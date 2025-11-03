@@ -38,8 +38,13 @@ async function importCards() {
 
     pipeline
       .on("data", async (data: any) => {
+        if (!data.value) return;
+
         // Skip variations, digital-only cards, and oversized cards.
-        if (data.value?.variation || data.value?.digital || data.value?.oversized) return;
+        if (data.value.variation || data.value.digital || data.value.oversized) return;
+
+        // For now, skip cards without a type_line (I may want to add this back in later)
+        if (!data.value.type_line) return;
 
         batch.push(data.value);
 
@@ -47,22 +52,26 @@ async function importCards() {
           pipeline.pause();
 
           try {
-            await Card.insertMany(batch, { ordered: false });
-            processedCount += batch.length;
-            console.log(`Processed ${processedCount} cards...`);
+            processedCount = await insertCards(batch, processedCount);
             batch = [];
-          } catch (error) {
-            console.error("Error inserting batch:", error);
+          } catch (error: any) {
+            batch = [];
+            pipeline.destroy(error);
           }
 
           pipeline.resume();
         }
       })
       .on("end", async () => {
+        if (pipeline.destroyed || pipeline.errored) {
+          console.log("Stream ended abnormally");
+          return;
+        }
+
         try {
           if (batch.length > 0) {
-            await Card.insertMany(batch, { ordered: false });
-            processedCount += batch.length;
+            processedCount = await insertCards(batch, processedCount);
+            batch = [];
           }
           console.log(`Completed! Total cards processed: ${processedCount}`);
           resolve();
@@ -80,6 +89,40 @@ async function importCards() {
 async function clearDb() {
   await Card.deleteMany({});
   console.log("Cleared Card database");
+}
+
+async function insertCards(batch: any[], initialProcessedCount: number = 0) {
+  const result = await Card.insertMany(batch, { ordered: false, rawResult: true });
+  const insertedCount = result.insertedCount;
+  let processedCount = initialProcessedCount + insertedCount;
+  console.log(`Processed ${processedCount} cards...`);
+
+  // Check for partial failures
+  if (insertedCount !== batch.length) {
+    const failedCount = batch.length - insertedCount;
+    console.log(`${failedCount} cards in this batch failed, retrying individually...`);
+
+    // Query which cards from the batch were successfully inserted
+    const batchCardIds = batch.map((card) => card.id);
+    const insertedCards = await Card.find({ id: { $in: batchCardIds } }).select("id");
+    const insertedCardIds = new Set(insertedCards.map((card) => card.id));
+
+    // Retry only the cards that failed
+    for (const card of batch) {
+      // Skip if this card was already inserted
+      if (insertedCardIds.has(card.id)) continue;
+
+      try {
+        await Card.create(card);
+        processedCount++;
+        console.log(`Successfully retried card: ${card?.name} (${card?.id})`);
+      } catch (err: any) {
+        console.error(`Failed to insert card: ${card?.name} (${card?.id}) - ${err.message}`);
+      }
+    }
+  }
+
+  return processedCount;
 }
 
 run();

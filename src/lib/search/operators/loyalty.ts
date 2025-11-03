@@ -1,4 +1,4 @@
-import { parseComparison } from '../helpers';
+import { buildNumericStringComparison } from '../helpers';
 import { SearchOperatorConfig } from '../types';
 
 /**
@@ -7,9 +7,16 @@ import { SearchOperatorConfig } from '../types';
 export const loyaltyOperator: SearchOperatorConfig = {
   aliases: ['loy', 'loyalty'],
   buildQuery: (value, operator) => {
-    const { operator: mongoOp, value: num } = parseComparison(
-      operator ? `${operator}${value}` : value
-    );
-    return { loyalty: String(num) }; // Loyalty is stored as string
+    const isNumeric = /^-?\d+$/.test(value.trim());
+
+    if (!isNumeric && (operator === '=' || operator === '!=')) {
+      if (operator === '=') return { loyalty: value };
+      return { loyalty: { $ne: value } };
+    }
+
+    if (!isNumeric) return null;
+
+    const num = parseInt(value, 10);
+    return buildNumericStringComparison('loyalty', operator || '=', num);
   }
 };

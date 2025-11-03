@@ -1,4 +1,4 @@
-import { parseComparison } from '../helpers';
+import { buildNumericStringComparison } from '../helpers';
 import { SearchOperatorConfig } from '../types';
 
 /**
@@ -7,10 +7,17 @@ import { SearchOperatorConfig } from '../types';
 export const powerOperator: SearchOperatorConfig = {
   aliases: ['pow', 'power'],
   buildQuery: (value, operator) => {
-    // TODO: Handle power>toughness comparisons
-    const { operator: mongoOp, value: num } = parseComparison(
-      operator ? `${operator}${value}` : value
-    );
-    return { power: String(num) }; // Power is stored as string
+    const isNumeric = /^-?\d+$/.test(value.trim());
+
+    // For equals / not equals with non-numeric input, do string comparison
+    if (!isNumeric && (operator === '=' || operator === '!=')) {
+      if (operator === '=') return { power: value };
+      return { power: { $ne: value } };
+    }
+
+    if (!isNumeric) return null; // unsupported non-numeric with >,<,>=,<=
+
+    const num = parseInt(value, 10);
+    return buildNumericStringComparison('power', operator || '=', num);
   }
 };

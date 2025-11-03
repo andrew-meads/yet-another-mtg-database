@@ -122,3 +122,53 @@ export function parseEvenOdd(value: string): any {
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+/**
+ * Build a MongoDB $expr comparison for fields stored as strings but representing numbers.
+ * Only numeric string values (e.g., "0".."20") are considered in comparisons.
+ * For '!=', non-numeric values are included in results (treated as not equal).
+ *
+ * Example usage:
+ *   buildNumericStringComparison('power', '>=', 3)
+ */
+export function buildNumericStringComparison(
+  field: string,
+  operator: string | undefined,
+  value: number
+): any {
+  const op = operator || '=';
+  const fieldRef = `$${field}`;
+
+  const numericValue = {
+    $cond: [
+      { $regexMatch: { input: fieldRef as any, regex: /^[0-9]+$/ } },
+      { $toInt: fieldRef as any },
+      0 // treat non-numeric as 0 for all numeric comparisons
+    ]
+  } as any;
+
+  let expr: any;
+  switch (op) {
+    case '>':
+      expr = { $gt: [numericValue, value] };
+      break;
+    case '>=':
+      expr = { $gte: [numericValue, value] };
+      break;
+    case '<':
+      expr = { $lt: [numericValue, value] };
+      break;
+    case '<=':
+      expr = { $lte: [numericValue, value] };
+      break;
+    case '!=':
+      expr = { $ne: [numericValue, value] };
+      break;
+    case '=':
+    default:
+      expr = { $eq: [numericValue, value] };
+      break;
+  }
+
+  return { $expr: expr };
+}
