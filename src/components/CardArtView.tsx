@@ -3,6 +3,7 @@
 import { ICard } from "@/types/ICard";
 import clsx from "clsx";
 import { useState } from "react";
+import Image from "next/image";
 
 type ImageVariant = "png" | "border_crop" | "large" | "normal" | "small";
 
@@ -29,18 +30,31 @@ interface CardImageProps {
 }
 
 function CardImage({ imageUri, alt, width, height }: CardImageProps) {
+  // Render a container that allows the image to scale down to fit its parent height
   if (!imageUri) {
     return (
       <div
-        className="bg-gray-200 flex items-center justify-center text-gray-500"
-        style={{ width, height }}
+        className="bg-gray-200 flex items-center justify-center text-gray-500 h-full"
+        style={{ height: "100%", aspectRatio: `${width} / ${height}` }}
       >
         No image available{alt !== "" && ` for ${alt}`}
       </div>
     );
   }
 
-  return <img src={imageUri} alt={alt} width={width} height={height} />;
+  // Use Next/Image with fill, contained within a box sized by height + aspect-ratio
+  return (
+    <div className="relative h-full" style={{ aspectRatio: `${width} / ${height}` }}>
+      <Image
+        src={imageUri}
+        alt={alt}
+        fill
+        className="object-contain"
+        sizes="(max-width: 640px) 40vw, (max-width: 1024px) 25vw, 286px"
+        priority={false}
+      />
+    </div>
+  );
 }
 
 export default function CardArtView({
@@ -90,8 +104,8 @@ export default function CardArtView({
 
   if (shouldBeFlippable) {
     return (
-      <div className={clsx("flex flex-col gap-2", className)}>
-        <div onClick={handleFlip} className="cursor-pointer relative group inline-block">
+      <div className={clsx("flex flex-col gap-2 h-full items-center justify-center", className)}>
+        <div onClick={handleFlip} className="cursor-pointer relative group inline-block h-full">
           {images.map((image, index) => (
             <div
               key={index}
@@ -115,9 +129,9 @@ export default function CardArtView({
   }
 
   return (
-    <div className={clsx("flex flex-col gap-2", className)}>
+    <div className={clsx("flex flex-row gap-2 h-full items-center justify-center", className)}>
       {imagesToRender.map((image, index) => (
-        <div key={index} className="inline-block">
+        <div key={index} className="inline-block h-full">
           <CardImage {...image} />
         </div>
       ))}
