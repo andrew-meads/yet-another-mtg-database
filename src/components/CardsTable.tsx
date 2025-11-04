@@ -11,6 +11,7 @@ import {
 import { ICard } from "@/types/ICard";
 import { useEffect, useRef, useState } from "react";
 import CardPopup from "@/components/CardPopup";
+import { ManaCost } from "@/components/CardTextView";
 
 export interface CardsTableProps {
   cards: ICard[];
@@ -33,6 +34,29 @@ function CardsTableRow({
   onHoverLeave?: () => void;
   onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
 }) {
+  // Extract values from card_faces if present, otherwise use card-level values
+  const faces = card.card_faces || [];
+  
+  // Mana cost: show single face cost or both with "//"
+  const manaCosts = faces.length > 0 
+    ? faces.map(f => f.mana_cost).filter((c): c is string => Boolean(c))
+    : card.mana_cost ? [card.mana_cost] : [];
+  
+  // Power/Toughness/Loyalty: show both faces if different, separated by "//"
+  // Power/Toughness: combine as "P/T" per face, then join with "//"
+  const powerToughness = faces.length > 0
+    ? faces
+        .filter(f => f.power && f.toughness)
+        .map(f => `${f.power}/${f.toughness}`)
+        .join(" // ")
+    : (card.power && card.toughness) ? `${card.power}/${card.toughness}` : "";
+  
+  const loyalties = faces.length > 0 
+    ? faces.map(f => f.loyalty).filter(Boolean)
+    : card.loyalty ? [card.loyalty] : [];
+  
+  const loyalty = loyalties.length > 0 ? loyalties.join(" // ") : "";
+
   return (
     <TableRow
       className="cursor-pointer"
@@ -42,8 +66,22 @@ function CardsTableRow({
       onMouseMove={onHoverMove}
     >
       <TableCell className="font-medium">{card.name}</TableCell>
+      <TableCell className="text-center">
+        {manaCosts.length > 0 && (
+          <div className="flex justify-center items-center gap-1">
+            {manaCosts.map((cost, idx) => (
+              <div key={idx} className="flex items-center gap-1">
+                {idx > 0 && <span className="text-muted-foreground">//</span>}
+                <ManaCost cost={cost} />
+              </div>
+            ))}
+          </div>
+        )}
+      </TableCell>
       <TableCell>{card.type_line}</TableCell>
-      <TableCell className="text-right">{card.cmc}</TableCell>
+      <TableCell className="text-center">{card.cmc}</TableCell>
+      <TableCell className="text-center">{powerToughness}</TableCell>
+      <TableCell className="text-center">{loyalty}</TableCell>
     </TableRow>
   );
 }
@@ -113,8 +151,11 @@ export default function CardsTable({ cards, isLoading, error, maxHeight, onCardC
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead className="text-center">Mana Cost</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead className="text-right">CMC</TableHead>
+            <TableHead className="text-center">CMC</TableHead>
+            <TableHead className="text-center">P/T</TableHead>
+            <TableHead className="text-center">Loyalty</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
