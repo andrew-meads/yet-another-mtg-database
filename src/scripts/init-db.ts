@@ -1,6 +1,6 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import { Card } from "@/db/schema";
+import { Card, CardCollectionModel } from "@/db/schema";
 import fs from "fs";
 import { parser } from "stream-json";
 import { streamArray } from "stream-json/streamers/StreamArray";
@@ -46,6 +46,11 @@ async function importCards() {
         // For now, skip cards without a type_line (I may want to add this back in later)
         if (!data.value.type_line) return;
 
+        // Cards whose type_line is "Card" or "Card // Card" should be skipped.
+        if (data.value.type_line === "Card" || data.value.type_line === "Card // Card") {
+          return;
+        }
+
         batch.push(data.value);
 
         if (batch.length >= BATCH_SIZE) {
@@ -89,6 +94,18 @@ async function importCards() {
 async function clearDb() {
   await Card.deleteMany({});
   console.log("Cleared Card database");
+
+  // If CardCollectionModel is empty, create a default "My Collection"
+  const collectionCount = await CardCollectionModel.countDocuments();
+  if (collectionCount === 0) {
+    await CardCollectionModel.create({
+      name: "My Collection",
+      description: "Main collection",
+      collectionType: "collection",
+      cards: []
+    });
+    console.log("Created default 'My Collection' CardCollection");
+  }
 }
 
 async function insertCards(batch: any[], initialProcessedCount: number = 0) {

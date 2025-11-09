@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         hostname: "cards.scryfall.io",
         port: "",
         pathname: "/**"
+      },
+      {
+        protocol: "https",
+        hostname: "errors.scryfall.com",
+        port: "",
+        pathname: "/**"
       }
     ],
     // Prefer modern formats when available

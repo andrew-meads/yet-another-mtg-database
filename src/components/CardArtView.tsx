@@ -1,6 +1,6 @@
 "use client";
 
-import { ICard } from "@/types/ICard";
+import { MtgCard } from "@/types/MtgCard";
 import clsx from "clsx";
 import { useState } from "react";
 import Image from "next/image";
@@ -8,7 +8,7 @@ import Image from "next/image";
 type ImageVariant = "png" | "border_crop" | "large" | "normal" | "small";
 
 interface CardArtViewProps {
-  card: ICard;
+  card: MtgCard;
   variant: ImageVariant;
   className?: string;
   flippable?: boolean;
@@ -105,22 +105,23 @@ export default function CardArtView({
   if (shouldBeFlippable) {
     return (
       <div className={clsx("flex flex-col gap-2 h-full items-center justify-center", className)}>
-        <div onClick={handleFlip} className="cursor-pointer relative group inline-block h-full">
+        <div onClick={handleFlip} className="cursor-pointer relative group h-full flex items-center justify-center">
           {images.map((image, index) => (
             <div
               key={index}
-              className="transition-opacity duration-800"
+              className="transition-opacity duration-800 h-full flex items-center justify-center"
               style={{
                 position: index === 0 ? "relative" : "absolute",
                 top: index === 0 ? "auto" : 0,
                 left: index === 0 ? "auto" : 0,
+                right: index === 0 ? "auto" : 0,
                 opacity: currentFaceIndex === index ? 1 : 0
               }}
             >
               <CardImage {...image} />
             </div>
           ))}
-          <div className="absolute inset-0 bg-gray-700/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-semibold text-lg pointer-events-none">
+          <div className="absolute top-0 bottom-0 bg-gray-700/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-semibold text-lg pointer-events-none" style={{ left: 0, right: 0 }}>
             Click to flip
           </div>
         </div>

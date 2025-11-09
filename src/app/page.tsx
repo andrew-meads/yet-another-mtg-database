@@ -1,8 +1,4 @@
-import AppBar from "@/components/AppBar";
-import CardArtView from "@/components/CardArtView";
-import { CardTextView } from "@/components/CardTextView";
 import SearchPanel from "@/components/SearchPanel";
-import { useCallback } from "react";
 
 // async function getCard(id: string) {
 //   // Use absolute URL for server-side fetching
@@ -58,14 +54,5 @@ export default async function Home() {
 
   // TODO Other card types to check: Planar cards, dungeon cards
 
-  return (
-    <div className="min-h-screen bg-background">
-      <AppBar />
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SearchPanel />
-      </main>
-    </div>
-  );
+  return <SearchPanel />;
 }

@@ -6,19 +6,25 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
-import { ICard } from "@/types/ICard";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { MtgCard } from "@/types/MtgCard";
 import { useEffect, useRef, useState } from "react";
+import { useCardSelection } from "@/context/CardSelectionContext";
 import CardPopup from "@/components/CardPopup";
 import { ManaCost } from "@/components/CardTextView";
 
 export interface CardsTableProps {
-  cards: ICard[];
+  cards: MtgCard[];
   isLoading?: boolean;
   error?: Error | null;
   maxHeight?: string;
-  onCardClicked?: (card: ICard) => void;
+  onCardClicked?: (card: MtgCard) => void;
 }
 
 function CardsTableRow({
@@ -26,35 +32,44 @@ function CardsTableRow({
   onClick,
   onHoverEnter,
   onHoverLeave,
-  onHoverMove,
+  onHoverMove
 }: {
-  card: ICard;
-  onClick?: (card: ICard) => void;
+  card: MtgCard;
+  onClick?: (card: MtgCard) => void;
   onHoverEnter?: () => void;
   onHoverLeave?: () => void;
   onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
 }) {
   // Extract values from card_faces if present, otherwise use card-level values
   const faces = card.card_faces || [];
-  
+
   // Mana cost: show single face cost or both with "//"
-  const manaCosts = faces.length > 0 
-    ? faces.map(f => f.mana_cost).filter((c): c is string => Boolean(c))
-    : card.mana_cost ? [card.mana_cost] : [];
-  
+  const manaCosts =
+    faces.length > 0
+      ? faces.map((f) => f.mana_cost).filter((c): c is string => Boolean(c))
+      : card.mana_cost
+        ? [card.mana_cost]
+        : [];
+
   // Power/Toughness/Loyalty: show both faces if different, separated by "//"
   // Power/Toughness: combine as "P/T" per face, then join with "//"
-  const powerToughness = faces.length > 0
-    ? faces
-        .filter(f => f.power && f.toughness)
-        .map(f => `${f.power}/${f.toughness}`)
-        .join(" // ")
-    : (card.power && card.toughness) ? `${card.power}/${card.toughness}` : "";
-  
-  const loyalties = faces.length > 0 
-    ? faces.map(f => f.loyalty).filter(Boolean)
-    : card.loyalty ? [card.loyalty] : [];
-  
+  const powerToughness =
+    faces.length > 0
+      ? faces
+          .filter((f) => f.power && f.toughness)
+          .map((f) => `${f.power}/${f.toughness}`)
+          .join(" // ")
+      : card.power && card.toughness
+        ? `${card.power}/${card.toughness}`
+        : "";
+
+  const loyalties =
+    faces.length > 0
+      ? faces.map((f) => f.loyalty).filter(Boolean)
+      : card.loyalty
+        ? [card.loyalty]
+        : [];
+
   const loyalty = loyalties.length > 0 ? loyalties.join(" // ") : "";
 
   return (
@@ -79,6 +94,16 @@ function CardsTableRow({
         )}
       </TableCell>
       <TableCell>{card.type_line}</TableCell>
+      <TableCell className="text-center">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{card.set.toUpperCase()}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {card.set_name}
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
       <TableCell className="text-center">{card.cmc}</TableCell>
       <TableCell className="text-center">{powerToughness}</TableCell>
       <TableCell className="text-center">{loyalty}</TableCell>
@@ -86,7 +111,13 @@ function CardsTableRow({
   );
 }
 
-export default function CardsTable({ cards, isLoading, error, maxHeight, onCardClicked }: CardsTableProps) {
+export default function CardsTable({
+  cards,
+  isLoading,
+  error,
+  maxHeight,
+  onCardClicked
+}: CardsTableProps) {
   if (error) {
     return (
       <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-destructive">
@@ -112,10 +143,8 @@ export default function CardsTable({ cards, isLoading, error, maxHeight, onCardC
     );
   }
 
-  const containerStyle = maxHeight ? { maxHeight, overflowY: "auto" as const } : undefined;
-
   // Hover preview popup state
-  const [hovered, setHovered] = useState<{ card: ICard; pos: { x: number; y: number } } | null>(
+  const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
     null
   );
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -127,7 +156,7 @@ export default function CardsTable({ cards, isLoading, error, maxHeight, onCardC
     };
   }, []);
 
-  const handleRowEnter = (card: ICard) => {
+  const handleRowEnter = (card: MtgCard) => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
     showTimerRef.current = setTimeout(() => {
       setHovered({ card, pos: lastMousePosRef.current });
@@ -145,14 +174,27 @@ export default function CardsTable({ cards, isLoading, error, maxHeight, onCardC
     lastMousePosRef.current = { x: e.clientX, y: e.clientY };
   };
 
+  // Use maxHeight if provided, otherwise fill available height. When a caller
+  // doesn't pass an explicit onCardClicked callback, use the CardSelection
+  // context's setter (fallback is a noop if provider is not present).
+  const { setSelectedCard } = useCardSelection();
+
+  const clickHandler = onCardClicked ?? ((card: MtgCard) => setSelectedCard(card));
+
+  const containerClass = maxHeight
+    ? "rounded-md border overflow-hidden flex flex-col"
+    : "h-full rounded-md border overflow-hidden flex flex-col";
+  const containerStyle = maxHeight ? { maxHeight } : undefined;
+
   return (
-    <div style={containerStyle} className="rounded-md border">
-      <Table>
+    <div style={containerStyle} className={containerClass}>
+      <Table stickyHeader>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead className="text-center">Mana Cost</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead className="text-center">Set</TableHead>
             <TableHead className="text-center">CMC</TableHead>
             <TableHead className="text-center">P/T</TableHead>
             <TableHead className="text-center">Loyalty</TableHead>
@@ -163,7 +205,7 @@ export default function CardsTable({ cards, isLoading, error, maxHeight, onCardC
             <CardsTableRow
               key={card.id}
               card={card}
-              onClick={onCardClicked}
+              onClick={clickHandler}
               onHoverEnter={() => handleRowEnter(card)}
               onHoverLeave={handleRowLeave}
               onHoverMove={handleRowMove}

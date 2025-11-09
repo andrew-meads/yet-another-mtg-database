@@ -1,5 +1,5 @@
 // Define TypeScript interface for the Card document
-export interface ICard {
+export interface MtgCard {
   id: string;
   lang: string;
   tcgplayer_id?: number;

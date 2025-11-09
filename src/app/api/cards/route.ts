@@ -4,6 +4,19 @@ import { NextRequest } from "next/server";
 import { parseSearchQuery } from "@/lib/search/queryBuilder";
 import { getValidSortFields, getSortConfig } from "@/lib/sortConfig";
 
+/**
+ * GET /api/cards
+ * Searches and retrieves Magic: The Gathering cards with pagination and sorting.
+ * 
+ * Query Parameters:
+ * - q: Search query string (optional)
+ * - page: Page number (default: 1)
+ * - page-len: Number of cards per page (default: 100)
+ * - order: Sort field (default: "name")
+ * - dir: Sort direction: "asc" or "desc" (default: "asc")
+ * 
+ * @returns Response containing cards array, pagination info, and sort configuration
+ */
 export async function GET(request: NextRequest) {
   try {
     // Connect to database

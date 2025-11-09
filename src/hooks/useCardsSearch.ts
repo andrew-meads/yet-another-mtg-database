@@ -2,11 +2,11 @@
 
 import { useMemo } from "react";
 import { useQuery, UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
-import { ICard } from "@/types/ICard";
+import { MtgCard } from "@/types/MtgCard";
 
 // Response shape from GET /api/cards
 export interface CardsResponse {
-  cards: ICard[];
+  cards: MtgCard[];
   query: string | null;
   pagination: {
     total: number;

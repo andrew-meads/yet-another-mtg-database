@@ -4,11 +4,22 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import SearchControls, { type SearchControlsValues } from "@/components/SearchControls";
 import CardsTable from "@/components/CardsTable";
 import { useCardsSearch } from "@/hooks/useCardsSearch";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ICard } from "@/types/ICard";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+  PaginationEllipsis
+} from "@/components/ui/pagination";
+import { MtgCard } from "@/types/MtgCard";
 
-export default function SearchPanel({ onCardClicked }: { onCardClicked?: (card: ICard) => void }) {
+interface SearchPanelProps {
+  compact?: boolean;
+}
+
+export default function SearchPanel({ compact }: SearchPanelProps) {
   const [searchParams, setSearchParams] = useState<SearchControlsValues>({
     q: "lang:en exclude:extras",
     order: "name",
@@ -56,51 +67,135 @@ export default function SearchPanel({ onCardClicked }: { onCardClicked?: (card: 
     }
   };
 
+  const handlePageClick = (pageNum: number) => {
+    scrollPositionRef.current = window.scrollY;
+    shouldRestoreScrollRef.current = true;
+    setPage(pageNum);
+  };
+
   const renderPaginationControls = (position: "top" | "bottom") => {
     if (!data || data.cards.length === 0) return null;
 
+    const currentPage = data.pagination.page;
+    const totalPages = data.pagination.totalPages;
+
+    // Calculate which page numbers to show
+    const getPageNumbers = () => {
+      const pages: (number | "ellipsis")[] = [];
+      const maxVisible = 7; // Max page numbers to show including ellipsis
+
+      if (totalPages <= maxVisible) {
+        // Show all pages if we have few enough
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Always show first page
+        pages.push(1);
+
+        // Calculate range around current page
+        let startPage = Math.max(2, currentPage - 1);
+        let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+        // Add ellipsis after first page if needed
+        if (startPage > 2) {
+          pages.push("ellipsis");
+          startPage = Math.max(startPage, currentPage - 1);
+        }
+
+        // Add middle pages
+        for (let i = startPage; i <= endPage; i++) {
+          pages.push(i);
+        }
+
+        // Add ellipsis before last page if needed
+        if (endPage < totalPages - 1) {
+          pages.push("ellipsis");
+        }
+
+        // Always show last page
+        pages.push(totalPages);
+      }
+
+      return pages;
+    };
+
+    const pageNumbers = getPageNumbers();
+
     return (
-      <div className="flex items-center justify-between border-t pt-4">
-        <div className="text-sm text-muted-foreground">
-          Page {data.pagination.page} of {data.pagination.totalPages} • {data.pagination.total}{" "}
-          total cards
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page === 1}>
-            <ChevronLeft className="size-4 mr-1" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={!data.pagination.hasMore}
-          >
-            Next
-            <ChevronRight className="size-4 ml-1" />
-          </Button>
-        </div>
+      <div className="flex items-center justify-between border-t pt-4 gap-4">
+        <p className="text-sm text-muted-foreground whitespace-nowrap shrink-0">
+          Page {currentPage} of {totalPages} • {data.pagination.total} total cards
+        </p>
+        <Pagination key={`pages-${totalPages}`} className="mx-0 w-auto">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (page > 1) handlePrevPage();
+                }}
+                aria-disabled={page === 1}
+                className={page === 1 ? "pointer-events-none opacity-50" : undefined}
+              />
+            </PaginationItem>
+
+            {pageNumbers.map((pageNum, idx) =>
+              pageNum === "ellipsis" ? (
+                <PaginationItem key={`ellipsis-${idx}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageClick(pageNum);
+                    }}
+                    isActive={pageNum === currentPage}
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (data.pagination.hasMore) handleNextPage();
+                }}
+                aria-disabled={!data.pagination.hasMore}
+                className={!data.pagination.hasMore ? "pointer-events-none opacity-50" : undefined}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     );
   };
 
   return (
-    <div className="space-y-6">
-      <SearchControls onChange={handleSearchChange} initial={searchParams} />
+    <div className="h-full flex flex-col gap-6">
+      <SearchControls compact={compact} onChange={handleSearchChange} initial={searchParams} />
 
       {/* Pagination controls - Top */}
       {renderPaginationControls("top")}
 
-      <CardsTable
-        cards={data?.cards ?? []}
-        isLoading={isLoading}
-        error={error}
-        maxHeight="300px"
-        onCardClicked={onCardClicked}
-      />
+      <div className="flex-1 min-h-0">
+        <CardsTable
+          cards={data?.cards ?? []}
+          isLoading={isLoading}
+          error={error}
+        />
+      </div>
 
       {/* Pagination controls - Bottom */}
-      {renderPaginationControls("bottom")}
+      {!compact && renderPaginationControls("bottom")}
     </div>
   );
 }

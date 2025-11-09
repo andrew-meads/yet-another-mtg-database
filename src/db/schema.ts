@@ -1,9 +1,10 @@
 import mongoose, { Model } from "mongoose";
-import { ICard } from "@/types/ICard";
+import { MtgCard } from "@/types/MtgCard";
+import { CardCollection } from "@/types/CardCollection";
 const Schema = mongoose.Schema;
 
-// Define your schema
-const cardSchema = new Schema<ICard>(
+// Each document in the "cards" collection represents a Magic: The Gathering card
+const cardSchema = new Schema<MtgCard>(
   {
     id: { type: String, required: true, unique: true },
     lang: { type: String, required: true },
@@ -86,6 +87,27 @@ const cardSchema = new Schema<ICard>(
   { strict: true }
 );
 
+const collectionSchema = new Schema<CardCollection>(
+  {
+    name: { type: String, required: true },
+    description: { type: String, required: true, default: "" },
+    isActive: Boolean,
+    collectionType: { type: String, required: true, enum: ["collection", "wishlist", "deck"] },
+    cards: [
+      {
+        cardId: { type: String, required: true },
+        quantity: { type: Number, required: true },
+        notes: String,
+        tags: [String]
+      }
+    ]
+  },
+  { strict: true }
+);
+
 // Prevent model recompilation during hot reload in development
 export const Card = (mongoose.models.Card ||
-  mongoose.model<ICard>("Card", cardSchema)) as Model<ICard>;
+  mongoose.model<MtgCard>("Card", cardSchema)) as Model<MtgCard>;
+
+export const CardCollectionModel = (mongoose.models.CardCollection ||
+  mongoose.model<CardCollection>("CardCollection", collectionSchema)) as Model<CardCollection>;

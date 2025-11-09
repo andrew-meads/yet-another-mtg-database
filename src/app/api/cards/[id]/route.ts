@@ -2,6 +2,19 @@ import connectDB from "@/db/mongoose";
 import { Card } from "@/db/schema";
 import { NextRequest } from "next/server";
 
+/**
+ * GET /api/cards/[id]
+ * Retrieves a single Magic: The Gathering card by its Scryfall ID.
+ * 
+ * Query Parameters:
+ * - fetch: If "true", fetches the card from Scryfall API and updates the database
+ * 
+ * @returns The card object, or 404 if not found
+ * 
+ * Behavior:
+ * - With ?fetch=true: Fetches from Scryfall, replaces existing card in DB, returns fresh data
+ * - Without fetch param: Returns card from local database only
+ */
 export async function GET(request: NextRequest, ctx: RouteContext<"/api/cards/[id]">) {
   try {
     // Connect to database

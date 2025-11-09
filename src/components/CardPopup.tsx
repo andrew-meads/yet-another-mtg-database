@@ -1,11 +1,11 @@
 "use client";
 
 import CardArtView from "@/components/CardArtView";
-import type { ICard } from "@/types/ICard";
+import type { MtgCard } from "@/types/MtgCard";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export interface CardPopupProps {
-  card: ICard;
+  card: MtgCard;
   position: { x: number; y: number };
 }
 
