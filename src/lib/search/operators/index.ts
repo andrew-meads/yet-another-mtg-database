@@ -8,6 +8,7 @@ export { identityOperator } from "./identity";
 export { typeOperator } from "./type";
 export { oracleOperator } from "./oracle";
 export { nameOperator } from "./name";
+export { flavornameOperator } from "./flavorname";
 export { manavalueOperator } from "./manavalue";
 export { powerOperator } from "./power";
 export { toughnessOperator } from "./toughness";

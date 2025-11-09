@@ -8,11 +8,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
@@ -72,6 +68,15 @@ function CardsTableRow({
 
   const loyalty = loyalties.length > 0 ? loyalties.join(" // ") : "";
 
+  // Display flavor name if present, with real name in brackets and italics
+  const displayName = card.flavor_name ? (
+    <>
+      {card.flavor_name} <span className="italic">({card.name})</span>
+    </>
+  ) : (
+    card.name
+  );
+
   return (
     <TableRow
       className="cursor-pointer"
@@ -80,7 +85,7 @@ function CardsTableRow({
       onMouseLeave={onHoverLeave}
       onMouseMove={onHoverMove}
     >
-      <TableCell className="font-medium">{card.name}</TableCell>
+      <TableCell className="font-medium">{displayName}</TableCell>
       <TableCell className="text-center">
         {manaCosts.length > 0 && (
           <div className="flex justify-center items-center gap-1">
@@ -99,9 +104,7 @@ function CardsTableRow({
           <TooltipTrigger asChild>
             <span>{card.set.toUpperCase()}</span>
           </TooltipTrigger>
-          <TooltipContent>
-            {card.set_name}
-          </TooltipContent>
+          <TooltipContent>{card.set_name}</TooltipContent>
         </Tooltip>
       </TableCell>
       <TableCell className="text-center">{card.cmc}</TableCell>

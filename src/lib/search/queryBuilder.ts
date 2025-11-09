@@ -141,9 +141,15 @@ function combineWithAnd(queries: any[]): any {
 function buildTermQuery(term: ParsedTerm): any {
   let query: any;
   
-  // If no key specified, treat as name search
+  // If no key specified, treat as name search (including flavor_name)
   if (!term.key) {
-    query = { name: new RegExp(escapeRegex(term.value), 'i') };
+    const regex = new RegExp(escapeRegex(term.value), 'i');
+    query = {
+      $or: [
+        { name: regex },
+        { flavor_name: regex }
+      ]
+    };
   } else {
     // Find the operator config
     const config = findOperatorConfig(term.key);
