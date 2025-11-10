@@ -71,7 +71,12 @@ function InnerWorkspace({ layout, children }: { layout: number[]; children?: Rea
             {/* Top: Card Image */}
             <ResizablePanel defaultSize={50} minSize={30} className="p-4 overflow-hidden">
               <div className="h-full w-full">
-                <CardArtView card={selectedCard} variant="normal" flippable={true} />
+                <CardArtView
+                  card={selectedCard}
+                  variant="normal"
+                  flippable={true}
+                  draggable={true}
+                />
               </div>
             </ResizablePanel>
 

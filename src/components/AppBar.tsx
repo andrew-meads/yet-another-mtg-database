@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ModeToggle } from "./ui/ModeToggle";
 import { Button } from "@/components/ui/button";
+import { Separator } from "./ui/separator";
+import ActiveCollectionButtons from "./ActiveCollectionButtons";
 
 export default function AppBar() {
   const pathname = usePathname();
@@ -21,6 +23,10 @@ export default function AppBar() {
               <Button asChild variant={pathname === "/my-cards" ? "default" : "outline"} size="sm">
                 <Link href="/my-cards">My cards</Link>
               </Button>
+
+              <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1" />
+
+              <ActiveCollectionButtons />
             </nav>
           </div>
           <ModeToggle />

@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import QueryProvider from "@/components/QueryProvider";
 import AppBar from "@/components/AppBar";
 import MainWorkspace from "@/components/MainWorkspace";
+import { ActiveCollectionsProvider } from "@/context/ActiveCollectionsContext";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -37,14 +38,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <div className="min-h-screen bg-background">
-              <AppBar />
-              <main className="w-full mx-auto px-4 py-6">
-                <MainWorkspace>
-                  {children}
-                </MainWorkspace>
-              </main>
-            </div>
+            <ActiveCollectionsProvider>
+              <div className="min-h-screen bg-background">
+                <AppBar />
+                <main className="w-full mx-auto px-4 py-6">
+                  <MainWorkspace>{children}</MainWorkspace>
+                </main>
+              </div>
+            </ActiveCollectionsProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

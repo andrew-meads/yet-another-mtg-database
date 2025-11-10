@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { NewCollectionDialog } from "./NewCollectionDialog";
-import { CollectionSummary, CollectionType } from "@/types/CardCollection";
+import { CollectionType } from "@/types/CardCollection";
 import { useRetrieveCollectionSummaries } from "@/hooks/useRetrieveCollectionSummaries";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import { ChevronDown } from "lucide-react";
@@ -20,15 +21,10 @@ interface HomeTabProps {
     description: string;
     collectionType: CollectionType;
   }) => void;
-  onCollectionClicked: (collection: CollectionSummary) => void;
   isCreating?: boolean;
 }
 
-export default function HomeTab({
-  onNewCollection,
-  onCollectionClicked,
-  isCreating = false
-}: HomeTabProps) {
+export default function HomeTab({ onNewCollection, isCreating = false }: HomeTabProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<CollectionType>("collection");
 
@@ -95,15 +91,14 @@ export default function HomeTab({
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {data.collections.slice(0, 6).map((collection) => (
               <li key={collection._id}>
-                <Button
-                  variant="ghost"
-                  className="w-full cursor-pointer"
-                  onClick={() => onCollectionClicked(collection)}
-                >
-                  {getCollectionIcon(collection.collectionType)}
-                  <span>
-                    {collection.name} <em className="text-muted-foreground">({collection.collectionType})</em>
-                  </span>
+                <Button variant="ghost" className="w-full cursor-pointer" asChild>
+                  <Link href={`/my-cards/${collection._id}`} className="flex items-center gap-2">
+                    {getCollectionIcon(collection.collectionType)}
+                    <span>
+                      {collection.name}{" "}
+                      <em className="text-muted-foreground">({collection.collectionType})</em>
+                    </span>
+                  </Link>
                 </Button>
               </li>
             ))}
@@ -143,11 +138,8 @@ export default function HomeTab({
                 {data.collections
                   .filter((c) => c.collectionType === "collection")
                   .map((collection) => (
-                    <DropdownMenuItem
-                      key={collection._id}
-                      onClick={() => onCollectionClicked(collection)}
-                    >
-                      {collection.name}
+                    <DropdownMenuItem key={collection._id} asChild>
+                      <Link href={`/my-cards/${collection._id}`}>{collection.name}</Link>
                     </DropdownMenuItem>
                   ))}
                 {data.collections.filter((c) => c.collectionType === "collection").length === 0 && (
@@ -171,11 +163,8 @@ export default function HomeTab({
                 {data.collections
                   .filter((c) => c.collectionType === "wishlist")
                   .map((collection) => (
-                    <DropdownMenuItem
-                      key={collection._id}
-                      onClick={() => onCollectionClicked(collection)}
-                    >
-                      {collection.name}
+                    <DropdownMenuItem key={collection._id} asChild>
+                      <Link href={`/my-cards/${collection._id}`}>{collection.name}</Link>
                     </DropdownMenuItem>
                   ))}
                 {data.collections.filter((c) => c.collectionType === "wishlist").length === 0 && (
@@ -199,11 +188,8 @@ export default function HomeTab({
                 {data.collections
                   .filter((c) => c.collectionType === "deck")
                   .map((collection) => (
-                    <DropdownMenuItem
-                      key={collection._id}
-                      onClick={() => onCollectionClicked(collection)}
-                    >
-                      {collection.name}
+                    <DropdownMenuItem key={collection._id} asChild>
+                      <Link href={`/my-cards/${collection._id}`}>{collection.name}</Link>
                     </DropdownMenuItem>
                   ))}
                 {data.collections.filter((c) => c.collectionType === "deck").length === 0 && (

@@ -12,6 +12,7 @@ interface CardArtViewProps {
   variant: ImageVariant;
   className?: string;
   flippable?: boolean;
+  draggable?: boolean;
 }
 
 const IMAGE_DIMENSIONS: Record<ImageVariant, { width: number; height: number }> = {
@@ -61,7 +62,8 @@ export default function CardArtView({
   card,
   variant,
   className,
-  flippable = false
+  flippable = false,
+  draggable = false
 }: CardArtViewProps) {
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0);
   const dimensions = IMAGE_DIMENSIONS[variant];
@@ -105,7 +107,10 @@ export default function CardArtView({
   if (shouldBeFlippable) {
     return (
       <div className={clsx("flex flex-col gap-2 h-full items-center justify-center", className)}>
-        <div onClick={handleFlip} className="cursor-pointer relative group h-full flex items-center justify-center">
+        <div
+          onClick={handleFlip}
+          className="cursor-pointer relative group h-full flex items-center justify-center"
+        >
           {images.map((image, index) => (
             <div
               key={index}
@@ -121,7 +126,10 @@ export default function CardArtView({
               <CardImage {...image} />
             </div>
           ))}
-          <div className="absolute top-0 bottom-0 bg-gray-700/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-semibold text-lg pointer-events-none" style={{ left: 0, right: 0 }}>
+          <div
+            className="absolute top-0 bottom-0 bg-gray-700/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-semibold text-lg pointer-events-none"
+            style={{ left: 0, right: 0 }}
+          >
             Click to flip
           </div>
         </div>
