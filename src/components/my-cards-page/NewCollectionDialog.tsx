@@ -20,27 +20,30 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { CollectionType } from "@/types/CardCollection";
 
 interface NewCollectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultCollectionType?: "collection" | "wishlist" | "deck";
+  defaultCollectionType?: CollectionType;
   onCreate: (data: {
     name: string;
     description: string;
-    collectionType: "collection" | "wishlist" | "deck";
+    collectionType: CollectionType;
   }) => void;
+  isCreating?: boolean;
 }
 
 export function NewCollectionDialog({
   open,
   onOpenChange,
   defaultCollectionType = "collection",
-  onCreate
+  onCreate,
+  isCreating = false
 }: NewCollectionDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [collectionType, setCollectionType] = useState<"collection" | "wishlist" | "deck">(
+  const [collectionType, setCollectionType] = useState<CollectionType>(
     defaultCollectionType
   );
 
@@ -112,9 +115,7 @@ export function NewCollectionDialog({
             <Label htmlFor="collectionType">Type</Label>
             <Select
               value={collectionType}
-              onValueChange={(value) =>
-                setCollectionType(value as "collection" | "wishlist" | "deck")
-              }
+              onValueChange={(value) => setCollectionType(value as CollectionType)}
             >
               <SelectTrigger id="collectionType" className="w-full">
                 <SelectValue />
@@ -128,11 +129,11 @@ export function NewCollectionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel} disabled={isCreating}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!name.trim()}>
-            Create
+          <Button onClick={handleCreate} disabled={!name.trim() || isCreating}>
+            {isCreating ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

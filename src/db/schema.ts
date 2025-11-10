@@ -90,7 +90,7 @@ const cardSchema = new Schema<MtgCard>(
 const collectionSchema = new Schema<CardCollection>(
   {
     name: { type: String, required: true },
-    description: { type: String, required: true, default: "" },
+    description: { type: String, required: false, default: "" },
     isActive: Boolean,
     collectionType: { type: String, required: true, enum: ["collection", "wishlist", "deck"] },
     cards: [
@@ -102,7 +102,7 @@ const collectionSchema = new Schema<CardCollection>(
       }
     ]
   },
-  { strict: true }
+  { strict: true, timestamps: true }
 );
 
 // Prevent model recompilation during hot reload in development

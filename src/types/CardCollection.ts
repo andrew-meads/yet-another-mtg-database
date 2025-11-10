@@ -1,11 +1,16 @@
 import { MtgCard } from "./MtgCard";
 
-export interface CardCollection {
+export type CollectionType = "collection" | "wishlist" | "deck";
+
+export interface CollectionSummary {
   _id: string;
   name: string;
-  collectionType: "collection" | "wishlist" | "deck";
-  description: string;
+  collectionType: CollectionType;
   isActive?: boolean;
+}
+
+export interface CardCollection extends CollectionSummary {
+  description: string;
   cards: Array<{
     cardId: string;
     quantity: number;

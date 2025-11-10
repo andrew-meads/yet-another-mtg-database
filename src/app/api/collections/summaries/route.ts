@@ -3,7 +3,7 @@ import { CardCollectionModel } from "@/db/schema";
 import { NextRequest } from "next/server";
 
 /**
- * GET /api/collections/names
+ * GET /api/collections/summaries
  * Retrieves a lightweight list of all card collections (ID, name, and type only).
  *
  * Query Parameters:
@@ -28,7 +28,9 @@ export async function GET(request: NextRequest) {
       name: 1,
       collectionType: 1,
       isActive: 1
-    }).lean();
+    })
+      .sort({ updatedAt: -1 }) // Sort by last modification time, newest first
+      .lean();
     return Response.json({ collections });
   } catch (error) {
     console.error("Error fetching collection names:", error);

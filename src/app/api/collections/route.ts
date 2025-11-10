@@ -5,14 +5,14 @@ import { NextRequest } from "next/server";
 /**
  * POST /api/collections
  * Creates a new card collection.
- * 
+ *
  * Request Body:
  * - name: Collection name (required)
  * - description: Collection description (optional)
  * - collectionType: Type: "collection", "wishlist", or "deck" (required)
- * 
+ *
  * @returns Response with created collection and Location header pointing to the new resource
- * 
+ *
  * The collection is initialized with an empty cards array.
  */
 export async function POST(request: NextRequest) {
@@ -24,10 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || !collectionType) {
-      return Response.json(
-        { error: "Name and collectionType are required" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Name and collectionType are required" }, { status: 400 });
     }
 
     // Validate collectionType enum
