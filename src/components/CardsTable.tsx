@@ -3,130 +3,44 @@
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import CardPopup from "@/components/CardPopup";
-import { ManaCost } from "@/components/CardTextView";
-import { useCardDragSource } from "@/hooks/useCardDragSource";
-import clsx from "clsx";
+import CardsTableRow from "@/components/CardsTableRow";
 
+/**
+ * Props for the CardsTable component
+ */
 export interface CardsTableProps {
+  /** Array of MTG cards to display */
   cards: MtgCard[];
+  /** Whether the table is currently loading data */
   isLoading?: boolean;
+  /** Error object if loading failed */
   error?: Error | null;
+  /** Optional maximum height for the table container */
   maxHeight?: string;
+  /** Optional callback when a card is clicked. If not provided, uses CardSelectionContext */
   onCardClicked?: (card: MtgCard) => void;
 }
 
-function CardsTableRow({
-  card,
-  onClick,
-  onHoverEnter,
-  onHoverLeave,
-  onHoverMove,
-  onDragStateChange
-}: {
-  card: MtgCard;
-  onClick?: (card: MtgCard) => void;
-  onHoverEnter?: () => void;
-  onHoverLeave?: () => void;
-  onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
-  onDragStateChange?: (isDragging: boolean) => void;
-}) {
-  // Make the row draggable
-  const { isDragging, dragRef } = useCardDragSource(card);
-
-  // Notify parent when drag state changes
-  useEffect(() => {
-    onDragStateChange?.(isDragging);
-  }, [isDragging, onDragStateChange]);
-
-  // Extract values from card_faces if present, otherwise use card-level values
-  const faces = card.card_faces || [];
-
-  // Mana cost: show single face cost or both with "//"
-  const manaCosts =
-    faces.length > 0
-      ? faces.map((f) => f.mana_cost).filter((c): c is string => Boolean(c))
-      : card.mana_cost
-        ? [card.mana_cost]
-        : [];
-
-  // Power/Toughness/Loyalty: show both faces if different, separated by "//"
-  // Power/Toughness: combine as "P/T" per face, then join with "//"
-  const powerToughness =
-    faces.length > 0
-      ? faces
-          .filter((f) => f.power && f.toughness)
-          .map((f) => `${f.power}/${f.toughness}`)
-          .join(" // ")
-      : card.power && card.toughness
-        ? `${card.power}/${card.toughness}`
-        : "";
-
-  const loyalties =
-    faces.length > 0
-      ? faces.map((f) => f.loyalty).filter(Boolean)
-      : card.loyalty
-        ? [card.loyalty]
-        : [];
-
-  const loyalty = loyalties.length > 0 ? loyalties.join(" // ") : "";
-
-  // Display flavor name if present, with real name in brackets and italics
-  const displayName = card.flavor_name ? (
-    <>
-      {card.flavor_name} <span className="italic">({card.name})</span>
-    </>
-  ) : (
-    card.name
-  );
-
-  return (
-    <TableRow
-      ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
-      className={clsx("cursor-pointer", isDragging && "opacity-50")}
-      onClick={() => onClick?.(card)}
-      onMouseEnter={onHoverEnter}
-      onMouseLeave={onHoverLeave}
-      onMouseMove={onHoverMove}
-    >
-      <TableCell className="font-medium">{displayName}</TableCell>
-      <TableCell className="text-center">
-        {manaCosts.length > 0 && (
-          <div className="flex justify-center items-center gap-1">
-            {manaCosts.map((cost, idx) => (
-              <div key={idx} className="flex items-center gap-1">
-                {idx > 0 && <span className="text-muted-foreground">//</span>}
-                <ManaCost cost={cost} />
-              </div>
-            ))}
-          </div>
-        )}
-      </TableCell>
-      <TableCell>{card.type_line}</TableCell>
-      <TableCell className="text-center">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>{card.set.toUpperCase()}</span>
-          </TooltipTrigger>
-          <TooltipContent>{card.set_name}</TooltipContent>
-        </Tooltip>
-      </TableCell>
-      <TableCell className="text-center">{card.cmc}</TableCell>
-      <TableCell className="text-center">{powerToughness}</TableCell>
-      <TableCell className="text-center">{loyalty}</TableCell>
-    </TableRow>
-  );
-}
-
+/**
+ * Main table component for displaying a list of MTG cards
+ * 
+ * Features:
+ * - Sticky header for easy column reference while scrolling
+ * - Card selection via click (integrates with CardSelectionContext)
+ * - Keyboard navigation with arrow keys (up/down)
+ * - Auto-scroll to keep selected card visible during keyboard navigation
+ * - Drag and drop support for adding cards to collections
+ * - Hover preview popup after 500ms delay
+ * - Loading and error states
+ */
 export default function CardsTable({
   cards,
   isLoading,
@@ -134,6 +48,7 @@ export default function CardsTable({
   maxHeight,
   onCardClicked
 }: CardsTableProps) {
+  // === EARLY RETURNS FOR SPECIAL STATES ===
   if (error) {
     return (
       <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-destructive">
@@ -159,15 +74,105 @@ export default function CardsTable({
     );
   }
 
-  // Hover preview popup state
+  // === STATE MANAGEMENT ===
+  
+  // Hover preview popup: tracks which card is being hovered and mouse position
   const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
     null
   );
+  
+  // Track if any row is currently being dragged (to hide hover popup)
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
+  
+  // === REFS ===
+  
+  // Track last mouse position for hover popup positioning
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  
+  // Timer for delayed hover popup display (500ms)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Reference to the table container for keyboard focus detection
+  const tableRef = useRef<HTMLDivElement>(null);
+  
+  // Map of card IDs to row refs for scroll-into-view functionality
+  const rowRefsRef = useRef<Map<string, React.RefObject<HTMLTableRowElement | null>>>(new Map());
 
-  // Clear hover state when dragging starts
+  // === HELPER FUNCTIONS ===
+  
+  /**
+   * Get or create a ref for a specific card row
+   * Used for keyboard navigation scroll behavior
+   */
+  const getRowRef = (cardId: string) => {
+    if (!rowRefsRef.current.has(cardId)) {
+      rowRefsRef.current.set(cardId, { current: null });
+    }
+    return rowRefsRef.current.get(cardId)!;
+  };
+
+  // === SELECTION CONTEXT ===
+  
+  // Get selected card state from context. Falls back to noop if provider not present.
+  const { selectedCard, setSelectedCard } = useCardSelection();
+
+  // Use provided click handler or default to setting selection context
+  const clickHandler = onCardClicked ?? ((card: MtgCard) => setSelectedCard(card));
+
+  // === KEYBOARD NAVIGATION ===
+  
+  /**
+   * Handle arrow key navigation for card selection
+   * - Only works when table has focus and a card is selected
+   * - Arrow Down: select next card
+   * - Arrow Up: select previous card
+   * - Automatically scrolls selected row into view (centered)
+   */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle arrow keys if we have a selected card and the table container has focus
+      if (!selectedCard || !tableRef.current?.contains(document.activeElement)) {
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        
+        const currentIndex = cards.findIndex((c) => c.id === selectedCard.id);
+        if (currentIndex === -1) return;
+
+        let nextIndex: number;
+        if (e.key === "ArrowDown") {
+          nextIndex = Math.min(currentIndex + 1, cards.length - 1);
+        } else {
+          nextIndex = Math.max(currentIndex - 1, 0);
+        }
+
+        if (nextIndex !== currentIndex) {
+          const nextCard = cards[nextIndex];
+          setSelectedCard(nextCard);
+          
+          // Scroll the row into view centered in the viewport
+          const rowRef = getRowRef(nextCard.id);
+          if (rowRef.current) {
+            rowRef.current.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center'
+            });
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedCard, cards, setSelectedCard]);
+
+  // === HOVER POPUP MANAGEMENT ===
+  
+  /**
+   * Clear hover popup when dragging starts to avoid visual conflicts
+   */
   useEffect(() => {
     if (isAnyRowDragging) {
       if (showTimerRef.current) clearTimeout(showTimerRef.current);
@@ -175,12 +180,19 @@ export default function CardsTable({
     }
   }, [isAnyRowDragging]);
 
+  /**
+   * Cleanup hover timer on unmount
+   */
   useEffect(() => {
     return () => {
       if (showTimerRef.current) clearTimeout(showTimerRef.current);
     };
   }, []);
 
+  /**
+   * Start hover timer when mouse enters a row
+   * Popup appears after 500ms if mouse remains on row
+   */
   const handleRowEnter = (card: MtgCard) => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
     showTimerRef.current = setTimeout(() => {
@@ -188,31 +200,39 @@ export default function CardsTable({
     }, 500);
   };
 
+  /**
+   * Cancel hover timer and hide popup when mouse leaves a row
+   */
   const handleRowLeave = () => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
     showTimerRef.current = null;
     setHovered(null);
   };
 
+  /**
+   * Track mouse position for hover popup placement
+   * CardPopup component applies its own offset and viewport clamping
+   */
   const handleRowMove = (e: React.MouseEvent<HTMLTableRowElement>) => {
-    // Pass raw cursor coordinates; CardPopup applies its own offset and clamping
     lastMousePosRef.current = { x: e.clientX, y: e.clientY };
   };
 
-  // Use maxHeight if provided, otherwise fill available height. When a caller
-  // doesn't pass an explicit onCardClicked callback, use the CardSelection
-  // context's setter (fallback is a noop if provider is not present).
-  const { setSelectedCard } = useCardSelection();
-
-  const clickHandler = onCardClicked ?? ((card: MtgCard) => setSelectedCard(card));
-
+  // === CONTAINER STYLING ===
+  
   const containerClass = maxHeight
     ? "rounded-md border overflow-hidden flex flex-col"
     : "h-full rounded-md border overflow-hidden flex flex-col";
   const containerStyle = maxHeight ? { maxHeight } : undefined;
 
+  // === RENDER ===
+  
   return (
-    <div style={containerStyle} className={containerClass}>
+    <div 
+      ref={tableRef}
+      style={containerStyle} 
+      className={containerClass}
+      tabIndex={0} // Make container focusable for keyboard navigation
+    >
       <Table stickyHeader>
         <TableHeader>
           <TableRow>
@@ -235,10 +255,13 @@ export default function CardsTable({
               onHoverLeave={handleRowLeave}
               onHoverMove={handleRowMove}
               onDragStateChange={setIsAnyRowDragging}
+              isSelected={selectedCard?.id === card.id}
+              rowRef={getRowRef(card.id)}
             />
           ))}
         </TableBody>
       </Table>
+      {/* Show hover popup only when hovering and not dragging */}
       {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
     </div>
   );
