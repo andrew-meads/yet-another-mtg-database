@@ -6,6 +6,8 @@ import QueryProvider from "@/components/QueryProvider";
 import AppBar from "@/components/AppBar";
 import MainWorkspace from "@/components/MainWorkspace";
 import { ActiveCollectionsProvider } from "@/context/ActiveCollectionsContext";
+import ReactDndProvider from "@/components/dnd/ReactDndProvider";
+import CardDragLayer from "@/components/dnd/CardDragLayer";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -38,14 +40,19 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <ActiveCollectionsProvider>
-              <div className="min-h-screen bg-background">
-                <AppBar />
-                <main className="w-full mx-auto px-4 py-6">
-                  <MainWorkspace>{children}</MainWorkspace>
-                </main>
-              </div>
-            </ActiveCollectionsProvider>
+            <ReactDndProvider>
+              <ActiveCollectionsProvider>
+                <div className="min-h-screen bg-background">
+                  <AppBar />
+                  <main className="w-full mx-auto px-4 py-6">
+                    <MainWorkspace>{children}</MainWorkspace>
+                  </main>
+                </div>
+              </ActiveCollectionsProvider>
+
+              {/* Drag layers */}
+              <CardDragLayer />
+            </ReactDndProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

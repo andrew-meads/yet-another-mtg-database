@@ -14,6 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import CardPopup from "@/components/CardPopup";
 import { ManaCost } from "@/components/CardTextView";
+import { useCardDragSource } from "@/hooks/useCardDragSource";
+import clsx from "clsx";
 
 export interface CardsTableProps {
   cards: MtgCard[];
@@ -28,14 +30,24 @@ function CardsTableRow({
   onClick,
   onHoverEnter,
   onHoverLeave,
-  onHoverMove
+  onHoverMove,
+  onDragStateChange
 }: {
   card: MtgCard;
   onClick?: (card: MtgCard) => void;
   onHoverEnter?: () => void;
   onHoverLeave?: () => void;
   onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
+  onDragStateChange?: (isDragging: boolean) => void;
 }) {
+  // Make the row draggable
+  const { isDragging, dragRef } = useCardDragSource(card);
+
+  // Notify parent when drag state changes
+  useEffect(() => {
+    onDragStateChange?.(isDragging);
+  }, [isDragging, onDragStateChange]);
+
   // Extract values from card_faces if present, otherwise use card-level values
   const faces = card.card_faces || [];
 
@@ -79,7 +91,8 @@ function CardsTableRow({
 
   return (
     <TableRow
-      className="cursor-pointer"
+      ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
+      className={clsx("cursor-pointer", isDragging && "opacity-50")}
       onClick={() => onClick?.(card)}
       onMouseEnter={onHoverEnter}
       onMouseLeave={onHoverLeave}
@@ -150,8 +163,17 @@ export default function CardsTable({
   const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
     null
   );
+  const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear hover state when dragging starts
+  useEffect(() => {
+    if (isAnyRowDragging) {
+      if (showTimerRef.current) clearTimeout(showTimerRef.current);
+      setHovered(null);
+    }
+  }, [isAnyRowDragging]);
 
   useEffect(() => {
     return () => {
@@ -212,11 +234,12 @@ export default function CardsTable({
               onHoverEnter={() => handleRowEnter(card)}
               onHoverLeave={handleRowLeave}
               onHoverMove={handleRowMove}
+              onDragStateChange={setIsAnyRowDragging}
             />
           ))}
         </TableBody>
       </Table>
-      {hovered && <CardPopup card={hovered.card} position={hovered.pos} />}
+      {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
     </div>
   );
 }
