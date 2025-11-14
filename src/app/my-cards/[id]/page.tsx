@@ -4,6 +4,7 @@ import { use } from "react";
 import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { useRetrieveCollectionDetails } from "@/hooks/useRetrieveCollectionDetails";
 import { getCollectionIcon } from "@/lib/collectionUtils";
+import CollectionTable from "@/components/my-cards-page/CollectionTable";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -60,6 +61,7 @@ export default function Page({ params }: PageProps) {
           {collection.description || "No description provided"}
         </p>
       </div>
+      <CollectionTable collection={collection} />
     </div>
   );
 }

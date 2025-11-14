@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
@@ -31,7 +25,7 @@ export interface CardsTableProps {
 
 /**
  * Main table component for displaying a list of MTG cards
- * 
+ *
  * Features:
  * - Sticky header for easy column reference while scrolling
  * - Card selection via click (integrates with CardSelectionContext)
@@ -75,31 +69,31 @@ export default function CardsTable({
   }
 
   // === STATE MANAGEMENT ===
-  
+
   // Hover preview popup: tracks which card is being hovered and mouse position
   const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
     null
   );
-  
+
   // Track if any row is currently being dragged (to hide hover popup)
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
-  
+
   // === REFS ===
-  
+
   // Track last mouse position for hover popup positioning
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  
+
   // Timer for delayed hover popup display (500ms)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   // Reference to the table container for keyboard focus detection
   const tableRef = useRef<HTMLDivElement>(null);
-  
+
   // Map of card IDs to row refs for scroll-into-view functionality
   const rowRefsRef = useRef<Map<string, React.RefObject<HTMLTableRowElement | null>>>(new Map());
 
   // === HELPER FUNCTIONS ===
-  
+
   /**
    * Get or create a ref for a specific card row
    * Used for keyboard navigation scroll behavior
@@ -112,7 +106,7 @@ export default function CardsTable({
   };
 
   // === SELECTION CONTEXT ===
-  
+
   // Get selected card state from context. Falls back to noop if provider not present.
   const { selectedCard, setSelectedCard } = useCardSelection();
 
@@ -120,7 +114,7 @@ export default function CardsTable({
   const clickHandler = onCardClicked ?? ((card: MtgCard) => setSelectedCard(card));
 
   // === KEYBOARD NAVIGATION ===
-  
+
   /**
    * Handle arrow key navigation for card selection
    * - Only works when table has focus and a card is selected
@@ -137,7 +131,7 @@ export default function CardsTable({
 
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
-        
+
         const currentIndex = cards.findIndex((c) => c.id === selectedCard.id);
         if (currentIndex === -1) return;
 
@@ -151,13 +145,13 @@ export default function CardsTable({
         if (nextIndex !== currentIndex) {
           const nextCard = cards[nextIndex];
           setSelectedCard(nextCard);
-          
+
           // Scroll the row into view centered in the viewport
           const rowRef = getRowRef(nextCard.id);
           if (rowRef.current) {
-            rowRef.current.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center'
+            rowRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
             });
           }
         }
@@ -169,7 +163,7 @@ export default function CardsTable({
   }, [selectedCard, cards, setSelectedCard]);
 
   // === HOVER POPUP MANAGEMENT ===
-  
+
   /**
    * Clear hover popup when dragging starts to avoid visual conflicts
    */
@@ -218,18 +212,18 @@ export default function CardsTable({
   };
 
   // === CONTAINER STYLING ===
-  
+
   const containerClass = maxHeight
     ? "rounded-md border overflow-hidden flex flex-col"
     : "h-full rounded-md border overflow-hidden flex flex-col";
   const containerStyle = maxHeight ? { maxHeight } : undefined;
 
   // === RENDER ===
-  
+
   return (
-    <div 
+    <div
       ref={tableRef}
-      style={containerStyle} 
+      style={containerStyle}
       className={containerClass}
       tabIndex={0} // Make container focusable for keyboard navigation
     >

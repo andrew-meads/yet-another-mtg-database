@@ -9,21 +9,28 @@ export interface CollectionSummary {
   isActive?: boolean;
 }
 
+/**
+ * Card entry in a collection
+ */
+export interface CardEntry {
+  cardId: string;
+  quantity: number;
+  notes?: string;
+  tags?: string[];
+}
+
 export interface CardCollection extends CollectionSummary {
   description: string;
-  cards: Array<{
-    cardId: string;
-    quantity: number;
-    notes?: string;
-    tags?: string[];
-  }>;
+  cards: Array<CardEntry>;
+}
+
+export interface DetailedCardEntry {
+  card: MtgCard;
+  quantity: number;
+  notes?: string;
+  tags?: string[];
 }
 
 export interface CardCollectionWithCards extends CardCollection {
-  cardsDetailed: Array<{
-    card: MtgCard;
-    quantity: number;
-    notes?: string;
-    tags?: string[];
-  }>;
+  cardsDetailed: Array<DetailedCardEntry>;
 }

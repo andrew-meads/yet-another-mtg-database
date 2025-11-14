@@ -95,7 +95,7 @@ export default function CardsTableRow({
           .join(" // ")
       : card.power && card.toughness
         ? `${card.power}/${card.toughness}`
-        : "";
+        : "—";
 
   // Loyalty: show both faces if present, separated by "//"
   const loyalties =
@@ -105,7 +105,7 @@ export default function CardsTableRow({
         ? [card.loyalty]
         : [];
 
-  const loyalty = loyalties.length > 0 ? loyalties.join(" // ") : "";
+  const loyalty = loyalties.length > 0 ? loyalties.join(" // ") : "—";
 
   // Display flavor name if present, with real name in brackets and italics
   const displayName = card.flavor_name ? (

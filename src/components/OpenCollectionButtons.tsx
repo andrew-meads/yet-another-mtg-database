@@ -13,8 +13,7 @@ import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import { CollectionSummary } from "@/types/CardCollection";
 import { X, Star } from "lucide-react";
-import { useDrop } from "react-dnd";
-import { MtgCard } from "@/types/MtgCard";
+import { useCollectionDropTarget } from "@/hooks/useCollectionDropTarget";
 import clsx from "clsx";
 
 interface OpenCollectionButtonProps {
@@ -28,20 +27,14 @@ function OpenCollectionButton({ collection, onClose }: OpenCollectionButtonProps
   const { setActiveCollection } = useOpenCollectionsContext();
 
   // Setup button to be a drop target for cards
-  const [{ isOver }, dropRef] = useDrop(() => ({
-    accept: "CARD",
-    collect: (monitor) => ({
-      isOver: monitor.isOver()
-    }),
-    drop: ({ card }: { card: MtgCard }) => {
-      console.log(`Dropped card ${card.name} into collection ${name}`);
-    }
-  }));
+  const { isOver, dropRef } = useCollectionDropTarget({
+    collection
+  });
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div ref={dropRef as unknown as React.LegacyRef<HTMLDivElement>}>
+        <div ref={dropRef}>
           <Button
             variant={pathname === `/my-cards/${_id}` ? "default" : "outline"}
             size="sm"
