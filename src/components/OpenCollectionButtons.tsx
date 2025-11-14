@@ -24,8 +24,8 @@ interface OpenCollectionButtonProps {
 
 function OpenCollectionButton({ collection, onClose }: OpenCollectionButtonProps) {
   const pathname = usePathname();
-  const { _id, name, collectionType } = collection;
-  const { setActiveCollection, activeCollection } = useOpenCollectionsContext();
+  const { _id, name, collectionType, isActive } = collection;
+  const { setActiveCollection } = useOpenCollectionsContext();
 
   // Setup button to be a drop target for cards
   const [{ isOver }, dropRef] = useDrop(() => ({
@@ -54,7 +54,7 @@ function OpenCollectionButton({ collection, onClose }: OpenCollectionButtonProps
             <Link href={`/my-cards/${_id}`}>
               <span>{getCollectionIcon(collectionType)}</span>
               <span>{name}</span>
-              {_id === activeCollection?._id && <Star className="h-3 w-3 fill-current" />}
+              {isActive && <Star className="h-3 w-3 fill-current" />}
               <button
                 onClick={(e) => {
                   e.preventDefault();

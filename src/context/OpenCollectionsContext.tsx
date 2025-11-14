@@ -1,8 +1,9 @@
 "use client";
 
 import { useUpdateActiveCollection } from "@/hooks/useUpdateActiveCollection";
+import { useRetrieveCollectionSummaries } from "@/hooks/useRetrieveCollectionSummaries";
 import { CollectionSummary } from "@/types/CardCollection";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useMemo, useRef, useState } from "react";
 
 interface OpenCollectionContextType {
   addOpenCollection: (collection: CollectionSummary) => void;
@@ -24,13 +25,30 @@ export function useOpenCollectionsContext(): OpenCollectionContextType {
 
 /**
  * Provider component to manage open card collections in the UI.
+ * 
+ * Maintains a list of open collection IDs and derives the full collection objects
+ * from the cached collection summaries. This ensures that any updates to collections
+ * (e.g., name changes, active status) are automatically reflected in the UI.
  */
 export function OpenCollectionsProvider({ children }: { children: React.ReactNode }) {
-  const [openCollections, setOpenCollections] = useState<CollectionSummary[]>([]);
-  const [activeCollection, setActiveCollection] = useState<CollectionSummary | null>(null);
+  // Store only the IDs of open collections
+  const [openCollectionIds, setOpenCollectionIds] = useState<string[]>([]);
   const { mutateAsync } = useUpdateActiveCollection();
+  
+  // Fetch all collection summaries from the cache
+  const { data } = useRetrieveCollectionSummaries();
+  const allCollections = data?.collections || [];
 
   const justRemovedRef = useRef<string | null>(null);
+
+  // Derive the actual collection objects from the IDs and cached data
+  const openCollections = useMemo(() => {
+    return openCollectionIds
+      .map((id) => allCollections.find((c) => c._id === id))
+      .filter((c): c is CollectionSummary => c !== undefined);
+  }, [openCollectionIds, allCollections]);
+
+  const activeCollection = openCollections.find((c) => c.isActive) || null;
 
   /**
    * Add a collection to the list of open collections
@@ -43,12 +61,9 @@ export function OpenCollectionsProvider({ children }: { children: React.ReactNod
       return;
     }
 
-    const existingCollection = openCollections.find((c) => c._id === collection._id);
-    if (existingCollection) return;
+    if (openCollectionIds.includes(collection._id)) return;
 
-    if (collection.isActive) setActiveCollection(collection);
-
-    setOpenCollections([...openCollections, collection]);
+    setOpenCollectionIds([...openCollectionIds, collection._id]);
   };
 
   /**
@@ -57,7 +72,7 @@ export function OpenCollectionsProvider({ children }: { children: React.ReactNod
    * @param id The ID of the collection to remove
    */
   const removeOpenCollection = (id: string) => {
-    setOpenCollections(openCollections.filter((c) => c._id !== id));
+    setOpenCollectionIds(openCollectionIds.filter((cId) => cId !== id));
     // Mark as just removed
     justRemovedRef.current = id;
     // Clear the flag after a short delay to allow re-adding later
@@ -68,19 +83,8 @@ export function OpenCollectionsProvider({ children }: { children: React.ReactNod
     }, 100);
   };
 
-  const setActiveCollectionWithApiCall = async (collection: CollectionSummary) => {
-    // Optimistic update
-    const oldActive = activeCollection;
-    setActiveCollection(collection);
-
-    // Call API to set this collection as active
-    try {
-      await mutateAsync({ collectionId: collection._id, isActive: true });
-    } catch (error) {
-      // Revert on error
-      setActiveCollection(oldActive);
-      throw error;
-    }
+  const setActiveCollection = async (collection: CollectionSummary) => {
+    await mutateAsync({ collectionId: collection._id, isActive: true });
   };
 
   return (
@@ -90,7 +94,7 @@ export function OpenCollectionsProvider({ children }: { children: React.ReactNod
         removeOpenCollection,
         openCollections,
         activeCollection,
-        setActiveCollection: setActiveCollectionWithApiCall
+        setActiveCollection
       }}
     >
       {children}
