@@ -6,15 +6,18 @@ import { MtgCard } from "@/types/MtgCard";
 /**
  * Custom hook to make a component a drag source for MTG cards
  * 
+ * Captures the shift key state during dragging for use in drop handlers.
+ * 
  * @param card - The MTG card to be dragged
  * @param canDrag - Optional: Whether dragging is enabled (default: true)
  * @returns Object containing isDragging state and dragRef to attach to the draggable element
  */
 export function useCardDragSource(card: MtgCard, canDrag: boolean = true) {
+
   const [{ isDragging }, dragRef, preview] = useDrag(
     () => ({
       type: "CARD",
-      item: { card },
+      item: () => ({ card }),
       canDrag,
       collect: (monitor) => ({
         isDragging: monitor.isDragging()

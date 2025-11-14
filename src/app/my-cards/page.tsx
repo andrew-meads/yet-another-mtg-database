@@ -20,8 +20,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
-import { useCreateCollection } from "@/hooks/useCreateCollection";
-import { useRetrieveCollectionSummaries } from "@/hooks/useRetrieveCollectionSummaries";
+import { useCreateCollection } from "@/hooks/react-query/useCreateCollection";
+import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveCollectionSummaries";
 import { CollectionType } from "@/types/CardCollection";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import { ChevronDown, HomeIcon } from "lucide-react";
@@ -59,7 +59,7 @@ export default function Page() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="mx-auto space-y-6">
         <div>
           <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
             <HomeIcon className="h-6 w-6" />

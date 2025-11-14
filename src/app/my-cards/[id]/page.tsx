@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
-import { useRetrieveCollectionDetails } from "@/hooks/useRetrieveCollectionDetails";
+import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import CollectionTable from "@/components/my-cards-page/CollectionTable";
 
@@ -51,7 +51,7 @@ export default function Page({ params }: PageProps) {
   const { collection } = data;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
           {getCollectionIcon(collection.collectionType, "h-6 w-6")}

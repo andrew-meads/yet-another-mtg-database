@@ -1,19 +1,14 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CardCollectionWithCards } from "@/types/CardCollection";
 import { MtgCard } from "@/types/MtgCard";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import CardPopup from "@/components/CardPopup";
 import { useCardSelection } from "@/context/CardSelectionContext";
-import { useUpdateCardQuantities } from "@/hooks/useUpdateCardQuantities";
+import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
 import CollectionTableRow from "@/components/my-cards-page/CollectionTableRow";
+import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 
 /**
  * Props for the CollectionTable component
@@ -39,11 +34,16 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
     null
   );
 
+  // Track if any row is currently being dragged (to hide hover popup)
+  const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
+
   // Card selection context
   const { setSelectedCard } = useCardSelection();
 
   // Mutation hook for updating card quantities
   const { mutate: updateCardQuantities } = useUpdateCardQuantities();
+
+  const { dropRef } = useCollectionDropTarget({ collection });
 
   // === REFS ===
 
@@ -53,7 +53,26 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
   // Timer for delayed hover popup display (500ms)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // === HELPER FUNCTIONS ===
+  // === HOVER POPUP MANAGEMENT ===
+
+  /**
+   * Clear hover popup when dragging starts to avoid visual conflicts
+   */
+  useEffect(() => {
+    if (isAnyRowDragging) {
+      if (showTimerRef.current) clearTimeout(showTimerRef.current);
+      setHovered(null);
+    }
+  }, [isAnyRowDragging]);
+
+  /**
+   * Cleanup hover timer on unmount
+   */
+  useEffect(() => {
+    return () => {
+      if (showTimerRef.current) clearTimeout(showTimerRef.current);
+    };
+  }, []);
 
   /**
    * Start hover timer when mouse enters a row
@@ -127,7 +146,7 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
   // === RENDER ===
 
   return (
-    <div style={containerStyle} className={containerClass}>
+    <div style={containerStyle} className={containerClass} ref={dropRef}>
       <Table stickyHeader>
         <TableHeader>
           <TableRow>
@@ -145,19 +164,20 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
           {collection.cardsDetailed.map((cardDetail) => (
             <CollectionTableRow
               key={`${cardDetail.card.id}-${cardDetail.quantity}`}
-              card={cardDetail.card}
-              quantity={cardDetail.quantity}
+              collectionId={collection._id}
+              entry={cardDetail}
               onClick={setSelectedCard}
               onHoverEnter={() => handleRowEnter(cardDetail.card)}
               onHoverLeave={handleRowLeave}
               onHoverMove={handleRowMove}
               onQuantityChange={handleQuantityChange}
+              onDragStateChange={setIsAnyRowDragging}
             />
           ))}
         </TableBody>
       </Table>
-      {/* Show hover popup when hovering */}
-      {hovered && <CardPopup card={hovered.card} position={hovered.pos} />}
+      {/* Show hover popup only when hovering and not dragging */}
+      {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
     </div>
   );
 }

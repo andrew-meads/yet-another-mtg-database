@@ -44,7 +44,7 @@ export default function RootLayout({
               <OpenCollectionsProvider>
                 <div className="min-h-screen bg-background">
                   <AppBar />
-                  <main className="w-full mx-auto px-4 py-6">
+                  <main className="w-full mx-auto p-2">
                     <MainWorkspace>{children}</MainWorkspace>
                   </main>
                 </div>

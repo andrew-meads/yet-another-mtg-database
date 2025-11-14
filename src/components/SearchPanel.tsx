@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import SearchControls, { type SearchControlsValues } from "@/components/SearchControls";
 import CardsTable from "@/components/CardsTable";
-import { useCardsSearch } from "@/hooks/useCardsSearch";
+import { useCardsSearch } from "@/hooks/react-query/useCardsSearch";
 import {
   Pagination,
   PaginationContent,

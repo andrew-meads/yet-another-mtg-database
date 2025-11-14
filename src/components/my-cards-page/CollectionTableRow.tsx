@@ -6,15 +6,17 @@ import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { DetailedCardEntry } from "@/types/CardCollection";
+import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
+import { useEffect } from "react";
 
 /**
  * Props for CollectionTableRow component
  */
 interface CollectionTableRowProps {
-  /** The MTG card to display in this row */
-  card: MtgCard;
-  /** The quantity of this card in the collection */
-  quantity: number;
+  collectionId: string;
+  /** The entry in this row */
+  entry: DetailedCardEntry;
   /** Callback when row is clicked */
   onClick?: (card: MtgCard) => void;
   /** Callback when mouse enters the row */
@@ -25,11 +27,13 @@ interface CollectionTableRowProps {
   onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
   /** Callback when quantity changes */
   onQuantityChange?: (cardId: string, newQuantity: string) => void;
+  /** Callback to notify parent when drag state changes */
+  onDragStateChange?: (isDragging: boolean) => void;
 }
 
 /**
  * Individual table row component for displaying a single card in a collection
- * 
+ *
  * Features:
  * - Displays card attributes across multiple columns
  * - Handles double-faced cards with "//" separator
@@ -37,16 +41,27 @@ interface CollectionTableRowProps {
  * - Hover preview popup support
  */
 export default function CollectionTableRow({
-  card,
-  quantity,
+  collectionId,
+  entry,
   onClick,
   onHoverEnter,
   onHoverLeave,
   onHoverMove,
-  onQuantityChange
+  onQuantityChange,
+  onDragStateChange
 }: CollectionTableRowProps) {
+  // === DRAG AND DROP ===
+  const { isDragging, dragRef } = useCardEntryDragSource(collectionId, entry);
+
+  // Notify parent component when drag state changes (used to hide hover popup)
+  useEffect(() => {
+    onDragStateChange?.(isDragging);
+  }, [isDragging, onDragStateChange]);
+
   // === CARD DATA EXTRACTION ===
-  
+
+  const { card, quantity } = entry;
+
   // Extract mana costs (handling double-faced cards)
   const faces = card.card_faces || [];
   const manaCosts =
@@ -71,13 +86,12 @@ export default function CollectionTableRow({
       onMouseEnter={onHoverEnter}
       onMouseLeave={onHoverLeave}
       onMouseMove={onHoverMove}
+      ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
     >
       <TableCell className="font-medium">
         {card.name}
         {card.card_faces && card.card_faces.length > 1 && (
-          <span className="text-muted-foreground text-xs ml-2">
-            // {card.card_faces[1].name}
-          </span>
+          <span className="text-muted-foreground text-xs ml-2">// {card.card_faces[1].name}</span>
         )}
       </TableCell>
       <TableCell className="text-center">

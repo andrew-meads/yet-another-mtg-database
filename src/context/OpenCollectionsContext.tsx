@@ -1,7 +1,7 @@
 "use client";
 
-import { useUpdateActiveCollection } from "@/hooks/useUpdateActiveCollection";
-import { useRetrieveCollectionSummaries } from "@/hooks/useRetrieveCollectionSummaries";
+import { useUpdateActiveCollection } from "@/hooks/react-query/useUpdateActiveCollection";
+import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveCollectionSummaries";
 import { CollectionSummary } from "@/types/CardCollection";
 import { createContext, useContext, useMemo, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";

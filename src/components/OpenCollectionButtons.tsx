@@ -13,7 +13,7 @@ import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import { CollectionSummary } from "@/types/CardCollection";
 import { X, Star } from "lucide-react";
-import { useCollectionDropTarget } from "@/hooks/useCollectionDropTarget";
+import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 import clsx from "clsx";
 
 interface OpenCollectionButtonProps {
@@ -27,9 +27,7 @@ function OpenCollectionButton({ collection, onClose }: OpenCollectionButtonProps
   const { setActiveCollection } = useOpenCollectionsContext();
 
   // Setup button to be a drop target for cards
-  const { isOver, dropRef } = useCollectionDropTarget({
-    collection
-  });
+  const { isOver, dropRef } = useCollectionDropTarget({ collection });
 
   return (
     <ContextMenu>

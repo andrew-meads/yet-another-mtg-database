@@ -102,7 +102,7 @@ function InnerWorkspace({ layout, children }: { layout: number[]; children?: Rea
       <ResizableHandle withHandle />
 
       {/* Right: Page content (search or other) */}
-      <ResizablePanel defaultSize={layout[1]} minSize={30} className="p-4">
+      <ResizablePanel defaultSize={layout[1]} minSize={30} className="p-2">
         {children}
       </ResizablePanel>
     </ResizablePanelGroup>

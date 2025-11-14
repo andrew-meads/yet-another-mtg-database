@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect } from "react";
 import { ManaCost } from "@/components/CardTextView";
-import { useCardDragSource } from "@/hooks/useCardDragSource";
+import { useCardDragSource } from "@/hooks/drag-drop/useCardDragSource";
 import clsx from "clsx";
 
 /**
@@ -32,7 +32,7 @@ interface CardsTableRowProps {
 
 /**
  * Individual table row component for displaying a single MTG card
- * 
+ *
  * Features:
  * - Draggable via react-dnd for adding cards to collections
  * - Displays card attributes across multiple columns
@@ -62,12 +62,12 @@ export default function CardsTableRow({
   // Combine dragRef (for react-dnd) and rowRef (for scroll-into-view) into a single ref
   const combinedRef = (node: HTMLTableRowElement | null) => {
     // Apply drag ref
-    if (typeof dragRef === 'function') {
+    if (typeof dragRef === "function") {
       dragRef(node);
     } else if (dragRef) {
       (dragRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node;
     }
-    
+
     // Apply row ref for keyboard navigation scrolling
     if (rowRef) {
       (rowRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node;

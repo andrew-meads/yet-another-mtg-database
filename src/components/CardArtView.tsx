@@ -4,7 +4,7 @@ import { MtgCard } from "@/types/MtgCard";
 import clsx from "clsx";
 import { useState } from "react";
 import Image from "next/image";
-import { useCardDragSource } from "@/hooks/useCardDragSource";
+import { useCardDragSource } from "@/hooks/drag-drop/useCardDragSource";
 
 /**
  * Available image size variants from Scryfall API
