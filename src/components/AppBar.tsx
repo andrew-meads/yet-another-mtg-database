@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ModeToggle } from "./ui/ModeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "./ui/separator";
-import ActiveCollectionButtons from "./ActiveCollectionButtons";
+import OpenCollectionButtons from "./OpenCollectionButtons";
 
 export default function AppBar() {
   const pathname = usePathname();
@@ -26,7 +26,7 @@ export default function AppBar() {
 
               <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1" />
 
-              <ActiveCollectionButtons />
+              <OpenCollectionButtons />
             </nav>
           </div>
           <ModeToggle />

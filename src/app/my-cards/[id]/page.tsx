@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useEffect } from "react";
-import { useActiveCollectionsContext } from "@/context/ActiveCollectionsContext";
+import { use } from "react";
+import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { useRetrieveCollectionDetails } from "@/hooks/useRetrieveCollectionDetails";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 
@@ -11,10 +11,10 @@ interface PageProps {
 
 export default function Page({ params }: PageProps) {
   const { id } = use(params);
-  const { addActiveCollection } = useActiveCollectionsContext();
+  const { addOpenCollection } = useOpenCollectionsContext();
   const { data, isLoading, error } = useRetrieveCollectionDetails(id);
 
-  if (data) addActiveCollection(data.collection);
+  if (data) addOpenCollection(data.collection);
 
   if (isLoading) {
     return (
