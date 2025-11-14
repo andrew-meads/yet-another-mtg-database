@@ -4,6 +4,7 @@ import { useUpdateActiveCollection } from "@/hooks/useUpdateActiveCollection";
 import { useRetrieveCollectionSummaries } from "@/hooks/useRetrieveCollectionSummaries";
 import { CollectionSummary } from "@/types/CardCollection";
 import { createContext, useContext, useMemo, useRef, useState } from "react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface OpenCollectionContextType {
   addOpenCollection: (collection: CollectionSummary) => void;
@@ -32,7 +33,7 @@ export function useOpenCollectionsContext(): OpenCollectionContextType {
  */
 export function OpenCollectionsProvider({ children }: { children: React.ReactNode }) {
   // Store only the IDs of open collections
-  const [openCollectionIds, setOpenCollectionIds] = useState<string[]>([]);
+  const [openCollectionIds, setOpenCollectionIds] = useLocalStorage<string[]>("open-collection-ids", []);
   const { mutateAsync } = useUpdateActiveCollection();
   
   // Fetch all collection summaries from the cache
