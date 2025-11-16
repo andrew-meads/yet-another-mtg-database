@@ -27,7 +27,7 @@ function OpenCollectionButton({ collection, onClose }: OpenCollectionButtonProps
   const { setActiveCollection } = useOpenCollectionsContext();
 
   // Setup button to be a drop target for cards
-  const { isOver, dropRef } = useCollectionDropTarget({ collection });
+  const { isOver, dropRef } = useCollectionDropTarget({ collection, allowDrop: true });
 
   return (
     <ContextMenu>

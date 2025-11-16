@@ -9,12 +9,14 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Search, X } from "lucide-react";
 import { CardCollectionWithCards } from "@/types/CardCollection";
 import { MtgCard } from "@/types/MtgCard";
-import { useState, useRef, useEffect, Fragment } from "react";
+import { useState, useRef, useEffect, Fragment, useMemo } from "react";
 import CardPopup from "@/components/CardPopup";
+import SearchDialog, { SearchFilters, searchPredicate } from "@/components/SearchDialog";
 import { useCardSelection } from "@/context/CardSelectionContext";
-import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
 import { useUpdateCollection } from "@/hooks/react-query/useUpdateCollection";
 import CollectionTableRow from "@/components/my-cards-page/CollectionTableRow";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
@@ -58,22 +60,33 @@ export default function CollectionTable({
   // Track where to show the drop indicator when reordering
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
 
+  // Track search dialog open state
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+
+  // Track active search filters (null = no search active)
+  const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
 
+  // === SEARCH FILTERING ===
+
+  // Apply search filters if active
+  const filteredEntries = useMemo(() => {
+    if (!searchFilters) return collection.cardsDetailed;
+    return collection.cardsDetailed.filter(searchPredicate(searchFilters));
+  }, [searchFilters, collection.cardsDetailed]);
+
   // === PAGINATION LOGIC ===
 
-  const totalEntries = collection.cardsDetailed?.length || 0;
+  const totalEntries = filteredEntries?.length || 0;
   const isPaginationEnabled = entriesPerPage !== undefined && entriesPerPage > 0;
   const totalPages = isPaginationEnabled ? Math.ceil(totalEntries / entriesPerPage) : 1;
 
   // Calculate visible entries based on pagination
   const visibleEntries = isPaginationEnabled
-    ? collection.cardsDetailed.slice(
-        (currentPage - 1) * entriesPerPage!,
-        currentPage * entriesPerPage!
-      )
-    : collection.cardsDetailed;
+    ? filteredEntries.slice((currentPage - 1) * entriesPerPage!, currentPage * entriesPerPage!)
+    : filteredEntries;
 
   // Reset to page 1 if current page exceeds total pages
   useEffect(() => {
@@ -85,15 +98,13 @@ export default function CollectionTable({
   // Card selection context
   const { setSelectedCard } = useCardSelection();
 
-  // Mutation hook for updating card quantities
-  const { mutate: updateCardQuantities } = useUpdateCardQuantities();
-
   // Mutation hook for updating collection metadata and card order
   const { mutate: updateCollection } = useUpdateCollection();
 
   // Make this component a drop target for cards and card entries.
   const { dropRef, isOver, hoverPosition, hoverPayload } = useCollectionDropTarget({
     collection,
+    allowDrop: searchFilters === null, // Disable dropping when search is active
     onDrop: (payload) => {
       // Only handle reordering within the same collection
       // Cross-collection drops are handled by useCollectionDropTarget
@@ -141,7 +152,7 @@ export default function CollectionTable({
 
       // Only select actual data rows, not divider rows
       const rows = Array.from(tableBody.querySelectorAll("tr[data-row-index]"));
-      
+
       // Default to end of visible entries
       let targetIndex = isPaginationEnabled
         ? (currentPage - 1) * entriesPerPage + rows.length
@@ -154,9 +165,7 @@ export default function CollectionTable({
 
         if (hoverPosition.y < rowMiddle) {
           // Convert visible index to actual collection index
-          targetIndex = isPaginationEnabled
-            ? (currentPage - 1) * entriesPerPage + i
-            : i;
+          targetIndex = isPaginationEnabled ? (currentPage - 1) * entriesPerPage + i : i;
           break;
         }
       }
@@ -165,7 +174,15 @@ export default function CollectionTable({
     } else {
       setDropIndicatorIndex(null);
     }
-  }, [isOver, hoverPosition, hoverPayload, collection._id, isPaginationEnabled, currentPage, entriesPerPage]);
+  }, [
+    isOver,
+    hoverPosition,
+    hoverPayload,
+    collection._id,
+    isPaginationEnabled,
+    currentPage,
+    entriesPerPage
+  ]);
 
   // === REFS ===
 
@@ -231,6 +248,20 @@ export default function CollectionTable({
     setSelectedCard(card);
   };
 
+  /**
+   * Handle search dialog submission
+   */
+  const handleSearch = (filters: SearchFilters) => {
+    setSearchFilters(filters);
+  };
+
+  /**
+   * Clear active search filters
+   */
+  const handleClearSearch = () => {
+    setSearchFilters(null);
+  };
+
   // === EARLY RETURNS FOR SPECIAL STATES ===
 
   if (!collection.cardsDetailed || collection.cardsDetailed.length === 0) {
@@ -257,6 +288,72 @@ export default function CollectionTable({
       ref={dropRef}
       data-collection-id={collection._id}
     >
+      {/* Search and Pagination Controls */}
+      <div className="border-b p-3 flex justify-between items-center gap-2 bg-background">
+        {/* Pagination Controls */}
+        {isPaginationEnabled && totalPages > 1 ? (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={
+                    currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        ) : (
+          <div />
+        )}
+
+        {/* Search Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSearchDialogOpen(true)}
+            className="gap-2"
+          >
+            <Search className="h-4 w-4" />
+            Search
+          </Button>
+          {searchFilters && (
+            <Button variant="outline" size="sm" onClick={handleClearSearch} className="gap-2">
+              <X className="h-4 w-4" />
+              Clear Search
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Search Dialog */}
+      <SearchDialog
+        open={isSearchDialogOpen}
+        onOpenChange={setIsSearchDialogOpen}
+        onSearch={handleSearch}
+      />
+
       <Table stickyHeader>
         <TableHeader>
           <TableRow>
@@ -277,7 +374,7 @@ export default function CollectionTable({
               ? (currentPage - 1) * entriesPerPage + visibleIndex
               : visibleIndex;
             return (
-              <Fragment key={`${cardDetail.card.id}-${cardDetail.quantity}-${actualIndex}`}>
+              <Fragment key={cardDetail._id}>
                 {/* Show drop indicator before this row if needed */}
                 {dropIndicatorIndex === actualIndex && (
                   <tr>
@@ -292,6 +389,7 @@ export default function CollectionTable({
                   rowIndex={actualIndex}
                   onClick={(card) => handleRowClick(card, actualIndex)}
                   isSelected={selectedRowIndex === actualIndex}
+                  isSearchActive={searchFilters !== null}
                   onHoverEnter={() => handleRowEnter(cardDetail.card)}
                   onHoverLeave={handleRowLeave}
                   onHoverMove={handleRowMove}
@@ -316,40 +414,6 @@ export default function CollectionTable({
       </Table>
       {/* Show hover popup only when hovering and not dragging */}
       {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
-      {/* Show pagination controls if enabled */}
-      {isPaginationEnabled && totalPages > 1 && (
-        <div className="border-t p-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className={
-                    currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
     </div>
   );
 }

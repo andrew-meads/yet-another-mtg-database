@@ -1,6 +1,7 @@
 "use client";
 
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MtgCard } from "@/types/MtgCard";
 import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { DetailedCardEntry } from "@/types/CardCollection";
 import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
 import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 /**
  * Props for CollectionTableRow component
@@ -25,6 +26,8 @@ interface CollectionTableRowProps {
   onClick?: (card: MtgCard) => void;
   /** Whether this row is currently selected */
   isSelected?: boolean;
+  /** Whether search is currently active in the parent table */
+  isSearchActive?: boolean;
   /** Callback when mouse enters the row */
   onHoverEnter?: () => void;
   /** Callback when mouse leaves the row */
@@ -50,6 +53,7 @@ export default function CollectionTableRow({
   rowIndex,
   onClick,
   isSelected = false,
+  isSearchActive = false,
   onHoverEnter,
   onHoverLeave,
   onHoverMove,
@@ -64,11 +68,16 @@ export default function CollectionTableRow({
   // Local state for quantity input (allows immediate UI updates)
   const [localQuantity, setLocalQuantity] = useState(entry.quantity);
   
+  // Track if the change was user-initiated (to distinguish from external updates)
+  const isUserChangeRef = useRef(false);
+  
   // Debounce the quantity changes
   const debouncedQuantity = useDebouncedValue(localQuantity, 500);
 
   // Update local quantity when entry changes (e.g., from external updates)
   useEffect(() => {
+    // Mark as external change (not user-initiated)
+    isUserChangeRef.current = false;
     setLocalQuantity(entry.quantity);
   }, [entry.quantity]);
 
@@ -76,9 +85,6 @@ export default function CollectionTableRow({
   const handleImmediateQuantityChange = (newQuantity: number) => {
     // Validate input (minimum 0, where 0 means remove)
     if (newQuantity < 0) return;
-
-    // Update local state
-    setLocalQuantity(newQuantity);
 
     // Update via API immediately
     updateCardQuantities({
@@ -93,19 +99,27 @@ export default function CollectionTableRow({
     });
   };
 
+  // Handle user input changes
+  const handleUserQuantityChange = (newQuantity: number) => {
+    isUserChangeRef.current = true;
+    setLocalQuantity(newQuantity);
+  };
+
   // Send API update when debounced quantity changes
   useEffect(() => {
-    // Only update if the debounced value differs from the original
-    if (debouncedQuantity !== entry.quantity) {
+    // Only update if this was a user-initiated change
+    if (isUserChangeRef.current && debouncedQuantity !== entry.quantity) {
       handleImmediateQuantityChange(debouncedQuantity);
+      isUserChangeRef.current = false;
     }
-  }, [debouncedQuantity, entry.quantity]);
+  }, [debouncedQuantity]);
 
   // === DRAG AND DROP ===
   const { isDragging, dragRef } = useCardEntryDragSource({
     sourceCollectionId: collectionId,
     sourceIndex: rowIndex,
-    entry
+    entry,
+    canDrag: !isSearchActive
   });
 
   // Notify parent component when drag state changes (used to hide hover popup)
@@ -164,8 +178,26 @@ export default function CollectionTableRow({
           </div>
         )}
       </TableCell>
-      <TableCell className="text-sm">{card.type_line}</TableCell>
-      <TableCell className="text-center text-xs uppercase">{card.set}</TableCell>
+      <TableCell className="text-sm">
+        {card.type_line.length > 40 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{card.type_line.substring(0, 40)}...</span>
+            </TooltipTrigger>
+            <TooltipContent>{card.type_line}</TooltipContent>
+          </Tooltip>
+        ) : (
+          card.type_line
+        )}
+      </TableCell>
+      <TableCell className="text-center text-xs uppercase">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{card.set}</span>
+          </TooltipTrigger>
+          <TooltipContent>{card.set_name}</TooltipContent>
+        </Tooltip>
+      </TableCell>
       <TableCell className="text-center">{card.cmc}</TableCell>
       <TableCell className="text-center">{renderPowerToughness()}</TableCell>
       <TableCell className="text-center">{card.loyalty || "—"}</TableCell>
@@ -177,7 +209,7 @@ export default function CollectionTableRow({
             value={localQuantity}
             onChange={(e) => {
               const val = parseInt(e.target.value, 10);
-              if (!isNaN(val)) setLocalQuantity(val);
+              if (!isNaN(val)) handleUserQuantityChange(val);
             }}
             className="w-16 text-center font-semibold"
           />

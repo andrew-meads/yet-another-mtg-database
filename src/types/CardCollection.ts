@@ -13,6 +13,7 @@ export interface CollectionSummary {
  * Card entry in a collection
  */
 export interface CardEntry {
+  _id: string;
   cardId: string;
   quantity: number;
   notes?: string;
@@ -25,6 +26,7 @@ export interface CardCollection extends CollectionSummary {
 }
 
 export interface DetailedCardEntry {
+  _id: string;
   card: MtgCard;
   quantity: number;
   notes?: string;

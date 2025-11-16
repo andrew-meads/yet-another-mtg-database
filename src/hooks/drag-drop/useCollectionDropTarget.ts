@@ -12,6 +12,7 @@ export interface UseCollectionDropTargetOptions {
   collection: CollectionSummary;
   /** Optional callback when a card or card entry is dropped */
   onDrop?: (payload: UseCollectionDropTargetDropPayload) => void;
+  allowDrop: boolean;
 }
 
 /**
@@ -66,7 +67,8 @@ interface UseCollectionDropTargetDropPayload {
  */
 export function useCollectionDropTarget({
   collection,
-  onDrop
+  onDrop,
+  allowDrop
 }: UseCollectionDropTargetOptions): UseCollectionDropTargetResult {
   const { mutate: updateCardQuantities } = useUpdateCardQuantities();
 
@@ -83,6 +85,7 @@ export function useCollectionDropTarget({
   >(
     () => ({
       accept: ["CARD", "CARD_ENTRY"],
+      canDrop: () => allowDrop,
       collect: (monitor) => {
         const item = monitor.getItem<UseCollectionDropTargetDropPayload>();
         return {
@@ -154,7 +157,7 @@ export function useCollectionDropTarget({
         onDrop?.(enhancedPayload);
       }
     }),
-    [collection._id, onDrop, updateCardQuantities]
+    [collection._id, onDrop, updateCardQuantities, allowDrop]
   );
 
   return {

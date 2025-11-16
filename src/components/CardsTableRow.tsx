@@ -142,7 +142,18 @@ export default function CardsTableRow({
           </div>
         )}
       </TableCell>
-      <TableCell>{card.type_line}</TableCell>
+      <TableCell>
+        {card.type_line.length > 40 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{card.type_line.substring(0, 40)}...</span>
+            </TooltipTrigger>
+            <TooltipContent>{card.type_line}</TooltipContent>
+          </Tooltip>
+        ) : (
+          card.type_line
+        )}
+      </TableCell>
       <TableCell className="text-center">
         <Tooltip>
           <TooltipTrigger asChild>
