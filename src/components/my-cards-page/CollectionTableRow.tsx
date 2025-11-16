@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { DetailedCardEntry } from "@/types/CardCollection";
 import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
-import { useEffect } from "react";
+import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useEffect, useState } from "react";
 
 /**
  * Props for CollectionTableRow component
@@ -17,16 +19,18 @@ interface CollectionTableRowProps {
   collectionId: string;
   /** The entry in this row */
   entry: DetailedCardEntry;
+  /** Row index for reordering */
+  rowIndex: number;
   /** Callback when row is clicked */
   onClick?: (card: MtgCard) => void;
+  /** Whether this row is currently selected */
+  isSelected?: boolean;
   /** Callback when mouse enters the row */
   onHoverEnter?: () => void;
   /** Callback when mouse leaves the row */
   onHoverLeave?: () => void;
   /** Callback when mouse moves within the row */
   onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
-  /** Callback when quantity changes */
-  onQuantityChange?: (cardId: string, newQuantity: string) => void;
   /** Callback to notify parent when drag state changes */
   onDragStateChange?: (isDragging: boolean) => void;
 }
@@ -43,24 +47,73 @@ interface CollectionTableRowProps {
 export default function CollectionTableRow({
   collectionId,
   entry,
+  rowIndex,
   onClick,
+  isSelected = false,
   onHoverEnter,
   onHoverLeave,
   onHoverMove,
-  onQuantityChange,
   onDragStateChange
 }: CollectionTableRowProps) {
+  // === CARD DATA EXTRACTION (needed early for hooks) ===
+  const { card, quantity } = entry;
+
+  // === HOOKS ===
+  const { mutate: updateCardQuantities } = useUpdateCardQuantities();
+
+  // Local state for quantity input (allows immediate UI updates)
+  const [localQuantity, setLocalQuantity] = useState(entry.quantity);
+  
+  // Debounce the quantity changes
+  const debouncedQuantity = useDebouncedValue(localQuantity, 500);
+
+  // Update local quantity when entry changes (e.g., from external updates)
+  useEffect(() => {
+    setLocalQuantity(entry.quantity);
+  }, [entry.quantity]);
+
+  // Handler for immediate quantity updates (e.g., trash button)
+  const handleImmediateQuantityChange = (newQuantity: number) => {
+    // Validate input (minimum 0, where 0 means remove)
+    if (newQuantity < 0) return;
+
+    // Update local state
+    setLocalQuantity(newQuantity);
+
+    // Update via API immediately
+    updateCardQuantities({
+      collectionId,
+      modifications: [
+        {
+          cardId: card.id,
+          operator: "set",
+          amount: newQuantity
+        }
+      ]
+    });
+  };
+
+  // Send API update when debounced quantity changes
+  useEffect(() => {
+    // Only update if the debounced value differs from the original
+    if (debouncedQuantity !== entry.quantity) {
+      handleImmediateQuantityChange(debouncedQuantity);
+    }
+  }, [debouncedQuantity, entry.quantity]);
+
   // === DRAG AND DROP ===
-  const { isDragging, dragRef } = useCardEntryDragSource(collectionId, entry);
+  const { isDragging, dragRef } = useCardEntryDragSource({
+    sourceCollectionId: collectionId,
+    sourceIndex: rowIndex,
+    entry
+  });
 
   // Notify parent component when drag state changes (used to hide hover popup)
   useEffect(() => {
     onDragStateChange?.(isDragging);
   }, [isDragging, onDragStateChange]);
 
-  // === CARD DATA EXTRACTION ===
-
-  const { card, quantity } = entry;
+  // === MANA COST AND DISPLAY ===
 
   // Extract mana costs (handling double-faced cards)
   const faces = card.card_faces || [];
@@ -79,21 +132,26 @@ export default function CollectionTableRow({
     return "—";
   };
 
+  // Display flavor name if present, with real name in brackets and italics
+  const displayName = card.flavor_name ? (
+    <>
+      {card.flavor_name} <span className="italic">({card.name})</span>
+    </>
+  ) : (
+    card.name
+  );
+
   return (
     <TableRow
-      className="cursor-pointer hover:bg-muted/50"
+      className={`cursor-pointer hover:bg-muted/50 ${isSelected ? "bg-accent" : ""}`}
       onClick={() => onClick?.(card)}
       onMouseEnter={onHoverEnter}
       onMouseLeave={onHoverLeave}
       onMouseMove={onHoverMove}
       ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
+      data-row-index={rowIndex}
     >
-      <TableCell className="font-medium">
-        {card.name}
-        {card.card_faces && card.card_faces.length > 1 && (
-          <span className="text-muted-foreground text-xs ml-2">// {card.card_faces[1].name}</span>
-        )}
-      </TableCell>
+      <TableCell className="font-medium">{displayName}</TableCell>
       <TableCell className="text-center">
         {manaCosts.length > 0 && (
           <div className="flex justify-center items-center gap-1">
@@ -116,15 +174,18 @@ export default function CollectionTableRow({
           <Input
             type="number"
             min="1"
-            value={quantity}
-            onChange={(e) => onQuantityChange?.(card.id, e.target.value)}
+            value={localQuantity}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              if (!isNaN(val)) setLocalQuantity(val);
+            }}
             className="w-16 text-center font-semibold"
           />
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 cursor-pointer"
-            onClick={() => onQuantityChange?.(card.id, "0")}
+            onClick={() => handleImmediateQuantityChange(0)}
             aria-label="Remove card"
           >
             <Trash2 className="h-4 w-4" />

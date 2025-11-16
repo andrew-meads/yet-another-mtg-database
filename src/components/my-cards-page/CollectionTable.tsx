@@ -1,12 +1,21 @@
 "use client";
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 import { CardCollectionWithCards } from "@/types/CardCollection";
 import { MtgCard } from "@/types/MtgCard";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import CardPopup from "@/components/CardPopup";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
+import { useUpdateCollection } from "@/hooks/react-query/useUpdateCollection";
 import CollectionTableRow from "@/components/my-cards-page/CollectionTableRow";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 
@@ -18,6 +27,8 @@ export interface CollectionTableProps {
   collection: CardCollectionWithCards;
   /** Optional maximum height for the table container */
   maxHeight?: string;
+  /** Number of entries per page (enables pagination if set) */
+  entriesPerPage?: number;
 }
 
 /**
@@ -26,7 +37,11 @@ export interface CollectionTableProps {
  * Similar to CardsTable but includes a Quantity column showing
  * how many copies of each card are in the collection.
  */
-export default function CollectionTable({ collection, maxHeight }: CollectionTableProps) {
+export default function CollectionTable({
+  collection,
+  maxHeight,
+  entriesPerPage
+}: CollectionTableProps) {
   // === STATE MANAGEMENT ===
 
   // Hover preview popup: tracks which card is being hovered and mouse position
@@ -37,13 +52,120 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
   // Track if any row is currently being dragged (to hide hover popup)
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
 
+  // Track selected collection row by row index
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
+
+  // Track where to show the drop indicator when reordering
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // === PAGINATION LOGIC ===
+
+  const totalEntries = collection.cardsDetailed?.length || 0;
+  const isPaginationEnabled = entriesPerPage !== undefined && entriesPerPage > 0;
+  const totalPages = isPaginationEnabled ? Math.ceil(totalEntries / entriesPerPage) : 1;
+
+  // Calculate visible entries based on pagination
+  const visibleEntries = isPaginationEnabled
+    ? collection.cardsDetailed.slice(
+        (currentPage - 1) * entriesPerPage!,
+        currentPage * entriesPerPage!
+      )
+    : collection.cardsDetailed;
+
+  // Reset to page 1 if current page exceeds total pages
+  useEffect(() => {
+    if (isPaginationEnabled && currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages, isPaginationEnabled]);
+
   // Card selection context
   const { setSelectedCard } = useCardSelection();
 
   // Mutation hook for updating card quantities
   const { mutate: updateCardQuantities } = useUpdateCardQuantities();
 
-  const { dropRef } = useCollectionDropTarget({ collection });
+  // Mutation hook for updating collection metadata and card order
+  const { mutate: updateCollection } = useUpdateCollection();
+
+  // Make this component a drop target for cards and card entries.
+  const { dropRef, isOver, hoverPosition, hoverPayload } = useCollectionDropTarget({
+    collection,
+    onDrop: (payload) => {
+      // Only handle reordering within the same collection
+      // Cross-collection drops are handled by useCollectionDropTarget
+      if (payload.sourceCollectionId !== collection._id) return;
+
+      // Get the source index and target index for reordering
+      const sourceIdx = payload.sourceIndex;
+      if (sourceIdx === undefined || dropIndicatorIndex === null) return;
+
+      // If dropping in the same position, do nothing
+      if (sourceIdx === dropIndicatorIndex || sourceIdx + 1 === dropIndicatorIndex) return;
+
+      // Make a copy of the cards array
+      const reorderedCards = [...collection.cards];
+
+      // Remove the item from its original position
+      const [movedCard] = reorderedCards.splice(sourceIdx, 1);
+
+      // Calculate the new target index (adjust if we removed an item before the target)
+      const targetIdx =
+        dropIndicatorIndex > sourceIdx ? dropIndicatorIndex - 1 : dropIndicatorIndex;
+
+      // Insert the item at the new position
+      reorderedCards.splice(targetIdx, 0, movedCard);
+
+      // Update the collection with the new card order
+      // console.log(reorderedCards);
+      updateCollection({
+        collectionId: collection._id,
+        cards: reorderedCards
+      });
+    }
+  });
+
+  // When dragging something from this collection to itself enable reordering.
+  useEffect(() => {
+    // Check if we're hovering and the source is this collection
+    if (isOver && hoverPayload?.sourceCollectionId === collection._id && hoverPosition) {
+      // Find which row we're hovering over based on Y position
+      const tableBody = document.querySelector(`[data-collection-id="${collection._id}"] tbody`);
+      if (!tableBody) {
+        setDropIndicatorIndex(null);
+        return;
+      }
+
+      // Only select actual data rows, not divider rows
+      const rows = Array.from(tableBody.querySelectorAll("tr[data-row-index]"));
+      
+      // Default to end of visible entries
+      let targetIndex = isPaginationEnabled
+        ? (currentPage - 1) * entriesPerPage + rows.length
+        : rows.length;
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rect = row.getBoundingClientRect();
+        const rowMiddle = rect.top + rect.height / 2;
+
+        if (hoverPosition.y < rowMiddle) {
+          // Convert visible index to actual collection index
+          targetIndex = isPaginationEnabled
+            ? (currentPage - 1) * entriesPerPage + i
+            : i;
+          break;
+        }
+      }
+
+      setDropIndicatorIndex(targetIndex);
+    } else {
+      setDropIndicatorIndex(null);
+    }
+  }, [isOver, hoverPosition, hoverPayload, collection._id, isPaginationEnabled, currentPage, entriesPerPage]);
 
   // === REFS ===
 
@@ -102,28 +224,11 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
   };
 
   /**
-   * Handle quantity change for a card
-   * Accepts 0 to remove the card from the collection
+   * Handle row click to select a collection row
    */
-  const handleQuantityChange = (cardId: string, newQuantity: string) => {
-    const quantity = parseInt(newQuantity, 10);
-
-    // Validate input (minimum 0, where 0 means remove)
-    if (isNaN(quantity) || quantity < 0) {
-      return;
-    }
-
-    // Update via API
-    updateCardQuantities({
-      collectionId: collection._id,
-      modifications: [
-        {
-          cardId,
-          operator: "set",
-          amount: quantity
-        }
-      ]
-    });
+  const handleRowClick = (card: MtgCard, rowIndex: number) => {
+    setSelectedRowIndex(rowIndex);
+    setSelectedCard(card);
   };
 
   // === EARLY RETURNS FOR SPECIAL STATES ===
@@ -146,7 +251,12 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
   // === RENDER ===
 
   return (
-    <div style={containerStyle} className={containerClass} ref={dropRef}>
+    <div
+      style={containerStyle}
+      className={containerClass}
+      ref={dropRef}
+      data-collection-id={collection._id}
+    >
       <Table stickyHeader>
         <TableHeader>
           <TableRow>
@@ -161,23 +271,85 @@ export default function CollectionTable({ collection, maxHeight }: CollectionTab
           </TableRow>
         </TableHeader>
         <TableBody>
-          {collection.cardsDetailed.map((cardDetail) => (
-            <CollectionTableRow
-              key={`${cardDetail.card.id}-${cardDetail.quantity}`}
-              collectionId={collection._id}
-              entry={cardDetail}
-              onClick={setSelectedCard}
-              onHoverEnter={() => handleRowEnter(cardDetail.card)}
-              onHoverLeave={handleRowLeave}
-              onHoverMove={handleRowMove}
-              onQuantityChange={handleQuantityChange}
-              onDragStateChange={setIsAnyRowDragging}
-            />
-          ))}
+          {visibleEntries.map((cardDetail, visibleIndex) => {
+            // Calculate the actual index in the full collection
+            const actualIndex = isPaginationEnabled
+              ? (currentPage - 1) * entriesPerPage + visibleIndex
+              : visibleIndex;
+            return (
+              <Fragment key={`${cardDetail.card.id}-${cardDetail.quantity}-${actualIndex}`}>
+                {/* Show drop indicator before this row if needed */}
+                {dropIndicatorIndex === actualIndex && (
+                  <tr>
+                    <td colSpan={8} className="p-0">
+                      <div className="h-1 bg-primary" />
+                    </td>
+                  </tr>
+                )}
+                <CollectionTableRow
+                  collectionId={collection._id}
+                  entry={cardDetail}
+                  rowIndex={actualIndex}
+                  onClick={(card) => handleRowClick(card, actualIndex)}
+                  isSelected={selectedRowIndex === actualIndex}
+                  onHoverEnter={() => handleRowEnter(cardDetail.card)}
+                  onHoverLeave={handleRowLeave}
+                  onHoverMove={handleRowMove}
+                  onDragStateChange={setIsAnyRowDragging}
+                />
+              </Fragment>
+            );
+          })}
+          {/* Show drop indicator at the end if needed */}
+          {dropIndicatorIndex !== null &&
+            dropIndicatorIndex ===
+              (isPaginationEnabled
+                ? (currentPage - 1) * entriesPerPage! + visibleEntries.length
+                : collection.cardsDetailed.length) && (
+              <tr>
+                <td colSpan={8} className="p-0">
+                  <div className="h-1 bg-primary" />
+                </td>
+              </tr>
+            )}
         </TableBody>
       </Table>
       {/* Show hover popup only when hovering and not dragging */}
       {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
+      {/* Show pagination controls if enabled */}
+      {isPaginationEnabled && totalPages > 1 && (
+        <div className="border-t p-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={
+                    currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }

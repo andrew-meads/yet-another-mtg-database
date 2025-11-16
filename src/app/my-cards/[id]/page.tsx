@@ -61,7 +61,7 @@ export default function Page({ params }: PageProps) {
           {collection.description || "No description provided"}
         </p>
       </div>
-      <CollectionTable collection={collection} />
+      <CollectionTable collection={collection} entriesPerPage={10} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useDrop } from "react-dnd";
+import { useState } from "react";
 import { MtgCard } from "@/types/MtgCard";
 import { CollectionSummary, DetailedCardEntry } from "@/types/CardCollection";
 import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
@@ -19,6 +20,10 @@ export interface UseCollectionDropTargetOptions {
 export interface UseCollectionDropTargetResult {
   /** Whether a card or card entry is currently being dragged over this target */
   isOver: boolean;
+  /** The client coordinates where the cursor is currently hovering (null when not hovering) */
+  hoverPosition: { x: number; y: number } | null;
+  /** The payload currently being dragged over this target (null when not hovering) */
+  hoverPayload: UseCollectionDropTargetDropPayload | null;
   /** Ref to attach to the drop target element */
   dropRef: React.Ref<HTMLDivElement>;
 }
@@ -34,6 +39,8 @@ interface UseCollectionDropTargetDropPayload {
   sourceCollectionId?: string;
   /** The card entry being dropped (for CARD_ENTRY type) */
   entry?: DetailedCardEntry;
+  /** The source index of the card entry being dropped (for CARD_ENTRY type) */
+  sourceIndex?: number;
 
   /** The client coordinates where the drop occurred */
   dropPosition: { x: number; y: number };
@@ -63,16 +70,35 @@ export function useCollectionDropTarget({
 }: UseCollectionDropTargetOptions): UseCollectionDropTargetResult {
   const { mutate: updateCardQuantities } = useUpdateCardQuantities();
 
-  const [{ isOver }, dropRef] = useDrop<
+  // Track hover position separately since collect doesn't run on every mouse move
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+
+  const [{ isOver, hoverPayload }, dropRef] = useDrop<
     UseCollectionDropTargetDropPayload,
     void,
-    { isOver: boolean }
+    {
+      isOver: boolean;
+      hoverPayload: UseCollectionDropTargetDropPayload | null;
+    }
   >(
     () => ({
       accept: ["CARD", "CARD_ENTRY"],
-      collect: (monitor) => ({
-        isOver: monitor.isOver()
-      }),
+      collect: (monitor) => {
+        const item = monitor.getItem<UseCollectionDropTargetDropPayload>();
+        return {
+          isOver: monitor.isOver(),
+          hoverPayload: monitor.isOver() && item ? item : null
+        };
+      },
+      hover: (_, monitor) => {
+        // Update hover position on every mouse move
+        const clientOffset = monitor.getClientOffset();
+        if (monitor.isOver() && clientOffset) {
+          setHoverPosition({ x: clientOffset.x, y: clientOffset.y });
+        } else {
+          setHoverPosition(null);
+        }
+      },
       drop: (payload, monitor) => {
         const { card, entry, sourceCollectionId } = payload;
 
@@ -133,6 +159,8 @@ export function useCollectionDropTarget({
 
   return {
     isOver,
+    hoverPosition,
+    hoverPayload,
     dropRef: dropRef as unknown as React.Ref<HTMLDivElement>
   };
 }
