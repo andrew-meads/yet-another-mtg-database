@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
     detailsCollection.cardsDetailed = collection.cards.map((colCard) => {
       const cardDetail = mtgCards.find((mc) => mc.id === colCard.cardId);
       return {
-        _id: colCard._id,
+        _id: colCard._id!,
         card: cardDetail!,
         quantity: colCard.quantity,
         notes: colCard.notes,

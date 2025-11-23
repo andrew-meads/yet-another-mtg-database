@@ -2,7 +2,8 @@ import { useDrop } from "react-dnd";
 import { useState } from "react";
 import { MtgCard } from "@/types/MtgCard";
 import { CollectionSummary, DetailedCardEntry } from "@/types/CardCollection";
-import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
+import { useDeleteCardEntry } from "../react-query/useDeleteCardEntry";
+import { usePushCardEntryToCollection } from "../react-query/usePushCardEntryToCollection";
 
 /**
  * Options for the collection drop target hook
@@ -70,7 +71,8 @@ export function useCollectionDropTarget({
   onDrop,
   allowDrop
 }: UseCollectionDropTargetOptions): UseCollectionDropTargetResult {
-  const { mutate: updateCardQuantities } = useUpdateCardQuantities();
+  const { mutate: deleteCardEntry } = useDeleteCardEntry();
+  const { mutate: pushCardEntryToCollection } = usePushCardEntryToCollection();
 
   // Track hover position separately since collect doesn't run on every mouse move
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
@@ -129,35 +131,28 @@ export function useCollectionDropTarget({
           amount = entry.quantity;
 
           // Remove all copies of the card from the source collection.
-          updateCardQuantities({
+          deleteCardEntry({
             collectionId: sourceCollectionId!,
-            modifications: [
-              {
-                cardId: cardToAdd.id,
-                operator: "subtract",
-                amount
-              }
-            ]
+            cardIndex: payload.sourceIndex!
           });
         }
 
         // Add that many copies of the card to the target collection.
-        updateCardQuantities({
+        pushCardEntryToCollection({
           collectionId: collection._id,
-          modifications: [
-            {
-              cardId: cardToAdd!.id,
-              operator: "add",
-              amount
-            }
-          ]
+          cardEntry: {
+            cardId: cardToAdd!.id,
+            quantity: amount,
+            notes: entry?.notes,
+            tags: entry?.tags || []
+          }
         });
 
         // Call custom callback if provided
         onDrop?.(enhancedPayload);
       }
     }),
-    [collection._id, onDrop, updateCardQuantities, allowDrop]
+    [collection._id, onDrop, pushCardEntryToCollection, deleteCardEntry, allowDrop]
   );
 
   return {
