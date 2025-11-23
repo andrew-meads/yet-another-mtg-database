@@ -6,12 +6,13 @@ import { MtgCard } from "@/types/MtgCard";
 import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronRight, StickyNote, Tag } from "lucide-react";
 import { DetailedCardEntry } from "@/types/CardCollection";
 import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
-import { useUpdateCardQuantities } from "@/hooks/react-query/useUpdateCardQuantities";
+import { useUpdateCardEntry } from "@/hooks/react-query/useUpdateCardEntry";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useEffect, useState, useRef } from "react";
+import EntryNotesAndTags from "./EntryNotesAndTags";
 
 /**
  * Props for CollectionTableRow component
@@ -26,6 +27,10 @@ interface CollectionTableRowProps {
   onClick?: (card: MtgCard) => void;
   /** Whether this row is currently selected */
   isSelected?: boolean;
+  /** Whether this row is currently expanded */
+  isExpanded?: boolean;
+  /** Callback to toggle expansion */
+  onExpand?: () => void;
   /** Whether search is currently active in the parent table */
   isSearchActive?: boolean;
   /** Callback when mouse enters the row */
@@ -53,6 +58,8 @@ export default function CollectionTableRow({
   rowIndex,
   onClick,
   isSelected = false,
+  isExpanded = false,
+  onExpand,
   isSearchActive = false,
   onHoverEnter,
   onHoverLeave,
@@ -63,14 +70,14 @@ export default function CollectionTableRow({
   const { card, quantity } = entry;
 
   // === HOOKS ===
-  const { mutate: updateCardQuantities } = useUpdateCardQuantities();
+  const { mutate: updateCardEntry } = useUpdateCardEntry();
 
   // Local state for quantity input (allows immediate UI updates)
   const [localQuantity, setLocalQuantity] = useState(entry.quantity);
-  
+
   // Track if the change was user-initiated (to distinguish from external updates)
   const isUserChangeRef = useRef(false);
-  
+
   // Debounce the quantity changes
   const debouncedQuantity = useDebouncedValue(localQuantity, 500);
 
@@ -87,15 +94,10 @@ export default function CollectionTableRow({
     if (newQuantity < 0) return;
 
     // Update via API immediately
-    updateCardQuantities({
+    updateCardEntry({
       collectionId,
-      modifications: [
-        {
-          cardId: card.id,
-          operator: "set",
-          amount: newQuantity
-        }
-      ]
+      cardIndex: rowIndex,
+      quantity: newQuantity
     });
   };
 
@@ -147,7 +149,7 @@ export default function CollectionTableRow({
   };
 
   // Display flavor name if present, with real name in brackets and italics
-  const displayName = card.flavor_name ? (
+  const nameText = card.flavor_name ? (
     <>
       {card.flavor_name} <span className="italic">({card.name})</span>
     </>
@@ -155,75 +157,130 @@ export default function CollectionTableRow({
     card.name
   );
 
-  return (
-    <TableRow
-      className={`cursor-pointer hover:bg-muted/50 ${isSelected ? "bg-accent" : ""}`}
-      onClick={() => onClick?.(card)}
-      onMouseEnter={onHoverEnter}
-      onMouseLeave={onHoverLeave}
-      onMouseMove={onHoverMove}
-      ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
-      data-row-index={rowIndex}
-    >
-      <TableCell className="font-medium">{displayName}</TableCell>
-      <TableCell className="text-center">
-        {manaCosts.length > 0 && (
-          <div className="flex justify-center items-center gap-1">
-            {manaCosts.map((cost, idx) => (
-              <div key={idx} className="flex items-center gap-1">
-                {idx > 0 && <span className="text-muted-foreground">//</span>}
-                <ManaCost cost={cost} />
-              </div>
-            ))}
-          </div>
-        )}
-      </TableCell>
-      <TableCell className="text-sm">
-        {card.type_line.length > 40 ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>{card.type_line.substring(0, 40)}...</span>
-            </TooltipTrigger>
-            <TooltipContent>{card.type_line}</TooltipContent>
-          </Tooltip>
-        ) : (
-          card.type_line
-        )}
-      </TableCell>
-      <TableCell className="text-center text-xs uppercase">
+  const displayName = (
+    <div className="flex items-center gap-2">
+      <span>{nameText}</span>
+      {entry.notes && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span>{card.set}</span>
+            <StickyNote className="h-3 w-3 text-muted-foreground" />
           </TooltipTrigger>
-          <TooltipContent>{card.set_name}</TooltipContent>
+          <TooltipContent>
+            <p className="max-w-xs text-xs">{entry.notes}</p>
+          </TooltipContent>
         </Tooltip>
-      </TableCell>
-      <TableCell className="text-center">{card.cmc}</TableCell>
-      <TableCell className="text-center">{renderPowerToughness()}</TableCell>
-      <TableCell className="text-center">{card.loyalty || "—"}</TableCell>
-      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-center gap-1">
-          <Input
-            type="number"
-            min="1"
-            value={localQuantity}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              if (!isNaN(val)) handleUserQuantityChange(val);
-            }}
-            className="w-16 text-center font-semibold"
-          />
+      )}
+      {entry.tags && entry.tags.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Tag className="h-3 w-3 text-muted-foreground" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="max-w-xs text-xs">{entry.tags.join(", ")}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <TableRow
+        className={`cursor-pointer hover:bg-muted/50 ${isSelected ? "bg-accent" : ""}`}
+        onClick={() => onClick?.(card)}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
+        onMouseMove={onHoverMove}
+        ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
+        data-row-index={rowIndex}
+      >
+        <TableCell className="p-2 text-center">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 cursor-pointer"
-            onClick={() => handleImmediateQuantityChange(0)}
-            aria-label="Remove card"
+            className="h-6 w-6"
+            onClick={(e) => {
+              e.stopPropagation();
+              onExpand?.();
+            }}
           >
-            <Trash2 className="h-4 w-4" />
+            <ChevronRight
+              className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+            />
           </Button>
-        </div>
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        <TableCell className="font-medium">{displayName}</TableCell>
+        <TableCell className="text-center">
+          {manaCosts.length > 0 && (
+            <div className="flex justify-center items-center gap-1">
+              {manaCosts.map((cost, idx) => (
+                <div key={idx} className="flex items-center gap-1">
+                  {idx > 0 && <span className="text-muted-foreground">//</span>}
+                  <ManaCost cost={cost} />
+                </div>
+              ))}
+            </div>
+          )}
+        </TableCell>
+        <TableCell className="text-sm">
+          {card.type_line.length > 40 ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{card.type_line.substring(0, 40)}...</span>
+              </TooltipTrigger>
+              <TooltipContent>{card.type_line}</TooltipContent>
+            </Tooltip>
+          ) : (
+            card.type_line
+          )}
+        </TableCell>
+        <TableCell className="text-center text-xs uppercase">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{card.set}</span>
+            </TooltipTrigger>
+            <TooltipContent>{card.set_name}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+        <TableCell className="text-center">{card.cmc}</TableCell>
+        <TableCell className="text-center">{renderPowerToughness()}</TableCell>
+        <TableCell className="text-center">{card.loyalty || "—"}</TableCell>
+        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-center gap-1">
+            <Input
+              type="number"
+              min="1"
+              value={localQuantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val)) handleUserQuantityChange(val);
+              }}
+              className="w-16 text-center font-semibold"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 cursor-pointer"
+              onClick={() => handleImmediateQuantityChange(0)}
+              aria-label="Remove card"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+      {isExpanded && (
+        <TableRow>
+          <TableCell colSpan={9} className="bg-muted/30 p-4 text-sm">
+            <EntryNotesAndTags
+              notes={entry.notes}
+              tags={entry.tags}
+              collectionId={collectionId}
+              cardIndex={rowIndex}
+            />
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }

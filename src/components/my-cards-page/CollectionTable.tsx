@@ -1,6 +1,13 @@
 "use client";
 
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableCell
+} from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -56,6 +63,9 @@ export default function CollectionTable({
 
   // Track selected collection row by row index
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
+
+  // Track expanded collection row by row index
+  const [expandedRowIndex, setExpandedRowIndex] = useState<number | null>(null);
 
   // Track where to show the drop indicator when reordering
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
@@ -249,6 +259,13 @@ export default function CollectionTable({
   };
 
   /**
+   * Handle row expand toggle
+   */
+  const handleRowExpand = (rowIndex: number) => {
+    setExpandedRowIndex(expandedRowIndex === rowIndex ? null : rowIndex);
+  };
+
+  /**
    * Handle search dialog submission
    */
   const handleSearch = (filters: SearchFilters) => {
@@ -357,6 +374,7 @@ export default function CollectionTable({
       <Table stickyHeader>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10"></TableHead>
             <TableHead>Name</TableHead>
             <TableHead className="text-center">Mana Cost</TableHead>
             <TableHead>Type</TableHead>
@@ -378,7 +396,7 @@ export default function CollectionTable({
                 {/* Show drop indicator before this row if needed */}
                 {dropIndicatorIndex === actualIndex && (
                   <tr>
-                    <td colSpan={8} className="p-0">
+                    <td colSpan={9} className="p-0">
                       <div className="h-1 bg-primary" />
                     </td>
                   </tr>
@@ -389,6 +407,8 @@ export default function CollectionTable({
                   rowIndex={actualIndex}
                   onClick={(card) => handleRowClick(card, actualIndex)}
                   isSelected={selectedRowIndex === actualIndex}
+                  isExpanded={expandedRowIndex === actualIndex}
+                  onExpand={() => handleRowExpand(actualIndex)}
                   isSearchActive={searchFilters !== null}
                   onHoverEnter={() => handleRowEnter(cardDetail.card)}
                   onHoverLeave={handleRowLeave}
@@ -405,7 +425,7 @@ export default function CollectionTable({
                 ? (currentPage - 1) * entriesPerPage! + visibleEntries.length
                 : collection.cardsDetailed.length) && (
               <tr>
-                <td colSpan={8} className="p-0">
+                <td colSpan={9} className="p-0">
                   <div className="h-1 bg-primary" />
                 </td>
               </tr>
