@@ -25,7 +25,7 @@ interface IFace {
  * @param card - The card object containing oracle_text and other card data
  */
 export function CardTextView({ card }: { card: MtgCard }) {
-  const faces: IFace[] = (card.card_faces as IFace[]) || [];
+  const faces: IFace[] = [...((card.card_faces as IFace[]) || [])];
   if (faces.length === 0) faces.push(card as IFace);
   const oracleTexts =
     card.card_faces?.map((f) => f.oracle_text).filter((t) => t && t.trim() !== "") || [];

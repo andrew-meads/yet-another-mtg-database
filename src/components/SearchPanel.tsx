@@ -13,19 +13,22 @@ import {
   PaginationLink,
   PaginationEllipsis
 } from "@/components/ui/pagination";
-import { MtgCard } from "@/types/MtgCard";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface SearchPanelProps {
   compact?: boolean;
 }
 
 export default function SearchPanel({ compact }: SearchPanelProps) {
-  const [searchParams, setSearchParams] = useState<SearchControlsValues>({
-    q: "lang:en exclude:extras",
-    order: "name",
-    dir: "asc",
-    pageLen: 25
-  });
+  const [searchParams, setSearchParams] = useLocalStorage<SearchControlsValues>(
+    "search-panel-params",
+    {
+      q: "lang:en exclude:extras",
+      order: "name",
+      dir: "asc",
+      pageLen: 25
+    }
+  );
   const [page, setPage] = useState(1);
   const scrollPositionRef = useRef<number | null>(null);
   const shouldRestoreScrollRef = useRef(false);
@@ -187,11 +190,7 @@ export default function SearchPanel({ compact }: SearchPanelProps) {
       {renderPaginationControls("top")}
 
       <div className="flex-1 min-h-0">
-        <CardsTable
-          cards={data?.cards ?? []}
-          isLoading={isLoading}
-          error={error}
-        />
+        <CardsTable cards={data?.cards ?? []} isLoading={isLoading} error={error} />
       </div>
 
       {/* Pagination controls - Bottom */}
