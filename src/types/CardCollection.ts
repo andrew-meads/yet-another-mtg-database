@@ -13,7 +13,7 @@ export interface CollectionSummary {
  * Card entry in a collection
  */
 export interface CardEntry {
-  _id: string;
+  _id?: string;
   cardId: string;
   quantity: number;
   notes?: string;

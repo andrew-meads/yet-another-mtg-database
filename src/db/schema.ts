@@ -1,7 +1,7 @@
-import mongoose, { Model } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import { MtgCard } from "@/types/MtgCard";
 import { CardCollection } from "@/types/CardCollection";
-const Schema = mongoose.Schema;
+import { Tag } from "@/types/Tag";
 
 // Each document in the "cards" collection represents a Magic: The Gathering card
 const cardSchema = new Schema<MtgCard>(
@@ -104,6 +104,14 @@ const collectionSchema = new Schema<CardCollection>(
   },
   { strict: true, timestamps: true }
 );
+
+// Tag schema: each tag is just a string
+export const TagSchema = new Schema<Tag>({
+  label: { type: String, required: true, unique: true }
+});
+
+export const TagModel = (mongoose.models.Tag ||
+  mongoose.model<Tag>("Tag", TagSchema)) as Model<Tag>;
 
 // Prevent model recompilation during hot reload in development
 export const Card = (mongoose.models.Card ||
