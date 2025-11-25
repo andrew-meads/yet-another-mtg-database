@@ -25,6 +25,10 @@ interface CardArtViewProps {
   flippable?: boolean;
   /** Whether the card should be draggable (for drag & drop) */
   draggable?: boolean;
+  /** Optional explicit width (overrides h-full behavior) */
+  width?: number | string;
+  /** Optional explicit height (overrides h-full behavior) */
+  height?: number | string;
 }
 
 /**
@@ -51,6 +55,10 @@ interface CardImageProps {
   width: number;
   /** Natural height of the image */
   height: number;
+  /** Optional explicit container width */
+  containerWidth?: number | string;
+  /** Optional explicit container height */
+  containerHeight?: number | string;
 }
 
 /**
@@ -64,7 +72,9 @@ export default function CardArtView({
   variant,
   className,
   flippable = false,
-  draggable = false
+  draggable = false,
+  width: explicitWidth,
+  height: explicitHeight
 }: CardArtViewProps) {
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0);
   const dimensions = IMAGE_DIMENSIONS[variant];
@@ -80,7 +90,9 @@ export default function CardArtView({
       imageUri: face.image_uris?.[variant],
       alt: face.name,
       width: dimensions.width,
-      height: dimensions.height
+      height: dimensions.height,
+      containerWidth: explicitWidth,
+      containerHeight: explicitHeight
     }));
   } else {
     images = [
@@ -88,7 +100,9 @@ export default function CardArtView({
         imageUri: card.image_uris?.[variant],
         alt: card.name,
         width: dimensions.width,
-        height: dimensions.height
+        height: dimensions.height,
+        containerWidth: explicitWidth,
+        containerHeight: explicitHeight
       }
     ];
   }
@@ -108,24 +122,32 @@ export default function CardArtView({
   // Make image draggable if specified
   const { isDragging, dragRef } = useCardDragSource(card, draggable);
 
+  // Determine container style based on explicit dimensions
+  const containerStyle: React.CSSProperties = {};
+  if (explicitWidth) containerStyle.width = explicitWidth;
+  if (explicitHeight) containerStyle.height = explicitHeight;
+  // If no explicit dimensions, default to h-full (existing behavior)
+  if (!explicitWidth && !explicitHeight) containerStyle.height = "100%";
+
   if (shouldBeFlippable) {
     return (
       <div
         ref={dragRef as unknown as React.LegacyRef<HTMLDivElement>}
         className={clsx(
-          "flex flex-col gap-2 h-full items-center justify-center",
+          "flex flex-col gap-2 items-center justify-center",
           isDragging && "opacity-50",
           className
         )}
+        style={containerStyle}
       >
         <div
           onClick={handleFlip}
-          className="cursor-pointer relative group h-full flex items-center justify-center"
+          className="cursor-pointer relative group h-full w-full flex items-center justify-center"
         >
           {images.map((image, index) => (
             <div
               key={index}
-              className="transition-opacity duration-800 h-full flex items-center justify-center"
+              className="transition-opacity duration-800 h-full w-full flex items-center justify-center"
               style={{
                 position: index === 0 ? "relative" : "absolute",
                 top: index === 0 ? "auto" : 0,
@@ -152,13 +174,14 @@ export default function CardArtView({
     <div
       ref={dragRef as unknown as React.LegacyRef<HTMLDivElement>}
       className={clsx(
-        "flex flex-row gap-2 h-full items-center justify-center",
+        "flex flex-row gap-2 items-center justify-center",
         isDragging && "opacity-50",
         className
       )}
+      style={containerStyle}
     >
       {imagesToRender.map((image, index) => (
-        <div key={index} className="inline-block h-full">
+        <div key={index} className="flex h-full w-full items-center justify-center">
           <CardImage {...image} />
         </div>
       ))}
@@ -172,13 +195,30 @@ export default function CardArtView({
  * Uses Next.js Image component for optimization
  * Maintains aspect ratio using CSS aspect-ratio property
  */
-function CardImage({ imageUri, alt, width, height }: CardImageProps) {
+function CardImage({
+  imageUri,
+  alt,
+  width,
+  height,
+  containerWidth,
+  containerHeight
+}: CardImageProps) {
+  // Determine style based on props
+  const style: React.CSSProperties = {
+    aspectRatio: `${width} / ${height}`
+  };
+
+  if (containerWidth) style.width = "100%";
+  if (containerHeight) style.height = "100%";
+  // Default to h-full if no explicit dimensions provided (backward compatibility)
+  if (!containerWidth && !containerHeight) style.height = "100%";
+
   // Render a container that allows the image to scale down to fit its parent height
   if (!imageUri) {
     return (
       <div
-        className="bg-gray-200 flex items-center justify-center text-gray-500 h-full"
-        style={{ height: "100%", aspectRatio: `${width} / ${height}` }}
+        className="bg-gray-200 flex items-center justify-center text-gray-500"
+        style={style}
       >
         No image available{alt !== "" && ` for ${alt}`}
       </div>
@@ -187,7 +227,7 @@ function CardImage({ imageUri, alt, width, height }: CardImageProps) {
 
   // Use Next/Image with fill, contained within a box sized by height + aspect-ratio
   return (
-    <div className="relative h-full" style={{ aspectRatio: `${width} / ${height}` }}>
+    <div className="relative" style={style}>
       <Image
         src={imageUri}
         alt={alt}

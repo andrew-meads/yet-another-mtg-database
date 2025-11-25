@@ -76,6 +76,8 @@ function InnerWorkspace({ layout, children }: { layout: number[]; children?: Rea
                   variant="normal"
                   flippable={true}
                   draggable={true}
+                  width="100%"
+                  height="100%"
                 />
               </div>
             </ResizablePanel>
