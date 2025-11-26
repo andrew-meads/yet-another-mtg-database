@@ -193,7 +193,7 @@ export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
         );
       })}
 
-      <div className="overlay absolute top-[0] left-[0] right-[0] bottom-[0] flex flex-row items-start justify-end p-4 pointer-events-none select-none text-xl font-bold">
+      <div className="overlay absolute top-0 bottom-0 left-0 right-0 flex flex-row items-start justify-end p-4 pointer-events-none select-none text-xl font-bold">
         <span className="bg-background/60 w-12 h-12 flex items-center justify-center rounded-full">
           {entry.quantity - hoverIndex!} / {entry.quantity}
         </span>

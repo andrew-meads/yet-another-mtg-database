@@ -27,8 +27,8 @@ export default function DropSeparator({ deck, index }: DropSeparatorProps) {
     <div
       ref={dropRef}
       className={cn(
-        "min-w-min w-[16px] border border-transparent rounded-xs",
-        index === 0 && "ml-[-16px] absolute",
+        "min-w-min w-4 border border-transparent rounded-xs",
+        index === 0 && "-ml-4 absolute",
         isRelevantItemDragging && "bg-foreground/20",
         isOver && "bg-foreground/80"
       )}
