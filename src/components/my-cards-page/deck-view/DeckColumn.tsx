@@ -7,8 +7,16 @@ import { useCardSelection } from "@/context/CardSelectionContext";
 import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET, CONTAINER_OFFSET } from "./card-dimensions";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
-import { StickyNote, Tag } from "lucide-react";
+import { useCardEntryQuantity } from "@/hooks/useCardEntryQuantity";
+import { StickyNote, Tag, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Slider } from "@/components/ui/slider";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger
+} from "@/components/ui/context-menu";
 
 interface DeckColumnProps {
   deck: CardCollectionWithCards;
@@ -23,6 +31,14 @@ export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const { setSelectedCard } = useCardSelection();
   const { mutate: updateCardsInCollection } = useUpdateCollectionCards();
+
+  // Quantity management with debouncing
+  const { localQuantity, handleUserQuantityChange, handleImmediateQuantityChange } =
+    useCardEntryQuantity({
+      collectionId: deck._id,
+      cardIndex: index,
+      initialQuantity: entry.quantity
+    });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || isDragging) return;
@@ -42,6 +58,15 @@ export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
 
   const handleClick = () => {
     setSelectedCard(entry.card);
+  };
+
+  const handleDelete = () => {
+    handleImmediateQuantityChange(0);
+  };
+
+  const handleQuantityChange = (value: number[]) => {
+    const newQuantity = value[0];
+    handleUserQuantityChange(newQuantity);
   };
 
   const { isDragging, dragRef, draggedItem } = useCardEntryDragSource({
@@ -112,8 +137,10 @@ export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
   });
 
   return (
-    <div
-      ref={(node) => {
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={(node) => {
         // Apply dragRef
         dragRef(node as unknown as HTMLDivElement);
 
@@ -201,6 +228,24 @@ export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
           )}
         </div>
       )}
-    </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <div className="px-2 py-3 min-w-[200px]">
+          <div className="text-sm font-medium mb-2">Quantity: {localQuantity}</div>
+          <Slider
+            value={[localQuantity]}
+            onValueChange={handleQuantityChange}
+            min={1}
+            max={Math.max(20, entry.quantity)}
+            step={1}
+          />
+        </div>
+        <ContextMenuItem onClick={handleDelete}>
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

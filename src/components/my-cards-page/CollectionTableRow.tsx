@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Trash2, ChevronRight, StickyNote, Tag } from "lucide-react";
 import { DetailedCardEntry } from "@/types/CardCollection";
 import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
-import { useUpdateCardEntry } from "@/hooks/react-query/useUpdateCardEntry";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useEffect, useState, useRef } from "react";
+import { useCardEntryQuantity } from "@/hooks/useCardEntryQuantity";
+import { useEffect } from "react";
 import EntryNotesAndTags from "./EntryNotesAndTags";
 
 /**
@@ -69,52 +68,13 @@ export default function CollectionTableRow({
   // === CARD DATA EXTRACTION (needed early for hooks) ===
   const { card, quantity } = entry;
 
-  // === HOOKS ===
-  const { mutate: updateCardEntry } = useUpdateCardEntry();
-
-  // Local state for quantity input (allows immediate UI updates)
-  const [localQuantity, setLocalQuantity] = useState(entry.quantity);
-
-  // Track if the change was user-initiated (to distinguish from external updates)
-  const isUserChangeRef = useRef(false);
-
-  // Debounce the quantity changes
-  const debouncedQuantity = useDebouncedValue(localQuantity, 500);
-
-  // Update local quantity when entry changes (e.g., from external updates)
-  useEffect(() => {
-    // Mark as external change (not user-initiated)
-    isUserChangeRef.current = false;
-    setLocalQuantity(entry.quantity);
-  }, [entry.quantity]);
-
-  // Handler for immediate quantity updates (e.g., trash button)
-  const handleImmediateQuantityChange = (newQuantity: number) => {
-    // Validate input (minimum 0, where 0 means remove)
-    if (newQuantity < 0) return;
-
-    // Update via API immediately
-    updateCardEntry({
+  // === QUANTITY MANAGEMENT ===
+  const { localQuantity, handleUserQuantityChange, handleImmediateQuantityChange } =
+    useCardEntryQuantity({
       collectionId,
       cardIndex: rowIndex,
-      quantity: newQuantity
+      initialQuantity: entry.quantity
     });
-  };
-
-  // Handle user input changes
-  const handleUserQuantityChange = (newQuantity: number) => {
-    isUserChangeRef.current = true;
-    setLocalQuantity(newQuantity);
-  };
-
-  // Send API update when debounced quantity changes
-  useEffect(() => {
-    // Only update if this was a user-initiated change
-    if (isUserChangeRef.current && debouncedQuantity !== entry.quantity) {
-      handleImmediateQuantityChange(debouncedQuantity);
-      isUserChangeRef.current = false;
-    }
-  }, [debouncedQuantity]);
 
   // === DRAG AND DROP ===
   const { isDragging, dragRef } = useCardEntryDragSource({

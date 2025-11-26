@@ -57,6 +57,9 @@ export default function Page({ params }: PageProps) {
 
   const { collection } = data;
 
+  // Calculate total number of cards
+  const totalCards = collection.cards.reduce((sum, entry) => sum + entry.quantity, 0);
+
   return (
     <div className="mx-auto space-y-6 h-full flex flex-col">
       <div className="flex items-start justify-between shrink-0">
@@ -66,7 +69,8 @@ export default function Page({ params }: PageProps) {
             {collection.name}
           </h2>
           <p className="text-muted-foreground">
-            {collection.description || "No description provided"}
+            {collection.description || "No description provided"} • {totalCards} card
+            {totalCards !== 1 ? "s" : ""}
           </p>
         </div>
         <div className="flex items-center space-x-2">
