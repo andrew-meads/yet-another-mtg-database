@@ -7,6 +7,8 @@ import { useCardSelection } from "@/context/CardSelectionContext";
 import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET, CONTAINER_OFFSET } from "./card-dimensions";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
+import { StickyNote, Tag } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DeckColumnProps {
   deck: CardCollectionWithCards;
@@ -165,10 +167,40 @@ export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
       })}
 
       <div className="overlay absolute top-[0] left-[0] right-[0] bottom-[0] flex flex-row items-start justify-end p-4 pointer-events-none select-none text-xl font-bold">
-        <span className="bg-[rgba(0,0,0,0.6)] w-12 h-12 flex items-center justify-center rounded-full">
+        <span className="bg-background/60 w-12 h-12 flex items-center justify-center rounded-full">
           {entry.quantity - hoverIndex!} / {entry.quantity}
         </span>
       </div>
+
+      {/* Notes/Tags overlay in bottom-left */}
+      {(entry.notes || (entry.tags && entry.tags.length > 0)) && (
+        <div className="absolute bottom-1 left-1 flex items-center gap-1 pointer-events-auto select-none">
+          {entry.notes && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-[rgba(0,0,0,0.7)] rounded p-1">
+                  <StickyNote className="h-3 w-3 text-white" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-xs">{entry.notes}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {entry.tags && entry.tags.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-[rgba(0,0,0,0.7)] rounded p-1">
+                  <Tag className="h-3 w-3 text-white" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-xs">{entry.tags.join(", ")}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
     </div>
   );
 }

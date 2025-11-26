@@ -61,8 +61,8 @@ export default function DeckColumnDragLayer() {
         ))}
       </div>
 
-      <div className="absolute top-0 left-0 right-0 bottom-0 flex items-start justify-end p-4 text-3xl font-bold text-white">
-        <span className="bg-[rgba(0,0,0,0.6)] w-12 h-12 flex items-center justify-center rounded-full">
+      <div className="absolute top-0 left-0 right-0 bottom-0 flex items-start justify-end p-4 text-3xl font-bold">
+        <span className="bg-background/60 w-12 h-12 flex items-center justify-center rounded-full">
           {quantity}x
         </span>
       </div>
