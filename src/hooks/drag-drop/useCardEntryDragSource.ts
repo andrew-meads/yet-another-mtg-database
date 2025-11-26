@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { useDrag } from "react-dnd";
+import { DragSourceMonitor, useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { DetailedCardEntry } from "@/types/CardCollection";
+import { CollectionDragSourcePayload } from "./Types";
 
 interface UseCardEntryDragSourceProps {
   sourceCollectionId: string;
@@ -9,6 +10,9 @@ interface UseCardEntryDragSourceProps {
   entry: DetailedCardEntry;
   canDrag?: boolean;
   hideDefaultPreview?: boolean;
+  getItem?: (
+    monitor: DragSourceMonitor<CollectionDragSourcePayload>
+  ) => CollectionDragSourcePayload;
 }
 
 /**
@@ -27,15 +31,17 @@ export function useCardEntryDragSource({
   sourceIndex,
   entry,
   canDrag = true,
-  hideDefaultPreview = false
+  hideDefaultPreview = false,
+  getItem
 }: UseCardEntryDragSourceProps) {
-  const [{ isDragging }, dragRef, preview] = useDrag(
+  const [{ isDragging, draggedItem }, dragRef, preview] = useDrag(
     () => ({
       type: "CARD_ENTRY",
-      item: () => ({ sourceCollectionId, entry, sourceIndex }),
+      item: getItem ? getItem : () => ({ sourceCollectionId, entry, sourceIndex }),
       canDrag,
       collect: (monitor) => ({
-        isDragging: monitor.isDragging()
+        isDragging: monitor.isDragging(),
+        draggedItem: monitor.getItem() as CollectionDragSourcePayload
       })
     }),
     [entry, canDrag, sourceCollectionId]
@@ -46,5 +52,5 @@ export function useCardEntryDragSource({
     if (hideDefaultPreview) preview(getEmptyImage(), { captureDraggingState: true });
   }, [preview, hideDefaultPreview]);
 
-  return { isDragging, dragRef };
+  return { isDragging, dragRef, draggedItem };
 }

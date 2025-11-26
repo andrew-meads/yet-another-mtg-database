@@ -8,6 +8,7 @@ import MainWorkspace from "@/components/MainWorkspace";
 import { OpenCollectionsProvider } from "@/context/OpenCollectionsContext";
 import ReactDndProvider from "@/components/dnd/ReactDndProvider";
 import CardDragLayer from "@/components/dnd/CardDragLayer";
+import DeckColumnDragLayer from "@/components/dnd/DeckColumnDragLayer";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -52,6 +53,7 @@ export default function RootLayout({
 
               {/* Drag layers */}
               <CardDragLayer />
+              <DeckColumnDragLayer />
             </ReactDndProvider>
           </QueryProvider>
         </ThemeProvider>

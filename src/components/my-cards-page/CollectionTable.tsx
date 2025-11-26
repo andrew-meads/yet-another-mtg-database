@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCell
-} from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -24,7 +17,6 @@ import { useState, useRef, useEffect, Fragment, useMemo } from "react";
 import CardPopup from "@/components/CardPopup";
 import SearchDialog, { SearchFilters, searchPredicate } from "@/components/SearchDialog";
 import { useCardSelection } from "@/context/CardSelectionContext";
-import { useUpdateCollection } from "@/hooks/react-query/useUpdateCollection";
 import CollectionTableRow from "@/components/my-cards-page/CollectionTableRow";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 
@@ -108,45 +100,11 @@ export default function CollectionTable({
   // Card selection context
   const { setSelectedCard } = useCardSelection();
 
-  // Mutation hook for updating collection metadata and card order
-  const { mutate: updateCollection } = useUpdateCollection();
-
   // Make this component a drop target for cards and card entries.
   const { dropRef, isOver, hoverPosition, hoverPayload } = useCollectionDropTarget({
     collection,
     allowDrop: searchFilters === null, // Disable dropping when search is active
-    onDrop: (payload) => {
-      // Only handle reordering within the same collection
-      // Cross-collection drops are handled by useCollectionDropTarget
-      if (payload.sourceCollectionId !== collection._id) return;
-
-      // Get the source index and target index for reordering
-      const sourceIdx = payload.sourceIndex;
-      if (sourceIdx === undefined || dropIndicatorIndex === null) return;
-
-      // If dropping in the same position, do nothing
-      if (sourceIdx === dropIndicatorIndex || sourceIdx + 1 === dropIndicatorIndex) return;
-
-      // Make a copy of the cards array
-      const reorderedCards = [...collection.cards];
-
-      // Remove the item from its original position
-      const [movedCard] = reorderedCards.splice(sourceIdx, 1);
-
-      // Calculate the new target index (adjust if we removed an item before the target)
-      const targetIdx =
-        dropIndicatorIndex > sourceIdx ? dropIndicatorIndex - 1 : dropIndicatorIndex;
-
-      // Insert the item at the new position
-      reorderedCards.splice(targetIdx, 0, movedCard);
-
-      // Update the collection with the new card order
-      // console.log(reorderedCards);
-      updateCollection({
-        collectionId: collection._id,
-        cards: reorderedCards
-      });
-    }
+    getDestinationIndex: () => dropIndicatorIndex ?? collection.cardsDetailed.length
   });
 
   // When dragging something from this collection to itself enable reordering.

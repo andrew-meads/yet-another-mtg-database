@@ -1,9 +1,9 @@
-import { useDrop } from "react-dnd";
+import { DropTargetMonitor, useDrop } from "react-dnd";
 import { useState } from "react";
+import { CollectionSummary } from "@/types/CardCollection";
+import { CollectionDropTargetPayload } from "./Types";
+import { useUpdateCollectionCards } from "../react-query/useUpdateCollectionCards";
 import { MtgCard } from "@/types/MtgCard";
-import { CollectionSummary, DetailedCardEntry } from "@/types/CardCollection";
-import { useDeleteCardEntry } from "../react-query/useDeleteCardEntry";
-import { usePushCardEntryToCollection } from "../react-query/usePushCardEntryToCollection";
 
 /**
  * Options for the collection drop target hook
@@ -11,9 +11,17 @@ import { usePushCardEntryToCollection } from "../react-query/usePushCardEntryToC
 export interface UseCollectionDropTargetOptions {
   /** The collection to drop cards or card entries into */
   collection: CollectionSummary;
-  /** Optional callback when a card or card entry is dropped */
-  onDrop?: (payload: UseCollectionDropTargetDropPayload) => void;
-  allowDrop: boolean;
+  /** Optional callback when a card or card entry is dropped. */
+  onDrop?: (payload: CollectionDropTargetPayload) => boolean | void;
+  /** Whether dropping is allowed on this target */
+  allowDrop:
+    | boolean
+    | ((
+        item: CollectionDropTargetPayload,
+        monitor: DropTargetMonitor<CollectionDropTargetPayload, void>
+      ) => boolean);
+  /** Optional callback when a card or card entry is dropped, which should calculate the index where the drop occurred. */
+  getDestinationIndex?: (hoverPosition: { x: number; y: number }) => number;
 }
 
 /**
@@ -25,27 +33,9 @@ export interface UseCollectionDropTargetResult {
   /** The client coordinates where the cursor is currently hovering (null when not hovering) */
   hoverPosition: { x: number; y: number } | null;
   /** The payload currently being dragged over this target (null when not hovering) */
-  hoverPayload: UseCollectionDropTargetDropPayload | null;
+  hoverPayload: CollectionDropTargetPayload | null;
   /** Ref to attach to the drop target element */
   dropRef: React.Ref<HTMLDivElement>;
-}
-
-/**
- * Payload passed to the onDrop callback
- */
-interface UseCollectionDropTargetDropPayload {
-  /** The card being dropped (for CARD type) */
-  card?: MtgCard;
-
-  /** The source collection ID (for CARD_ENTRY type) */
-  sourceCollectionId?: string;
-  /** The card entry being dropped (for CARD_ENTRY type) */
-  entry?: DetailedCardEntry;
-  /** The source index of the card entry being dropped (for CARD_ENTRY type) */
-  sourceIndex?: number;
-
-  /** The client coordinates where the drop occurred */
-  dropPosition: { x: number; y: number };
 }
 
 /**
@@ -69,91 +59,63 @@ interface UseCollectionDropTargetDropPayload {
 export function useCollectionDropTarget({
   collection,
   onDrop,
-  allowDrop
+  allowDrop,
+  getDestinationIndex
 }: UseCollectionDropTargetOptions): UseCollectionDropTargetResult {
-  const { mutate: deleteCardEntry } = useDeleteCardEntry();
-  const { mutate: pushCardEntryToCollection } = usePushCardEntryToCollection();
+  const { mutate: updateCardsInCollection } = useUpdateCollectionCards();
 
   // Track hover position separately since collect doesn't run on every mouse move
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [{ isOver, hoverPayload }, dropRef] = useDrop<
-    UseCollectionDropTargetDropPayload,
+    CollectionDropTargetPayload,
     void,
     {
       isOver: boolean;
-      hoverPayload: UseCollectionDropTargetDropPayload | null;
+      hoverPayload: CollectionDropTargetPayload | null;
     }
-  >(
-    () => ({
-      accept: ["CARD", "CARD_ENTRY"],
-      canDrop: () => allowDrop,
-      collect: (monitor) => {
-        const item = monitor.getItem<UseCollectionDropTargetDropPayload>();
-        return {
-          isOver: monitor.isOver(),
-          hoverPayload: monitor.isOver() && item ? item : null
-        };
-      },
-      hover: (_, monitor) => {
-        // Update hover position on every mouse move
-        const clientOffset = monitor.getClientOffset();
-        if (monitor.isOver() && clientOffset) {
-          setHoverPosition({ x: clientOffset.x, y: clientOffset.y });
-        } else {
-          setHoverPosition(null);
-        }
-      },
-      drop: (payload, monitor) => {
-        const { card, entry, sourceCollectionId } = payload;
-
-        // Get drop position and shift key state
-        const clientOffset = monitor.getClientOffset();
-        const dropPosition = clientOffset
-          ? { x: clientOffset.x, y: clientOffset.y }
-          : { x: 0, y: 0 };
-
-        // Create enhanced payload with drop metadata
-        const enhancedPayload: UseCollectionDropTargetDropPayload = {
-          ...payload,
-          dropPosition
-        };
-
-        // If dropping a CARD_ENTRY from the same collection, ignore, just use callback.
-        if (sourceCollectionId === collection._id) return onDrop?.(enhancedPayload);
-
-        let cardToAdd = card;
-        let amount = 1;
-
-        // If dropping a CARD_ENTRY, extract the card and remove it from the source collection
-        if (!cardToAdd && entry) {
-          cardToAdd = entry.card;
-          amount = entry.quantity;
-
-          // Remove all copies of the card from the source collection.
-          deleteCardEntry({
-            collectionId: sourceCollectionId!,
-            cardIndex: payload.sourceIndex!
-          });
-        }
-
-        // Add that many copies of the card to the target collection.
-        pushCardEntryToCollection({
-          collectionId: collection._id,
-          cardEntry: {
-            cardId: cardToAdd!.id,
-            quantity: amount,
-            notes: entry?.notes,
-            tags: entry?.tags || []
-          }
-        });
-
-        // Call custom callback if provided
-        onDrop?.(enhancedPayload);
+  >({
+    accept: ["CARD", "CARD_ENTRY"],
+    canDrop: typeof allowDrop === "function" ? allowDrop : () => allowDrop,
+    collect: (monitor) => {
+      const item = monitor.getItem<CollectionDropTargetPayload>();
+      return {
+        isOver: monitor.isOver() && monitor.canDrop(),
+        hoverPayload: monitor.isOver() && item ? item : null
+      };
+    },
+    hover: (_, monitor) => {
+      // Update hover position on every mouse move
+      const clientOffset = monitor.getClientOffset();
+      if (monitor.isOver() && clientOffset) {
+        setHoverPosition({ x: clientOffset.x, y: clientOffset.y });
+      } else {
+        setHoverPosition(null);
       }
-    }),
-    [collection._id, onDrop, pushCardEntryToCollection, deleteCardEntry, allowDrop]
-  );
+    },
+    drop: (payload, monitor) => {
+      // Get drop position
+      const clientOffset = monitor.getClientOffset();
+      const dropPosition = clientOffset ? { x: clientOffset.x, y: clientOffset.y } : { x: 0, y: 0 };
+
+      // Calculate drop index if callback provided
+      const dropIndex = getDestinationIndex ? getDestinationIndex(dropPosition) : -1;
+
+      // Create enhanced payload with drop metadata
+      const enhancedPayload: CollectionDropTargetPayload = {
+        ...payload,
+        dropPosition,
+        dropIndex
+      };
+
+      // If custom onDrop handler provided, call it
+      const result = onDrop?.(enhancedPayload);
+
+      // Default behaviour: add/move card(s) between collections
+      if (!onDrop || result)
+        return defaultDropBehaviour(collection, updateCardsInCollection, enhancedPayload);
+    }
+  });
 
   return {
     isOver,
@@ -161,4 +123,66 @@ export function useCollectionDropTarget({
     hoverPayload,
     dropRef: dropRef as unknown as React.Ref<HTMLDivElement>
   };
+}
+
+function defaultDropBehaviour(
+  targetCollection: CollectionSummary,
+  updateCardsInCollection: (arg: any) => void,
+  { card, entry, sourceCollectionId, sourceIndex, dropIndex, quantity }: CollectionDropTargetPayload
+) {
+  // If we're just dropping a CARD, do that now and return.
+  if (card) return dropCard(targetCollection, card, 1, updateCardsInCollection);
+
+  const isSameCollection = sourceCollectionId === targetCollection._id;
+
+  // If dropping to the same collection, move the card to a new index
+  if (isSameCollection) {
+    // console.log("Source index:", sourceIndex, "Drop index:", dropIndex);
+    return updateCardsInCollection({
+      collectionId: targetCollection._id,
+      action: "move",
+      fromIndex: sourceIndex!,
+      toIndex: dropIndex,
+      quantity
+    });
+  }
+
+  // Otherwise, remove from the source collection and add to the target collection
+  // Remove quantity copies of the card from the source collection.
+  updateCardsInCollection({
+    collectionId: sourceCollectionId!,
+    action: "remove",
+    fromIndex: sourceIndex!,
+    quantity
+  });
+
+  // Add that many copies of the card to the target collection.
+  updateCardsInCollection({
+    collectionId: targetCollection._id,
+    action: "add",
+    entry: {
+      cardId: entry!.card.id,
+      quantity: entry!.quantity,
+      notes: entry!.notes,
+      tags: entry!.tags || []
+    },
+    quantity
+  });
+}
+
+function dropCard(
+  collection: CollectionSummary,
+  card: MtgCard,
+  quantity: number,
+  updateCardsInCollection: (arg: any) => void
+) {
+  // Add that many copies of the card to the target collection.
+  updateCardsInCollection({
+    collectionId: collection._id,
+    action: "add",
+    entry: {
+      cardId: card.id,
+      quantity
+    }
+  });
 }

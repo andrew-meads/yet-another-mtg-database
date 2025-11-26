@@ -1,11 +1,12 @@
 "use client";
 
 import { useDragLayer } from "react-dnd";
-import CardArtView from "../CardArtView";
+import CardArtView from "@/components/CardArtView";
+import { CollectionDragSourcePayload } from "@/hooks/drag-drop/Types";
 
 export default function CardDragLayer() {
   const { item, currentOffset, itemType } = useDragLayer((monitor) => ({
-    item: monitor.getItem(),
+    item: monitor.getItem() as CollectionDragSourcePayload,
     itemType: monitor.getItemType(),
     currentOffset: monitor.getClientOffset()
   }));
@@ -14,9 +15,9 @@ export default function CardDragLayer() {
 
   // Offset by half the card dimensions to center it on the cursor
   // Adjust these values based on your "small" variant dimensions
-  const cardWidth = 146 / 2;  // half of small variant width
+  const cardWidth = 146 / 2; // half of small variant width
   const cardHeight = 204 / 2; // half of small variant height
-  
+
   const transform = `translate(${currentOffset.x - cardWidth}px, ${currentOffset.y - cardHeight}px)`;
 
   return (
@@ -31,7 +32,7 @@ export default function CardDragLayer() {
         height: "204px"
       }}
     >
-      <CardArtView card={item.card} variant="small" />
+      <CardArtView card={item.card!} variant="small" />
     </div>
   );
 }

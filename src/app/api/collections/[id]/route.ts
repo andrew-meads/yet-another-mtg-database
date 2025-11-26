@@ -1,17 +1,17 @@
 import connectDB from "@/db/mongoose";
 import { CardCollectionModel, Card } from "@/db/schema";
-import { CardCollectionWithCards } from "@/types/CardCollection";
+import { CardCollectionWithCards, CardEntry } from "@/types/CardCollection";
 import { NextRequest } from "next/server";
 
 /**
  * GET /api/collections/[id]
  * Retrieves a single card collection by its ID.
- * 
+ *
  * Query Parameters:
  * - details: If "true", includes full card details in the response (optional)
- * 
+ *
  * @returns The collection object, or 404 if not found
- * 
+ *
  * Behavior:
  * - Without details param: Returns collection with card IDs, quantities, notes, and tags
  * - With ?details=true: Populates full MTG card data for each card in the collection
@@ -58,17 +58,23 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
   }
 }
 
+interface PatchCollectionBody {
+  name?: string;
+  description?: string;
+  cards?: Array<CardEntry>;
+}
+
 /**
  * PATCH /api/collections/[id]
  * Updates an existing card collection.
- * 
+ *
  * Request Body (all fields optional, partial updates supported):
  * - name: Collection name
  * - description: Collection description
  * - cards: Array of card objects with cardId, quantity, notes, and tags
- * 
+ *
  * @returns The updated collection, or 404 if not found
- * 
+ *
  * Note: Fields _id and collectionType cannot be modified.
  * Only provided fields will be updated; omitted fields remain unchanged.
  */
@@ -78,7 +84,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/collec
 
     const { id } = await ctx.params;
     const body = await request.json();
-    const { name, description, cards } = body;
+    const { name, description, cards } = body as PatchCollectionBody;
 
     // Build update object only with allowed fields that are provided
     const update: Record<string, any> = {};

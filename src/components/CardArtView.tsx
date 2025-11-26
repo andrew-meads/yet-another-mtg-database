@@ -216,10 +216,7 @@ function CardImage({
   // Render a container that allows the image to scale down to fit its parent height
   if (!imageUri) {
     return (
-      <div
-        className="bg-gray-200 flex items-center justify-center text-gray-500"
-        style={style}
-      >
+      <div className="bg-gray-200 flex items-center justify-center text-gray-500" style={style}>
         No image available{alt !== "" && ` for ${alt}`}
       </div>
     );
@@ -237,5 +234,47 @@ function CardImage({
         priority={false}
       />
     </div>
+  );
+}
+
+/**
+ * Props for SimpleCardArtView component
+ */
+interface SimpleCardArtViewProps {
+  /** The MTG card to display */
+  card: MtgCard;
+  /** Which image size variant to display */
+  variant: ImageVariant;
+  /** Width of the image container */
+  width: number | string;
+  /** Height of the image container */
+  height: number | string;
+}
+
+/**
+ * SimpleCardArtView component - renders a card image without flipping or dragging logic
+ *
+ * For cards with multiple faces, displays the first face's image
+ */
+export function SimpleCardArtView({ card, variant, width, height }: SimpleCardArtViewProps) {
+  const dimensions = IMAGE_DIMENSIONS[variant];
+
+  // Check if card faces have their own images
+  const cardFaces = card.card_faces;
+  const hasFaceImages = cardFaces && cardFaces.length > 0 && cardFaces[0].image_uris;
+
+  const imageUri = hasFaceImages ? cardFaces[0].image_uris?.[variant] : card.image_uris?.[variant];
+
+  const alt = hasFaceImages ? cardFaces[0].name : card.name;
+
+  return (
+    <CardImage
+      imageUri={imageUri}
+      alt={alt}
+      width={dimensions.width}
+      height={dimensions.height}
+      containerWidth={width}
+      containerHeight={height}
+    />
   );
 }

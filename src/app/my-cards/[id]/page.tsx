@@ -5,15 +5,22 @@ import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import CollectionTable from "@/components/my-cards-page/CollectionTable";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import DeckView from "@/components/my-cards-page/deck-view/DeckView";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+type PageMode = "collection" | "deck-builder";
+
 export default function Page({ params }: PageProps) {
   const { id } = use(params);
   const { addOpenCollection } = useOpenCollectionsContext();
   const { data, isLoading, error } = useRetrieveCollectionDetails(id);
+  const [mode, setMode] = useLocalStorage<PageMode>(`my-cards-page-mode-${id}`, "collection");
 
   if (data) addOpenCollection(data.collection);
 
@@ -51,17 +58,30 @@ export default function Page({ params }: PageProps) {
   const { collection } = data;
 
   return (
-    <div className="mx-auto space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-          {getCollectionIcon(collection.collectionType, "h-6 w-6")}
-          {collection.name}
-        </h2>
-        <p className="text-muted-foreground">
-          {collection.description || "No description provided"}
-        </p>
+    <div className="mx-auto space-y-6 h-full flex flex-col">
+      <div className="flex items-start justify-between shrink-0">
+        <div>
+          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+            {getCollectionIcon(collection.collectionType, "h-6 w-6")}
+            {collection.name}
+          </h2>
+          <p className="text-muted-foreground">
+            {collection.description || "No description provided"}
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="mode-toggle"
+            checked={mode === "deck-builder"}
+            onCheckedChange={(checked) => setMode(checked ? "deck-builder" : "collection")}
+          />
+          <Label htmlFor="mode-toggle">Deck Builder</Label>
+        </div>
       </div>
-      <CollectionTable collection={collection} entriesPerPage={10} />
+      <div className="flex-1 min-h-0">
+        {mode === "collection" && <CollectionTable collection={collection} entriesPerPage={10} />}
+        {mode === "deck-builder" && <DeckView deck={collection} />}
+      </div>
     </div>
   );
 }

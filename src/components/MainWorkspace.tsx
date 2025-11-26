@@ -73,7 +73,7 @@ function InnerWorkspace({ layout, children }: { layout: number[]; children?: Rea
               <div className="h-full w-full">
                 <CardArtView
                   card={selectedCard}
-                  variant="normal"
+                  variant="large"
                   flippable={true}
                   draggable={true}
                   width="100%"
