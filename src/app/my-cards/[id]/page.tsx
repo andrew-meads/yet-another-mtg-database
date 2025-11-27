@@ -4,7 +4,7 @@ import { use } from "react";
 import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { getCollectionIcon } from "@/lib/collectionUtils";
-import CollectionTable from "@/components/my-cards-page/CollectionTable";
+import CollectionTable from "@/components/my-cards-page/collection-view/CollectionTable";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
 import { Switch } from "@/components/ui/switch";

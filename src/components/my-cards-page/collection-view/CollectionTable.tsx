@@ -17,8 +17,10 @@ import { useState, useRef, useEffect, Fragment, useMemo } from "react";
 import CardPopup from "@/components/CardPopup";
 import SearchDialog, { SearchFilters, searchPredicate } from "@/components/SearchDialog";
 import { useCardSelection } from "@/context/CardSelectionContext";
-import CollectionTableRow from "@/components/my-cards-page/CollectionTableRow";
+import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
+import CollectionTableRow from "@/components/my-cards-page/collection-view/CollectionTableRow";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
+import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
 
 /**
  * Props for the CollectionTable component
@@ -70,6 +72,15 @@ export default function CollectionTable({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+
+  // === CONTEXT ===
+  const { activeCollection, openCollections } = useOpenCollectionsContext();
+
+  // === HOOKS ===
+  const { mutate: updateCardsInCollection } = useUpdateCollectionCards();
+
+  // === REFS ===
+  const tableRef = useRef<HTMLDivElement>(null);
 
   // === SEARCH FILTERING ===
 
@@ -182,6 +193,31 @@ export default function CollectionTable({
   }, []);
 
   /**
+   * Keyboard handler for moving card to active collection
+   * Triggered with + or = keys when a row is selected
+   */
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only trigger if table is in focus and a row is selected
+      if (!tableRef.current?.contains(document.activeElement) || selectedRowIndex === null) {
+        return;
+      }
+
+      // Check for + or = keys
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        const selectedEntry = filteredEntries[selectedRowIndex];
+        if (selectedEntry) {
+          handleMoveToCollection(selectedEntry, selectedRowIndex, 1, undefined);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedRowIndex, filteredEntries, activeCollection, openCollections, collection._id]);
+
+  /**
    * Start hover timer when mouse enters a row
    * Popup appears after 500ms if mouse remains on row
    */
@@ -237,6 +273,59 @@ export default function CollectionTable({
     setSearchFilters(null);
   };
 
+  /**
+   * Handle move to collection
+   */
+  const handleMoveToCollection = (
+    entry: import("@/types/CardCollection").DetailedCardEntry,
+    rowIndex: number,
+    quantity: number,
+    targetCollectionId?: string
+  ) => {
+    // Determine target collection
+    let targetCollection;
+
+    if (targetCollectionId === undefined) {
+      // Use active collection if no specific collection ID provided
+      if (activeCollection?._id === collection._id) {
+        // Can't move to the same collection
+        return;
+      }
+      targetCollection = activeCollection;
+    } else {
+      // Find collection in open collections by ID
+      targetCollection = openCollections.find((c) => c._id === targetCollectionId);
+    }
+
+    // Return early if no valid collection found
+    if (!targetCollection) return;
+
+    // Remove from current collection
+    updateCardsInCollection(
+      {
+        collectionId: collection._id,
+        action: "remove",
+        fromIndex: rowIndex,
+        quantity
+      },
+      {
+        onSuccess: () => {
+          // After successful removal, add to target collection
+          updateCardsInCollection({
+            collectionId: targetCollection._id,
+            action: "add",
+            entry: {
+              cardId: entry.card.id,
+              quantity,
+              notes: entry.notes,
+              tags: entry.tags
+            }
+          });
+        }
+      }
+    );
+  };
+
   // === EARLY RETURNS FOR SPECIAL STATES ===
 
   if (!collection.cardsDetailed || collection.cardsDetailed.length === 0) {
@@ -260,8 +349,14 @@ export default function CollectionTable({
     <div
       style={containerStyle}
       className={containerClass}
-      ref={dropRef}
+      ref={(node) => {
+        if (typeof dropRef === "function") {
+          dropRef(node);
+        }
+        tableRef.current = node;
+      }}
       data-collection-id={collection._id}
+      tabIndex={0} // Make container focusable for keyboard navigation
     >
       {/* Search and Pagination Controls */}
       <div className="border-b p-3 flex justify-between items-center gap-2 bg-background">
@@ -372,6 +467,7 @@ export default function CollectionTable({
                   onHoverLeave={handleRowLeave}
                   onHoverMove={handleRowMove}
                   onDragStateChange={setIsAnyRowDragging}
+                  onMoveToCollection={handleMoveToCollection}
                 />
               </Fragment>
             );
