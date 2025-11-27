@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import SearchControls, { type SearchControlsValues } from "@/components/SearchControls";
+import SearchControls, { type SearchControlsValues } from "@/components/card-search-page/SearchControls";
 import CardsTable from "@/components/card-search-page/CardsTable";
 import { useCardsSearch } from "@/hooks/react-query/useCardsSearch";
 import {
@@ -26,7 +26,8 @@ export default function SearchPanel({ compact }: SearchPanelProps) {
       q: "lang:en exclude:extras",
       order: "name",
       dir: "asc",
-      pageLen: 25
+      pageLen: 25,
+      owned: false
     }
   );
   const [page, setPage] = useState(1);
@@ -38,6 +39,7 @@ export default function SearchPanel({ compact }: SearchPanelProps) {
     order: searchParams.order,
     dir: searchParams.dir,
     pageLen: searchParams.pageLen,
+    owned: searchParams.owned,
     page
   });
 

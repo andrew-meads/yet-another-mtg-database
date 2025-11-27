@@ -28,6 +28,7 @@ export type CardsQueryParams = {
   pageLen?: number;
   order?: string;
   dir?: "asc" | "desc";
+  owned?: boolean;
   // Optional: allow disabling the query from the caller
   enabled?: boolean;
 };
@@ -39,6 +40,7 @@ function buildQueryString(params: CardsQueryParams): string {
   if (params.pageLen && params.pageLen !== 100) sp.set("page-len", String(params.pageLen));
   if (params.order && params.order !== "name") sp.set("order", params.order);
   if (params.dir && params.dir !== "asc") sp.set("dir", params.dir);
+  if (params.owned) sp.set("owned", "true");
   const qs = sp.toString();
   return qs ? `?${qs}` : "";
 }
@@ -64,8 +66,9 @@ export function useCardsSearch<TData = CardsResponse>(
     const order = params.order ?? "name";
     const dir: "asc" | "desc" = params.dir ?? "asc";
     const q = params.q?.trim() ?? "";
-    return { q, page, pageLen, order, dir } as Required<Omit<CardsQueryParams, "enabled">>;
-  }, [params.q, params.page, params.pageLen, params.order, params.dir]);
+    const owned = params.owned ?? false;
+    return { q, page, pageLen, order, dir, owned } as Required<Omit<CardsQueryParams, "enabled">>;
+  }, [params.q, params.page, params.pageLen, params.order, params.dir, params.owned]);
 
   return useQuery<CardsResponse, Error, TData, any[]>({
     queryKey: [
@@ -74,7 +77,8 @@ export function useCardsSearch<TData = CardsResponse>(
       normalized.page,
       normalized.pageLen,
       normalized.order,
-      normalized.dir
+      normalized.dir,
+      normalized.owned
     ],
     queryFn: ({ signal }) => fetchCards(normalized, signal),
     staleTime: 15_000,

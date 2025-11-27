@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export type SortField =
   | "name"
@@ -31,6 +32,7 @@ export interface SearchControlsValues {
   order: SortField;
   dir: "asc" | "desc";
   pageLen: number;
+  owned: boolean;
 }
 
 export interface SearchControlsProps {
@@ -63,13 +65,14 @@ export default function SearchControls({
   const [order, setOrder] = useState<SortField>(initial?.order ?? "name");
   const [dir, setDir] = useState<"asc" | "desc">(initial?.dir ?? "asc");
   const [pageLen, setPageLen] = useState<number>(initial?.pageLen ?? 100);
+  const [owned, setOwned] = useState<boolean>(initial?.owned ?? false);
 
   const debouncedQ = useDebouncedValue(q, 350);
 
   // Emit changes
   useEffect(() => {
-    onChange?.({ q: debouncedQ, order, dir, pageLen });
-  }, [debouncedQ, order, dir, pageLen, onChange]);
+    onChange?.({ q: debouncedQ, order, dir, pageLen, owned });
+  }, [debouncedQ, order, dir, pageLen, owned, onChange]);
 
   return (
     <div className={cn("w-full", className)}>
@@ -84,13 +87,29 @@ export default function SearchControls({
           <Field className={!compact ? "col-span-full" : undefined}>
             <FieldLabel htmlFor="search-q">Search</FieldLabel>
             <FieldContent>
-              <Input
-                id="search-q"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={compact ? "Search..." : "Try: t:creature c:gr (flying or trample)"}
-                className={compact ? "h-8" : undefined}
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="search-q"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={compact ? "Search..." : "Try: t:creature c:gr (flying or trample)"}
+                  className={compact ? "h-8" : undefined}
+                />
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <Switch
+                    id="search-owned"
+                    checked={owned}
+                    onCheckedChange={setOwned}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                  <label
+                    htmlFor="search-owned"
+                    className="text-sm font-medium cursor-pointer select-none"
+                  >
+                    Owned
+                  </label>
+                </div>
+              </div>
             </FieldContent>
           </Field>
 
