@@ -2,10 +2,23 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger
+} from "@/components/ui/context-menu";
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect } from "react";
 import { ManaCost } from "@/components/CardTextView";
 import { useCardDragSource } from "@/hooks/drag-drop/useCardDragSource";
+import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
+import { getCollectionIcon } from "@/lib/collectionUtils";
+import { Star, Plus } from "lucide-react";
 import clsx from "clsx";
 
 /**
@@ -24,6 +37,8 @@ interface CardsTableRowProps {
   onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
   /** Callback to notify parent when drag state changes */
   onDragStateChange?: (isDragging: boolean) => void;
+  /** Callback when add to collection button is clicked */
+  onAddToCollection?: (card: MtgCard, collectionId?: string) => void;
   /** Whether this row is currently selected */
   isSelected?: boolean;
   /** Ref for scroll-into-view functionality (keyboard navigation) */
@@ -47,6 +62,7 @@ export default function CardsTableRow({
   onHoverLeave,
   onHoverMove,
   onDragStateChange,
+  onAddToCollection,
   isSelected,
   rowRef
 }: CardsTableRowProps) {
@@ -54,10 +70,19 @@ export default function CardsTableRow({
   // Make the row draggable using react-dnd
   const { isDragging, dragRef } = useCardDragSource(card);
 
+  // === CONTEXT ===
+  // Get open collections from context
+  const { activeCollection, openCollections } = useOpenCollectionsContext();
+
   // Notify parent component when drag state changes (used to hide hover popup)
   useEffect(() => {
     onDragStateChange?.(isDragging);
   }, [isDragging, onDragStateChange]);
+
+  // === HANDLERS ===
+  const handleAddToCollection = () => {
+    onAddToCollection?.(card, undefined);
+  };
 
   // Combine dragRef (for react-dnd) and rowRef (for scroll-into-view) into a single ref
   const combinedRef = (node: HTMLTableRowElement | null) => {
@@ -117,18 +142,20 @@ export default function CardsTableRow({
   );
 
   return (
-    <TableRow
-      ref={combinedRef as unknown as React.LegacyRef<HTMLTableRowElement>}
-      className={clsx(
-        "cursor-pointer",
-        isDragging && "opacity-50",
-        isSelected && "bg-primary/10 hover:bg-primary/15"
-      )}
-      onClick={() => onClick?.(card)}
-      onMouseEnter={onHoverEnter}
-      onMouseLeave={onHoverLeave}
-      onMouseMove={onHoverMove}
-    >
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <TableRow
+          ref={combinedRef as unknown as React.LegacyRef<HTMLTableRowElement>}
+          className={clsx(
+            "cursor-pointer",
+            isDragging && "opacity-50",
+            isSelected && "bg-primary/10 hover:bg-primary/15"
+          )}
+          onClick={() => onClick?.(card)}
+          onMouseEnter={onHoverEnter}
+          onMouseLeave={onHoverLeave}
+          onMouseMove={onHoverMove}
+        >
       <TableCell className="font-medium">{displayName}</TableCell>
       <TableCell className="text-center">
         {manaCosts.length > 0 && (
@@ -165,6 +192,64 @@ export default function CardsTableRow({
       <TableCell className="text-center">{card.cmc}</TableCell>
       <TableCell className="text-center">{powerToughness}</TableCell>
       <TableCell className="text-center">{loyalty}</TableCell>
+      <TableCell className="w-[50px]">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCollection();
+              }}
+            >
+              <Star className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="flex flex-col">
+              <span>Add to active collection</span>
+              {activeCollection && (
+                <span className="text-xs text-muted-foreground">{activeCollection.name}</span>
+              )}
+              <span className="text-xs text-muted-foreground">Press + or =</span>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
     </TableRow>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={handleAddToCollection}>
+          <div className="flex flex-col flex-1">
+            <div className="flex items-center">
+              <Star className="mr-2 h-4 w-4" />
+              Add to active collection
+              <span className="ml-auto pl-4 text-xs text-muted-foreground">+ or =</span>
+            </div>
+            {activeCollection && (
+              <span className="ml-6 text-xs text-muted-foreground">{activeCollection.name}</span>
+            )}
+          </div>
+        </ContextMenuItem>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <Plus className="mr-2 h-4 w-4" />
+            Add to collection
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            {openCollections.map((collection) => (
+              <ContextMenuItem
+                key={collection._id}
+                onClick={() => onAddToCollection?.(card, collection._id)}
+              >
+                {getCollectionIcon(collection.collectionType, "h-4 w-4 mr-2")}
+                {collection.name}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

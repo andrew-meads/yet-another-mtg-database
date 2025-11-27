@@ -1,4 +1,4 @@
-import SearchPanel from "@/components/SearchPanel";
+import SearchPanel from "@/components/card-search-page/SearchPanel";
 
 export default async function Home() {
 

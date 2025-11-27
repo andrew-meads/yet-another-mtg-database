@@ -4,8 +4,10 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
+import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
+import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
 import CardPopup from "@/components/CardPopup";
-import CardsTableRow from "@/components/CardsTableRow";
+import CardsTableRow from "@/components/card-search-page/CardsTableRow";
 
 /**
  * Props for the CardsTable component
@@ -78,6 +80,14 @@ export default function CardsTable({
   // Track if any row is currently being dragged (to hide hover popup)
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
 
+  // === CONTEXT ===
+
+  // Get active collection and open collections from context
+  const { activeCollection, openCollections } = useOpenCollectionsContext();
+
+  // Get mutation function for updating collection cards
+  const { mutate: updateCardsInCollection } = useUpdateCollectionCards();
+
   // === REFS ===
 
   // Track last mouse position for hover popup positioning
@@ -120,14 +130,25 @@ export default function CardsTable({
    * - Only works when table has focus and a card is selected
    * - Arrow Down: select next card
    * - Arrow Up: select previous card
+   * - + or =: add selected card to active collection
    * - Automatically scrolls selected row into view (centered)
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle arrow keys if we have a selected card and the table container has focus
-      if (!selectedCard || !tableRef.current?.contains(document.activeElement)) {
+      // Only handle keys if the table container has focus
+      if (!tableRef.current?.contains(document.activeElement)) {
         return;
       }
+
+      // Handle + or = keys to add to collection
+      if ((e.key === "+" || e.key === "=") && selectedCard) {
+        e.preventDefault();
+        handleAddToCollection(selectedCard, undefined);
+        return;
+      }
+
+      // Handle arrow keys for navigation
+      if (!selectedCard) return;
 
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
@@ -211,6 +232,35 @@ export default function CardsTable({
     lastMousePosRef.current = { x: e.clientX, y: e.clientY };
   };
 
+  /**
+   * Handle add to collection button click
+   */
+  const handleAddToCollection = (card: MtgCard, collectionId?: string) => {
+    // Determine target collection
+    let targetCollection;
+    
+    if (collectionId === undefined) {
+      // Use active collection if no specific collection ID provided
+      targetCollection = activeCollection;
+    } else {
+      // Find collection in open collections by ID
+      targetCollection = openCollections.find((c) => c._id === collectionId);
+    }
+
+    // Return early if no valid collection found
+    if (!targetCollection) return;
+
+    // Add card to collection
+    updateCardsInCollection({
+      collectionId: targetCollection._id,
+      action: "add",
+      entry: {
+        cardId: card.id,
+        quantity: 1
+      }
+    });
+  };
+
   // === CONTAINER STYLING ===
 
   const containerClass = maxHeight
@@ -237,6 +287,7 @@ export default function CardsTable({
             <TableHead className="text-center">CMC</TableHead>
             <TableHead className="text-center">P/T</TableHead>
             <TableHead className="text-center">Loyalty</TableHead>
+            <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -249,6 +300,7 @@ export default function CardsTable({
               onHoverLeave={handleRowLeave}
               onHoverMove={handleRowMove}
               onDragStateChange={setIsAnyRowDragging}
+              onAddToCollection={handleAddToCollection}
               isSelected={selectedCard?.id === card.id}
               rowRef={getRowRef(card.id)}
             />
