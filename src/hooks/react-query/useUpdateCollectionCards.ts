@@ -43,6 +43,7 @@ export function useUpdateCollectionCards(): UseMutationResult<any, Error, PatchC
     mutationFn: updateCards,
     onSuccess: (_data, { collectionId }) => {
       queryClient.invalidateQueries({ queryKey: ["collection-details", collectionId] });
+      queryClient.invalidateQueries({ queryKey: ["card-locations"] });
     }
   });
 }

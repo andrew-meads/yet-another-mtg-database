@@ -89,6 +89,11 @@ export function useUpdateCardEntry(): UseMutationResult<any, Error, UpdateCardEn
         queryKey: ["collection-summaries"]
       });
 
+      // Invalidate card locations since collection contents may have changed
+      queryClient.invalidateQueries({
+        queryKey: ["card-locations"]
+      });
+
       // Invalidate tags query if there were any tags added
       if (variables.tags && variables.tags.length > 0) {
         queryClient.invalidateQueries({

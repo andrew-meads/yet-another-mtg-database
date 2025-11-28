@@ -5,6 +5,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import CardArtView from "@/components/CardArtView";
 import { CardTextView } from "@/components/CardTextView";
 import { CardSelectionProvider, useCardSelection } from "@/context/CardSelectionContext";
+import CardLocationsView from "./CardLocationsView";
 
 const STORAGE_KEY = "layout/main-panels";
 
@@ -31,8 +32,8 @@ export default function MainWorkspace({ children }: { children?: ReactNode }) {
     } catch {
       // ignore
     }
-    // New default: 25% left (card details) / 75% right (search)
-    setLayout([25, 75]);
+    // New default: 20% left (card details) / 80% right (search)
+    setLayout([20, 80]);
   }, []);
 
   if (!layout) {
@@ -69,7 +70,7 @@ function InnerWorkspace({ layout, children }: { layout: number[]; children?: Rea
         {selectedCard ? (
           <ResizablePanelGroup direction="vertical">
             {/* Top: Card Image */}
-            <ResizablePanel defaultSize={50} minSize={30} className="p-4 overflow-hidden">
+            <ResizablePanel defaultSize={45} minSize={30} className="p-4 overflow-hidden">
               <div className="h-full w-full">
                 <CardArtView
                   card={selectedCard}
@@ -84,9 +85,18 @@ function InnerWorkspace({ layout, children }: { layout: number[]; children?: Rea
 
             <ResizableHandle withHandle />
 
+            {/* Middle: Card locations */}
+            <ResizablePanel defaultSize={20} minSize={10}>
+              <div className="h-full p-4 overflow-y-auto">
+                <CardLocationsView cardName={selectedCard?.name} />
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
             {/* Bottom: Card Text */}
-            <ResizablePanel defaultSize={50} minSize={30}>
-              <div className="h-full p-4 overflow-y-scroll">
+            <ResizablePanel defaultSize={35} minSize={30}>
+              <div className="h-full p-4 overflow-y-auto">
                 <CardTextView card={selectedCard} />
               </div>
             </ResizablePanel>

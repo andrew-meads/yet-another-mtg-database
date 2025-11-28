@@ -19,6 +19,7 @@ export function useDeleteCardEntry(): UseMutationResult<void, Error, DeleteCardE
     onSuccess: (_data, { collectionId }) => {
       queryClient.invalidateQueries({ queryKey: ["collection-details", collectionId] });
       queryClient.invalidateQueries({ queryKey: ["collection-summaries"] });
+      queryClient.invalidateQueries({ queryKey: ["card-locations"] });
     }
   });
 }
