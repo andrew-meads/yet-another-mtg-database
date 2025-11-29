@@ -21,7 +21,7 @@ export default function DeckView({ deck }: DeckViewProps) {
         </Fragment>
       ))}
 
-      <AddDeckColumn />
+      <AddDeckColumn deck={deck} />
     </div>
   );
 }
