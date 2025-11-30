@@ -3,20 +3,54 @@ import mongoose from "mongoose";
 import { Card, CardCollectionModel } from "@/db/schema";
 import fs from "fs";
 import { parser } from "stream-json";
-import { streamArray } from "stream-json/streamers/StreamArray";
+import StreamArray, { streamArray } from "stream-json/streamers/StreamArray";
+import { Command } from "commander";
+import { Readable } from "stream";
+
+const program = new Command();
+program
+  .name("init-db")
+  .description("Initialize the MongoDB database with card data")
+  .version("1.0.0")
+  .option("-f, --file <path>", "Path to all-cards.json file")
+  .option("--data-url <url>", "URL to download all-cards.json from")
+  .option("-c, --clear", "Clear existing data before importing", false)
+  .parse(process.argv);
+
+const options = program.opts();
+console.log(options);
 
 const mongoDbUri = process.env.MONGO_DB_URI;
 if (!mongoDbUri) {
   throw new Error("MONGO_DB_URI environment variable is not defined");
 }
 
+/**
+ * Main entry point for the database initialization script.
+ * Connects to MongoDB, optionally clears existing data, creates default collections,
+ * and imports card data from a file or URL.
+ */
 async function run() {
   try {
     await mongoose.connect(mongoDbUri!);
     console.log("Connected to MongoDB");
 
-    await clearDb();
-    await importCards();
+    // Get pipeline for reading card data
+    const pipeline = await getReadPipeline();
+
+    // Clear existing data if --clear flag is set. Do this after getting the pipeline to
+    // avoid deleting data then not being able to read the new data.
+    if (options.clear) {
+      await clearDb();
+    } else {
+      console.log("Skipping database clear");
+    }
+
+    // Create default collections if none exist
+    await createDefaultCollections();
+
+    // Import card data
+    await importCards(pipeline);
   } catch (error) {
     console.error(error);
   } finally {
@@ -25,16 +59,57 @@ async function run() {
   }
 }
 
-async function importCards() {
+/**
+ * Creates a streaming pipeline for reading card data from various sources.
+ * Supports three input methods: command-line specified file, URL download, or environment variable file path.
+ * The pipeline parses JSON and streams individual array elements for memory-efficient processing.
+ *
+ * @returns A StreamArray pipeline that emits individual card objects
+ * @throws Error if both --file and --data-url options are specified, or if no input source is available
+ */
+async function getReadPipeline(): Promise<StreamArray> {
+  if (options.file && options.dataUrl)
+    throw new Error("Cannot specify both --file and --data-url options");
+
+  if (options.file) {
+    console.log(`Importing cards from file: ${options.file}`);
+    return fs.createReadStream(options.file).pipe(parser()).pipe(streamArray());
+  }
+
+  if (options.dataUrl) {
+    console.log(`Downloading and importing cards from URL: ${options.dataUrl}`);
+    const res = await fetch(options.dataUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to download data from URL: ${res.status} ${res.statusText}`);
+    }
+    // Convert Web Stream to Node.js stream
+    return Readable.fromWeb(res.body as any)
+      .pipe(parser())
+      .pipe(streamArray());
+  }
+
+  if (!process.env.ALL_CARDS_FILE) {
+    throw new Error("No input file specified and ALL_CARDS_FILE env variable is not set");
+  }
+
+  console.log(`Importing cards from default ALL_CARDS_FILE: ${process.env.ALL_CARDS_FILE}`);
+  return fs.createReadStream(process.env.ALL_CARDS_FILE!).pipe(parser()).pipe(streamArray());
+}
+
+/**
+ * Streams and imports card data from the provided pipeline into MongoDB.
+ * Processes cards in batches for efficiency, filtering out variations, digital-only cards,
+ * oversized cards, and cards with invalid type_line values.
+ * Implements backpressure handling by pausing/resuming the stream during batch inserts.
+ *
+ * @param pipeline - The StreamArray pipeline that provides card data
+ * @returns Promise that resolves when all cards have been processed
+ */
+async function importCards(pipeline: StreamArray) {
   return new Promise<void>((resolve, reject) => {
     const BATCH_SIZE = 1000;
     let batch: any[] = [];
     let processedCount = 0;
-
-    const pipeline = fs
-      .createReadStream(process.env.ALL_CARDS_FILE!)
-      .pipe(parser())
-      .pipe(streamArray());
 
     pipeline
       .on("data", async (data: any) => {
@@ -91,10 +166,21 @@ async function importCards() {
   });
 }
 
+/**
+ * Deletes all existing card documents from the database.
+ * Used when the --clear flag is specified to start with a clean slate.
+ */
 async function clearDb() {
   await Card.deleteMany({});
   console.log("Cleared Card database");
+}
 
+/**
+ * Ensures at least one default card collection exists in the database.
+ * Creates a "My Collection" collection if no collections are found.
+ * This provides users with a starting point for organizing their cards.
+ */
+async function createDefaultCollections() {
   // If CardCollectionModel is empty, create a default "My Collection"
   const collectionCount = await CardCollectionModel.countDocuments();
   if (collectionCount === 0) {
@@ -108,6 +194,15 @@ async function clearDb() {
   }
 }
 
+/**
+ * Inserts a batch of cards into MongoDB with automatic retry logic for failures.
+ * Uses bulk insert for efficiency, then individually retries any failed cards.
+ * This handles duplicate key errors and other insertion failures gracefully.
+ *
+ * @param batch - Array of card objects to insert
+ * @param initialProcessedCount - Running count of successfully processed cards
+ * @returns Updated count of successfully processed cards
+ */
 async function insertCards(batch: any[], initialProcessedCount: number = 0) {
   const result = await Card.insertMany(batch, { ordered: false, rawResult: true });
   const insertedCount = result.insertedCount;
