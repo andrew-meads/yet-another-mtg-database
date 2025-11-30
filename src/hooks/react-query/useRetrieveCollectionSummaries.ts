@@ -2,6 +2,7 @@
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { CollectionSummary } from "@/types/CardCollection";
+import { useSession } from "next-auth/react";
 
 export interface CollectionSummariesResponse {
   collections: CollectionSummary[];
@@ -26,9 +27,12 @@ export function useRetrieveCollectionSummaries(): UseQueryResult<
   CollectionSummariesResponse,
   Error
 > {
+  const { status } = useSession();
+
   return useQuery({
     queryKey: ["collection-summaries"],
     queryFn: fetchCollectionSummaries,
-    staleTime: 30_000 // Consider data fresh for 30 seconds
+    staleTime: 30_000, // Consider data fresh for 30 seconds
+    enabled: status === "authenticated" // Only run query if authenticated
   });
 }

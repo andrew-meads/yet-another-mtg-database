@@ -2,6 +2,14 @@ import mongoose, { Model, Schema } from "mongoose";
 import { MtgCard } from "@/types/MtgCard";
 import { CardCollection } from "@/types/CardCollection";
 import { Tag } from "@/types/Tag";
+import { User } from "@/types/User";
+
+const userSchema = new Schema<User>(
+  {
+    emailAddress: { type: String, required: true, unique: true }
+  },
+  { strict: true }
+);
 
 // Each document in the "cards" collection represents a Magic: The Gathering card
 const cardSchema = new Schema<MtgCard>(
@@ -109,6 +117,9 @@ const collectionSchema = new Schema<CardCollection>(
 export const TagSchema = new Schema<Tag>({
   label: { type: String, required: true, unique: true }
 });
+
+export const UserModel = (mongoose.models.User ||
+  mongoose.model<User>("User", userSchema)) as Model<User>;
 
 export const TagModel = (mongoose.models.Tag ||
   mongoose.model<Tag>("Tag", TagSchema)) as Model<Tag>;
