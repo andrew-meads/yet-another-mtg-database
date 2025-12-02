@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { inspect } from "util";
 import connectDB from "@/db/mongoose";
-import { CardCollectionModel } from "@/db/schema";
-import { CardCollection, CardEntry } from "@/types/CardCollection";
+import { CardCollectionModel, CardCollectionDocument } from "@/db/schema";
+import { CardEntry } from "@/types/CardCollection";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 type PatchCardsActions = "add" | "append" | "remove" | "swap" | "move" | "merge" | "swap-or-merge";
 const VALID_ACTIONS = ["add", "append", "remove", "swap", "move", "merge", "swap-or-merge"];
@@ -52,7 +54,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     await connectDB();
 
-    const collection = await CardCollectionModel.findById(id);
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
+
+    const collection = await CardCollectionModel.findOne({ _id: id, owner: userId });
     if (!collection) {
       return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     }
@@ -110,7 +115,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
  * @param quantity optional quantity to add (overrides entry.quantity if provided)
  */
 async function handleAddEntry(
-  collection: CardCollection,
+  collection: CardCollectionDocument,
   entry?: CardEntry,
   toIndex?: number,
   quantity?: number
@@ -153,7 +158,11 @@ async function handleAddEntry(
  * @param entry the entry to append
  * @param quantity optional quantity to set on the appended entry (overrides entry.quantity if provided)
  */
-async function handleAppendEntry(collection: CardCollection, entry?: CardEntry, quantity?: number) {
+async function handleAppendEntry(
+  collection: CardCollectionDocument,
+  entry?: CardEntry,
+  quantity?: number
+) {
   validateCardEntry(entry);
   if (quantity !== undefined) entry!.quantity = quantity;
   collection.cards.push(entry!);
@@ -167,7 +176,7 @@ async function handleAppendEntry(collection: CardCollection, entry?: CardEntry, 
  * @param quantity optional quantity to remove (if not provided, removes the entire entry)
  */
 async function handleRemoveEntry(
-  collection: CardCollection,
+  collection: CardCollectionDocument,
   fromIndex?: number,
   quantity?: number
 ) {
@@ -193,7 +202,11 @@ async function handleRemoveEntry(
  * @param fromIndex the index of the first entry
  * @param toIndex the index of the second entry
  */
-async function handleSwapEntry(collection: CardCollection, fromIndex?: number, toIndex?: number) {
+async function handleSwapEntry(
+  collection: CardCollectionDocument,
+  fromIndex?: number,
+  toIndex?: number
+) {
   if (fromIndex === undefined || fromIndex < 0 || fromIndex >= collection.cards.length) {
     throw new Error("Invalid fromIndex: must be a valid index in the cards array.");
   }
@@ -221,7 +234,7 @@ async function handleSwapEntry(collection: CardCollection, fromIndex?: number, t
  * @param quantity optional quantity to move (if not provided, moves the entire entry)
  */
 async function handleMoveEntry(
-  collection: CardCollection,
+  collection: CardCollectionDocument,
   fromIndex?: number,
   toIndex?: number,
   quantity?: number
@@ -271,7 +284,11 @@ async function handleMoveEntry(
  * @param fromIndex the index of the entry to merge into (destination)
  * @param toIndex the index of the entry to merge from (will be removed after merge)
  */
-async function handleMergeEntry(collection: CardCollection, fromIndex?: number, toIndex?: number) {
+async function handleMergeEntry(
+  collection: CardCollectionDocument,
+  fromIndex?: number,
+  toIndex?: number
+) {
   if (fromIndex === undefined || fromIndex < 0 || fromIndex >= collection.cards.length) {
     throw new Error("Invalid fromIndex: must be a valid index in the cards array.");
   }
@@ -308,7 +325,7 @@ async function handleMergeEntry(collection: CardCollection, fromIndex?: number, 
  * @param quantity optional quantity to consider when moving
  */
 async function handleSwapOrMergeEntry(
-  collection: CardCollection,
+  collection: CardCollectionDocument,
   fromIndex?: number,
   toIndex?: number,
   quantity?: number

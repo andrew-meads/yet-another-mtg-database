@@ -2,6 +2,8 @@ import connectDB from "@/db/mongoose";
 import { CardCollectionModel, Card } from "@/db/schema";
 import { CardCollectionWithCards, CardEntry } from "@/types/CardCollection";
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 /**
  * GET /api/collections/[id]
@@ -10,7 +12,7 @@ import { NextRequest } from "next/server";
  * Query Parameters:
  * - details: If "true", includes full card details in the response (optional)
  *
- * @returns The collection object, or 404 if not found
+ * @returns The collection object, or 404 if not found or not owned by the authenticated user
  *
  * Behavior:
  * - Without details param: Returns collection with card IDs, quantities, notes, and tags
@@ -20,8 +22,11 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
   try {
     await connectDB();
 
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
+
     const { id } = await ctx.params;
-    const collection = await CardCollectionModel.findById(id).lean();
+    const collection = await CardCollectionModel.findOne({ _id: id, owner: userId }).lean();
 
     if (!collection) {
       return Response.json({ error: "Collection not found" }, { status: 404 });
@@ -34,6 +39,8 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
     // Populate card details if requested
     const detailsCollection: CardCollectionWithCards = {
       ...collection,
+      _id: collection._id.toString(),
+      owner: collection.owner.toString(),
       cardsDetailed: []
     };
 
@@ -73,7 +80,7 @@ interface PatchCollectionBody {
  * - description: Collection description
  * - cards: Array of card objects with cardId, quantity, notes, and tags
  *
- * @returns The updated collection, or 404 if not found
+ * @returns The updated collection, or 404 if not found or not owned by the authenticated user
  *
  * Note: Fields _id and collectionType cannot be modified.
  * Only provided fields will be updated; omitted fields remain unchanged.
@@ -81,6 +88,9 @@ interface PatchCollectionBody {
 export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/collections/[id]">) {
   try {
     await connectDB();
+
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
 
     const { id } = await ctx.params;
     const body = await request.json();
@@ -100,11 +110,15 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/collec
       );
     }
 
-    // Find and update the collection
-    const collection = await CardCollectionModel.findByIdAndUpdate(id, update, {
-      new: true,
-      runValidators: true
-    });
+    // Find and update the collection (only if owned by user)
+    const collection = await CardCollectionModel.findOneAndUpdate(
+      { _id: id, owner: userId },
+      update,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
 
     if (!collection) {
       return Response.json({ error: "Collection not found" }, { status: 404 });

@@ -1,6 +1,8 @@
 import connectDB from "@/db/mongoose";
 import { CardCollectionModel } from "@/db/schema";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 /**
  * PATCH /api/collections/[id]/isActive
@@ -28,21 +30,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "isActive must be a boolean value" }, { status: 400 });
     }
 
-    // Check if the collection exists before making any updates
-    const existingCollection = await CardCollectionModel.findById(id);
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
+
+    // Check if the collection exists and is owned by the current user
+    const existingCollection = await CardCollectionModel.findOne({ _id: id, owner: userId });
 
     if (!existingCollection) {
       return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     }
 
-    // If setting a collection to active, first deactivate all other collections
+    // If setting a collection to active, first deactivate all other collections owned by this user
     if (body.isActive === true) {
-      await CardCollectionModel.updateMany({ _id: { $ne: id } }, { isActive: false });
+      await CardCollectionModel.updateMany({ _id: { $ne: id }, owner: userId }, { isActive: false });
     }
 
     // Update the collection's isActive status
-    const updatedCollection = await CardCollectionModel.findByIdAndUpdate(
-      id,
+    const updatedCollection = await CardCollectionModel.findOneAndUpdate(
+      { _id: id, owner: userId },
       { isActive: body.isActive },
       { new: true } // Return the updated document
     );

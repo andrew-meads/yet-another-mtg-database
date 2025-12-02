@@ -2,6 +2,8 @@ import connectDB from "@/db/mongoose";
 import { CardCollectionModel, Card } from "@/db/schema";
 import { CardLocation } from "@/types/CardLocation";
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 /**
  * GET /api/cards/locations?name=CardName
@@ -40,9 +42,13 @@ export async function GET(request: NextRequest) {
     // Get all matching card IDs
     const matchingCardIds = matchingCards.map((card) => card.id);
 
-    // Find all collections that contain at least one of these cards
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
+
+    // Find all collections that contain at least one of these cards and are owned by the current user
     const collections = await CardCollectionModel.find({
-      "cards.cardId": { $in: matchingCardIds }
+      "cards.cardId": { $in: matchingCardIds },
+      owner: userId
     }).lean();
 
     // Build CardLocation objects

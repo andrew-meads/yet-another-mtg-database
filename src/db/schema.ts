@@ -1,8 +1,13 @@
-import mongoose, { Model, Schema } from "mongoose";
+import mongoose, { Model, Schema, Types } from "mongoose";
 import { MtgCard } from "@/types/MtgCard";
 import { CardCollection } from "@/types/CardCollection";
 import { Tag } from "@/types/Tag";
 import { User } from "@/types/User";
+
+// Mongoose document type for CardCollection with ObjectId
+export type CardCollectionDocument = Omit<CardCollection, "owner"> & {
+  owner: Types.ObjectId;
+};
 
 const userSchema = new Schema<User>(
   {
@@ -95,11 +100,12 @@ const cardSchema = new Schema<MtgCard>(
   { strict: true }
 );
 
-const collectionSchema = new Schema<CardCollection>(
+const collectionSchema = new Schema<CardCollectionDocument>(
   {
     name: { type: String, required: true },
     description: { type: String, required: false, default: "" },
     isActive: Boolean,
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
     collectionType: { type: String, required: true, enum: ["collection", "wishlist", "deck"] },
     cards: [
       {
@@ -129,4 +135,4 @@ export const Card = (mongoose.models.Card ||
   mongoose.model<MtgCard>("Card", cardSchema)) as Model<MtgCard>;
 
 export const CardCollectionModel = (mongoose.models.CardCollection ||
-  mongoose.model<CardCollection>("CardCollection", collectionSchema)) as Model<CardCollection>;
+  mongoose.model<CardCollectionDocument>("CardCollection", collectionSchema)) as Model<CardCollectionDocument>;

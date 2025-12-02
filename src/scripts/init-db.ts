@@ -47,7 +47,7 @@ async function run() {
     }
 
     // Create default collections if none exist
-    await createDefaultCollections();
+    // await createDefaultCollections();
 
     // Import card data
     await importCards(pipeline);

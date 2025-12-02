@@ -7,6 +7,7 @@ export interface CollectionSummary {
   name: string;
   collectionType: CollectionType;
   isActive?: boolean;
+  owner: string;
 }
 
 /**

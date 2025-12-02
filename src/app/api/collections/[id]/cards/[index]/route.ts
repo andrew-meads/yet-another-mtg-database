@@ -2,6 +2,8 @@ import connectDB from "@/db/mongoose";
 import { CardCollectionModel } from "@/db/schema";
 import { TagModel } from "@/db/schema";
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 /**
  * PATCH /api/collections/[id]/cards/[index]
@@ -57,11 +59,14 @@ export async function PATCH(
       update[`cards.${cardIndex}.quantity`] = quantity;
     }
 
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
+
     // If quantity is 0, use $unset to remove the entry
     let result;
     if (quantity === 0) {
       result = await CardCollectionModel.findOneAndUpdate(
-        { _id: id },
+        { _id: id, owner: userId },
         { $unset: { [`cards.${cardIndex}`]: 1 } },
         { new: true }
       );
@@ -72,7 +77,7 @@ export async function PATCH(
       }
     } else {
       result = await CardCollectionModel.findOneAndUpdate(
-        { _id: id },
+        { _id: id, owner: userId },
         { $set: update },
         { new: true }
       );
@@ -124,7 +129,11 @@ export async function DELETE(
     if (isNaN(cardIndex) || cardIndex < 0) {
       return Response.json({ error: "Invalid index parameter" }, { status: 400 });
     }
-    const collection = await CardCollectionModel.findById(id);
+
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
+
+    const collection = await CardCollectionModel.findOne({ _id: id, owner: userId });
     if (!collection) {
       return Response.json({ error: "Collection not found" }, { status: 404 });
     }

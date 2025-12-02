@@ -1,6 +1,8 @@
 import connectDB from "@/db/mongoose";
 import { CardCollectionModel } from "@/db/schema";
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 /**
  * POST /api/collections
@@ -13,11 +15,14 @@ import { NextRequest } from "next/server";
  *
  * @returns Response with created collection and Location header pointing to the new resource
  *
- * The collection is initialized with an empty cards array.
+ * The collection is initialized with an empty cards array and assigned to the authenticated user.
  */
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
+
+    const session = await getServerSession(authOptions);
+    const userId = session!.user._id;
 
     const body = await request.json();
     const { name, description, collectionType } = body;
@@ -36,11 +41,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new collection with empty cards array
+    // Create new collection with empty cards array and owner
     const newCollection = new CardCollectionModel({
       name,
       description,
       collectionType,
+      owner: userId,
       cards: []
     });
 
