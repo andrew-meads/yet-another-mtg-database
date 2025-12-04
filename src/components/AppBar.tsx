@@ -67,7 +67,7 @@ export default function AppBar() {
                 <DropdownMenu>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <button className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center">
+                      <button className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center cursor-pointer">
                         {session.user.image ? (
                           <Image
                             src={session.user.image}
@@ -95,7 +95,7 @@ export default function AppBar() {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <Button variant="outline" size="sm" onClick={handleSignIn}>
+              <Button className="cursor-pointer" variant="outline" size="sm" onClick={handleSignIn}>
                 <LogIn className="mr-2 h-4 w-4" />
                 Login
               </Button>

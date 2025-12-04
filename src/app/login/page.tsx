@@ -38,7 +38,7 @@ export default function LoginPage() {
           )}
           <Button
             onClick={handleGoogleSignIn}
-            className="w-full max-w-xs flex items-center justify-center gap-3"
+            className="cursor-pointer w-full max-w-xs flex items-center justify-center gap-3"
             size="lg"
             variant="outline"
           >
