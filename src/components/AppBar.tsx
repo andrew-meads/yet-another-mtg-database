@@ -13,14 +13,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogIn, LogOut, Camera, Search, FolderOpen } from "lucide-react";
+import { LogIn, LogOut, Camera, Search, FolderOpen, Menu } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function AppBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/login" });
@@ -32,58 +35,136 @@ export default function AppBar() {
 
   return (
     <header className="bg-background border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-foreground">Yet another MTG Database</h1>
-            <nav aria-label="Primary" className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground truncate">
+              <span className="hidden sm:inline">Yet another MTG Database</span>
+              <span className="sm:hidden">YAMTG DB</span>
+            </h1>
+            <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-2">
               {status === "authenticated" && (
                 <>
-                  <Button
-                    asChild
-                    variant={pathname === "/search" ? "default" : "outline"}
-                    size="sm"
-                  >
-                    <Link href="/search">
-                      <Search className="mr-2 h-4 w-4" />
-                      Card Search
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant={pathname === "/scan" ? "default" : "outline"}
-                    size="sm"
-                  >
-                    <Link href="/scan">
-                      <Camera className="mr-2 h-4 w-4" />
-                      Scan
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant={pathname === "/my-cards" ? "default" : "outline"}
-                    size="sm"
-                  >
-                    <Link href="/my-cards">
-                      <FolderOpen className="mr-2 h-4 w-4" />
-                      My cards
-                    </Link>
-                  </Button>
+                  {/* Desktop navigation */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <Button
+                      asChild
+                      variant={pathname === "/search" ? "default" : "outline"}
+                      size="sm"
+                    >
+                      <Link href="/search">
+                        <Search className="mr-2 h-4 w-4" />
+                        Card Search
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant={pathname === "/scan" ? "default" : "outline"}
+                      size="sm"
+                    >
+                      <Link href="/scan">
+                        <Camera className="mr-2 h-4 w-4" />
+                        Scan
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant={pathname === "/my-cards" ? "default" : "outline"}
+                      size="sm"
+                    >
+                      <Link href="/my-cards">
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        My cards
+                      </Link>
+                    </Button>
 
-                  <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1" />
+                    <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1" />
 
-                  <OpenCollectionButtons />
+                    <OpenCollectionButtons />
+                  </div>
+
+                  {/* Mobile navigation - icon only */}
+                  <div className="flex md:hidden items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          asChild
+                          variant={pathname === "/search" ? "default" : "outline"}
+                          size="icon"
+                          className="h-9 w-9"
+                        >
+                          <Link href="/search">
+                            <Search className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Card Search</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          asChild
+                          variant={pathname === "/scan" ? "default" : "outline"}
+                          size="icon"
+                          className="h-9 w-9"
+                        >
+                          <Link href="/scan">
+                            <Camera className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Scan</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          asChild
+                          variant={pathname === "/my-cards" ? "default" : "outline"}
+                          size="icon"
+                          className="h-9 w-9"
+                        >
+                          <Link href="/my-cards">
+                            <FolderOpen className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>My Cards</TooltipContent>
+                    </Tooltip>
+
+                    {/* Mobile collections menu */}
+                    <Sheet open={isCollectionsOpen} onOpenChange={setIsCollectionsOpen}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-9 w-9">
+                              <Menu className="h-4 w-4" />
+                            </Button>
+                          </SheetTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>Open Collections</TooltipContent>
+                      </Tooltip>
+                      <SheetContent side="right">
+                        <SheetHeader>
+                          <SheetTitle>Open Collections</SheetTitle>
+                        </SheetHeader>
+                        <div className="mt-4 w-full">
+                          <OpenCollectionButtons mobileDrawerMode={true} />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  </div>
                 </>
               )}
             </nav>
           </div>
-          <div className="flex items-center gap-2">
-            {status === "authenticated" && session?.user ? (
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">{status === "authenticated" && session?.user ? (
               <Tooltip>
                 <DropdownMenu>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <button className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center cursor-pointer">
+                      <button className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center cursor-pointer">
                         {session.user.image ? (
                           <Image
                             src={session.user.image}
@@ -113,7 +194,7 @@ export default function AppBar() {
             ) : (
               <Button className="cursor-pointer" variant="outline" size="sm" onClick={handleSignIn}>
                 <LogIn className="mr-2 h-4 w-4" />
-                Login
+                <span className="hidden sm:inline">Login</span>
               </Button>
             )}
             <ModeToggle />

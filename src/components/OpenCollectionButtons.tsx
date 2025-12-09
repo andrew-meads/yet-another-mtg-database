@@ -9,12 +9,24 @@ import {
   ContextMenuItem,
   ContextMenuTrigger
 } from "@/components/ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import { CollectionSummary } from "@/types/CardCollection";
-import { X, Star } from "lucide-react";
+import { X, Star, FolderOpen, ChevronDown } from "lucide-react";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 import clsx from "clsx";
+import { Separator } from "./ui/separator";
+
+interface OpenCollectionButtonsProps {
+  mobileDrawerMode?: boolean;
+}
 
 interface OpenCollectionButtonProps {
   collection: CollectionSummary;
@@ -70,10 +82,12 @@ function OpenCollectionButton({ collection, onClose }: OpenCollectionButtonProps
   );
 }
 
-export default function OpenCollectionButtons() {
+export default function OpenCollectionButtons({ mobileDrawerMode = false }: OpenCollectionButtonsProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { openCollections, removeOpenCollection } = useOpenCollectionsContext();
+  const { openCollections, removeOpenCollection, setActiveCollection } = useOpenCollectionsContext();
+
+  const THRESHOLD = 3;
 
   const handleCloseButton = (id: string) => {
     removeOpenCollection(id);
@@ -87,6 +101,135 @@ export default function OpenCollectionButtons() {
     return null;
   }
 
+  // Mobile drawer mode: render as list items styled like dropdown menu
+  if (mobileDrawerMode) {
+    return (
+      <div className="w-full space-y-1">
+        {openCollections.map((collection, index) => {
+          const isCurrentPage = pathname === `/my-cards/${collection._id}`;
+          return (
+            <div key={collection._id}>
+              <div
+                className={clsx(
+                  "flex items-center justify-between gap-2 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors",
+                  isCurrentPage && "bg-accent"
+                )}
+                onClick={() => router.push(`/my-cards/${collection._id}`)}
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span>{getCollectionIcon(collection.collectionType)}</span>
+                  <span className="truncate">{collection.name}</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {collection.isActive ? (
+                    <div className="rounded-sm p-1">
+                      <Star className="h-3 w-3 fill-current" />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveCollection(collection);
+                      }}
+                      className="rounded-sm p-1 hover:bg-accent transition-colors"
+                      aria-label={`Make ${collection.name} active`}
+                    >
+                      <Star className="h-3 w-3" />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleCloseButton(collection._id);
+                    }}
+                    className="rounded-sm p-1 hover:bg-accent transition-colors"
+                    aria-label={`Close ${collection.name}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+              {index < openCollections.length - 1 && <Separator className="my-1" />}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // If we have more than THRESHOLD collections, use dropdown menu
+  if (openCollections.length > THRESHOLD) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            <span>{openCollections.length} Collections</span>
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          {openCollections.map((collection, index) => {
+            const isCurrentPage = pathname === `/my-cards/${collection._id}`;
+            return (
+              <div key={collection._id}>
+                <DropdownMenuItem
+                  className={clsx(
+                    "flex items-center justify-between gap-2 cursor-pointer",
+                    isCurrentPage && "bg-accent"
+                  )}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    router.push(`/my-cards/${collection._id}`);
+                  }}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span>{getCollectionIcon(collection.collectionType)}</span>
+                    <span className="truncate">{collection.name}</span>
+                  </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {collection.isActive ? (
+                    <div className="rounded-sm p-1">
+                      <Star className="h-3 w-3 fill-current" />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveCollection(collection);
+                      }}
+                      className="rounded-sm p-1 hover:bg-accent transition-colors"
+                      aria-label={`Make ${collection.name} active`}
+                    >
+                      <Star className="h-3 w-3" />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleCloseButton(collection._id);
+                    }}
+                    className="rounded-sm p-1 hover:bg-accent transition-colors"
+                    aria-label={`Close ${collection.name}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </DropdownMenuItem>
+              {index < openCollections.length - 1 && <DropdownMenuSeparator />}
+            </div>
+          );
+        })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Otherwise, show individual buttons
   return openCollections.map((collection) => (
     <OpenCollectionButton
       key={collection._id}
