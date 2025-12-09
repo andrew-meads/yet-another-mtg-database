@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Camera, Search, FolderOpen } from "lucide-react";
 import Image from "next/image";
 
 export default function AppBar() {
@@ -44,14 +44,30 @@ export default function AppBar() {
                     variant={pathname === "/search" ? "default" : "outline"}
                     size="sm"
                   >
-                    <Link href="/search">Card Search</Link>
+                    <Link href="/search">
+                      <Search className="mr-2 h-4 w-4" />
+                      Card Search
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant={pathname === "/scan" ? "default" : "outline"}
+                    size="sm"
+                  >
+                    <Link href="/scan">
+                      <Camera className="mr-2 h-4 w-4" />
+                      Scan
+                    </Link>
                   </Button>
                   <Button
                     asChild
                     variant={pathname === "/my-cards" ? "default" : "outline"}
                     size="sm"
                   >
-                    <Link href="/my-cards">My cards</Link>
+                    <Link href="/my-cards">
+                      <FolderOpen className="mr-2 h-4 w-4" />
+                      My cards
+                    </Link>
                   </Button>
 
                   <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1" />

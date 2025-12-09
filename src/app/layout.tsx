@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Roboto, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-import AppBar from "@/components/AppBar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { Toaster } from "sonner";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -32,12 +32,8 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${roboto.variable} ${firaCode.variable} antialiased`}>
-        <Providers session={session}>
-          <div className="min-h-screen bg-background">
-            <AppBar />
-            {children}
-          </div>
-        </Providers>
+        <Providers session={session}>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   );

@@ -136,3 +136,4 @@ export const Card = (mongoose.models.Card ||
 
 export const CardCollectionModel = (mongoose.models.CardCollection ||
   mongoose.model<CardCollectionDocument>("CardCollection", collectionSchema)) as Model<CardCollectionDocument>;
+

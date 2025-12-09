@@ -8,6 +8,7 @@ import ReactDndProvider from "@/components/dnd/ReactDndProvider";
 import { OpenCollectionsProvider } from "@/context/OpenCollectionsContext";
 import CardDragLayer from "@/components/dnd/CardDragLayer";
 import DeckColumnDragLayer from "@/components/dnd/DeckColumnDragLayer";
+import { ScanContextProvider } from "@/context/ScanContext";
 
 export function Providers({
   children,
@@ -17,19 +18,14 @@ export function Providers({
   session: Session | null;
 }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <SessionProvider session={session}>
         <QueryProvider>
           <ReactDndProvider>
             <OpenCollectionsProvider>
-              {children}
+              <ScanContextProvider>{children}</ScanContextProvider>
             </OpenCollectionsProvider>
-            
+
             {/* Drag layers */}
             <CardDragLayer />
             <DeckColumnDragLayer />
