@@ -44,7 +44,7 @@ export default function CardListItem({ card }: CardListItemProps) {
       )}
     >
       {/* Card thumbnail */}
-      <div className="shrink-0 w-20 sm:w-20">
+      <div className="shrink-0 w-30 sm:w-20">
         <CardArtView
           card={card}
           variant="small"

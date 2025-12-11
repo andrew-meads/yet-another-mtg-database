@@ -131,20 +131,25 @@ export default function CollectionTable({
 
       // Only select actual data rows, not divider rows
       const rows = Array.from(tableBody.querySelectorAll("tr[data-row-index]"));
+      // console.log(rows);
 
       // Default to end of visible entries
       let targetIndex = isPaginationEnabled
         ? (currentPage - 1) * entriesPerPage + rows.length
         : rows.length;
 
+      // console.log(`Number of rows: ${rows.length}`);
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const rect = row.getBoundingClientRect();
+        // console.log(`Row ${i} rect:`, rect);
         const rowMiddle = rect.top + rect.height / 2;
 
         if (hoverPosition.y < rowMiddle) {
           // Convert visible index to actual collection index
           targetIndex = isPaginationEnabled ? (currentPage - 1) * entriesPerPage + i : i;
+          console.log("Setting drop indicator to index:", targetIndex);
           break;
         }
       }
@@ -336,19 +341,11 @@ export default function CollectionTable({
     );
   }
 
-  // === CONTAINER STYLING ===
-
-  const containerClass = maxHeight
-    ? "rounded-md border overflow-hidden flex flex-col"
-    : "h-full rounded-md border overflow-hidden flex flex-col";
-  const containerStyle = maxHeight ? { maxHeight } : undefined;
-
   // === RENDER ===
 
   return (
     <div
-      style={containerStyle}
-      className={containerClass}
+      className="h-full rounded-md border overflow-hidden flex flex-col"
       ref={(node) => {
         if (typeof dropRef === "function") {
           dropRef(node);

@@ -7,6 +7,7 @@ import { CardTextView } from "@/components/CardTextView";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import CardLocationsView from "./CardLocationsView";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 
 /**
  * localStorage key for persisting desktop panel layout sizes
@@ -24,17 +25,16 @@ const STORAGE_KEY = "layout/main-panels";
  * @param props.children - Content to display in the main workspace area
  */
 export default function MainWorkspace({ children }: React.PropsWithChildren) {
+  const isDesktop = useIsDesktop();
+  console.log("MainWorkspace isDesktop:", isDesktop);
+
   return (
     <div className="w-full h-[calc(100dvh-64px)] md:h-[calc(100vh-120px)] min-h-[600px]">
-      {/* Mobile: Simple scrollable layout */}
-      <div className="md:hidden h-full">
-        <MobileMainWorkspace>{children}</MobileMainWorkspace>
-      </div>
-
-      {/* Desktop: Resizable panel layout */}
-      <div className="hidden md:block h-full">
+      {isDesktop ? (
         <DesktopMainWorkspace>{children}</DesktopMainWorkspace>
-      </div>
+      ) : (
+        <MobileMainWorkspace>{children}</MobileMainWorkspace>
+      )}
     </div>
   );
 }
@@ -52,11 +52,7 @@ export default function MainWorkspace({ children }: React.PropsWithChildren) {
  * @param props.children - Content to display in the mobile workspace
  */
 function MobileMainWorkspace({ children }: React.PropsWithChildren) {
-  return (
-    <div className="h-full overflow-y-auto">
-      {children}
-    </div>
-  );
+  return <div className="h-full overflow-y-auto">{children}</div>;
 }
 
 /**
