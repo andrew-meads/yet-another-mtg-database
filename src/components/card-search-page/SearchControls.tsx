@@ -77,14 +77,9 @@ export default function SearchControls({
   return (
     <div className={cn("w-full", className)}>
       <form>
-        <FieldGroup
-          className={cn(
-            "grid",
-            compact ? "grid-cols-[1fr_auto_auto_auto]" : "grid-cols-1 md:grid-cols-3",
-            "gap-3"
-          )}
-        >
-          <Field className={!compact ? "col-span-full" : undefined}>
+        <FieldGroup className="flex flex-col gap-3">
+          {/* Search field - full width */}
+          <Field>
             <FieldLabel htmlFor="search-q">Search</FieldLabel>
             <FieldContent>
               <div className="flex items-center gap-2">
@@ -113,65 +108,68 @@ export default function SearchControls({
             </FieldContent>
           </Field>
 
-          <Field>
-            <FieldLabel>Order</FieldLabel>
-            <FieldContent>
-              <Select value={order} onValueChange={(v) => setOrder(v as SortField)}>
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue placeholder="Order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Order by</SelectLabel>
-                    {ORDER_FIELDS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+          {/* Order, Direction, Page length - horizontal on all screens */}
+          <div className="grid grid-cols-3 gap-3">
+            <Field>
+              <FieldLabel>Order</FieldLabel>
+              <FieldContent>
+                <Select value={order} onValueChange={(v) => setOrder(v as SortField)}>
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue placeholder="Order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Order by</SelectLabel>
+                      {ORDER_FIELDS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>Direction</FieldLabel>
+              <FieldContent>
+                <Select value={dir} onValueChange={(v) => setDir(v as "asc" | "desc")}>
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue placeholder="Direction" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">
+                      <ArrowDownAZ className="size-5" />
+                      Asc
+                    </SelectItem>
+                    <SelectItem value="desc">
+                      <ArrowUpAZ className="size-5" />
+                      Desc
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </FieldContent>
+            </Field>
+
+            <Field>
+              <FieldLabel>Page length</FieldLabel>
+              <FieldContent>
+                <Select value={String(pageLen)} onValueChange={(v) => setPageLen(parseInt(v, 10))}>
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue placeholder="Page length" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_LENGTHS.map((len) => (
+                      <SelectItem key={len} value={String(len)}>
+                        {len}
                       </SelectItem>
                     ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </FieldContent>
-          </Field>
-
-          <Field>
-            <FieldLabel>Direction</FieldLabel>
-            <FieldContent>
-              <Select value={dir} onValueChange={(v) => setDir(v as "asc" | "desc")}>
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue placeholder="Direction" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">
-                    <ArrowDownAZ className="size-5" />
-                    Asc
-                  </SelectItem>
-                  <SelectItem value="desc">
-                    <ArrowUpAZ className="size-5" />
-                    Desc
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </FieldContent>
-          </Field>
-
-          <Field>
-            <FieldLabel>Page length</FieldLabel>
-            <FieldContent>
-              <Select value={String(pageLen)} onValueChange={(v) => setPageLen(parseInt(v, 10))}>
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue placeholder="Page length" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_LENGTHS.map((len) => (
-                    <SelectItem key={len} value={String(len)}>
-                      {len}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FieldContent>
-          </Field>
+                  </SelectContent>
+                </Select>
+              </FieldContent>
+            </Field>
+          </div>
         </FieldGroup>
       </form>
     </div>

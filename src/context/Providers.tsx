@@ -6,6 +6,7 @@ import { Session } from "next-auth";
 import QueryProvider from "@/components/QueryProvider";
 import ReactDndProvider from "@/components/dnd/ReactDndProvider";
 import { OpenCollectionsProvider } from "@/context/OpenCollectionsContext";
+import { CardSelectionProvider } from "@/context/CardSelectionContext";
 import CardDragLayer from "@/components/dnd/CardDragLayer";
 import DeckColumnDragLayer from "@/components/dnd/DeckColumnDragLayer";
 import { ScanContextProvider } from "@/context/ScanContext";
@@ -23,7 +24,9 @@ export function Providers({
         <QueryProvider>
           <ReactDndProvider>
             <OpenCollectionsProvider>
-              <ScanContextProvider>{children}</ScanContextProvider>
+              <CardSelectionProvider>
+                <ScanContextProvider>{children}</ScanContextProvider>
+              </CardSelectionProvider>
             </OpenCollectionsProvider>
 
             {/* Drag layers */}

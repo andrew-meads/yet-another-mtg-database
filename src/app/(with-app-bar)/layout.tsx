@@ -1,6 +1,6 @@
 import AppBar from "@/components/AppBar";
 
-export default function LayoutWithAppBar({ children }: { children: React.ReactNode }) {
+export default function LayoutWithAppBar({ children }: React.PropsWithChildren) {
   return (
     <div className="min-h-screen bg-background">
       <AppBar />

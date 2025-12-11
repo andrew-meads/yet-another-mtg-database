@@ -1,67 +1,96 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import type React from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import CardArtView from "@/components/CardArtView";
 import { CardTextView } from "@/components/CardTextView";
-import { CardSelectionProvider, useCardSelection } from "@/context/CardSelectionContext";
+import { useCardSelection } from "@/context/CardSelectionContext";
 import CardLocationsView from "./CardLocationsView";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
+/**
+ * localStorage key for persisting desktop panel layout sizes
+ */
 const STORAGE_KEY = "layout/main-panels";
 
-export default function MainWorkspace({ children }: { children?: ReactNode }) {
-  const [layout, setLayout] = useState<number[] | null>(null);
-
-  // Load persisted layout on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const arr = JSON.parse(raw) as number[];
-        if (Array.isArray(arr)) {
-          if (arr.length === 3) {
-            // Migrate old 3-panel layout (left, deck, search) -> (left, searchCombined)
-            setLayout([arr[0], arr[1] + arr[2]]);
-            return;
-          } else if (arr.length === 2) {
-            setLayout(arr);
-            return;
-          }
-        }
-      }
-    } catch {
-      // ignore
-    }
-    // New default: 20% left (card details) / 80% right (search)
-    setLayout([20, 80]);
-  }, []);
-
-  if (!layout) {
-    // Wait for layout to load to avoid flicker
-    return null;
-  }
-
+/**
+ * MainWorkspace Component
+ *
+ * Root component that provides a responsive workspace for viewing MTG cards and search results.
+ * - On mobile (<768px): Simple scrollable layout
+ * - On desktop (≥768px): Uses a resizable panel layout with card details on the left and content on the right
+ *
+ * @param props - Component props
+ * @param props.children - Content to display in the main workspace area
+ */
+export default function MainWorkspace({ children }: React.PropsWithChildren) {
   return (
-    <CardSelectionProvider>
-      <div className="w-full h-[calc(100vh-120px)] min-h-[600px]">
-        <InnerWorkspace layout={layout}>{children}</InnerWorkspace>
+    <div className="w-full h-[calc(100dvh-64px)] md:h-[calc(100vh-120px)] min-h-[600px]">
+      {/* Mobile: Simple scrollable layout */}
+      <div className="md:hidden h-full">
+        <MobileMainWorkspace>{children}</MobileMainWorkspace>
       </div>
-    </CardSelectionProvider>
+
+      {/* Desktop: Resizable panel layout */}
+      <div className="hidden md:block h-full">
+        <DesktopMainWorkspace>{children}</DesktopMainWorkspace>
+      </div>
+    </div>
   );
 }
 
-function InnerWorkspace({ layout, children }: { layout: number[]; children?: ReactNode }) {
+/**
+ * MobileMainWorkspace Component
+ *
+ * Mobile-optimized workspace for small screens (<768px).
+ *
+ * Features:
+ * - Simple single-view layout displaying children content (search results, collections, etc.)
+ * - Full-height scrollable area
+ *
+ * @param props - Component props
+ * @param props.children - Content to display in the mobile workspace
+ */
+function MobileMainWorkspace({ children }: React.PropsWithChildren) {
+  return (
+    <div className="h-full overflow-y-auto">
+      {children}
+    </div>
+  );
+}
+
+/**
+ * DesktopMainWorkspace Component
+ *
+ * Desktop-optimized workspace using resizable panels for larger screens (≥768px).
+ *
+ * Layout:
+ * - Left panel: Card details (20% default width, collapsible, min 15%)
+ *   - Top: Card image (45% default height)
+ *   - Middle: Card locations (20% default height)
+ *   - Bottom: Card text (35% default height)
+ * - Right panel: Main content area (80% default width, min 30%)
+ *   - Displays children (search results, collections, etc.)
+ *
+ * Features:
+ * - Resizable panels with drag handles - user can adjust sizes
+ * - Layout sizes are persisted to localStorage
+ * - Left panel can be collapsed when not needed
+ * - Cards are draggable in desktop mode
+ * - All panels have vertical scrolling when content overflows
+ *
+ * @param props - Component props
+ * @param props.children - Content to display in the right panel
+ */
+function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
   const { selectedCard } = useCardSelection();
+  const [layout, setLayout] = useLocalStorage<number[]>(STORAGE_KEY, [20, 80]);
 
   return (
     <ResizablePanelGroup
       direction="horizontal"
       onLayout={(sizes) => {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(sizes));
-        } catch {
-          // ignore
-        }
+        setLayout(sizes);
       }}
       className="rounded-md border"
     >
