@@ -8,7 +8,7 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 
 function SearchPageContent() {
   const { cards, isLoading, error, searchParams, onSearchChange } = useSearchResults();
-  const isDesktop = useIsDesktop();
+  const { isDesktop, mounted } = useIsDesktop();
 
   return (
     <div className="h-full flex flex-col gap-6">
@@ -21,7 +21,10 @@ function SearchPageContent() {
       )}
 
       <div className="flex-1 min-h-0">
-        {isDesktop ? (
+        {!mounted ? (
+          // Render nothing or a placeholder until mounted to avoid hydration mismatch
+          <div className="w-full h-full" />
+        ) : isDesktop ? (
           <CardsTable cards={cards} isLoading={isLoading} error={error} />
         ) : (
           <CardsList cards={cards} isLoading={isLoading} error={error} />

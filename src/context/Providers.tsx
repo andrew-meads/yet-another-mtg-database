@@ -3,7 +3,7 @@
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { SessionProvider } from "next-auth/react";
 import { Session } from "next-auth";
-import QueryProvider from "@/components/QueryProvider";
+import QueryProvider from "@/context/QueryProvider";
 import ReactDndProvider from "@/components/dnd/ReactDndProvider";
 import { OpenCollectionsProvider } from "@/context/OpenCollectionsContext";
 import { CardSelectionProvider } from "@/context/CardSelectionContext";

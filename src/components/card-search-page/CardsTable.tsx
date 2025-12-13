@@ -70,6 +70,26 @@ export default function CardsTable({
     );
   }
 
+  return <InternalCardsTable cards={cards} maxHeight={maxHeight} onCardClicked={onCardClicked} />;
+}
+
+/**
+ * Props for InternalCardsTable component
+ */
+interface InternalCardsTableProps {
+  /** Array of MTG cards to display (guaranteed non-empty) */
+  cards: MtgCard[];
+  /** Optional maximum height for the table container */
+  maxHeight?: string;
+  /** Optional callback when a card is clicked. If not provided, uses CardSelectionContext */
+  onCardClicked?: (card: MtgCard) => void;
+}
+
+/**
+ * Internal table component that handles the actual rendering and logic
+ * Separated from CardsTable to avoid violating Rules of Hooks with early returns
+ */
+function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTableProps) {
   // === STATE MANAGEMENT ===
 
   // Hover preview popup: tracks which card is being hovered and mouse position
@@ -238,7 +258,7 @@ export default function CardsTable({
   const handleAddToCollection = (card: MtgCard, collectionId?: string) => {
     // Determine target collection
     let targetCollection;
-    
+
     if (collectionId === undefined) {
       // Use active collection if no specific collection ID provided
       targetCollection = activeCollection;

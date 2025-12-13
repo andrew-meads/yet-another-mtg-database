@@ -25,12 +25,14 @@ const STORAGE_KEY = "layout/main-panels";
  * @param props.children - Content to display in the main workspace area
  */
 export default function MainWorkspace({ children }: React.PropsWithChildren) {
-  const isDesktop = useIsDesktop();
+  const { isDesktop, mounted } = useIsDesktop();
   console.log("MainWorkspace isDesktop:", isDesktop);
 
   return (
     <div className="w-full h-[calc(100dvh-64px)] md:h-[calc(100vh-120px)] min-h-[600px]">
-      {isDesktop ? (
+      {!mounted ? (
+        <div className="w-full h-full" />
+      ) : isDesktop ? (
         <DesktopMainWorkspace>{children}</DesktopMainWorkspace>
       ) : (
         <MobileMainWorkspace>{children}</MobileMainWorkspace>
