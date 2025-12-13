@@ -26,7 +26,7 @@ const STORAGE_KEY = "layout/main-panels";
  */
 export default function MainWorkspace({ children }: React.PropsWithChildren) {
   const { isDesktop, mounted } = useIsDesktop();
-  console.log("MainWorkspace isDesktop:", isDesktop);
+  // console.log("MainWorkspace isDesktop:", isDesktop);
 
   return (
     <div className="w-full h-[calc(100dvh-64px)] md:h-[calc(100vh-120px)] min-h-[600px]">
@@ -106,6 +106,7 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
                   draggable={true}
                   width="100%"
                   height="100%"
+                  priority
                 />
               </div>
             </ResizablePanel>

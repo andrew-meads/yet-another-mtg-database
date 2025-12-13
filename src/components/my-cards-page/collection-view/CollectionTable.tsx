@@ -149,7 +149,7 @@ export default function CollectionTable({
         if (hoverPosition.y < rowMiddle) {
           // Convert visible index to actual collection index
           targetIndex = isPaginationEnabled ? (currentPage - 1) * entriesPerPage + i : i;
-          console.log("Setting drop indicator to index:", targetIndex);
+          // console.log("Setting drop indicator to index:", targetIndex);
           break;
         }
       }

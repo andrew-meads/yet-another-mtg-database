@@ -66,6 +66,7 @@ export default function AppBar() {
                             src={session.user.image}
                             alt={session.user.name || "User"}
                             fill
+                            sizes="(max-width: 640px) 32px, 40px"
                             className="object-cover"
                           />
                         ) : (

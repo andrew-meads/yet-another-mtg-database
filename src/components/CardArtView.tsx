@@ -29,6 +29,8 @@ interface CardArtViewProps {
   width?: number | string;
   /** Optional explicit height (overrides h-full behavior) */
   height?: number | string;
+  /** Whether to prioritize loading this image (for LCP optimization) */
+  priority?: boolean;
 }
 
 /**
@@ -59,6 +61,8 @@ interface CardImageProps {
   containerWidth?: number | string;
   /** Optional explicit container height */
   containerHeight?: number | string;
+  /** Whether to prioritize loading this image (for LCP optimization) */
+  priority?: boolean;
 }
 
 /**
@@ -74,7 +78,8 @@ export default function CardArtView({
   flippable = false,
   draggable = false,
   width: explicitWidth,
-  height: explicitHeight
+  height: explicitHeight,
+  priority = false
 }: CardArtViewProps) {
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0);
   const dimensions = IMAGE_DIMENSIONS[variant];
@@ -92,7 +97,8 @@ export default function CardArtView({
       width: dimensions.width,
       height: dimensions.height,
       containerWidth: explicitWidth,
-      containerHeight: explicitHeight
+      containerHeight: explicitHeight,
+      priority
     }));
   } else {
     images = [
@@ -102,7 +108,8 @@ export default function CardArtView({
         width: dimensions.width,
         height: dimensions.height,
         containerWidth: explicitWidth,
-        containerHeight: explicitHeight
+        containerHeight: explicitHeight,
+        priority
       }
     ];
   }
@@ -201,7 +208,8 @@ function CardImage({
   width,
   height,
   containerWidth,
-  containerHeight
+  containerHeight,
+  priority = false
 }: CardImageProps) {
   // Determine style based on props
   const style: React.CSSProperties = {
@@ -231,7 +239,7 @@ function CardImage({
         fill
         className="object-contain"
         sizes="(max-width: 640px) 40vw, (max-width: 1024px) 25vw, 286px"
-        priority={false}
+        priority={priority}
       />
     </div>
   );
