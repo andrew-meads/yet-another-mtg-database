@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 export interface CardListItemProps {
   /** The card to display */
   card: MtgCard;
+  priority?: boolean;
 }
 
 /**
@@ -24,7 +25,7 @@ export interface CardListItemProps {
  * - Card details on the right (name, set, type, mana cost)
  * - Tap to select the card (shows full details in Card Details tab)
  */
-export default function CardListItem({ card }: CardListItemProps) {
+export default function CardListItem({ card, priority = false }: CardListItemProps) {
   const { selectedCard, setSelectedCard } = useCardSelection();
   const router = useRouter();
   const isSelected = selectedCard?.id === card.id;
@@ -52,6 +53,7 @@ export default function CardListItem({ card }: CardListItemProps) {
           draggable={false}
           width="100%"
           height="auto"
+          priority
         />
       </div>
 

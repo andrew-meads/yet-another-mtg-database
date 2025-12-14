@@ -57,8 +57,8 @@ export default function CardsList({ cards, isLoading, error }: CardsListProps) {
   return (
     <div className="rounded-md border overflow-hidden">
       <div className="overflow-y-auto max-h-[calc(100vh-20rem)]">
-        {cards.map((card) => (
-          <CardListItem key={card.id} card={card} />
+        {cards.map((card, index) => (
+          <CardListItem key={card.id} card={card} priority={index < 4} />
         ))}
       </div>
     </div>
