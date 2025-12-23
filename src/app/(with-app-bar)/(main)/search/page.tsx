@@ -5,30 +5,22 @@ import CardsTable from "@/components/card-search-page/CardsTable";
 import CardsList from "@/components/card-search-page/mobile/CardsList";
 import SearchResults, { useSearchResults } from "@/components/card-search-page/SearchResults";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import InfiniteScrollSearchResults, {
+  useInfiniteScrollSearchResults
+} from "@/components/card-search-page/InfiniteScrollSearchResults";
+import CardsInfiniteList from "@/components/card-search-page/mobile/CardsInfiniteList";
 
-function SearchPageContent() {
+function DesktopSearchPageContent() {
   const { cards, isLoading, error, searchParams, onSearchChange } = useSearchResults();
-  const { isDesktop, mounted } = useIsDesktop();
 
   return (
     <div className="h-full flex flex-col gap-6">
       <SearchControls onChange={onSearchChange} initial={searchParams} />
 
-      {isDesktop && (
-        <div>
-          <SearchResults.PaginationControls />
-        </div>
-      )}
+      <SearchResults.PaginationControls />
 
       <div className="flex-1 min-h-0">
-        {!mounted ? (
-          // Render nothing or a placeholder until mounted to avoid hydration mismatch
-          <div className="w-full h-full" />
-        ) : isDesktop ? (
-          <CardsTable cards={cards} isLoading={isLoading} error={error} />
-        ) : (
-          <CardsList cards={cards} isLoading={isLoading} error={error} />
-        )}
+        <CardsTable cards={cards} isLoading={isLoading} error={error} />
       </div>
 
       <SearchResults.PaginationControls />
@@ -36,10 +28,49 @@ function SearchPageContent() {
   );
 }
 
-export default function SearchPage() {
+function MobileSearchPageContent() {
+  const {
+    cardPages,
+    isLoading,
+    error,
+    searchParams,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    onSearchChange
+  } = useInfiniteScrollSearchResults();
   return (
-    <SearchResults>
-      <SearchPageContent />
-    </SearchResults>
+    <div className="h-full flex flex-col gap-6">
+      <SearchControls onChange={onSearchChange} initial={searchParams} />
+
+      <div className="flex-1 min-h-0">
+        <CardsInfiniteList
+          cardPages={cardPages}
+          isLoading={isLoading}
+          error={error}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  const { isDesktop } = useIsDesktop();
+
+  if (isDesktop) {
+    return (
+      <SearchResults>
+        <DesktopSearchPageContent />
+      </SearchResults>
+    );
+  }
+
+  return (
+    <InfiniteScrollSearchResults>
+      <MobileSearchPageContent />
+    </InfiniteScrollSearchResults>
   );
 }
