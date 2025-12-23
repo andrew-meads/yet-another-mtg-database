@@ -5,9 +5,16 @@ import { Card } from "@/db/schema";
 import { MtgCard } from "@/types/MtgCard";
 import { RecognizedCard } from "@/types/RecognizedCard";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai: OpenAI;
+
+function getOpenAIInstance(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  }
+  return openai;
+}
 
 /**
  * Recognizes a Magic: The Gathering card from an image using OpenAI Vision API.
@@ -19,6 +26,9 @@ const openai = new OpenAI({
  * @returns Promise resolving to the recognized card data
  */
 async function recognizeCardWithOpenAI(image: Blob): Promise<RecognizedCard> {
+
+  const openai = getOpenAIInstance();
+
   // Convert blob to base64
   const bytes = await image.arrayBuffer();
   const buffer = Buffer.from(bytes);
@@ -211,7 +221,7 @@ async function searchForMatchingCards(recognizedCard: RecognizedCard): Promise<M
   // Check if this is a split card (contains " // ")
   const isSplitCard = name.includes(" // ");
   let reversedName: string | null = null;
-  
+
   if (isSplitCard) {
     // Reverse the split card name (e.g., "Dangerous // Armed" -> "Armed // Dangerous")
     const parts = name.split(" // ");
@@ -220,21 +230,22 @@ async function searchForMatchingCards(recognizedCard: RecognizedCard): Promise<M
   }
 
   // Build query to search for the original name OR reversed name (if split card) OR flavor_name
-  const nameQuery = isSplitCard && reversedName
-    ? { 
-        $or: [
-          { name: { $regex: `^${name}$`, $options: "i" } },
-          { name: { $regex: `^${reversedName}$`, $options: "i" } },
-          { flavor_name: { $regex: `^${name}$`, $options: "i" } },
-          { flavor_name: { $regex: `^${reversedName}$`, $options: "i" } }
-        ]
-      }
-    : { 
-        $or: [
-          { name: { $regex: name, $options: "i" } },
-          { flavor_name: { $regex: name, $options: "i" } }
-        ]
-      };
+  const nameQuery =
+    isSplitCard && reversedName
+      ? {
+          $or: [
+            { name: { $regex: `^${name}$`, $options: "i" } },
+            { name: { $regex: `^${reversedName}$`, $options: "i" } },
+            { flavor_name: { $regex: `^${name}$`, $options: "i" } },
+            { flavor_name: { $regex: `^${reversedName}$`, $options: "i" } }
+          ]
+        }
+      : {
+          $or: [
+            { name: { $regex: name, $options: "i" } },
+            { flavor_name: { $regex: name, $options: "i" } }
+          ]
+        };
 
   const cardsByName = await Card.find({
     ...nameQuery,

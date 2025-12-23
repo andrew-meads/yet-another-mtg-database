@@ -1,0 +1,40 @@
+services:
+  yamtgd-app:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+      - MONGO_DB_URI=mongodb://yamtgd-database:27017/yet-another-mtg-database
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - yamtgd-database
+    networks:
+      - yamtgd-net
+      - proxy-net
+    labels:
+      caddy: mtg-database.ocean.anhydrous.dev
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+    restart: unless-stopped
+
+  yamtgd-database:
+    image: mongo:latest
+    # ports:
+    #   - "27017:27017"
+    volumes:
+      - yamtgd-mongo-data:/data/db
+    networks:
+      - yamtgd-net
+    restart: unless-stopped
+
+volumes:
+  yamtgd-mongo-data:
+    driver: local
+
+networks:
+  yamtgd-net:
+    driver: bridge
+  proxy-net:
+    external: true

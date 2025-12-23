@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "init-db": "tsx src/scripts/init-db.ts"
+    "init-db": "tsx src/scripts/init-db.ts",
+    "whitelist-user": "tsx src/scripts/whitelist-user.ts"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
