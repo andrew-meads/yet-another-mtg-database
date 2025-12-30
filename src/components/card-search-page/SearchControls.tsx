@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { ArrowDownAZ, ArrowUpAZ, Package, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type SortField =
   | "name"
@@ -33,6 +34,7 @@ export interface SearchControlsValues {
   dir: "asc" | "desc";
   pageLen: number;
   owned: boolean;
+  useDefaultFilters: boolean;
 }
 
 export interface SearchControlsProps {
@@ -66,13 +68,14 @@ export default function SearchControls({
   const [dir, setDir] = useState<"asc" | "desc">(initial?.dir ?? "asc");
   const [pageLen, setPageLen] = useState<number>(initial?.pageLen ?? 100);
   const [owned, setOwned] = useState<boolean>(initial?.owned ?? false);
+  const [useDefaultFilters, setUseDefaultFilters] = useState<boolean>(true);
 
   const debouncedQ = useDebouncedValue(q, 350);
 
   // Emit changes
   useEffect(() => {
-    onChange?.({ q: debouncedQ, order, dir, pageLen, owned });
-  }, [debouncedQ, order, dir, pageLen, owned, onChange]);
+    onChange?.({ q: debouncedQ, useDefaultFilters, order, dir, pageLen, owned });
+  }, [debouncedQ, order, dir, pageLen, owned, onChange, useDefaultFilters]);
 
   return (
     <div className={cn("w-full", className)}>
@@ -87,23 +90,44 @@ export default function SearchControls({
                   id="search-q"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder={compact ? "Search..." : "Try: t:creature c:gr (flying or trample)"}
                   className={compact ? "h-8" : undefined}
                 />
-                <div className="flex items-center gap-2 whitespace-nowrap">
-                  <Switch
-                    id="search-owned"
-                    checked={owned}
-                    onCheckedChange={setOwned}
-                    className="data-[state=checked]:bg-primary"
-                  />
-                  <label
-                    htmlFor="search-owned"
-                    className="text-sm font-medium cursor-pointer select-none"
-                  >
-                    Owned
-                  </label>
-                </div>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={owned ? "default" : "outline"}
+                      size="icon-sm"
+                      onClick={() => setOwned(!owned)}
+                      aria-label="Filter to owned cards only"
+                    >
+                      <Package />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Owned cards only</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={useDefaultFilters ? "default" : "outline"}
+                      size="icon-sm"
+                      onClick={() => setUseDefaultFilters(!useDefaultFilters)}
+                      aria-label="Use default filters"
+                    >
+                      <Filter />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Use default filters <em className="text-muted">(lang:en exclude:extra)</em></p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </FieldContent>
           </Field>

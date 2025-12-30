@@ -74,6 +74,8 @@ export interface SearchResultsProps {
   children: React.ReactNode;
 }
 
+const DEFAULT_FILTERS = "lang:en exclude:extra";
+
 /**
  * SearchResults Component
  *
@@ -94,15 +96,20 @@ export default function SearchResults({ children }: SearchResultsProps) {
       order: "name",
       dir: "asc",
       pageLen: 25,
-      owned: false
+      owned: false,
+      useDefaultFilters: true
     }
   );
   const [page, setPage] = useState(1);
   const scrollPositionRef = useRef<number | null>(null);
   const shouldRestoreScrollRef = useRef(false);
 
+  const q = searchParams.useDefaultFilters
+    ? `${DEFAULT_FILTERS} ${searchParams.q}`.trim()
+    : searchParams.q;
+
   const { data, isLoading, error } = useCardsSearch({
-    q: searchParams.q,
+    q,
     order: searchParams.order,
     dir: searchParams.dir,
     pageLen: searchParams.pageLen,
