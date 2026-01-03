@@ -77,7 +77,12 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  --svg-icon-stroke: #000000;
+  --set-icon-stroke: #000000;
+  --rarity-common-fill: #212121;
+  --rarity-uncommon-fill: #bae2ef;
+  --rarity-rare-fill: #e9d292;
+  --rarity-mythic-fill: #f59326;
+  --rarity-special-fill: #4b1e5b;
 }
 
 .dark {
@@ -113,7 +118,8 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  --svg-icon-stroke: #FFFFFF;
+  --set-icon-stroke: #ffffff;
+  --rarity-common-fill: #cccccc;
 }
 
 @layer base {

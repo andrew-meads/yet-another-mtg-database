@@ -13,11 +13,11 @@ interface SetSvgProps {
 }
 
 const RARITY_STYLES: Record<string, { fill: string }> = {
-  common: { fill: "#212121" },
-  uncommon: { fill: "#bae2ef" },
-  rare: { fill: "#e9d292" },
-  mythic: { fill: "#f59326" },
-  special: { fill: "#4b1e5b" }
+  common: { fill: "var(--rarity-common-fill)" },
+  uncommon: { fill: "var(--rarity-uncommon-fill)" },
+  rare: { fill: "var(--rarity-rare-fill)" },
+  mythic: { fill: "var(--rarity-mythic-fill)" },
+  special: { fill: "var(--rarity-special-fill)" }
 };
 
 /**
@@ -65,7 +65,7 @@ export function SetSvg({ setCode, rarityCode, width = 24, height = 24, className
         {
           width,
           height,
-          "--svg-icon-fill": rarityStyle.fill
+          "--set-icon-fill": rarityStyle.fill
         } as React.CSSProperties
       }
       dangerouslySetInnerHTML={{ __html: svgContent }}

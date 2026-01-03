@@ -5,6 +5,6 @@
 }
 
 .setIcon svg path {
-  fill: var(--svg-icon-fill);
-  stroke: var(--svg-icon-stroke);
+  fill: var(--set-icon-fill);
+  stroke: var(--set-icon-stroke);
 }
