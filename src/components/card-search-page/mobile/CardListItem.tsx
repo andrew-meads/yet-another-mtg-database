@@ -6,6 +6,7 @@ import { ManaCost } from "@/components/CardTextView";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { SetSvg } from "@/components/SetSvg";
 
 /**
  * Props for the CardListItem component
@@ -60,9 +61,12 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
       {/* Card details */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
         {/* Card name */}
-        <h3 className="font-semibold text-sm sm:text-base truncate">
-          {card.flavor_name || card.name}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-sm sm:text-base truncate">
+            {card.flavor_name || card.name}
+          </h3>
+          <SetSvg setCode={card.set} rarityCode={card.rarity} width={16} height={16} />
+        </div>
 
         {/* Set info */}
         <p className="text-xs text-muted-foreground">

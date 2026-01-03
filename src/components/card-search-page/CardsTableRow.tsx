@@ -20,6 +20,7 @@ import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
 import { getCollectionIcon } from "@/lib/collectionUtils";
 import { Star, Plus } from "lucide-react";
 import clsx from "clsx";
+import { SetSvg } from "@/components/SetSvg";
 
 /**
  * Props for CardsTableRow component
@@ -156,68 +157,74 @@ export default function CardsTableRow({
           onMouseLeave={onHoverLeave}
           onMouseMove={onHoverMove}
         >
-      <TableCell className="font-medium">{displayName}</TableCell>
-      <TableCell className="text-center">
-        {manaCosts.length > 0 && (
-          <div className="flex justify-center items-center gap-1">
-            {manaCosts.map((cost, idx) => (
-              <div key={idx} className="flex items-center gap-1">
-                {idx > 0 && <span className="text-muted-foreground">//</span>}
-                <ManaCost cost={cost} />
+          <TableCell className="font-medium">{displayName}</TableCell>
+          <TableCell className="text-center">
+            {manaCosts.length > 0 && (
+              <div className="flex justify-center items-center gap-1">
+                {manaCosts.map((cost, idx) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-muted-foreground">//</span>}
+                    <ManaCost cost={cost} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </TableCell>
-      <TableCell>
-        {card.type_line.length > 40 ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>{card.type_line.substring(0, 40)}...</span>
-            </TooltipTrigger>
-            <TooltipContent>{card.type_line}</TooltipContent>
-          </Tooltip>
-        ) : (
-          card.type_line
-        )}
-      </TableCell>
-      <TableCell className="text-center">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>{card.set.toUpperCase()}</span>
-          </TooltipTrigger>
-          <TooltipContent>{card.set_name}</TooltipContent>
-        </Tooltip>
-      </TableCell>
-      <TableCell className="text-center">{card.cmc}</TableCell>
-      <TableCell className="text-center">{powerToughness}</TableCell>
-      <TableCell className="text-center">{loyalty}</TableCell>
-      <TableCell className="w-[50px]">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCollection();
-              }}
-            >
-              <Star className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="flex flex-col">
-              <span>Add to active collection</span>
-              {activeCollection && (
-                <span className="text-xs text-muted-foreground">{activeCollection.name}</span>
-              )}
-              <span className="text-xs text-muted-foreground">Press + or =</span>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TableCell>
-    </TableRow>
+            )}
+          </TableCell>
+          <TableCell>
+            {card.type_line.length > 40 ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>{card.type_line.substring(0, 40)}...</span>
+                </TooltipTrigger>
+                <TooltipContent>{card.type_line}</TooltipContent>
+              </Tooltip>
+            ) : (
+              card.type_line
+            )}
+          </TableCell>
+          <TableCell className="text-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-flex items-center justify-center">
+                  <SetSvg setCode={card.set} rarityCode={card.rarity} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {card.set_name}{" "}
+                <em className="text-xs text-muted-foreground">({card.set.toUpperCase()})</em>{" "}
+                {card.rarity}
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+          <TableCell className="text-center">{card.cmc}</TableCell>
+          <TableCell className="text-center">{powerToughness}</TableCell>
+          <TableCell className="text-center">{loyalty}</TableCell>
+          <TableCell className="w-[50px]">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCollection();
+                  }}
+                >
+                  <Star className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="flex flex-col">
+                  <span>Add to active collection</span>
+                  {activeCollection && (
+                    <span className="text-xs text-muted-foreground">{activeCollection.name}</span>
+                  )}
+                  <span className="text-xs text-muted-foreground">Press + or =</span>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+        </TableRow>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={handleAddToCollection}>

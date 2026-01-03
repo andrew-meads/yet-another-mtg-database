@@ -74,7 +74,7 @@ export interface SearchResultsProps {
   children: React.ReactNode;
 }
 
-const DEFAULT_FILTERS = "lang:en exclude:extra";
+const DEFAULT_FILTERS = "lang:en exclude:extras";
 
 /**
  * SearchResults Component

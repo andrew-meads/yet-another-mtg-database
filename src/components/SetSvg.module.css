@@ -1,0 +1,10 @@
+.setIcon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.setIcon svg path {
+  fill: var(--svg-icon-fill);
+  stroke: var(--svg-icon-stroke);
+}

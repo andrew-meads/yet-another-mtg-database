@@ -52,6 +52,8 @@ export interface InfiniteScrollSearchResultsProps {
   children: React.ReactNode;
 }
 
+const DEFAULT_FILTERS = "lang:en exclude:extras";
+
 /**
  * InfiniteScrollSearchResults Component
  *
@@ -70,15 +72,21 @@ export default function InfiniteScrollSearchResults({
   const [searchParams, setSearchParams] = useLocalStorage<SearchControlsValues>(
     "search-panel-params",
     {
-      q: "lang:en exclude:extras",
+      q: "",
       order: "name",
       dir: "asc",
       pageLen: 25,
-      owned: false
+      owned: false,
+      useDefaultFilters: true
     }
   );
+
+  const q = searchParams.useDefaultFilters
+    ? `${DEFAULT_FILTERS} ${searchParams.q}`.trim()
+    : searchParams.q;
+
   const queryResult = useInfiniteCardsSearch({
-    q: searchParams.q,
+    q,
     order: searchParams.order,
     dir: searchParams.dir,
     pageLen: searchParams.pageLen,

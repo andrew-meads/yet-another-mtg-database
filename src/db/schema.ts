@@ -3,6 +3,7 @@ import { MtgCard } from "@/types/MtgCard";
 import { CardCollection } from "@/types/CardCollection";
 import { Tag } from "@/types/Tag";
 import { User } from "@/types/User";
+import { SetSvg } from "@/types/SetSvg";
 
 // Mongoose document type for CardCollection with ObjectId
 export type CardCollectionDocument = Omit<CardCollection, "owner"> & {
@@ -124,16 +125,25 @@ export const TagSchema = new Schema<Tag>({
   label: { type: String, required: true, unique: true }
 });
 
+export const SetSvgSchema = new Schema<SetSvg>({
+  setCode: { type: String, required: true, unique: true },
+  svgContent: { type: String, required: true }
+});
+
 export const UserModel = (mongoose.models.User ||
   mongoose.model<User>("User", userSchema)) as Model<User>;
 
 export const TagModel = (mongoose.models.Tag ||
   mongoose.model<Tag>("Tag", TagSchema)) as Model<Tag>;
 
-// Prevent model recompilation during hot reload in development
 export const Card = (mongoose.models.Card ||
   mongoose.model<MtgCard>("Card", cardSchema)) as Model<MtgCard>;
 
 export const CardCollectionModel = (mongoose.models.CardCollection ||
-  mongoose.model<CardCollectionDocument>("CardCollection", collectionSchema)) as Model<CardCollectionDocument>;
+  mongoose.model<CardCollectionDocument>(
+    "CardCollection",
+    collectionSchema
+  )) as Model<CardCollectionDocument>;
 
+export const SetSvgModel = (mongoose.models.SetSvg ||
+  mongoose.model<SetSvg>("SetSvg", SetSvgSchema)) as Model<SetSvg>;

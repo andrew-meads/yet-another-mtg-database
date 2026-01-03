@@ -25,6 +25,7 @@ import { getCollectionIcon } from "@/lib/collectionUtils";
 import { useEffect, useState } from "react";
 import EntryNotesAndTags from "../EntryNotesAndTags";
 import { on } from "events";
+import { SetSvg } from "@/components/SetSvg";
 
 /**
  * Component for move to collection menu item with quantity slider
@@ -330,9 +331,15 @@ export default function CollectionTableRow({
             <TableCell className="text-center text-xs uppercase">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span>{card.set}</span>
+                  <div className="inline-flex items-center justify-center">
+                    <SetSvg setCode={card.set} rarityCode={card.rarity} width={20} height={20} />
+                  </div>
                 </TooltipTrigger>
-                <TooltipContent>{card.set_name}</TooltipContent>
+                <TooltipContent>
+                  {card.set_name}{" "}
+                  <em className="text-xs text-muted-foreground">({card.set.toUpperCase()})</em>{" "}
+                  {card.rarity}
+                </TooltipContent>
               </Tooltip>
             </TableCell>
             <TableCell className="text-center">{card.cmc}</TableCell>

@@ -303,7 +303,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
             <TableHead>Name</TableHead>
             <TableHead className="text-center">Mana Cost</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead className="text-center">Set</TableHead>
+            <TableHead className="text-center">Set / Rarity</TableHead>
             <TableHead className="text-center">CMC</TableHead>
             <TableHead className="text-center">P/T</TableHead>
             <TableHead className="text-center">Loyalty</TableHead>
