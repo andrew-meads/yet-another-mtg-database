@@ -65,7 +65,7 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
           <h3 className="font-semibold text-sm sm:text-base truncate">
             {card.flavor_name || card.name}
           </h3>
-          <SetSvg setCode={card.set} rarityCode={card.rarity} width={16} height={16} />
+          <SetSvg setCode={card.set} rarityCode={card.rarity} width={24} height={24} />
         </div>
 
         {/* Set info */}

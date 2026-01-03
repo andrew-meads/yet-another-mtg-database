@@ -332,7 +332,7 @@ export default function CollectionTableRow({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="inline-flex items-center justify-center">
-                    <SetSvg setCode={card.set} rarityCode={card.rarity} width={20} height={20} />
+                    <SetSvg setCode={card.set} rarityCode={card.rarity} width={32} height={32} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
