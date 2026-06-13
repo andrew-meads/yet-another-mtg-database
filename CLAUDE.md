@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A personal Magic: The Gathering card database and collection manager. Next.js 16 (App Router, React 19) frontend + API routes, backed by MongoDB via Mongoose. Card data originates from Scryfall bulk JSON. Features include Scryfall-style search, collection/deck/wishlist management, drag-and-drop card organization, and camera-based card recognition (OpenAI Vision).
+A personal Magic: The Gathering card database and collection manager. Next.js 16 (App Router, React 19) frontend + API routes, backed by MongoDB via Mongoose. Card data originates from Scryfall bulk JSON. Features include Scryfall-style search, collection/deck/wishlist management, drag-and-drop card organization, and camera-based card scanning (proxied to an external card-scanner backend).
 
 ## Commands
 
@@ -53,7 +53,7 @@ npm run whitelist-user -- user@example.com
 
 ## Environment
 
-Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` (NextAuth Google OAuth), `OPENAI_API_KEY` (card recognition), `ALL_CARDS_FILE` (default bulk import path).
+Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` (NextAuth Google OAuth), `SCANNER_BASE_URL` (external card-scanner backend the `/api/scan` route proxies to — defaults to `http://localhost:8000`), `ALL_CARDS_FILE` (default bulk import path).
 
 ## Architecture
 
@@ -75,18 +75,19 @@ Sorting is separate (`src/lib/sortConfig.ts`): some sort fields require a MongoD
 NextAuth (v4) with Google provider, **JWT session strategy (no DB session store)**. `src/app/api/auth/[...nextauth]/route.ts` just re-exports the handler.
 - The `signIn` callback enforces the whitelist: rejects any email not found in `users`. On first successful sign-in it auto-creates a "Main Collection" for the user.
 - The DB `_id` is threaded through `jwt` → `session` callbacks and exposed as `session.user._id` (typed via module augmentation in `auth.ts`).
-- Pages are gated server-side: e.g. `(with-app-bar)/(main)/layout.tsx` calls `getServerSession` and redirects to `/login` when absent. There is **no `middleware.ts`** — gating happens in layouts/routes.
+- **API routes are auth-gated by `src/proxy.ts`** — this is the Next.js 16 middleware (the file was renamed from `middleware.ts` to `proxy.ts` in Next 16). Its `getToken()` check returns `401 { error: "Unauthorized" }`, and its `matcher` (`"/api/((?!auth).*)"`) protects every `/api/*` route except `/api/auth/*`. Routes that need the user id additionally call `getServerSession(authOptions)` and read `session!.user._id` (trusting the middleware).
+- Pages are also gated server-side: e.g. `(with-app-bar)/(main)/layout.tsx` calls `getServerSession` and redirects to `/login` when absent.
 
 ### Routing (`src/app/`)
 App Router with route groups (folders in parentheses don't affect URL paths):
 - `(with-app-bar)/` — adds the global `AppBar`. `(main)/` nested group adds auth gate + `MainWorkspace`, containing `/search` and `/my-cards`.
 - `/scan` + `/scan/results` — camera capture and recognition results (client-side, uses `ScanContext`).
-- API routes under `app/api/`: `cards`, `collections`, `sets`, `tags`, `recognize`, `auth`.
+- API routes under `app/api/`: `cards`, `collections`, `sets`, `tags`, `scan`, `auth`.
 
-### Card recognition (`src/app/api/recognize/route.ts`)
-`POST /api/recognize` takes a `FormData` image, sends it to OpenAI Vision (`gpt-4o-mini`) to extract `{ name, setCode, collectorNumber }`, then looks the card up in MongoDB by name/`flavor_name` (with split-card `//` reversal handling). Has retry logic for malformed JSON responses. The client flow lives in `src/app/scan/` and `usePostImageForRecognition`.
+### Card scanning (`src/app/api/scan/route.ts`)
+`POST /api/scan` is a thin **auth-guarded proxy** to the external card-scanner backend (`ghcr.io/andrew-meads/card-scanner-backend`, defined in the compose files at port 8000). It validates the multipart `image` field, forwards it to `${SCANNER_BASE_URL}/api/scan` (default `http://localhost:8000`), and passes the scanner's JSON response back verbatim — de-skewed card crops plus ranked Scryfall matches (`{ count, cards: [{ id, url, width, height, matches }], debugUrl }`). Returns `502` if the scanner is unreachable. The route touches no Mongo model. The client flow lives in `src/app/scan/`.
 
-> **Note:** `docker-compose.yml` also defines an external `card-scanner` service (a separate OCR backend at `ghcr.io/andrew-meads/card-scanner-backend`) and its Postgres DB. This is a separate scanning path and is **not** referenced from the Next.js source.
+> **Note:** crop `url`s in the scanner response are relative (`/cards/<file>.jpg`) and served by the scanner backend, not Next.js — the client must resolve them against the scanner origin.
 
 ### Set icons (`src/app/api/sets/[code]/svg/route.ts`)
 Lazily caches Scryfall set-symbol SVGs into the `setsvgs` collection on first request, then serves from DB with long-lived cache headers.
