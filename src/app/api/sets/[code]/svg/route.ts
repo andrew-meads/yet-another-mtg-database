@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/db/mongoose";
 import { SetSvgModel } from "@/db/schema";
+import { scryfallFetch } from "@/lib/scryfall";
 
 /**
  * GET handler for retrieving set icon SVGs by set code.
@@ -60,9 +61,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  */
 async function fetchSetSvgFromScryfall(setCode: string): Promise<string> {
   // Fetch set info from Scryfall
-  const setResponse = await fetch(`https://api.scryfall.com/sets/${setCode}`);
+  const setResponse = await scryfallFetch(`${process.env.SCRYFALL_API_BASE_URL}/sets/${setCode}`);
+
+  // console.log(`Fetching set info for code: ${setCode} - Status: ${setResponse.status}`);
 
   if (!setResponse.ok) {
+    const errorData = await setResponse.json();
+    console.error(`Scryfall API error: ${errorData.details}`);
     throw new Error("Set not found");
   }
 
@@ -72,7 +77,9 @@ async function fetchSetSvgFromScryfall(setCode: string): Promise<string> {
   }
 
   // Fetch the SVG content
-  const svgResponse = await fetch(setData.icon_svg_uri);
+  const svgResponse = await scryfallFetch(setData.icon_svg_uri);
+
+  // console.log(`Fetching SVG for set: ${setCode} - Status: ${svgResponse.status}`);
 
   if (!svgResponse.ok) {
     throw new Error("Failed to fetch SVG");

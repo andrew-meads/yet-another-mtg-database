@@ -1,6 +1,7 @@
 import connectDB from "@/db/mongoose";
 import { Card } from "@/db/schema";
 import { NextRequest } from "next/server";
+import { scryfallFetch } from "@/lib/scryfall";
 
 /**
  * GET /api/cards/[id]
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/cards/[i
     // Fetch from Scryfall and update DB if requested
     if (shouldFetch) {
       const url = `${process.env.SCRYFALL_API_BASE_URL!}/cards/${id}`;
-      const response = await fetch(url);
+      const response = await scryfallFetch(url);
       if (!response.ok) {
         console.error("Error fetching from Scryfall:", response.statusText);
         return Response.json({ error: "Failed to fetch card from Scryfall" }, { status: 502 });

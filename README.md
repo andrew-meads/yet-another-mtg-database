@@ -82,6 +82,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | --- | --- |
 | `MONGO_DB_URI` | MongoDB connection string (default `mongodb://127.0.0.1:27017/yet-another-mtg-database`) |
 | `ALL_CARDS_FILE` | Default path to the Scryfall bulk JSON used by `init-db` |
+| `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards and set icons on demand |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `AUTH_SECRET` | Random secret used to sign NextAuth JWTs |

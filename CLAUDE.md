@@ -53,7 +53,9 @@ npm run whitelist-user -- user@example.com
 
 ## Environment
 
-Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` (NextAuth Google OAuth), `SCANNER_BASE_URL` (external card-scanner backend the `/api/scan` route proxies to — defaults to `http://localhost:8000`), `ALL_CARDS_FILE` (default bulk import path).
+Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` (NextAuth Google OAuth), `SCANNER_BASE_URL` (external card-scanner backend the `/api/scan` route proxies to — defaults to `http://localhost:8000`), `ALL_CARDS_FILE` (default bulk import path), `SCRYFALL_API_BASE_URL` (Scryfall API base, defaults to `https://api.scryfall.com`; used by the card-refresh and set-icon routes).
+
+Scryfall requires a custom `User-Agent` and an `Accept` header on every API request, and a max of 10 requests/second — all Scryfall `fetch`es go through `scryfallFetch` / `SCRYFALL_HEADERS` in `src/lib/scryfall.ts`, which attaches the headers and rate-limits starts to <= 10/s via an in-process serialized queue (relies on the server being a long-lived singleton; not coordinated across instances).
 
 ## Architecture
 

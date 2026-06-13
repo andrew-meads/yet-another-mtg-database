@@ -6,6 +6,7 @@ import { parser } from "stream-json";
 import StreamArray, { streamArray } from "stream-json/streamers/StreamArray";
 import { Command } from "commander";
 import { Readable } from "stream";
+import { SCRYFALL_HEADERS } from "@/lib/scryfall";
 
 const program = new Command();
 program
@@ -78,7 +79,7 @@ async function getReadPipeline(): Promise<StreamArray> {
 
   if (options.dataUrl) {
     console.log(`Downloading and importing cards from URL: ${options.dataUrl}`);
-    const res = await fetch(options.dataUrl);
+    const res = await fetch(options.dataUrl, { headers: SCRYFALL_HEADERS });
     if (!res.ok) {
       throw new Error(`Failed to download data from URL: ${res.status} ${res.statusText}`);
     }
