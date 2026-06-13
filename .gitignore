@@ -45,3 +45,6 @@ next-env.d.ts
 # bulk data
 /bulk-data/*
 !/bulk-data/.gitkeep
+
+data/cards/*
+!data/cards/.gitkeep

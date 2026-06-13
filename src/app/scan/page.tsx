@@ -2,40 +2,42 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X, SwitchCamera, AlertCircle } from "lucide-react";
+import { Camera, X, SwitchCamera, AlertCircle, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useScanContext } from "@/context/ScanContext";
-import { usePostImageForRecognition } from "@/hooks/react-query/usePostImageForRecognition";
+import { usePostImageForScan } from "@/hooks/react-query/usePostImageForScan";
 
-const DEBUG_MODE = false;
+// Non-standard camera-focus members not present in the lib DOM types.
+type FocusCapabilities = MediaTrackCapabilities & { focusMode?: string[] };
+type FocusConstraint = MediaTrackConstraintSet & {
+  focusMode?: string;
+  pointsOfInterest?: { x: number; y: number }[];
+};
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [recognitionError, setRecognitionError] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null);
   const router = useRouter();
-  const { setScannedImage, setRecognized, setCards } = useScanContext();
-  const { mutate: recognizeImage, isPending: isRecognizing } = usePostImageForRecognition({
+  const { setScanResult } = useScanContext();
+
+  const { mutate: scanImage, isPending } = usePostImageForScan({
     onSuccess: (data) => {
-      console.log("✅ Recognition successful:", data);
-      setRecognized(data.recognized);
-      setCards(data.cards);
+      setScanResult(data);
       router.push("/scan/results");
     },
-    onError: (error) => {
-      console.error("❌ Recognition failed:", error);
-      setRecognitionError(error.message || "Failed to recognize card");
-      setIsProcessing(false);
+    onError: (err) => {
+      setScanError(err.message || "Failed to scan image");
     }
   });
 
-  // Check if device has multiple cameras
+  // Detect whether the device has more than one camera (enables the switch button).
   useEffect(() => {
     async function checkCameras() {
       try {
@@ -49,22 +51,23 @@ export default function ScanPage() {
     checkCameras();
   }, []);
 
+  // Start (and restart on facing-mode change) the camera stream.
   useEffect(() => {
     let mounted = true;
+    let localStream: MediaStream | null = null;
 
     async function startCamera() {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: facingMode,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
+          video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
         });
+        localStream = mediaStream;
 
         if (mounted && videoRef.current) {
           videoRef.current.srcObject = mediaStream;
           setStream(mediaStream);
+        } else {
+          mediaStream.getTracks().forEach((track) => track.stop());
         }
       } catch (err) {
         console.error("Error accessing camera:", err);
@@ -78,133 +81,86 @@ export default function ScanPage() {
 
     return () => {
       mounted = false;
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      if (localStream) localStream.getTracks().forEach((track) => track.stop());
     };
   }, [facingMode]);
 
-  // Cleanup stream when component unmounts
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [stream]);
-
+  // Capture the full video frame and submit it for scanning.
   const handleCapture = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
 
-    setIsProcessing(true);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setScanError("Failed to capture image");
+      return;
+    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
+    );
+    if (!blob) {
+      setScanError("Failed to capture image");
+      return;
+    }
+
+    setScanError(null);
+    scanImage(blob);
+  };
+
+  // Submit an existing image file (works even when the camera is unavailable).
+  const handleUploadClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // reset so picking the same file fires onChange again
+    if (!file) return;
+    setScanError(null);
+    scanImage(file);
+  };
+
+  // Best-effort tap-to-focus. Supported mainly on Android Chrome; elsewhere the
+  // focus ring still gives visual feedback.
+  const handleVideoTap = async (e: React.MouseEvent<HTMLVideoElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const rect = video.getBoundingClientRect();
+    setFocusPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    window.setTimeout(() => setFocusPoint(null), 800);
+
+    const track = stream?.getVideoTracks()[0];
+    if (!track || !track.getCapabilities) return;
+
+    const capabilities = track.getCapabilities() as FocusCapabilities;
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+
+    const mode = capabilities.focusMode?.includes("single-shot")
+      ? "single-shot"
+      : capabilities.focusMode?.includes("continuous")
+        ? "continuous"
+        : null;
+    if (!mode) return;
 
     try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-
-      // Get video dimensions (actual stream resolution)
-      const videoWidth = video.videoWidth;
-      const videoHeight = video.videoHeight;
-
-      // Get video element dimensions (displayed size on screen)
-      const displayWidth = video.clientWidth;
-      const displayHeight = video.clientHeight;
-
-      // Calculate video aspect ratio and display aspect ratio
-      const videoAspect = videoWidth / videoHeight;
-      const displayAspect = displayWidth / displayHeight;
-
-      // Calculate the visible portion of the video (accounting for object-cover)
-      let visibleVideoWidth, visibleVideoHeight, offsetX, offsetY;
-
-      if (videoAspect > displayAspect) {
-        // Video is wider - height fills display, width is cropped
-        visibleVideoHeight = videoHeight;
-        visibleVideoWidth = videoHeight * displayAspect;
-        offsetX = (videoWidth - visibleVideoWidth) / 2;
-        offsetY = 0;
-      } else {
-        // Video is taller - width fills display, height is cropped
-        visibleVideoWidth = videoWidth;
-        visibleVideoHeight = videoWidth / displayAspect;
-        offsetX = 0;
-        offsetY = (videoHeight - visibleVideoHeight) / 2;
-      }
-
-      // Calculate scaling factor (visible video to display)
-      const scale = visibleVideoWidth / displayWidth;
-
-      // Calculate guide dimensions on the display (in CSS pixels)
-      // Guide is 80% width (w-4/5) with max-w-md (448px) and aspect ratio 2.5:3.5
-      const displayGuideWidth = Math.min(displayWidth * 0.8, 448);
-      const displayGuideHeight = displayGuideWidth * (3.5 / 2.5);
-
-      // Convert guide dimensions to video stream coordinates
-      const guideWidth = displayGuideWidth * scale;
-      const guideHeight = displayGuideHeight * scale;
-
-      // Calculate guide position (centered) in visible video coordinates, then add offset
-      const guideX = offsetX + (visibleVideoWidth - guideWidth) / 2;
-      const guideY = offsetY + (visibleVideoHeight - guideHeight) / 2;
-
-      // Set canvas to cropped dimensions
-      canvas.width = guideWidth;
-      canvas.height = guideHeight;
-
-      // Draw cropped video frame to canvas
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        console.error("Failed to get canvas context");
-        return;
-      }
-
-      ctx.drawImage(
-        video,
-        guideX,
-        guideY,
-        guideWidth,
-        guideHeight, // Source rectangle (crop area)
-        0,
-        0,
-        guideWidth,
-        guideHeight // Destination rectangle (canvas)
-      );
-
-      // Save the cropped image to display (debug only)
-      if (DEBUG_MODE) {
-        const dataUrl = canvas.toDataURL("image/png");
-        setCapturedImage(dataUrl);
-        console.log("Cropped image captured and displayed");
-      }
-
-      // Convert canvas to blob and save it.
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob!), "image/png");
-      });
-      setScannedImage(blob);
-
-      // Send image for recognition
-      recognizeImage(blob);
+      const constraint: FocusConstraint = { focusMode: mode, pointsOfInterest: [{ x, y }] };
+      await track.applyConstraints({ advanced: [constraint] });
     } catch (err) {
-      console.error("Error during capture:", err);
-    } finally {
-      setIsProcessing(false);
+      console.debug("Tap-to-focus not supported:", err);
     }
   };
 
   const handleSwitchCamera = () => {
-    // Stop current stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
-    // Toggle facing mode
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   };
 
   const handleClose = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
+    if (stream) stream.getTracks().forEach((track) => track.stop());
     router.back();
   };
 
@@ -212,7 +168,7 @@ export default function ScanPage() {
     <div className="fixed inset-0 bg-black flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm z-10">
-        <h1 className="text-white text-lg font-semibold">Scan Card</h1>
+        <h1 className="text-white text-lg font-semibold">Scan Cards</h1>
         <Button
           variant="ghost"
           size="icon"
@@ -226,11 +182,12 @@ export default function ScanPage() {
       {/* Camera Feed */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden">
         {error ? (
-          <div className="text-white text-center p-4">
-            <p className="mb-4">{error}</p>
-            <Button variant="secondary" onClick={handleClose}>
-              Go Back
-            </Button>
+          <div className="text-white text-center p-6 max-w-md">
+            <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+            <p className="mb-2">{error}</p>
+            <p className="text-white/70 text-sm">
+              You can still upload a photo using the button below.
+            </p>
           </div>
         ) : (
           <>
@@ -239,79 +196,111 @@ export default function ScanPage() {
               autoPlay
               playsInline
               muted
+              onClick={handleVideoTap}
               className="w-full h-full object-cover"
             />
-            {/* Hidden canvas for image capture */}
             <canvas ref={canvasRef} className="hidden" />
-            {/* Overlay guide for card placement */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="border-2 border-white/50 rounded-lg w-4/5 max-w-md aspect-[2.5/3.5] shadow-lg" />
+
+            {/* Framing hint */}
+            <div className="absolute bottom-4 inset-x-0 flex justify-center pointer-events-none">
+              <p className="text-white/80 text-sm bg-black/40 rounded-full px-3 py-1">
+                Place cards on a contrasting surface
+              </p>
             </div>
-            {/* Display captured image for debugging */}
-            {DEBUG_MODE && capturedImage && (
-              <div className="absolute top-4 right-4 border-2 border-white bg-black p-2 rounded max-w-xs pointer-events-none">
-                <img src={capturedImage} alt="Captured crop" className="w-full" />
-                <p className="text-white text-xs mt-1 text-center">Captured Image</p>
-              </div>
-            )}
-            {/* Recognition status overlay */}
-            {isRecognizing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                  <p className="text-white text-sm font-medium">Recognizing card...</p>
-                </div>
-              </div>
-            )}
-            {/* Recognition error overlay */}
-            {recognitionError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 max-w-md w-full">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-6 w-6 text-red-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="text-white font-semibold mb-2">Recognition Failed</h3>
-                      <p className="text-white/90 text-sm mb-4">{recognitionError}</p>
-                      <Button
-                        onClick={() => setRecognitionError(null)}
-                        variant="secondary"
-                        size="sm"
-                        className="w-full"
-                      >
-                        Dismiss
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
+            {/* Tap-to-focus ring */}
+            {focusPoint && (
+              <div
+                className="absolute w-16 h-16 border-2 border-white rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2 animate-ping"
+                style={{ left: focusPoint.x, top: focusPoint.y }}
+              />
             )}
           </>
+        )}
+
+        {/* Scanning status overlay */}
+        {isPending && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 flex flex-col items-center gap-3">
+              <div className="h-8 w-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+              <p className="text-white text-sm font-medium">Scanning…</p>
+            </div>
+          </div>
+        )}
+
+        {/* Scan error overlay */}
+        {scanError && !isPending && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 max-w-md w-full">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">Scan Failed</h3>
+                  <p className="text-white/90 text-sm mb-4">{scanError}</p>
+                  <Button
+                    onClick={() => setScanError(null)}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
       {/* Bottom Controls */}
       <div className="p-6 bg-black/50 backdrop-blur-sm z-10 flex justify-center items-center gap-4">
+        {!error && (
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleSwitchCamera}
+            disabled={!hasMultipleCameras || isPending}
+            className="rounded-full w-12 h-12 text-white hover:bg-white/20 disabled:opacity-30"
+            title="Switch camera"
+          >
+            <SwitchCamera className="h-5 w-5" />
+          </Button>
+        )}
+
+        {!error && (
+          <Button
+            size="lg"
+            onClick={handleCapture}
+            disabled={!stream || isPending}
+            className="rounded-full w-16 h-16 p-0"
+            title="Capture photo"
+          >
+            {isPending ? (
+              <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Camera className="h-6 w-6" />
+            )}
+          </Button>
+        )}
+
         <Button
           size="icon"
           variant="ghost"
-          onClick={handleSwitchCamera}
-          disabled={!!error || !hasMultipleCameras || isProcessing || isRecognizing}
+          onClick={handleUploadClick}
+          disabled={isPending}
           className="rounded-full w-12 h-12 text-white hover:bg-white/20 disabled:opacity-30"
+          title="Upload photo"
         >
-          <SwitchCamera className="h-5 w-5" />
+          <Upload className="h-5 w-5" />
         </Button>
-        <Button
-          size="lg"
-          onClick={handleCapture}
-          disabled={!!error || isProcessing || isRecognizing}
-          className="rounded-full w-16 h-16 p-0"
-        >
-          {isProcessing ? (
-            <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Camera className="h-6 w-6" />
-          )}
-        </Button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
       </div>
     </div>
   );
