@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
     // Minimum time (in seconds) to cache optimized remote images on the server
     // This doesn't force the browser to cache this long; it's the server-side cache TTL.
     minimumCacheTTL: 31536000 // ~1 year
+  },
+
+  experimental: {
+    turbopackFileSystemCacheForDev: false
   }
 };
 

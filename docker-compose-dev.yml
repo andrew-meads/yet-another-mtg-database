@@ -1,0 +1,59 @@
+services:
+  yamtgd-database:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - yamtgd-mongo-data:/data/db
+    networks:
+      - yamtgd-net
+    restart: unless-stopped
+
+  card-scanner-db:
+    image: postgres:16
+    container_name: card-scanner-db
+    environment:
+      POSTGRES_USER: cardscanner
+      POSTGRES_PASSWORD: cardscanner
+      POSTGRES_DB: cardscanner
+    volumes:
+      # Postgres data on a named volume (VM-native fs). Persists across
+      # down/up; cleared only by `docker compose down -v`.
+      - card-scanner-pgdata:/var/lib/postgresql/data
+    networks:
+      - yamtgd-net
+    healthcheck:
+      # Backend waits until Postgres is actually accepting connections.
+      test: ["CMD-SHELL", "pg_isready -U cardscanner -d cardscanner"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  card-scanner:
+    image: ghcr.io/andrew-meads/card-scanner-backend:latest
+    container_name: card-scanner
+    depends_on:
+      card-scanner-db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      # De-skewed crops + the index error log: bind-mounted so they're easy to inspect.
+      - ./data/cards:/data/cards
+    networks:
+      - yamtgd-net
+    environment:
+      CARDS_DIR: /data/cards
+      DATABASE_URL: postgresql://cardscanner:cardscanner@card-scanner-db:5432/cardscanner
+    restart: unless-stopped
+
+volumes:
+  yamtgd-mongo-data:
+    driver: local
+  card-scanner-pgdata:
+    driver: local
+
+networks:
+  yamtgd-net:
+    driver: bridge
