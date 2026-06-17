@@ -1,7 +1,7 @@
-import { DetailedCardEntry } from "./CardCollection";
+import { DetailedPhysicalCard } from "./PhysicalCard";
 
 export interface CardLocation {
   collectionId: string;
   collectionName: string;
-  cards: Array<DetailedCardEntry>;
+  cards: Array<DetailedPhysicalCard>;
 }

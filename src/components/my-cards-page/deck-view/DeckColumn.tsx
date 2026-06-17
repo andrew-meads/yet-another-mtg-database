@@ -1,16 +1,19 @@
+"use client";
+
 import { SimpleCardArtView } from "@/components/CardArtView";
-import { CardCollectionWithCards, DetailedCardEntry } from "@/types/CardCollection";
+import { DetailedPhysicalCard } from "@/types/PhysicalCard";
+import { DeckColumn as DeckColumnData } from "@/types/Deck";
 import { cn } from "@/lib/utils";
-import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET, CONTAINER_OFFSET } from "./card-dimensions";
-import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
-import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
-import { useCardEntryQuantity } from "@/hooks/useCardEntryQuantity";
-import { StickyNote, Tag, Trash2 } from "lucide-react";
+import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
+import { useDeckColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
+import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
+import { useDeletePhysicalCard } from "@/hooks/react-query/useDeletePhysicalCard";
+import { useDeleteColumn } from "@/hooks/react-query/useDeckColumns";
+import { StickyNote, Tag, Library, Trash2, Layers } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Slider } from "@/components/ui/slider";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -19,231 +22,190 @@ import {
 } from "@/components/ui/context-menu";
 
 interface DeckColumnProps {
-  deck: CardCollectionWithCards;
-  entry: DetailedCardEntry;
-  index: number;
+  deckId: string;
+  sectionId: string;
+  column: DeckColumnData;
 }
 
-export default function DeckColumn({ deck, entry, index }: DeckColumnProps) {
-  // Create an array from 1 to entry.quantity inclusive
-  const quantityArray = Array.from({ length: entry.quantity }, (_, i) => i + 1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+/** A single physical-card image within a column's overlapping stack. */
+function DeckCardImage({
+  deckId,
+  sectionId,
+  columnId,
+  card,
+  isFirst
+}: {
+  deckId: string;
+  sectionId: string;
+  columnId: string;
+  card: DetailedPhysicalCard;
+  isFirst: boolean;
+}) {
   const { setSelectedCard } = useCardSelection();
-  const { mutate: updateCardsInCollection } = useUpdateCollectionCards();
+  const deckCardOp = useDeckCardOp();
+  const deleteCard = useDeletePhysicalCard();
 
-  // Quantity management with debouncing
-  const { localQuantity, handleUserQuantityChange, handleImmediateQuantityChange } =
-    useCardEntryQuantity({
-      collectionId: deck._id,
-      cardIndex: index,
-      initialQuantity: entry.quantity
-    });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || isDragging) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const relativeY = e.clientY - rect.top - CONTAINER_OFFSET;
-
-    const clickedIndex = Math.floor(relativeY / OVERLAP_OFFSET);
-    const clampedIndex = Math.min(Math.max(0, clickedIndex), entry.quantity - 1);
-
-    setHoverIndex(clampedIndex);
-  };
-
-  const handleMouseLeave = () => {
-    setHoverIndex(null);
-  };
-
-  const handleClick = () => {
-    setSelectedCard(entry.card);
-  };
-
-  const handleDelete = () => {
-    handleImmediateQuantityChange(0);
-  };
-
-  const handleQuantityChange = (value: number[]) => {
-    const newQuantity = value[0];
-    handleUserQuantityChange(newQuantity);
-  };
-
-  const { isDragging, dragRef, draggedItem } = useCardEntryDragSource({
-    sourceCollectionId: deck._id,
-    sourceIndex: index,
-    entry,
-    hideDefaultPreview: true,
-    getItem: (monitor) => {
-      const clientOffset = monitor.getInitialClientOffset();
-      const sourceOffset = monitor.getInitialSourceClientOffset();
-      let quantity = 1;
-      if (clientOffset && sourceOffset) {
-        // Adjust for container border and padding
-        const relativeY = clientOffset.y - sourceOffset.y - CONTAINER_OFFSET;
-
-        // Calculate which card index was clicked
-        // Cards are stacked with OVERLAP_OFFSET (20px) visible for all but the last one
-        const clickedIndex = Math.floor(relativeY / OVERLAP_OFFSET);
-        // Clamp the index to the valid range [0, entry.quantity - 1]
-        const clampedIndex = Math.min(Math.max(0, clickedIndex), entry.quantity - 1);
-
-        // If we click index k, we are dragging cards k through n-1
-        quantity = entry.quantity - clampedIndex;
-      }
-
-      return {
-        sourceCollectionId: deck._id,
-        sourceIndex: index,
-        entry,
-        quantity,
-        draggingFromDeckView: true
-      };
-    }
-  });
-
-  // Custom drop behaviour to handle dropping cards at arbitrary positions, swapping, etc.
-  const { dropRef, isOver } = useCollectionDropTarget({
-    collection: deck,
-    allowDrop: true,
-    getDestinationIndex: () => index,
-    onDrop: ({ sourceCollectionId, card, sourceIndex, quantity }) => {
-      // If the source collection exists and is different from this one, return true to use default drop behaviour
-      if (sourceCollectionId && sourceCollectionId !== deck._id) return true;
-
-      // If we're dropping a CARD, add it at the drop index.
-      if (card) {
-        updateCardsInCollection({
-          collectionId: deck._id,
-          action: "add",
-          toIndex: index,
-          entry: {
-            cardId: card.id,
-            quantity: 1
-          }
-        });
-        return false;
-      }
-
-      // Otherwise, we're dropping an entry from the same collection. Swap or merge them.
-      updateCardsInCollection({
-        collectionId: deck._id,
-        action: "swap-or-merge",
-        fromIndex: sourceIndex,
-        toIndex: index,
-        quantity
-      });
-    }
+  const { isDragging, dragRef } = usePhysicalCardDragSource({
+    physicalCardIds: [card._id],
+    card: card.card,
+    sourceCollectionId: card.collectionId,
+    sourceDeckId: deckId,
+    origin: { type: "deck", sectionId, columnId }
   });
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
-          ref={(node) => {
-        // Apply dragRef
-        dragRef(node as unknown as HTMLDivElement);
-
-        // Apply dropRef (handle both callback and RefObject types)
-        if (typeof dropRef === "function") {
-          dropRef(node);
-        } else if (dropRef) {
-          (dropRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-        }
-
-        // Store in containerRef for mouse tracking
-        containerRef.current = node;
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      className={cn(
-        "flex flex-col min-w-min border border-transparent rounded-[5px] relative cursor-grab active:cursor-grabbing",
-        "[&>.overlay]:opacity-0 transition-opacity duration-200",
-        !isDragging && "hover:[&>.overlay]:opacity-100"
-      )}
-    >
-      {quantityArray.map((num, i) => {
-        const draggedQuantity = draggedItem?.quantity ?? 1;
-        const isCardDragging = isDragging && i >= entry.quantity - draggedQuantity;
-        const isCardHighlighted = !isDragging && hoverIndex !== null && i >= hoverIndex;
-
-        return (
-          <div
-            key={`${entry._id}-${num}`}
-            className={cn(
-              "shrink-0 pointer-events-none select-none transition-all duration-200",
-              isCardDragging && "filter-[grayscale(20%)_brightness(50%)]",
-              isCardHighlighted && "brightness-120 scale-[1.02]",
-              isOver && "brightness-200"
-            )}
-            style={{
-              width: `${CARD_WIDTH}px`,
-              height: `${CARD_HEIGHT}px`,
-              marginTop: i > 0 ? `-${CARD_HEIGHT - OVERLAP_OFFSET}px` : undefined
-            }}
-          >
-            <SimpleCardArtView
-              card={entry.card}
-              variant="normal"
-              width={CARD_WIDTH}
-              height={CARD_HEIGHT}
-            />
-          </div>
-        );
-      })}
-
-      <div className="overlay absolute top-0 bottom-0 left-0 right-0 flex flex-row items-start justify-end p-4 pointer-events-none select-none text-xl font-bold">
-        <span className="bg-background/60 w-12 h-12 flex items-center justify-center rounded-full">
-          {entry.quantity - hoverIndex!} / {entry.quantity}
-        </span>
-      </div>
-
-      {/* Notes/Tags overlay in bottom-left */}
-      {(entry.notes || (entry.tags && entry.tags.length > 0)) && (
-        <div className="absolute bottom-1 left-1 flex items-center gap-1 pointer-events-auto select-none">
-          {entry.notes && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-[rgba(0,0,0,0.7)] rounded p-1">
-                  <StickyNote className="h-3 w-3 text-white" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs text-xs">{entry.notes}</p>
-              </TooltipContent>
-            </Tooltip>
+          ref={dragRef as unknown as React.Ref<HTMLDivElement>}
+          className={cn(
+            "shrink-0 relative select-none cursor-grab active:cursor-grabbing transition-all duration-200",
+            isDragging && "opacity-40"
           )}
-          {entry.tags && entry.tags.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-[rgba(0,0,0,0.7)] rounded p-1">
-                  <Tag className="h-3 w-3 text-white" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs text-xs">{entry.tags.join(", ")}</p>
-              </TooltipContent>
-            </Tooltip>
+          style={{
+            width: `${CARD_WIDTH}px`,
+            height: `${CARD_HEIGHT}px`,
+            marginTop: isFirst ? undefined : `-${CARD_HEIGHT - OVERLAP_OFFSET}px`
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedCard(card.card);
+          }}
+        >
+          <SimpleCardArtView
+            card={card.card}
+            variant="normal"
+            width={CARD_WIDTH}
+            height={CARD_HEIGHT}
+          />
+
+          {/* Collection badge (which collection this physical card belongs to) */}
+          {card.collectionName && (
+            <div className="absolute top-1 left-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="bg-black/70 rounded px-1 py-0.5 flex items-center gap-1 max-w-[120px]">
+                    <Library className="h-3 w-3 text-white shrink-0" />
+                    <span className="text-[10px] text-white truncate">{card.collectionName}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>In collection: {card.collectionName}</TooltipContent>
+              </Tooltip>
+            </div>
           )}
-        </div>
-      )}
+
+          {/* Notes/tags */}
+          {(card.notes || (card.tags && card.tags.length > 0)) && (
+            <div className="absolute bottom-1 left-1 flex items-center gap-1">
+              {card.notes && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="bg-black/70 rounded p-1">
+                      <StickyNote className="h-3 w-3 text-white" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{card.notes}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {card.tags && card.tags.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="bg-black/70 rounded p-1">
+                      <Tag className="h-3 w-3 text-white" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{card.tags.join(", ")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <div className="px-2 py-3 min-w-[200px]">
-          <div className="text-sm font-medium mb-2">Quantity: {localQuantity}</div>
-          <Slider
-            value={[localQuantity]}
-            onValueChange={handleQuantityChange}
-            min={1}
-            max={Math.max(20, entry.quantity)}
-            step={1}
-          />
-        </div>
-        <ContextMenuItem onClick={handleDelete}>
+        <ContextMenuItem
+          onClick={() =>
+            deckCardOp.mutate({ deckId, op: "remove", physicalCardId: card._id })
+          }
+        >
+          <Layers className="mr-2 h-4 w-4" />
+          Remove from deck
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => deleteCard.mutate(card._id)}>
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          Delete card
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
+export default function DeckColumn({ deckId, sectionId, column }: DeckColumnProps) {
+  const columnRef = useRef<HTMLDivElement | null>(null);
+  const deleteColumn = useDeleteColumn();
+
+  const computeIndex = (offset: { x: number; y: number } | null) => {
+    const el = columnRef.current;
+    if (!el || !offset) return column.cards.length;
+    const rect = el.getBoundingClientRect();
+    const relativeY = offset.y - rect.top - CONTAINER_OFFSET;
+    const idx = Math.floor(relativeY / OVERLAP_OFFSET);
+    return Math.max(0, Math.min(idx, column.cards.length));
+  };
+
+  const { dropRef, isOver } = useDeckColumnDropTarget({
+    deckId,
+    sectionId,
+    columnId: column._id,
+    computeIndex
+  });
+
+  const isEmpty = column.cards.length === 0;
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={(node) => {
+            columnRef.current = node;
+            if (typeof dropRef === "function") dropRef(node);
+          }}
+          className={cn(
+            "flex flex-col min-w-min rounded-[5px] border p-1 transition-colors",
+            isOver ? "border-primary bg-primary/10" : "border-transparent"
+          )}
+        >
+          {isEmpty ? (
+            <div
+              className="rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-xs text-muted-foreground"
+              style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
+            >
+              Drop here
+            </div>
+          ) : (
+            column.cards.map((card, i) => (
+              <DeckCardImage
+                key={card._id}
+                deckId={deckId}
+                sectionId={sectionId}
+                columnId={column._id}
+                card={card}
+                isFirst={i === 0}
+              />
+            ))
+          )}
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          disabled={!isEmpty}
+          onClick={() => deleteColumn.mutate({ deckId, sectionId, columnId: column._id })}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete column{!isEmpty && " (empty it first)"}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

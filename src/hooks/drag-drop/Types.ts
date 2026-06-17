@@ -1,28 +1,40 @@
 import { MtgCard } from "@/types/MtgCard";
-import { DetailedCardEntry } from "@/types/CardCollection";
+import { OpenEntitySummary } from "@/types/Deck";
 
-export interface CollectionDragSourcePayload {
-  /** The card being dropped (for CARD type) */
-  card?: MtgCard;
+export const NEW_CARD = "NEW_CARD";
+export const PHYSICAL_CARD = "PHYSICAL_CARD";
 
-  /** The source collection ID (for CARD_ENTRY type) */
-  sourceCollectionId?: string;
-  /** The card entry being dropped (for CARD_ENTRY type) */
-  entry?: DetailedCardEntry;
-  /** The source index of the card entry being dropped (for CARD_ENTRY type) */
-  sourceIndex?: number;
-  /** The quantity being moved (for CARD_ENTRY type). If undefined, assume the entire quantity is being moved. */
-  quantity?: number;
-  /** Whether the drag originated from the Deck View */
-  draggingFromDeckView?: boolean;
+/** Dragged from search results — a brand new card to be added somewhere. */
+export interface NewCardDragItem {
+  kind: "new";
+  card: MtgCard;
 }
+
+/** Where a physical-card drag originated (drives the drag layer + index recompute). */
+export type PhysicalCardDragOrigin =
+  | { type: "collection" }
+  | { type: "deck"; sectionId: string; columnId: string };
 
 /**
- * Payload passed to the onDrop callback
+ * Dragged from a collection table row (one or more copies of a grouped row) or a
+ * single deck stack image (exactly one id).
  */
-export interface CollectionDropTargetPayload extends CollectionDragSourcePayload {
-  /** The client coordinates where the drop occurred */
-  dropPosition: { x: number; y: number };
-  /** The index within the target collection where the drop occurred. -1 means no particular position, and the handler can assume anywhere they like. */
-  dropIndex: number;
+export interface PhysicalCardDragItem {
+  kind: "physical";
+  /** One or more physical card ids; all share the same card, collection, and deck. */
+  physicalCardIds: string[];
+  card: MtgCard;
+  sourceCollectionId: string;
+  sourceDeckId?: string | null;
+  origin: PhysicalCardDragOrigin;
 }
+
+export type AnyDragItem = NewCardDragItem | PhysicalCardDragItem;
+
+/** A concrete drop destination handed to the dispatcher. */
+export type DropTarget =
+  | { kind: "collection"; collectionId: string }
+  | { kind: "deck-column"; deckId: string; sectionId: string; columnId: string; index: number }
+  | { kind: "deck-new-column"; deckId: string; sectionId: string }
+  | { kind: "deck-new-section"; deckId: string }
+  | { kind: "entity-button"; entity: OpenEntitySummary };

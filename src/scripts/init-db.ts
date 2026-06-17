@@ -1,6 +1,6 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import { Card, CardCollectionModel } from "@/db/schema";
+import { CardData } from "@/db/schema";
 import fs from "fs";
 import { parser } from "stream-json";
 import StreamArray, { streamArray } from "stream-json/streamers/StreamArray";
@@ -46,9 +46,6 @@ async function run() {
     } else {
       console.log("Skipping database clear");
     }
-
-    // Create default collections if none exist
-    // await createDefaultCollections();
 
     // Import card data
     await importCards(pipeline);
@@ -172,27 +169,8 @@ async function importCards(pipeline: StreamArray) {
  * Used when the --clear flag is specified to start with a clean slate.
  */
 async function clearDb() {
-  await Card.deleteMany({});
+  await CardData.deleteMany({});
   console.log("Cleared Card database");
-}
-
-/**
- * Ensures at least one default card collection exists in the database.
- * Creates a "My Collection" collection if no collections are found.
- * This provides users with a starting point for organizing their cards.
- */
-async function createDefaultCollections() {
-  // If CardCollectionModel is empty, create a default "My Collection"
-  const collectionCount = await CardCollectionModel.countDocuments();
-  if (collectionCount === 0) {
-    await CardCollectionModel.create({
-      name: "My Collection",
-      description: "Main collection",
-      collectionType: "collection",
-      cards: []
-    });
-    console.log("Created default 'My Collection' CardCollection");
-  }
 }
 
 /**
@@ -205,7 +183,7 @@ async function createDefaultCollections() {
  * @returns Updated count of successfully processed cards
  */
 async function insertCards(batch: any[], initialProcessedCount: number = 0) {
-  const result = await Card.insertMany(batch, { ordered: false, rawResult: true });
+  const result = await CardData.insertMany(batch, { ordered: false, rawResult: true });
   const insertedCount = result.insertedCount;
   let processedCount = initialProcessedCount + insertedCount;
   console.log(`Processed ${processedCount} cards...`);
@@ -217,7 +195,7 @@ async function insertCards(batch: any[], initialProcessedCount: number = 0) {
 
     // Query which cards from the batch were successfully inserted
     const batchCardIds = batch.map((card) => card.id);
-    const insertedCards = await Card.find({ id: { $in: batchCardIds } }).select("id");
+    const insertedCards = await CardData.find({ id: { $in: batchCardIds } }).select("id");
     const insertedCardIds = new Set(insertedCards.map((card) => card.id));
 
     // Retry only the cards that failed
@@ -226,7 +204,7 @@ async function insertCards(batch: any[], initialProcessedCount: number = 0) {
       if (insertedCardIds.has(card.id)) continue;
 
       try {
-        await Card.create(card);
+        await CardData.create(card);
         processedCount++;
         console.log(`Successfully retried card: ${card?.name} (${card?.id})`);
       } catch (err: any) {

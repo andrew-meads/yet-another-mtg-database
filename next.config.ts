@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Allow E2E tests to run a second, isolated dev server (own build dir + dev
+  // lock) without disturbing a developer's running `.next`. Unset in normal use.
+  ...(process.env.E2E_DIST_DIR ? { distDir: process.env.E2E_DIST_DIR } : {}),
+
   images: {
     // Allow optimizing remote images from Scryfall
     remotePatterns: [

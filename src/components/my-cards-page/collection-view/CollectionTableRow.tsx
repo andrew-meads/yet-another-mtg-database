@@ -1,184 +1,37 @@
 "use client";
 
-import { TableCell, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger
-} from "@/components/ui/context-menu";
 import { MtgCard } from "@/types/MtgCard";
 import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Trash2, ChevronRight, StickyNote, Tag, ArrowRightLeft, FolderInput } from "lucide-react";
-import { DetailedCardEntry } from "@/types/CardCollection";
-import { useCardEntryDragSource } from "@/hooks/drag-drop/useCardEntryDragSource";
-import { useCardEntryQuantity } from "@/hooks/useCardEntryQuantity";
-import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
-import { getCollectionIcon } from "@/lib/collectionUtils";
+import { Trash2, ChevronRight, StickyNote, Tag, Layers, Minus, Plus } from "lucide-react";
+import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
+import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
+import { useRemoveCardGroup } from "@/hooks/react-query/useRemoveCardGroup";
 import { useEffect, useState } from "react";
 import EntryNotesAndTags from "../EntryNotesAndTags";
-import { on } from "events";
 import { SetSvg } from "@/components/SetSvg";
+import { cn } from "@/lib/utils";
+import { CollectionGroupRow, COLLECTION_GRID } from "./grouping";
 
-/**
- * Component for move to collection menu item with quantity slider
- */
-interface MoveToCollectionMenuItemProps {
-  /** Collection to move to */
-  targetCollectionName: string;
-  /** Icon to display (optional) */
-  icon?: React.ReactNode;
-  /** Maximum quantity available to move */
-  maxQuantity: number;
-  /** Callback when move is triggered */
-  onMove: (quantity: number) => void;
-  /** Whether this item is disabled */
-  disabled?: boolean;
-  /** Optional keyboard hint */
-  keyboardHint?: string;
-}
-
-function MoveToCollectionMenuItem({
-  targetCollectionName,
-  icon,
-  maxQuantity,
-  onMove,
-  disabled = false,
-  keyboardHint
-}: MoveToCollectionMenuItemProps) {
-  const [quantity, setQuantity] = useState(1);
-
-  // Reset quantity when max changes
-  useEffect(() => {
-    setQuantity(Math.min(quantity, maxQuantity));
-  }, [maxQuantity]);
-
-  const handleMove = () => {
-    onMove(quantity);
-    setQuantity(1); // Reset after move
-  };
-
-  const handleQuantityChange = (value: number[]) => {
-    setQuantity(value[0]);
-  };
-
-  return (
-    <ContextMenuItem
-      onSelect={(e) => {
-        e.preventDefault(); // Prevent menu from closing
-      }}
-      disabled={disabled}
-    >
-      <div className="flex flex-col flex-1 gap-2">
-        <div className="flex items-center">
-          {icon}
-          {targetCollectionName}
-          {keyboardHint && (
-            <span className="ml-auto pl-4 text-xs text-muted-foreground">{keyboardHint}</span>
-          )}
-        </div>
-        {maxQuantity > 1 && !disabled && (
-          <div className="ml-6 space-y-1">
-            <Slider
-              value={[quantity]}
-              onValueChange={handleQuantityChange}
-              min={1}
-              max={maxQuantity}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {quantity} {quantity === 1 ? "card" : "cards"}
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 px-2 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMove();
-                }}
-              >
-                Move
-              </Button>
-            </div>
-          </div>
-        )}
-        {maxQuantity === 1 && !disabled && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-xs ml-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMove();
-            }}
-          >
-            Move
-          </Button>
-        )}
-      </div>
-    </ContextMenuItem>
-  );
-}
-
-/**
- * Props for CollectionTableRow component
- */
 interface CollectionTableRowProps {
   collectionId: string;
-  /** The entry in this row */
-  entry: DetailedCardEntry;
-  /** Row index for reordering */
-  rowIndex: number;
-  /** Callback when row is clicked */
+  row: CollectionGroupRow;
   onClick?: (card: MtgCard) => void;
-  /** Whether this row is currently selected */
   isSelected?: boolean;
-  /** Whether this row is currently expanded */
   isExpanded?: boolean;
-  /** Callback to toggle expansion */
   onExpand?: () => void;
-  /** Whether search is currently active in the parent table */
   isSearchActive?: boolean;
-  /** Callback when mouse enters the row */
   onHoverEnter?: () => void;
-  /** Callback when mouse leaves the row */
   onHoverLeave?: () => void;
-  /** Callback when mouse moves within the row */
-  onHoverMove?: (e: React.MouseEvent<HTMLTableRowElement>) => void;
-  /** Callback to notify parent when drag state changes */
+  onHoverMove?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDragStateChange?: (isDragging: boolean) => void;
-  /** Callback when move to collection is triggered */
-  onMoveToCollection?: (
-    entry: DetailedCardEntry,
-    rowIndex: number,
-    quantity: number,
-    targetCollectionId?: string
-  ) => void;
 }
 
-/**
- * Individual table row component for displaying a single card in a collection
- *
- * Features:
- * - Displays card attributes across multiple columns
- * - Handles double-faced cards with "//" separator
- * - Editable quantity field with trash can for removal
- * - Hover preview popup support
- */
 export default function CollectionTableRow({
   collectionId,
-  entry,
-  rowIndex,
+  row,
   onClick,
   isSelected = false,
   isExpanded = false,
@@ -187,43 +40,64 @@ export default function CollectionTableRow({
   onHoverEnter,
   onHoverLeave,
   onHoverMove,
-  onDragStateChange,
-  onMoveToCollection
+  onDragStateChange
 }: CollectionTableRowProps) {
-  // === CARD DATA EXTRACTION (needed early for hooks) ===
-  const { card, quantity } = entry;
+  const { card } = row;
+  const isLoose = row.deckId === null;
 
-  // === QUANTITY MANAGEMENT ===
-  const { localQuantity, handleUserQuantityChange, handleImmediateQuantityChange } =
-    useCardEntryQuantity({
-      collectionId,
-      cardIndex: rowIndex,
-      initialQuantity: entry.quantity
-    });
+  const createCard = useCreatePhysicalCard();
+  const removeGroup = useRemoveCardGroup();
 
-  // === DRAG AND DROP ===
-  const { isDragging, dragRef } = useCardEntryDragSource({
+  const { isDragging, dragRef } = usePhysicalCardDragSource({
+    physicalCardIds: row.physicalCardIds,
+    card,
     sourceCollectionId: collectionId,
-    sourceIndex: rowIndex,
-    entry,
+    sourceDeckId: row.deckId,
+    origin: { type: "collection" },
     canDrag: !isSearchActive
   });
 
-  // === CONTEXT ===
-  const { activeCollection, openCollections } = useOpenCollectionsContext();
-
-  // Filter out current collection from move options
-  const otherCollections = openCollections.filter((c) => c._id !== collectionId);
-
-  // === HANDLERS ===
-  // Notify parent component when drag state changes (used to hide hover popup)
   useEffect(() => {
     onDragStateChange?.(isDragging);
   }, [isDragging, onDragStateChange]);
 
-  // === MANA COST AND DISPLAY ===
+  const [localQty, setLocalQty] = useState(String(row.quantity));
+  useEffect(() => setLocalQty(String(row.quantity)), [row.quantity]);
 
-  // Extract mana costs (handling double-faced cards)
+  const addCopies = (n: number) => {
+    if (n <= 0) return;
+    createCard.mutate({
+      cardId: card.id,
+      collectionId,
+      notes: row.notes,
+      tags: row.tags,
+      quantity: n
+    });
+  };
+
+  const removeCopies = (n: number) => {
+    if (n <= 0) return;
+    removeGroup.mutate({
+      collectionId,
+      cardId: card.id,
+      notes: row.notes,
+      tags: row.tags,
+      deckId: row.deckId,
+      quantity: n
+    });
+  };
+
+  const commitQuantity = () => {
+    const next = parseInt(localQty, 10);
+    if (isNaN(next) || next === row.quantity) {
+      setLocalQty(String(row.quantity));
+      return;
+    }
+    if (next > row.quantity) addCopies(next - row.quantity);
+    else removeCopies(row.quantity - next);
+  };
+
+  // Mana costs (handling double-faced cards)
   const faces = card.card_faces || [];
   const manaCosts =
     faces.length > 0
@@ -232,15 +106,8 @@ export default function CollectionTableRow({
         ? [card.mana_cost]
         : [];
 
-  // Power/Toughness
-  const renderPowerToughness = () => {
-    if (card.power && card.toughness) {
-      return `${card.power}/${card.toughness}`;
-    }
-    return "—";
-  };
+  const powerToughness = card.power && card.toughness ? `${card.power}/${card.toughness}` : "—";
 
-  // Display flavor name if present, with real name in brackets and italics
   const nameText = card.flavor_name ? (
     <>
       {card.flavor_name} <span className="italic">({card.name})</span>
@@ -249,198 +116,183 @@ export default function CollectionTableRow({
     card.name
   );
 
-  const displayName = (
-    <div className="flex items-center gap-2">
-      <span>{nameText}</span>
-      {entry.notes && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <StickyNote className="h-3 w-3 text-muted-foreground" />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="max-w-xs text-xs">{entry.notes}</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
-      {entry.tags && entry.tags.length > 0 && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Tag className="h-3 w-3 text-muted-foreground" />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="max-w-xs text-xs">{entry.tags.join(", ")}</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
-    </div>
-  );
-
   return (
-    <>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <TableRow
-            className={`cursor-pointer hover:bg-muted/50 ${isSelected ? "bg-accent" : ""}`}
-            onClick={() => onClick?.(card)}
-            onMouseEnter={onHoverEnter}
-            onMouseLeave={onHoverLeave}
-            onMouseMove={onHoverMove}
-            ref={dragRef as unknown as React.LegacyRef<HTMLTableRowElement>}
-            data-row-index={rowIndex}
-          >
-            <TableCell className="p-2 text-center">
+    <div className={cn("border-b", isDragging && "opacity-40")}>
+      <div
+        ref={dragRef as unknown as React.Ref<HTMLDivElement>}
+        className={cn(
+          "grid items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-muted/50 text-sm",
+          isSelected && "bg-accent"
+        )}
+        style={{ gridTemplateColumns: COLLECTION_GRID }}
+        onClick={() => onClick?.(card)}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
+        onMouseMove={onHoverMove}
+      >
+        {/* Expand */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={(e) => {
+            e.stopPropagation();
+            onExpand?.();
+          }}
+        >
+          <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} />
+        </Button>
+
+        {/* Name */}
+        <div className="flex items-center gap-2 font-medium truncate">
+          <span className="truncate">{nameText}</span>
+          {row.notes && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <StickyNote className="h-3 w-3 shrink-0 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-xs">{row.notes}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {row.tags && row.tags.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Tag className="h-3 w-3 shrink-0 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
+        {/* Mana */}
+        <div className="flex justify-center items-center gap-1">
+          {manaCosts.map((cost, idx) => (
+            <div key={idx} className="flex items-center gap-1">
+              {idx > 0 && <span className="text-muted-foreground">//</span>}
+              <ManaCost cost={cost} />
+            </div>
+          ))}
+        </div>
+
+        {/* Type */}
+        <div className="truncate text-muted-foreground">
+          {card.type_line.length > 40 ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{card.type_line.substring(0, 40)}...</span>
+              </TooltipTrigger>
+              <TooltipContent>{card.type_line}</TooltipContent>
+            </Tooltip>
+          ) : (
+            card.type_line
+          )}
+        </div>
+
+        {/* Set / rarity */}
+        <div className="flex justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="inline-flex items-center justify-center">
+                <SetSvg setCode={card.set} rarityCode={card.rarity} width={28} height={28} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {card.set_name}{" "}
+              <em className="text-xs text-muted-foreground">({card.set.toUpperCase()})</em>{" "}
+              {card.rarity}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* CMC */}
+        <div className="text-center">{card.cmc}</div>
+
+        {/* P/T */}
+        <div className="text-center">{powerToughness}</div>
+
+        {/* Deck badge */}
+        <div className="flex justify-center">
+          {row.deckId ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs">
+              <Layers className="h-3 w-3" />
+              <span className="max-w-24 truncate">{row.deckName ?? "Deck"}</span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+
+        {/* Quantity */}
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          {isLoose ? (
+            <>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onExpand?.();
-                }}
+                className="h-7 w-7"
+                onClick={() => removeCopies(1)}
+                aria-label="Remove one"
               >
-                <ChevronRight
-                  className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                />
+                <Minus className="h-3.5 w-3.5" />
               </Button>
-            </TableCell>
-            <TableCell className="font-medium">{displayName}</TableCell>
-            <TableCell className="text-center">
-              {manaCosts.length > 0 && (
-                <div className="flex justify-center items-center gap-1">
-                  {manaCosts.map((cost, idx) => (
-                    <div key={idx} className="flex items-center gap-1">
-                      {idx > 0 && <span className="text-muted-foreground">//</span>}
-                      <ManaCost cost={cost} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </TableCell>
-            <TableCell className="text-sm">
-              {card.type_line.length > 40 ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>{card.type_line.substring(0, 40)}...</span>
-                  </TooltipTrigger>
-                  <TooltipContent>{card.type_line}</TooltipContent>
-                </Tooltip>
-              ) : (
-                card.type_line
-              )}
-            </TableCell>
-            <TableCell className="text-center text-xs uppercase">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="inline-flex items-center justify-center">
-                    <SetSvg setCode={card.set} rarityCode={card.rarity} width={32} height={32} />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {card.set_name}{" "}
-                  <em className="text-xs text-muted-foreground">({card.set.toUpperCase()})</em>{" "}
-                  {card.rarity}
-                </TooltipContent>
-              </Tooltip>
-            </TableCell>
-            <TableCell className="text-center">{card.cmc}</TableCell>
-            <TableCell className="text-center">{renderPowerToughness()}</TableCell>
-            <TableCell className="text-center">{card.loyalty || "—"}</TableCell>
-            <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-center gap-1">
-                <Input
-                  type="number"
-                  min="1"
-                  value={localQuantity}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val)) handleUserQuantityChange(val);
-                  }}
-                  className="w-16 text-center font-semibold"
-                />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMoveToCollection?.(entry, rowIndex, 1);
-                      }}
-                      disabled={activeCollection?._id === collectionId}
-                    >
-                      <ArrowRightLeft className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="flex flex-col">
-                      <span>Move to active collection</span>
-                      {activeCollection && activeCollection._id !== collectionId && (
-                        <span className="text-xs text-muted-foreground">
-                          {activeCollection.name}
-                        </span>
-                      )}
-                      <span className="text-xs text-muted-foreground">Press + or =</span>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 cursor-pointer"
-                  onClick={() => handleImmediateQuantityChange(0)}
-                  aria-label="Remove card"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          {activeCollection && (
-            <MoveToCollectionMenuItem
-              targetCollectionName={`Move to ${activeCollection.name}`}
-              icon={<ArrowRightLeft className="mr-2 h-4 w-4" />}
-              maxQuantity={entry.quantity}
-              onMove={(quantity) => onMoveToCollection?.(entry, rowIndex, quantity, undefined)}
-              disabled={activeCollection._id === collectionId}
-              keyboardHint="+ or ="
-            />
+              <Input
+                type="number"
+                min="0"
+                value={localQty}
+                onChange={(e) => setLocalQty(e.target.value)}
+                onBlur={commitQuantity}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitQuantity();
+                }}
+                className="w-14 text-center font-semibold"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => addCopies(1)}
+                aria-label="Add one"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          ) : (
+            <span className="w-8 text-center font-semibold">{row.quantity}</span>
           )}
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>
-              <FolderInput className="mr-2 h-4 w-4" />
-              Move to collection
-            </ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              {otherCollections.map((collection) => (
-                <MoveToCollectionMenuItem
-                  key={collection._id}
-                  targetCollectionName={collection.name}
-                  icon={getCollectionIcon(collection.collectionType, "h-4 w-4 mr-2")}
-                  maxQuantity={entry.quantity}
-                  onMove={(quantity) =>
-                    onMoveToCollection?.(entry, rowIndex, quantity, collection._id)
-                  }
-                />
-              ))}
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-        </ContextMenuContent>
-      </ContextMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => removeCopies(row.quantity)}
+                aria-label="Delete all copies"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isLoose
+                ? "Delete these copies"
+                : "Delete these copies (removes them from the deck too)"}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
       {isExpanded && (
-        <TableRow>
-          <TableCell colSpan={9} className="bg-muted/30 p-4 text-sm">
-            <EntryNotesAndTags
-              notes={entry.notes}
-              tags={entry.tags}
-              collectionId={collectionId}
-              cardIndex={rowIndex}
-            />
-          </TableCell>
-        </TableRow>
+        <div className="bg-muted/30 p-4">
+          <EntryNotesAndTags
+            notes={row.notes}
+            tags={row.tags}
+            physicalCardIds={row.physicalCardIds}
+          />
+        </div>
       )}
-    </>
+    </div>
   );
 }

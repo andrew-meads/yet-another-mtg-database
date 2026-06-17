@@ -1,5 +1,5 @@
 import connectDB from "@/db/mongoose";
-import { Card } from "@/db/schema";
+import { CardData } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { scryfallFetch } from "@/lib/scryfall";
 
@@ -34,14 +34,14 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/cards/[i
         return Response.json({ error: "Failed to fetch card from Scryfall" }, { status: 502 });
       }
       const cardData = await response.json();
-      await Card.deleteOne({ id }); // Remove existing card if any
-      const newCard = new Card(cardData);
+      await CardData.deleteOne({ id }); // Remove existing card if any
+      const newCard = new CardData(cardData);
       await newCard.save();
       return Response.json(newCard);
     }
 
     // Load card from db and return it, or a 404 if not found.
-    const card = await Card.findOne({ id });
+    const card = await CardData.findOne({ id });
     if (!card) return Response.json({ error: "Card not found" }, { status: 404 });
     return Response.json(card);
   } catch (error) {

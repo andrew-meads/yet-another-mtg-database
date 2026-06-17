@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ManaCost } from "@/components/CardTextView";
-import { DetailedCardEntry } from "@/types/CardCollection";
+import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import { MtgCard } from "@/types/MtgCard";
 
 /**
@@ -525,7 +525,7 @@ export function searchPredicate(filters: SearchFilters | null) {
     // No filters, match all
     return () => true;
   }
-  return (item: DetailedCardEntry | MtgCard) => {
+  return (item: DetailedPhysicalCard | MtgCard) => {
     const card = "card" in item ? item.card : item;
 
     // Helper function to get values from card or card_faces

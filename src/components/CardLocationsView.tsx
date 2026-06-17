@@ -33,22 +33,36 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
   };
 
   const handleDoubleClick = (collectionId: string) => {
-    router.push(`/my-cards/${collectionId}`);
+    router.push(`/my-cards/collections/${collectionId}`);
   };
 
   const locations: Loc[] = useMemo(() => {
     if (!cardLocations?.locations) return [];
 
-    return cardLocations.locations.flatMap((loc) =>
-      loc.cards.map((entry) => ({
-        key: `${loc.collectionId}-${entry._id}`,
-        collectionName: loc.collectionName,
-        collectionId: loc.collectionId,
-        card: entry.card,
-        tags: entry.tags || [],
-        quantity: entry.quantity
-      }))
-    );
+    // Group each collection's individual physical cards by card id into a count.
+    return cardLocations.locations.flatMap((loc) => {
+      const byCard = new Map<string, Loc>();
+      for (const entry of loc.cards) {
+        const key = `${loc.collectionId}-${entry.card.id}`;
+        const existing = byCard.get(key);
+        if (existing) {
+          existing.quantity++;
+          for (const tag of entry.tags || []) {
+            if (!existing.tags.includes(tag)) existing.tags.push(tag);
+          }
+        } else {
+          byCard.set(key, {
+            key,
+            collectionName: loc.collectionName,
+            collectionId: loc.collectionId,
+            card: entry.card,
+            tags: [...(entry.tags || [])],
+            quantity: 1
+          });
+        }
+      }
+      return [...byCard.values()];
+    });
   }, [cardLocations]);
 
   return (
