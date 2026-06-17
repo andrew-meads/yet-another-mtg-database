@@ -75,7 +75,7 @@ export default function CardPopup({ card, position }: CardPopupProps) {
     const next = computePlacement(lastPosRef.current, { w: elW, h: elH });
     setCoords(next);
     setReady(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [position.x, position.y, size.w, size.h]);
 
   // Recompute on window resize (async is fine post-initial)
