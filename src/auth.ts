@@ -2,7 +2,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import type { DefaultSession } from "next-auth";
 import connectDb from "@/db/mongoose";
-import { UserModel, CardCollectionModel } from "@/db/schema";
+import { UserModel, CollectionModel } from "@/db/schema";
 
 // Extend NextAuth types to include user._id
 declare module "next-auth" {
@@ -52,18 +52,17 @@ export const authOptions: NextAuthOptions = {
         // Store the database _id in the user object
         user._id = existingUser._id.toString();
 
-        // Create a default collection for this user if it doesn't exist
-        const numCollections = await CardCollectionModel.countDocuments({
+        // Create a default, active collection for this user if they have none
+        // (active so that search → deck drops work out of the box).
+        const numCollections = await CollectionModel.countDocuments({
           owner: existingUser._id
         });
         if (numCollections === 0) {
-          await CardCollectionModel.create({
+          await CollectionModel.create({
             name: "Main Collection",
             description: "My main MTG card collection",
-            isActive: false,
-            collectionType: "collection",
-            owner: existingUser._id,
-            cards: []
+            isActive: true,
+            owner: existingUser._id
           });
         }
 

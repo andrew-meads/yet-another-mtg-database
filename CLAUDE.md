@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A personal Magic: The Gathering card database and collection manager. Next.js 16 (App Router, React 19) frontend + API routes, backed by MongoDB via Mongoose. Card data originates from Scryfall bulk JSON. Features include Scryfall-style search, collection/deck/wishlist management, drag-and-drop card organization, and camera-based card scanning (proxied to an external card-scanner backend).
+A personal Magic: The Gathering card database and collection manager. Next.js 16 (App Router, React 19) frontend + API routes, backed by MongoDB via Mongoose. Card data originates from Scryfall bulk JSON. Features include Scryfall-style search, collection and deck management, drag-and-drop card organization, and camera-based card scanning (proxied to an external card-scanner backend).
 
 ## Commands
 
@@ -61,9 +61,18 @@ Scryfall requires a custom `User-Agent` and an `Accept` header on every API requ
 
 ### Data layer (`src/db/`, `src/types/`)
 - **`src/db/mongoose.ts`** — `connectDB()` caches the connection on `global.mongoose` to survive Next.js hot-reload. **Every API route must `await connectDB()` before touching a model.**
-- **`src/db/schema.ts`** — all Mongoose schemas/models, guarded with the `mongoose.models.X || mongoose.model(...)` pattern (required so re-imports during hot-reload don't throw). Models: `Card`, `CardCollectionModel`, `UserModel`, `TagModel`, `SetSvgModel`.
-- Plain TS interfaces in `src/types/` are the source of truth for document shapes; schemas are typed against them (`new Schema<MtgCard>(...)`). The `MtgCard` shape mirrors Scryfall's card JSON.
-- A `CardCollection` has a `collectionType` of `"collection" | "wishlist" | "deck"` and embeds its cards as an array of `{ cardId, quantity, notes, tags }`. Cards are referenced by Scryfall string `id`, **not** by Mongo `_id`.
+- **`src/db/schema.ts`** — all Mongoose schemas/models, guarded with the `mongoose.models.X || mongoose.model(...)` pattern (required so re-imports during hot-reload don't throw). Models: `CardData`, `PhysicalCardModel`, `CollectionModel`, `DeckModel`, `UserModel`, `TagModel`, `SetSvgModel`.
+- Plain TS interfaces in `src/types/` are the source of truth for document shapes; schemas are typed against them. The `MtgCard` shape mirrors Scryfall's card JSON.
+
+#### Physical-card-instance model (collections & decks)
+This is the core domain model. Read it before touching collections/decks/drag-and-drop.
+- **`CardData`** (`src/types/MtgCard.ts`) — Scryfall reference card data. The model is named `CardData` to disambiguate from physical copies, but is **pinned to the Mongo collection `cards`** (`{ collection: "cards" }` in the schema) so the bulk import and `$lookup`s stay stable. Cards are referenced everywhere by Scryfall string `id`, **not** Mongo `_id`.
+- **`PhysicalCard`** (`src/types/PhysicalCard.ts`) — one document per physical card copy: `{ owner, cardId, collectionId (required), deckId? (optional), notes?, tags? }`. **Invariant: every physical card belongs to exactly one collection and is assigned to at most one deck.** The `collectionId`/`deckId` back-refs are the **source of truth for membership** and power the cross-membership badges.
+- **`Collection`** (`src/types/Collection.ts`) — `{ owner, name, description, isActive? }`. No stored card order: membership is purely `PhysicalCard.collectionId`, and the collection table groups + sorts deterministically client-side.
+- **`Deck`** (`src/types/Deck.ts`) — `{ owner, name, description, sections: [{ name, columns: [{ cards: ObjectId[] }] }] }`. A deck is an *arrangement* layered over physical cards that still live in their collections: named sections, each with any number of unnamed columns, each an ordered list of `PhysicalCard` ids. Sections/columns get auto `_id`s used by the UI/API.
+- **No multi-doc transactions** (dev Mongo is a single mongod). Mutations write the `PhysicalCard` back-ref **first**, then fix up the deck's ordered arrays. `GET /api/decks/[id]?details=true` **reconciles** by appending any card whose `deckId` points at the deck but is missing from the arrays into a default column — so a mid-failure is always recoverable. Shared helpers: `src/lib/server/cardDetails.ts` (`detailPhysicalCards`, `upsertTags`) and `src/lib/server/deckArrange.ts` (`findOrCreateColumn`, `pullCardFromAllDecks`).
+- API surface: `/api/collections` (CRUD + `summaries` + `isActive`), `/api/decks` (CRUD + `/sections`, `/columns`, `/cards` placement ops `place|move|remove`), `/api/physical-cards` (POST create-N / PATCH notes·tags·collection / DELETE / `remove-group` decrement). The old `/api/collections/[id]/cards` action API is gone.
+- "Quantity" is a **display-only** concept now: the collection table groups copies by `cardId + notes + tags + deckId` (see `src/components/my-cards-page/collection-view/grouping.ts`) into one row with a count and a single deck badge (loose copies sort before deck-assigned ones). There is no `quantity` field on any document.
 
 ### Search engine (`src/lib/search/`)
 Parses Scryfall-like query strings into MongoDB query objects. Entry point: `parseSearchQuery(queryString)` (re-exported from `index.ts`). Pipeline:
@@ -71,11 +80,11 @@ Parses Scryfall-like query strings into MongoDB query objects. Entry point: `par
 2. **`queryBuilder.ts`** — recursive-descent `parseExpression` builds boolean structure: implicit AND between terms, explicit `or`, parenthesized groups, and `$nor` for negation. Bare terms (no `key:`) become a name/`flavor_name` regex search.
 3. **`config.ts` + `operators/`** — each operator (color, type, oracle, manavalue, set, rarity, etc.) is a `SearchOperatorConfig` with `aliases`, `buildQuery(value, operator)`, and optional `validate`. **To add a search operator: create a file in `operators/`, export it from `operators/index.ts`, and register it in `searchOperators` in `config.ts`.**
 
-Sorting is separate (`src/lib/sortConfig.ts`): some sort fields require a MongoDB aggregation pipeline (`useAggregation` + `buildAggregationSort`). `GET /api/cards` switches between `.find().sort()` and an aggregation pipeline, also using `$lookup` against `cardcollections` for the `owned=true` filter.
+Sorting is separate (`src/lib/sortConfig.ts`): some sort fields require a MongoDB aggregation pipeline (`useAggregation` + `buildAggregationSort`). `GET /api/cards` switches between `.find().sort()` and an aggregation pipeline, also using `$lookup` against `physicalcards` (localField `id` → foreignField `cardId`) for the `owned=true` filter.
 
 ### Auth (`src/auth.ts`)
 NextAuth (v4) with Google provider, **JWT session strategy (no DB session store)**. `src/app/api/auth/[...nextauth]/route.ts` just re-exports the handler.
-- The `signIn` callback enforces the whitelist: rejects any email not found in `users`. On first successful sign-in it auto-creates a "Main Collection" for the user.
+- The `signIn` callback enforces the whitelist: rejects any email not found in `users`. On first successful sign-in it auto-creates an **active** "Main Collection" (`CollectionModel`, `isActive: true`) so that search→deck drops work out of the box (adding a card to a deck requires an active collection to own the new physical card).
 - The DB `_id` is threaded through `jwt` → `session` callbacks and exposed as `session.user._id` (typed via module augmentation in `auth.ts`).
 - **API routes are auth-gated by `src/proxy.ts`** — this is the Next.js 16 middleware (the file was renamed from `middleware.ts` to `proxy.ts` in Next 16). Its `getToken()` check returns `401 { error: "Unauthorized" }`, and its `matcher` (`"/api/((?!auth).*)"`) protects every `/api/*` route except `/api/auth/*`. Routes that need the user id additionally call `getServerSession(authOptions)` and read `session!.user._id` (trusting the middleware).
 - Pages are also gated server-side: e.g. `(with-app-bar)/(main)/layout.tsx` calls `getServerSession` and redirects to `/login` when absent.
@@ -83,24 +92,25 @@ NextAuth (v4) with Google provider, **JWT session strategy (no DB session store)
 ### Routing (`src/app/`)
 App Router with route groups (folders in parentheses don't affect URL paths):
 - `(with-app-bar)/` — adds the global `AppBar`. `(main)/` nested group adds auth gate + `MainWorkspace`, containing `/search` and `/my-cards`.
+- `/my-cards` is a landing page (create/list collections + decks). Collections and decks are **distinct** entities with separate detail pages: `/my-cards/collections/[id]` (→ `CollectionTable`) and `/my-cards/decks/[id]` (→ `DeckView`). There is no longer a single page that toggles between table and deck views.
 - `/scan` + `/scan/results` — camera capture and recognition results (client-side, uses `ScanContext`).
-- API routes under `app/api/`: `cards`, `collections`, `sets`, `tags`, `scan`, `auth`.
+- API routes under `app/api/`: `cards`, `collections`, `decks`, `physical-cards`, `sets`, `tags`, `scan`, `auth`.
 
 ### Card scanning (`src/app/api/scan/`, `src/app/scan/`)
 `POST /api/scan` (`src/app/api/scan/route.ts`) is a thin **auth-guarded proxy** to the external card-scanner backend (`ghcr.io/andrew-meads/card-scanner-backend`, defined in the compose files at port 8000). It validates the multipart `image` field, forwards it to `${SCANNER_BASE_URL}/api/scan` (default `http://localhost:8000`), and passes the scanner's JSON back verbatim — each detected card's de-skewed crop plus a pre-ranked list of candidate Scryfall printings (`{ count, cards: [{ id, url, width, height, matches }], debugUrl }`, typed in `src/types/ScanResult.ts`). Returns `502` if the scanner is unreachable. Touches no Mongo model.
 
 The client flow lives in `src/app/scan/`:
 - `/scan` (`page.tsx`) — camera capture (full-frame, multi-card; front/back `facingMode` toggle; best-effort tap-to-focus) **or** uploading an existing image; both POST the blob via `usePostImageForScan` → `/api/scan`, store the result in `ScanContext`, and route to `/scan/results`.
-- `/scan/results` (`page.tsx` + `src/components/scan/ScannedCardItem.tsx`) — per detected card, shows the crop and a horizontally-scrolling, single-select strip of candidate printings (best match pre-selected), a quantity stepper, and an Add button that adds the chosen printing **by its `scryfallId`** to the active collection (`useUpdateCollectionCards`, action `"add"`) without leaving the page. Closing does `history.go(-2)` (past `/scan`).
+- `/scan/results` (`page.tsx` + `src/components/scan/ScannedCardItem.tsx`) — per detected card, shows the crop and a horizontally-scrolling, single-select strip of candidate printings (best match pre-selected), a quantity stepper, and an Add button that adds the chosen printing **by its `scryfallId`** to the active collection (`useCreatePhysicalCard` with `quantity`, creating N physical cards) without leaving the page. Closing does `history.go(-2)` (past `/scan`).
 - Crops come back as scanner-relative `url`s (`/cards/<file>.jpg`) and are served through the auth-proxied **`GET /api/scan/crops/[file]`** route. Render them with a plain `<img>` — `next/image` can't optimize this route because the optimizer fetches server-side without the user's auth cookie (→ 401). Candidate images are `cards.scryfall.io` URLs (allowed in `next.config.ts`), so `next/image` is fine there.
 
 ### Set icons (`src/app/api/sets/[code]/svg/route.ts`)
 Lazily caches Scryfall set-symbol SVGs into the `setsvgs` collection on first request, then serves from DB with long-lived cache headers.
 
 ### Client state & data fetching
-- **TanStack Query** for all server state. Hooks live in `src/hooks/react-query/` (e.g. `useInfiniteCardsSearch`, `useRetrieveCollectionDetails`). Provider in `src/context/QueryProvider.tsx`; all providers composed in `src/context/Providers.tsx`.
-- **React Context** for cross-component UI state: `CardSelectionContext`, `OpenCollectionsContext`, `ScanContext`.
-- **react-dnd** (HTML5 backend) for drag-and-drop; sources/targets in `src/hooks/drag-drop/`.
+- **TanStack Query** for all server state. Hooks live in `src/hooks/react-query/` (e.g. `useInfiniteCardsSearch`, `useRetrieveCollectionDetails`, `useRetrieveDeckDetails`, `useCreatePhysicalCard`, `useDeckCardOp`). Query keys: `["collection-summaries"]`, `["collection-details", id]`, `["deck-summaries"]`, `["deck-details", id]`, `["card-locations", name]`, `["tags"]`. Cross-kind moves (deck placement ↔ collection membership) change a badge on the "other" side, so the physical-card/deck mutations broadly invalidate both `["collection-details"]` and `["deck-details"]` plus `["card-locations"]` (see `src/hooks/react-query/invalidate.ts`). Provider in `src/context/QueryProvider.tsx`; all providers composed in `src/context/Providers.tsx`.
+- **React Context** for cross-component UI state: `CardSelectionContext`, `OpenEntitiesContext` (holds the user's open collections **and** decks as a `kind`-discriminated `OpenEntitySummary[]`; only collections can be `active`), `ScanContext`.
+- **react-dnd** (HTML5 backend) for drag-and-drop; sources/targets in `src/hooks/drag-drop/`. Two drag item types: `NEW_CARD` (from search) and `PHYSICAL_CARD` (one or more existing copies). All drop targets delegate to a single dispatcher, **`useDropDispatch`**, which implements the six drag scenarios: search→collection (create), search→deck (create in active collection, then place — errors via toast if no active collection), collection↔collection (change `collectionId`), collection/deck→deck (place, clearing any prior deck), deck→collection (clear `deckId`, optionally change collection). The collection table shows each card's deck badge; the deck view shows each card's collection badge. The collection table is **virtualized** with `@tanstack/react-virtual` (no pagination, no manual row reorder).
 - UI is **shadcn/ui** (Radix primitives) in `src/components/ui/` + **Tailwind CSS v4** (config in `globals.css` / `postcss.config.mjs`, no `tailwind.config`). `mana-font` renders mana symbols.
 
 ## Conventions

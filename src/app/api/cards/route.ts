@@ -1,5 +1,5 @@
 import connectDB from "@/db/mongoose";
-import { Card, CardCollectionModel } from "@/db/schema";
+import { CardData } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { parseSearchQuery } from "@/lib/search/queryBuilder";
 import { getValidSortFields, getSortConfig } from "@/lib/sortConfig";
@@ -66,9 +66,9 @@ export async function GET(request: NextRequest) {
     const buildOwnedFilterStages = () => [
       {
         $lookup: {
-          from: "cardcollections",
+          from: "physicalcards",
           localField: "id",
-          foreignField: "cards.cardId",
+          foreignField: "cardId",
           as: "ownedIn"
         }
       },
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         { $limit: limit }
       );
 
-      cards = await Card.aggregate(pipeline);
+      cards = await CardData.aggregate(pipeline);
       
       // Get total count with a separate aggregation
       const countPipeline: any[] = [
@@ -124,17 +124,17 @@ export async function GET(request: NextRequest) {
       }
 
       countPipeline.push({ $count: 'total' });
-      const countResult = await Card.aggregate(countPipeline);
+      const countResult = await CardData.aggregate(countPipeline);
       total = countResult.length > 0 ? countResult[0].total : 0;
     } else {
       // Simple sort
       const sortObject: { [key: string]: 1 | -1 } = { [sortConfig.field]: sortDirection };
-      cards = await Card.find(searchQuery)
+      cards = await CardData.find(searchQuery)
         .sort(sortObject)
         .limit(limit)
         .skip(skip)
         .lean();
-      total = await Card.countDocuments(searchQuery);
+      total = await CardData.countDocuments(searchQuery);
     }
 
     const totalPages = Math.ceil(total / pageLen);

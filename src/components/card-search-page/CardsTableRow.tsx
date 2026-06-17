@@ -15,9 +15,9 @@ import {
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect } from "react";
 import { ManaCost } from "@/components/CardTextView";
-import { useCardDragSource } from "@/hooks/drag-drop/useCardDragSource";
-import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
-import { getCollectionIcon } from "@/lib/collectionUtils";
+import { useNewCardDragSource } from "@/hooks/drag-drop/useNewCardDragSource";
+import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
+import { getEntityIcon } from "@/lib/collectionUtils";
 import { Star, Plus } from "lucide-react";
 import clsx from "clsx";
 import { SetSvg } from "@/components/SetSvg";
@@ -69,11 +69,12 @@ export default function CardsTableRow({
 }: CardsTableRowProps) {
   // === DRAG AND DROP ===
   // Make the row draggable using react-dnd
-  const { isDragging, dragRef } = useCardDragSource(card);
+  const { isDragging, dragRef } = useNewCardDragSource(card);
 
   // === CONTEXT ===
-  // Get open collections from context
-  const { activeCollection, openCollections } = useOpenCollectionsContext();
+  // Get open collections from context (decks can't receive a raw "add to collection")
+  const { activeCollection, openEntities } = useOpenEntitiesContext();
+  const openCollections = openEntities.filter((e) => e.kind === "collection");
 
   // Notify parent component when drag state changes (used to hide hover popup)
   useEffect(() => {
@@ -250,7 +251,7 @@ export default function CardsTableRow({
                 key={collection._id}
                 onClick={() => onAddToCollection?.(card, collection._id)}
               >
-                {getCollectionIcon(collection.collectionType, "h-4 w-4 mr-2")}
+                {getEntityIcon("collection", "h-4 w-4 mr-2")}
                 {collection.name}
               </ContextMenuItem>
             ))}

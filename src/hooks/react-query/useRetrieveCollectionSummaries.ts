@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { CollectionSummary } from "@/types/CardCollection";
+import { CollectionSummary } from "@/types/Collection";
 import { useSession } from "next-auth/react";
 
 export interface CollectionSummariesResponse {

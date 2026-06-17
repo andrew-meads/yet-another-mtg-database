@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "../ui/input";
 import TagInput from "../TagInput";
-import { useUpdateCardEntry } from "@/hooks/react-query/useUpdateCardEntry";
+import { useUpdatePhysicalCard } from "@/hooks/react-query/useUpdatePhysicalCard";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useRetrieveTags } from "@/hooks/react-query/useRetrieveTags";
 
 interface EntryNotesAndTagsProps {
   notes?: string;
   tags?: string[];
-  collectionId: string;
-  cardIndex: number;
+  /** All physical cards in this grouped row — edits apply to every copy. */
+  physicalCardIds: string[];
 }
 
-export default function EntryNotesAndTags({
-  notes,
-  tags,
-  collectionId,
-  cardIndex
-}: EntryNotesAndTagsProps) {
-  const { mutate: updateEntry } = useUpdateCardEntry();
+/**
+ * Editor for a grouped row's shared notes/tags. Applies changes to every physical
+ * card in the group so they stay grouped together.
+ */
+export default function EntryNotesAndTags({ notes, tags, physicalCardIds }: EntryNotesAndTagsProps) {
+  const { mutate: updateCard } = useUpdatePhysicalCard();
   const [localNotes, setLocalNotes] = useState(notes || "");
   const debouncedNotes = useDebouncedValue(localNotes, 500);
   const { data: predefinedTags = [] } = useRetrieveTags();
@@ -28,9 +27,12 @@ export default function EntryNotesAndTags({
   }, [notes]);
 
   useEffect(() => {
-    if (debouncedNotes !== notes) {
-      updateEntry({ collectionId, cardIndex, notes: debouncedNotes });
+    if (debouncedNotes !== (notes || "")) {
+      physicalCardIds.forEach((physicalCardId) =>
+        updateCard({ physicalCardId, notes: debouncedNotes })
+      );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedNotes]);
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,11 +40,7 @@ export default function EntryNotesAndTags({
   };
 
   const handleTagsChange = (newTags: string[]) => {
-    updateEntry({
-      collectionId,
-      cardIndex,
-      tags: newTags
-    });
+    physicalCardIds.forEach((physicalCardId) => updateCard({ physicalCardId, tags: newTags }));
   };
 
   return (
@@ -50,11 +48,7 @@ export default function EntryNotesAndTags({
       <span className="font-semibold">Notes:</span>
       <Input value={localNotes} placeholder="Your notes here" onChange={handleNotesChange} />
       <span className="font-semibold">Tags:</span>
-      <TagInput
-        value={tags || []}
-        predefinedTags={predefinedTags}
-        onChange={handleTagsChange}
-      />
+      <TagInput value={tags || []} predefinedTags={predefinedTags} onChange={handleTagsChange} />
     </div>
   );
 }

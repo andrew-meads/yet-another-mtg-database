@@ -1,14 +1,45 @@
 import mongoose, { Model, Schema, Types } from "mongoose";
 import { MtgCard } from "@/types/MtgCard";
-import { CardCollection } from "@/types/CardCollection";
 import { Tag } from "@/types/Tag";
 import { User } from "@/types/User";
 import { SetSvg } from "@/types/SetSvg";
 
-// Mongoose document type for CardCollection with ObjectId
-export type CardCollectionDocument = Omit<CardCollection, "owner"> & {
+// ---------------------------------------------------------------------------
+// Mongoose document shapes (ObjectId-typed; the plain TS interfaces in
+// src/types use string ids and are the DTO source of truth).
+// ---------------------------------------------------------------------------
+
+interface PhysicalCardDoc {
   owner: Types.ObjectId;
-};
+  cardId: string;
+  collectionId: Types.ObjectId;
+  deckId?: Types.ObjectId | null;
+  notes?: string;
+  tags?: string[];
+}
+
+interface CollectionDoc {
+  name: string;
+  description: string;
+  isActive?: boolean;
+  owner: Types.ObjectId;
+}
+
+interface DeckColumnDoc {
+  cards: Types.ObjectId[];
+}
+
+interface DeckSectionDoc {
+  name: string;
+  columns: DeckColumnDoc[];
+}
+
+interface DeckDoc {
+  name: string;
+  description: string;
+  owner: Types.ObjectId;
+  sections: DeckSectionDoc[];
+}
 
 const userSchema = new Schema<User>(
   {
@@ -18,6 +49,8 @@ const userSchema = new Schema<User>(
 );
 
 // Each document in the "cards" collection represents a Magic: The Gathering card
+// (Scryfall reference data). The model is named CardData to disambiguate it from
+// PhysicalCard (physical copies), but the underlying collection stays "cards".
 const cardSchema = new Schema<MtgCard>(
   {
     id: { type: String, required: true, unique: true },
@@ -98,24 +131,53 @@ const cardSchema = new Schema<MtgCard>(
     set_name: { type: String, required: true },
     set: { type: String, required: true }
   },
-  { strict: true }
+  { strict: true, collection: "cards" }
 );
 
-const collectionSchema = new Schema<CardCollectionDocument>(
+// A single physical card copy. Belongs to exactly one collection and optionally
+// one deck. These back-references are the source of truth for membership.
+const physicalCardSchema = new Schema<PhysicalCardDoc>(
+  {
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    cardId: { type: String, required: true },
+    collectionId: { type: Schema.Types.ObjectId, ref: "Collection", required: true, index: true },
+    deckId: { type: Schema.Types.ObjectId, ref: "Deck", default: null, index: true },
+    notes: String,
+    tags: [String]
+  },
+  { strict: true, timestamps: true }
+);
+
+// A collection holds physical cards. Membership is purely PhysicalCard.collectionId;
+// the collection table groups + sorts deterministically, so there is no stored order.
+const collectionSchema = new Schema<CollectionDoc>(
   {
     name: { type: String, required: true },
     description: { type: String, required: false, default: "" },
     isActive: Boolean,
-    owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    collectionType: { type: String, required: true, enum: ["collection", "wishlist", "deck"] },
-    cards: [
-      {
-        cardId: { type: String, required: true },
-        quantity: { type: Number, required: true },
-        notes: String,
-        tags: [String]
-      }
-    ]
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true }
+  },
+  { strict: true, timestamps: true }
+);
+
+// A deck arranges physical cards into named sections, each with any number of
+// (unnamed) columns. Columns are ordered lists of PhysicalCard ids; the deckId
+// back-reference is kept in sync with these arrays.
+const deckColumnSchema = new Schema<DeckColumnDoc>({
+  cards: [{ type: Schema.Types.ObjectId, ref: "PhysicalCard" }]
+});
+
+const deckSectionSchema = new Schema<DeckSectionDoc>({
+  name: { type: String, required: true },
+  columns: [deckColumnSchema]
+});
+
+const deckSchema = new Schema<DeckDoc>(
+  {
+    name: { type: String, required: true },
+    description: { type: String, required: false, default: "" },
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    sections: [deckSectionSchema]
   },
   { strict: true, timestamps: true }
 );
@@ -136,14 +198,17 @@ export const UserModel = (mongoose.models.User ||
 export const TagModel = (mongoose.models.Tag ||
   mongoose.model<Tag>("Tag", TagSchema)) as Model<Tag>;
 
-export const Card = (mongoose.models.Card ||
-  mongoose.model<MtgCard>("Card", cardSchema)) as Model<MtgCard>;
+export const CardData = (mongoose.models.CardData ||
+  mongoose.model<MtgCard>("CardData", cardSchema)) as Model<MtgCard>;
 
-export const CardCollectionModel = (mongoose.models.CardCollection ||
-  mongoose.model<CardCollectionDocument>(
-    "CardCollection",
-    collectionSchema
-  )) as Model<CardCollectionDocument>;
+export const PhysicalCardModel = (mongoose.models.PhysicalCard ||
+  mongoose.model<PhysicalCardDoc>("PhysicalCard", physicalCardSchema)) as Model<PhysicalCardDoc>;
+
+export const CollectionModel = (mongoose.models.Collection ||
+  mongoose.model<CollectionDoc>("Collection", collectionSchema)) as Model<CollectionDoc>;
+
+export const DeckModel = (mongoose.models.Deck ||
+  mongoose.model<DeckDoc>("Deck", deckSchema)) as Model<DeckDoc>;
 
 export const SetSvgModel = (mongoose.models.SetSvg ||
   mongoose.model<SetSvg>("SetSvg", SetSvgSchema)) as Model<SetSvg>;

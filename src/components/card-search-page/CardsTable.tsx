@@ -4,8 +4,8 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { MtgCard } from "@/types/MtgCard";
 import { useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
-import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
-import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
+import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
+import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import CardPopup from "@/components/CardPopup";
 import CardsTableRow from "@/components/card-search-page/CardsTableRow";
 
@@ -103,10 +103,11 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   // === CONTEXT ===
 
   // Get active collection and open collections from context
-  const { activeCollection, openCollections } = useOpenCollectionsContext();
+  const { activeCollection, openEntities } = useOpenEntitiesContext();
+  const openCollections = openEntities.filter((e) => e.kind === "collection");
 
-  // Get mutation function for updating collection cards
-  const { mutate: updateCardsInCollection } = useUpdateCollectionCards();
+  // Mutation to add a physical card to a collection
+  const { mutate: createPhysicalCard } = useCreatePhysicalCard();
 
   // === REFS ===
 
@@ -271,14 +272,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
     if (!targetCollection) return;
 
     // Add card to collection
-    updateCardsInCollection({
-      collectionId: targetCollection._id,
-      action: "add",
-      entry: {
-        cardId: card.id,
-        quantity: 1
-      }
-    });
+    createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id });
   };
 
   // === CONTAINER STYLING ===

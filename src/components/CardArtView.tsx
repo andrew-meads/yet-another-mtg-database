@@ -4,7 +4,7 @@ import { MtgCard } from "@/types/MtgCard";
 import clsx from "clsx";
 import { useState } from "react";
 import Image from "next/image";
-import { useCardDragSource } from "@/hooks/drag-drop/useCardDragSource";
+import { useNewCardDragSource } from "@/hooks/drag-drop/useNewCardDragSource";
 
 /**
  * Available image size variants from Scryfall API
@@ -127,7 +127,7 @@ export default function CardArtView({
   const imagesToRender = shouldBeFlippable ? images : images;
 
   // Make image draggable if specified
-  const { isDragging, dragRef } = useCardDragSource(card, draggable);
+  const { isDragging, dragRef } = useNewCardDragSource(card, draggable);
 
   // Determine container style based on explicit dimensions
   const containerStyle: React.CSSProperties = {};

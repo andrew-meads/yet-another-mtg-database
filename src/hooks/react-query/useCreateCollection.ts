@@ -1,16 +1,15 @@
 "use client";
 
-import { CardCollection, CollectionType } from "@/types/CardCollection";
+import { Collection } from "@/types/Collection";
 import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
 
 export interface CreateCollectionRequest {
   name: string;
   description: string;
-  collectionType: CollectionType;
 }
 
 export interface CreateCollectionResponse {
-  collection: CardCollection;
+  collection: Collection;
 }
 
 async function createCollection(data: CreateCollectionRequest): Promise<CreateCollectionResponse> {
@@ -40,7 +39,6 @@ export function useCreateCollection(): UseMutationResult<
   return useMutation({
     mutationFn: createCollection,
     onSuccess: () => {
-      // Invalidate collection summaries cache to trigger a refetch
       queryClient.invalidateQueries({ queryKey: ["collection-summaries"] });
     }
   });

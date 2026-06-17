@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScanContext } from "@/context/ScanContext";
-import { useOpenCollectionsContext } from "@/context/OpenCollectionsContext";
+import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import ScannedCardItem from "@/components/scan/ScannedCardItem";
 
 /**
@@ -16,7 +16,7 @@ import ScannedCardItem from "@/components/scan/ScannedCardItem";
  */
 export default function ScanResultsPage() {
   const { scanResult } = useScanContext();
-  const { activeCollection } = useOpenCollectionsContext();
+  const { activeCollection } = useOpenEntitiesContext();
 
   const cards = scanResult?.cards ?? [];
 

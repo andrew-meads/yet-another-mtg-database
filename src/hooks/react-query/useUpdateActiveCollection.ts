@@ -1,6 +1,6 @@
 "use client";
 
-import { CollectionSummary } from "@/types/CardCollection";
+import { CollectionSummary } from "@/types/Collection";
 import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
 
 export interface UpdateActiveCollectionRequest {

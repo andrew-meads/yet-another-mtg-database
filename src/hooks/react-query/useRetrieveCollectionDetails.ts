@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { CardCollectionWithCards } from "@/types/CardCollection";
+import { CollectionWithCards } from "@/types/Collection";
 
 export interface CollectionDetailsResponse {
-  collection: CardCollectionWithCards;
+  collection: CollectionWithCards;
 }
 
 async function fetchCollectionDetails(collectionId: string): Promise<CollectionDetailsResponse> {

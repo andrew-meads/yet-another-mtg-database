@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScannedCard } from "@/types/ScanResult";
-import { CollectionSummary } from "@/types/CardCollection";
-import { useUpdateCollectionCards } from "@/hooks/react-query/useUpdateCollectionCards";
+import { CollectionSummary } from "@/types/Collection";
+import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 
 /** Build the same-origin proxy URL for a scanner crop from its scanner-relative url. */
 function cropProxyUrl(url: string): string {
@@ -30,7 +30,7 @@ interface ScannedCardItemProps {
 export default function ScannedCardItem({ card, activeCollection }: ScannedCardItemProps) {
   const [selectedMatchIndex, setSelectedMatchIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const { mutate: updateCollectionCards, isPending } = useUpdateCollectionCards();
+  const { mutate: createPhysicalCard, isPending } = useCreatePhysicalCard();
 
   const hasMatches = card.matches.length > 0;
   const selectedMatch = hasMatches ? card.matches[selectedMatchIndex] : null;
@@ -38,11 +38,11 @@ export default function ScannedCardItem({ card, activeCollection }: ScannedCardI
   const handleAdd = () => {
     if (!activeCollection || !selectedMatch) return;
 
-    updateCollectionCards(
+    createPhysicalCard(
       {
+        cardId: selectedMatch.scryfallId,
         collectionId: activeCollection._id,
-        action: "add",
-        entry: { cardId: selectedMatch.scryfallId, quantity }
+        quantity
       },
       {
         onSuccess: () =>

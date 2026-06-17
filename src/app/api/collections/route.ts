@@ -1,21 +1,16 @@
 import connectDB from "@/db/mongoose";
-import { CardCollectionModel } from "@/db/schema";
+import { CollectionModel } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 
 /**
  * POST /api/collections
- * Creates a new card collection.
+ * Creates a new (empty) card collection owned by the authenticated user.
  *
  * Request Body:
  * - name: Collection name (required)
  * - description: Collection description (optional)
- * - collectionType: Type: "collection", "wishlist", or "deck" (required)
- *
- * @returns Response with created collection and Location header pointing to the new resource
- *
- * The collection is initialized with an empty cards array and assigned to the authenticated user.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -25,35 +20,20 @@ export async function POST(request: NextRequest) {
     const userId = session!.user._id;
 
     const body = await request.json();
-    const { name, description, collectionType } = body;
+    const { name, description } = body;
 
-    // Validate required fields
-    if (!name || !collectionType) {
-      return Response.json({ error: "Name and collectionType are required" }, { status: 400 });
+    if (!name) {
+      return Response.json({ error: "Name is required" }, { status: 400 });
     }
 
-    // Validate collectionType enum
-    const validTypes = ["collection", "wishlist", "deck"];
-    if (!validTypes.includes(collectionType)) {
-      return Response.json(
-        { error: `collectionType must be one of: ${validTypes.join(", ")}` },
-        { status: 400 }
-      );
-    }
-
-    // Create new collection with empty cards array and owner
-    const newCollection = new CardCollectionModel({
+    const newCollection = await CollectionModel.create({
       name,
-      description,
-      collectionType,
-      owner: userId,
-      cards: []
+      description: description ?? "",
+      owner: userId
     });
 
-    await newCollection.save();
-
     return Response.json(
-      { collection: newCollection },
+      { collection: { ...newCollection.toObject(), kind: "collection" } },
       {
         status: 201,
         headers: {
