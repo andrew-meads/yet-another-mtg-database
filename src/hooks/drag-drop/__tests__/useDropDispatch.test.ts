@@ -46,7 +46,7 @@ function physical(over: Record<string, unknown> = {}) {
     card: { id: "card-1" },
     sourceCollectionId: "c1",
     sourceDeckId: null,
-    origin: "collection",
+    origin: { type: "collection" },
     ...over
   } as never;
 }
@@ -119,11 +119,36 @@ describe("useDropDispatch", () => {
   });
 
   it("deck → collection removes from the deck then moves collection", async () => {
+    await dispatcher()(
+      physical({
+        sourceDeckId: "d1",
+        sourceCollectionId: "c1",
+        origin: { type: "deck", sectionId: "s1", columnId: "col1" }
+      }),
+      {
+        kind: "collection",
+        collectionId: "c2"
+      } as never
+    );
+    expect(m.deck).toHaveBeenCalledWith({ deckId: "d1", op: "remove", physicalCardId: "p1" });
+    expect(m.update).toHaveBeenCalledWith({ physicalCardId: "p1", collectionId: "c2" });
+  });
+
+  it("deck-assigned collection row dropped onto its own collection is a no-op", async () => {
+    await dispatcher()(physical({ sourceDeckId: "d1", sourceCollectionId: "c1" }), {
+      kind: "collection",
+      collectionId: "c1"
+    } as never);
+    expect(m.deck).not.toHaveBeenCalled();
+    expect(m.update).not.toHaveBeenCalled();
+  });
+
+  it("deck-assigned collection row moved to another collection keeps its deck", async () => {
     await dispatcher()(physical({ sourceDeckId: "d1", sourceCollectionId: "c1" }), {
       kind: "collection",
       collectionId: "c2"
     } as never);
-    expect(m.deck).toHaveBeenCalledWith({ deckId: "d1", op: "remove", physicalCardId: "p1" });
+    expect(m.deck).not.toHaveBeenCalled();
     expect(m.update).toHaveBeenCalledWith({ physicalCardId: "p1", collectionId: "c2" });
   });
 

@@ -81,8 +81,9 @@ export function useDropDispatch() {
       // Target is a collection.
       const targetCollectionId = concrete.collectionId;
       for (const physicalCardId of item.physicalCardIds) {
-        // deck → collection: drop the deck assignment first.
-        if (item.sourceDeckId) {
+        // deck → collection: drop the deck assignment. Dragging from a collection
+        // row never changes deck membership, even if the row is deck-assigned.
+        if (item.origin.type === "deck" && item.sourceDeckId) {
           await deckCardOp.mutateAsync({
             deckId: item.sourceDeckId,
             op: "remove",

@@ -17,13 +17,17 @@ export type PhysicalCardDragOrigin =
 
 /**
  * Dragged from a collection table row (one or more copies of a grouped row) or a
- * single deck stack image (exactly one id).
+ * run of deck stack images (may span different card types).
  */
 export interface PhysicalCardDragItem {
   kind: "physical";
-  /** One or more physical card ids; all share the same card, collection, and deck. */
+  /** One or more physical card ids being moved together. */
   physicalCardIds: string[];
+  /** The grabbed card — used for single-card previews and collection-row drags. */
   card: MtgCard;
+  /** Full card data for every card in the dragged run, in order. Present when
+   *  dragging from a deck column; absent for collection-row drags. */
+  cards?: MtgCard[];
   sourceCollectionId: string;
   sourceDeckId?: string | null;
   origin: PhysicalCardDragOrigin;
