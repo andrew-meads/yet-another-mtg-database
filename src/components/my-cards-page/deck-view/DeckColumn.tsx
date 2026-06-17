@@ -2,6 +2,7 @@
 
 import { SimpleCardArtView } from "@/components/CardArtView";
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
+import { MtgCard } from "@/types/MtgCard";
 import { DeckColumn as DeckColumnData } from "@/types/Deck";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
@@ -33,12 +34,18 @@ function DeckCardImage({
   sectionId,
   columnId,
   card,
+  physicalCardIds,
+  cards,
   isFirst
 }: {
   deckId: string;
   sectionId: string;
   columnId: string;
   card: DetailedPhysicalCard;
+  /** The physical card ids to drag together: this card plus every card on top of it. */
+  physicalCardIds: string[];
+  /** Full card data for every card in the run (for the drag preview). */
+  cards: MtgCard[];
   isFirst: boolean;
 }) {
   const { setSelectedCard } = useCardSelection();
@@ -46,8 +53,9 @@ function DeckCardImage({
   const deleteCard = useDeletePhysicalCard();
 
   const { isDragging, dragRef } = usePhysicalCardDragSource({
-    physicalCardIds: [card._id],
+    physicalCardIds,
     card: card.card,
+    cards,
     sourceCollectionId: card.collectionId,
     sourceDeckId: deckId,
     origin: { type: "deck", sectionId, columnId }
@@ -58,6 +66,7 @@ function DeckCardImage({
       <ContextMenuTrigger asChild>
         <div
           ref={dragRef as unknown as React.Ref<HTMLDivElement>}
+          data-testid={`deck-card-${card._id}`}
           className={cn(
             "shrink-0 relative select-none cursor-grab active:cursor-grabbing transition-all duration-200",
             isDragging && "opacity-40"
@@ -86,7 +95,7 @@ function DeckCardImage({
                 <TooltipTrigger asChild>
                   <div className="bg-black/70 rounded px-1 py-0.5 flex items-center gap-1 max-w-[120px]">
                     <Library className="h-3 w-3 text-white shrink-0" />
-                    <span className="text-[10px] text-white truncate">{card.collectionName}</span>
+                    {/* <span className="text-[10px] text-white truncate">{card.collectionName}</span> */}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>In collection: {card.collectionName}</TooltipContent>
@@ -173,6 +182,7 @@ export default function DeckColumn({ deckId, sectionId, column }: DeckColumnProp
             columnRef.current = node;
             if (typeof dropRef === "function") dropRef(node);
           }}
+          data-testid={`deck-column-${column._id}`}
           className={cn(
             "flex flex-col min-w-min rounded-[5px] border p-1 transition-colors",
             isOver ? "border-primary bg-primary/10" : "border-transparent"
@@ -193,6 +203,8 @@ export default function DeckColumn({ deckId, sectionId, column }: DeckColumnProp
                 sectionId={sectionId}
                 columnId={column._id}
                 card={card}
+                physicalCardIds={column.cards.slice(i).map((c) => c._id)}
+                cards={column.cards.slice(i).map((c) => c.card)}
                 isFirst={i === 0}
               />
             ))

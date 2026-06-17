@@ -5,10 +5,10 @@ import { MtgCard } from "@/types/MtgCard";
 import { PHYSICAL_CARD, PhysicalCardDragItem, PhysicalCardDragOrigin } from "./Types";
 
 interface UsePhysicalCardDragSourceProps {
-  /** The physical card id(s) being dragged. A deck stack image passes one; a
-   *  grouped collection row may pass several (all of the same card/coll/deck). */
   physicalCardIds: string[];
   card: MtgCard;
+  /** Full card data for every card in the dragged run (deck-column drags only). */
+  cards?: MtgCard[];
   sourceCollectionId: string;
   sourceDeckId?: string | null;
   origin: PhysicalCardDragOrigin;
@@ -24,6 +24,7 @@ interface UsePhysicalCardDragSourceProps {
 export function usePhysicalCardDragSource({
   physicalCardIds,
   card,
+  cards,
   sourceCollectionId,
   sourceDeckId,
   origin,
@@ -40,6 +41,7 @@ export function usePhysicalCardDragSource({
           kind: "physical",
           physicalCardIds,
           card,
+          cards,
           sourceCollectionId,
           sourceDeckId,
           origin
@@ -50,7 +52,7 @@ export function usePhysicalCardDragSource({
         draggedItem: monitor.getItem() as PhysicalCardDragItem
       })
     }),
-    [physicalCardIds, card, sourceCollectionId, sourceDeckId, origin, canDrag]
+    [physicalCardIds, card, cards, sourceCollectionId, sourceDeckId, origin, canDrag]
   );
 
   useEffect(() => {

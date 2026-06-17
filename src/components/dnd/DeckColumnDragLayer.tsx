@@ -3,9 +3,15 @@
 import { useDragLayer } from "react-dnd";
 import { SimpleCardArtView } from "@/components/CardArtView";
 import { AnyDragItem, PHYSICAL_CARD } from "@/hooks/drag-drop/Types";
-import { CARD_WIDTH, CARD_HEIGHT } from "@/components/my-cards-page/deck-view/card-dimensions";
+import {
+  CARD_WIDTH,
+  CARD_HEIGHT,
+  OVERLAP_OFFSET
+} from "@/components/my-cards-page/deck-view/card-dimensions";
 
-/** Drag preview for one (or several) existing physical cards. */
+const MAX_VISIBLE = 6;
+
+/** Drag preview for one or more existing physical cards from a deck column. */
 export default function DeckColumnDragLayer() {
   const { item, currentOffset, itemType } = useDragLayer((monitor) => ({
     item: monitor.getItem() as AnyDragItem | null,
@@ -15,7 +21,9 @@ export default function DeckColumnDragLayer() {
 
   if (!item || item.kind !== "physical" || !currentOffset || itemType !== PHYSICAL_CARD) return null;
 
-  const count = item.physicalCardIds.length;
+  const allCards = item.cards ?? [item.card];
+  const visible = allCards.slice(0, MAX_VISIBLE);
+  const totalHeight = CARD_HEIGHT + (visible.length - 1) * OVERLAP_OFFSET;
   const transform = `translate(${currentOffset.x - CARD_WIDTH / 2}px, ${currentOffset.y - CARD_HEIGHT / 2}px)`;
 
   return (
@@ -28,17 +36,23 @@ export default function DeckColumnDragLayer() {
         top: 0,
         transform,
         width: `${CARD_WIDTH}px`,
+        height: `${totalHeight}px`,
         opacity: 0.9
       }}
     >
-      <SimpleCardArtView card={item.card} variant="small" width={CARD_WIDTH} height={CARD_HEIGHT} />
-      {count > 1 && (
-        <div className="absolute top-0 right-0 p-2 text-2xl font-bold">
-          <span className="bg-background/70 w-10 h-10 flex items-center justify-center rounded-full">
-            {count}x
-          </span>
+      {visible.map((c, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            top: i * OVERLAP_OFFSET,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT
+          }}
+        >
+          <SimpleCardArtView card={c} variant="small" width={CARD_WIDTH} height={CARD_HEIGHT} />
         </div>
-      )}
+      ))}
     </div>
   );
 }

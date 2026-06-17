@@ -8,6 +8,8 @@ const PORT = 27018;
 const DB_NAME = "yamtgd-e2e";
 const SECRET = "e2e-test-secret-do-not-use-in-prod";
 const STORAGE_STATE = join(__dirname, ".auth", "storageState.json");
+/** Ids of the seeded deck fixtures, shared with specs (e.g. dragDeck.spec.ts). */
+const FIXTURES = join(__dirname, ".auth", "fixtures.json");
 
 /** A couple of minimal-but-complete cards so the search page has results. */
 const CARDS: Array<Record<string, unknown>> = [
@@ -64,8 +66,10 @@ async function globalSetup() {
   const db = mongoose.connection.db!;
 
   const userId = new Types.ObjectId();
+  const collectionId = new Types.ObjectId();
   await db.collection("users").insertOne({ _id: userId, emailAddress: "e2e@example.com" });
   await db.collection("collections").insertOne({
+    _id: collectionId,
     name: "Main Collection",
     description: "",
     isActive: true,
@@ -75,7 +79,64 @@ async function globalSetup() {
   });
   await db.collection("cards").insertMany(CARDS as never);
 
+  // A deck with one "Main" section, two columns: column A holds an ordered run of
+  // three physical cards; column B is empty. Used by dragDeck.spec.ts to verify
+  // that grabbing a card drags it plus every card on top of it.
+  const deckId = new Types.ObjectId();
+  const sectionId = new Types.ObjectId();
+  const colAId = new Types.ObjectId();
+  const colBId = new Types.ObjectId();
+  const pcIds = [new Types.ObjectId(), new Types.ObjectId(), new Types.ObjectId()];
+  const cardIds = ["e2e-shivan", "e2e-llanowar", "e2e-shivan"];
+
+  await db.collection("physicalcards").insertMany(
+    pcIds.map((_id, i) => ({
+      _id,
+      owner: userId,
+      cardId: cardIds[i],
+      collectionId,
+      deckId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })) as never
+  );
+
+  await db.collection("decks").insertOne({
+    _id: deckId,
+    name: "Drag Test Deck",
+    description: "",
+    owner: userId,
+    sections: [
+      {
+        _id: sectionId,
+        name: "Main",
+        columns: [
+          { _id: colAId, cards: pcIds },
+          { _id: colBId, cards: [] }
+        ]
+      }
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
   await mongoose.disconnect();
+
+  mkdirSync(dirname(FIXTURES), { recursive: true });
+  writeFileSync(
+    FIXTURES,
+    JSON.stringify(
+      {
+        deckId: deckId.toString(),
+        sectionId: sectionId.toString(),
+        columnA: colAId.toString(),
+        columnB: colBId.toString(),
+        physicalCardIds: pcIds.map((id) => id.toString())
+      },
+      null,
+      2
+    )
+  );
 
   // Mint a NextAuth session cookie. getToken (proxy.ts) and the session callback
   // (auth.ts) read AUTH_SECRET and token._id, so this satisfies the auth gate.
