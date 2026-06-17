@@ -48,3 +48,10 @@ next-env.d.ts
 
 data/cards/*
 !data/cards/.gitkeep
+
+# tests
+/coverage
+/test-results
+/playwright-report
+/e2e/.auth
+/.next-e2e

@@ -16,9 +16,24 @@ npm run lint             # ESLint (eslint-config-next)
 
 npm run init-db          # Import Scryfall bulk card data into MongoDB
 npm run whitelist-user   # Whitelist a user by email (see Auth below)
+
+npm test                 # Run all Vitest projects (unit + integration + components)
+npm run test:unit        # Pure-logic unit tests (search engine, sort, helpers)
+npm run test:integration # API route + server-helper tests (mongodb-memory-server)
+npm run test:components  # React component/hook/context tests (jsdom + RTL)
+npm run test:coverage    # Vitest with v8 coverage
+npm run test:e2e         # Playwright E2E (run `npm run test:e2e:install` once first)
 ```
 
-There is **no test suite** in this repo.
+### Testing
+
+The suite (added with Vitest 4 + Playwright) lives in three Vitest projects plus E2E:
+- **`unit`** (node) — pure functions: `src/lib/search/**`, `src/lib/sortConfig.ts`, `grouping.ts`, etc. Tests co-located in `__tests__/`.
+- **`integration`** (node) — API route handlers and `src/lib/server/**` against an in-memory MongoDB (`mongodb-memory-server`); `getServerSession` is mocked. Files in `tests/integration/`; shared lifecycle/auth/seed helpers in `tests/integration/setup.ts` and `helpers.ts`. Runs single-fork with isolation off so one DB connection is shared.
+- **`jsdom`** (jsdom) — components, hooks, contexts via Testing Library + MSW. Global mocks (`next/navigation`, `next/image`, `matchMedia`) in `vitest.setup.jsdom.ts`.
+- **E2E** (`e2e/`, Playwright) — runs the app on port 3100 with its own `distDir` (`E2E_DIST_DIR`, so it never collides with a running dev server). `e2e/global-setup.ts` starts a fixed-port in-memory Mongo, seeds a user + active "Main Collection" + cards, and mints a NextAuth session cookie (no production auth changes).
+
+Config: `vitest.config.ts`, `playwright.config.ts`. Run a single project with `vitest run --project <name>`.
 
 ### Local development infrastructure
 
