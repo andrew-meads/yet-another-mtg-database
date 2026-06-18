@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Configuration for sorting fields.
  * Defines how each field should be sorted, including custom logic for complex fields.

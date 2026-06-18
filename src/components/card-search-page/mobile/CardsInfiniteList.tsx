@@ -20,7 +20,7 @@ const SCROLL_POSITION_KEY = "cards-infinite-list-scroll";
 export default function CardsInfiniteList({
   cardPages,
   isLoading,
-  error,
+  error: _error,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage

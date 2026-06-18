@@ -92,11 +92,13 @@ export default function CardsTableRow({
     if (typeof dragRef === "function") {
       dragRef(node);
     } else if (dragRef) {
+      // eslint-disable-next-line react-hooks/immutability
       (dragRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node;
     }
 
     // Apply row ref for keyboard navigation scrolling
     if (rowRef) {
+      // eslint-disable-next-line react-hooks/immutability
       (rowRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node;
     }
   };
@@ -164,7 +166,7 @@ export default function CardsTableRow({
               <div className="flex justify-center items-center gap-1">
                 {manaCosts.map((cost, idx) => (
                   <div key={idx} className="flex items-center gap-1">
-                    {idx > 0 && <span className="text-muted-foreground">//</span>}
+                    {idx > 0 && <span className="text-muted-foreground">{"//"}</span>}
                     <ManaCost cost={cost} />
                   </div>
                 ))}

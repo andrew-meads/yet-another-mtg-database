@@ -27,6 +27,7 @@ import {
  */
 interface SearchResultsContextValue {
   /** Array of cards from the search results */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cards: any[];
   /** Whether the search is currently loading */
   isLoading: boolean;

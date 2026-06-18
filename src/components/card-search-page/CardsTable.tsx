@@ -144,6 +144,28 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   // Use provided click handler or default to setting selection context
   const clickHandler = onCardClicked ?? ((card: MtgCard) => setSelectedCard(card));
 
+  /**
+   * Handle add to collection button click
+   */
+  const handleAddToCollection = (card: MtgCard, collectionId?: string) => {
+    // Determine target collection
+    let targetCollection;
+
+    if (collectionId === undefined) {
+      // Use active collection if no specific collection ID provided
+      targetCollection = activeCollection;
+    } else {
+      // Find collection in open collections by ID
+      targetCollection = openCollections.find((c) => c._id === collectionId);
+    }
+
+    // Return early if no valid collection found
+    if (!targetCollection) return;
+
+    // Add card to collection
+    createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id });
+  };
+
   // === KEYBOARD NAVIGATION ===
 
   /**
@@ -212,6 +234,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   useEffect(() => {
     if (isAnyRowDragging) {
       if (showTimerRef.current) clearTimeout(showTimerRef.current);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHovered(null);
     }
   }, [isAnyRowDragging]);
@@ -253,28 +276,6 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
     lastMousePosRef.current = { x: e.clientX, y: e.clientY };
   };
 
-  /**
-   * Handle add to collection button click
-   */
-  const handleAddToCollection = (card: MtgCard, collectionId?: string) => {
-    // Determine target collection
-    let targetCollection;
-
-    if (collectionId === undefined) {
-      // Use active collection if no specific collection ID provided
-      targetCollection = activeCollection;
-    } else {
-      // Find collection in open collections by ID
-      targetCollection = openCollections.find((c) => c._id === collectionId);
-    }
-
-    // Return early if no valid collection found
-    if (!targetCollection) return;
-
-    // Add card to collection
-    createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id });
-  };
-
   // === CONTAINER STYLING ===
 
   const containerClass = maxHeight
@@ -305,6 +306,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
           </TableRow>
         </TableHeader>
         <TableBody>
+          {/* eslint-disable-next-line react-hooks/refs */}
           {cards.map((card) => (
             <CardsTableRow
               key={card.id}

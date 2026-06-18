@@ -39,6 +39,7 @@ export default function DeckSection({ deckId, section }: DeckSectionProps) {
   const addColumn = useAddColumn();
 
   const [name, setName] = useState(section.name);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setName(section.name), [section.name]);
 
   const isEmpty = section.columns.every((c) => c.cards.length === 0);

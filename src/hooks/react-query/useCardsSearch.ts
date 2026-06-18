@@ -57,6 +57,7 @@ async function fetchCards(params: CardsQueryParams, signal?: AbortSignal): Promi
 
 export function useCardsSearch<TData = CardsResponse>(
   params: CardsQueryParams,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options?: Omit<UseQueryOptions<CardsResponse, Error, TData, any[]>, "queryKey" | "queryFn">
 ): UseQueryResult<TData, Error> {
   // Normalize params (defaults + clamping) to keep stable query keys
@@ -70,6 +71,7 @@ export function useCardsSearch<TData = CardsResponse>(
     return { q, page, pageLen, order, dir, owned } as Required<Omit<CardsQueryParams, "enabled">>;
   }, [params.q, params.page, params.pageLen, params.order, params.dir, params.owned]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return useQuery<CardsResponse, Error, TData, any[]>({
     queryKey: [
       "cards",
@@ -83,6 +85,7 @@ export function useCardsSearch<TData = CardsResponse>(
     queryFn: ({ signal }) => fetchCards(normalized, signal),
     staleTime: 15_000,
     // v5 replacement for keepPreviousData
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     placeholderData: (prev) => prev as any,
     enabled: params.enabled ?? true,
     ...options,

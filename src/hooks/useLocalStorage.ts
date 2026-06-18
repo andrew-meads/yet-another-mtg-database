@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 /**
  * A hook that works like useState but persists the value to localStorage.

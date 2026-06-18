@@ -98,6 +98,7 @@ async function fetchCardsPage(
 export function useInfiniteCardsSearch(
   params: InfiniteCardsQueryParams,
   options?: Omit<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     UseInfiniteQueryOptions<CardsPageResponse, Error, InfiniteData<CardsPageResponse>, any[], number>,
     "queryKey" | "queryFn" | "getNextPageParam" | "initialPageParam"
   >
@@ -112,6 +113,7 @@ export function useInfiniteCardsSearch(
     return { q, pageLen, order, dir, owned } as Required<Omit<InfiniteCardsQueryParams, "enabled">>;
   }, [params.q, params.pageLen, params.order, params.dir, params.owned]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return useInfiniteQuery<CardsPageResponse, Error, InfiniteData<CardsPageResponse>, any[], number>({
     queryKey: [
       "cards-infinite",

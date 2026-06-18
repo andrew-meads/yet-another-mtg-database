@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { tokenizeQuery, parseTerm, ParsedTerm } from './parser';
 import { findOperatorConfig } from './config';
 import { escapeRegex } from './helpers';

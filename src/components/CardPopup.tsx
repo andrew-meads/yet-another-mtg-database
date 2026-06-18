@@ -81,7 +81,7 @@ export default function CardPopup({ card, position }: CardPopupProps) {
   // Recompute on window resize (async is fine post-initial)
   useEffect(() => {
     const onResize = () => {
-      setCoords((prev) => computePlacement(lastPosRef.current, { w: size.w, h: size.h }));
+      setCoords(() => computePlacement(lastPosRef.current, { w: size.w, h: size.h }));
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);

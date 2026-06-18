@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 
 function wrapper(client: QueryClient) {
-  return ({ children }: { children: React.ReactNode }) =>
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client }, children);
+  Wrapper.displayName = "TestQueryWrapper";
+  return Wrapper;
 }
 
 let fetchMock: ReturnType<typeof vi.spyOn>;

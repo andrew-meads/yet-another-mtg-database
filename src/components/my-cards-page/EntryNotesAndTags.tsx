@@ -23,6 +23,7 @@ export default function EntryNotesAndTags({ notes, tags, physicalCardIds }: Entr
   const { data: predefinedTags = [] } = useRetrieveTags();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalNotes(notes || "");
   }, [notes]);
 

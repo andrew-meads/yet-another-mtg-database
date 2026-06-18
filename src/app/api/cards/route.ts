@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
     // Use aggregation pipeline for complex sorting or owned filter, otherwise use simple sort
     if ((sortConfig.useAggregation && sortConfig.buildAggregationSort) || owned) {
       // Build aggregation pipeline
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pipeline: any[] = [
         // Match the search query
         { $match: searchQuery }
@@ -114,6 +115,7 @@ export async function GET(request: NextRequest) {
       cards = await CardData.aggregate(pipeline);
       
       // Get total count with a separate aggregation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const countPipeline: any[] = [
         { $match: searchQuery }
       ];

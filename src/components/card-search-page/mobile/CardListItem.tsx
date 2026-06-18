@@ -54,7 +54,7 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
           draggable={false}
           width="100%"
           height="auto"
-          priority
+          priority={priority}
         />
       </div>
 

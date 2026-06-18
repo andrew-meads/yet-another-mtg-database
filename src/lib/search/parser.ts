@@ -15,7 +15,7 @@ export function tokenizeQuery(query: string): string[] {
 
   for (let i = 0; i < query.length; i++) {
     const char = query[i];
-    const nextChar = query[i + 1];
+    const _nextChar = query[i + 1];
 
     // Handle quotes
     if ((char === '"' || char === "'") && !inQuotes) {

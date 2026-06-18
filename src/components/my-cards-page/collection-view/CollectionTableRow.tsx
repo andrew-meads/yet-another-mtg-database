@@ -62,6 +62,7 @@ export default function CollectionTableRow({
   }, [isDragging, onDragStateChange]);
 
   const [localQty, setLocalQty] = useState(String(row.quantity));
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setLocalQty(String(row.quantity)), [row.quantity]);
 
   const addCopies = (n: number) => {
@@ -172,7 +173,7 @@ export default function CollectionTableRow({
         <div className="flex justify-center items-center gap-1">
           {manaCosts.map((cost, idx) => (
             <div key={idx} className="flex items-center gap-1">
-              {idx > 0 && <span className="text-muted-foreground">//</span>}
+              {idx > 0 && <span className="text-muted-foreground">{"//"}</span>}
               <ManaCost cost={cost} />
             </div>
           ))}

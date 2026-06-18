@@ -2,7 +2,6 @@
 
 import SearchControls from "@/components/card-search-page/SearchControls";
 import CardsTable from "@/components/card-search-page/CardsTable";
-import CardsList from "@/components/card-search-page/mobile/CardsList";
 import SearchResults, { useSearchResults } from "@/components/card-search-page/SearchResults";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import InfiniteScrollSearchResults, {
