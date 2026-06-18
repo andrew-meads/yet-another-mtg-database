@@ -11,6 +11,9 @@ interface UsePhysicalCardDragSourceProps {
   cards?: MtgCard[];
   sourceCollectionId: string;
   sourceDeckId?: string | null;
+  /** Human-readable source names for the drag-layer membership badges. */
+  sourceCollectionName?: string;
+  sourceDeckName?: string;
   origin: PhysicalCardDragOrigin;
   canDrag?: boolean;
   hideDefaultPreview?: boolean;
@@ -27,6 +30,8 @@ export function usePhysicalCardDragSource({
   cards,
   sourceCollectionId,
   sourceDeckId,
+  sourceCollectionName,
+  sourceDeckName,
   origin,
   canDrag = true,
   hideDefaultPreview = true,
@@ -44,6 +49,8 @@ export function usePhysicalCardDragSource({
           cards,
           sourceCollectionId,
           sourceDeckId,
+          sourceCollectionName,
+          sourceDeckName,
           origin
         })),
       canDrag,
@@ -52,7 +59,17 @@ export function usePhysicalCardDragSource({
         draggedItem: monitor.getItem() as PhysicalCardDragItem
       })
     }),
-    [physicalCardIds, card, cards, sourceCollectionId, sourceDeckId, origin, canDrag]
+    [
+      physicalCardIds,
+      card,
+      cards,
+      sourceCollectionId,
+      sourceDeckId,
+      sourceCollectionName,
+      sourceDeckName,
+      origin,
+      canDrag
+    ]
   );
 
   useEffect(() => {

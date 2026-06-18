@@ -14,6 +14,7 @@ import { CARD_WIDTH, CARD_HEIGHT } from "./card-dimensions";
 
 interface DeckSectionProps {
   deckId: string;
+  deckName?: string;
   section: DeckSectionData;
 }
 
@@ -33,7 +34,7 @@ function NewColumnDropZone({ deckId, sectionId }: { deckId: string; sectionId: s
   );
 }
 
-export default function DeckSection({ deckId, section }: DeckSectionProps) {
+export default function DeckSection({ deckId, deckName, section }: DeckSectionProps) {
   const updateSection = useUpdateSection();
   const deleteSection = useDeleteSection();
   const addColumn = useAddColumn();
@@ -87,7 +88,13 @@ export default function DeckSection({ deckId, section }: DeckSectionProps) {
 
       <div className="flex flex-row flex-wrap items-start gap-3">
         {section.columns.map((column) => (
-          <DeckColumn key={column._id} deckId={deckId} sectionId={section._id} column={column} />
+          <DeckColumn
+            key={column._id}
+            deckId={deckId}
+            deckName={deckName}
+            sectionId={section._id}
+            column={column}
+          />
         ))}
         <NewColumnDropZone deckId={deckId} sectionId={section._id} />
       </div>

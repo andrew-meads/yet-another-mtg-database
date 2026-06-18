@@ -17,6 +17,7 @@ import { CollectionGroupRow, COLLECTION_GRID } from "./grouping";
 
 interface CollectionTableRowProps {
   collectionId: string;
+  collectionName?: string;
   row: CollectionGroupRow;
   onClick?: (card: MtgCard) => void;
   isSelected?: boolean;
@@ -31,6 +32,7 @@ interface CollectionTableRowProps {
 
 export default function CollectionTableRow({
   collectionId,
+  collectionName,
   row,
   onClick,
   isSelected = false,
@@ -53,6 +55,8 @@ export default function CollectionTableRow({
     card,
     sourceCollectionId: collectionId,
     sourceDeckId: row.deckId,
+    sourceCollectionName: collectionName,
+    sourceDeckName: row.deckName,
     origin: { type: "collection" },
     canDrag: !isSearchActive
   });

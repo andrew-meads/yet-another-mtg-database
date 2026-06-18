@@ -33,7 +33,12 @@ export default function DeckView({ deck }: DeckViewProps) {
   return (
     <div className="h-full rounded-md border overflow-auto p-4 space-y-8">
       {deck.sections.map((section) => (
-        <DeckSection key={section._id} deckId={deck._id} section={section} />
+        <DeckSection
+          key={section._id}
+          deckId={deck._id}
+          deckName={deck.name}
+          section={section}
+        />
       ))}
 
       <div className="flex items-center gap-3 pt-2">

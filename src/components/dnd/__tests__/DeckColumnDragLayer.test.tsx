@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import type { MtgCard } from "@/types/MtgCard";
-import { PHYSICAL_CARD } from "@/hooks/drag-drop/Types";
+import { PHYSICAL_CARD, PhysicalCardDragOrigin } from "@/hooks/drag-drop/Types";
 
 // Control what useDragLayer returns per test.
 const h = vi.hoisted(() => ({
@@ -33,31 +33,42 @@ function makeCard(id: string): MtgCard {
   return { id, name: id } as MtgCard;
 }
 
-function activeDrag(cards?: MtgCard[]) {
+function activeDrag(opts: {
+  origin: PhysicalCardDragOrigin;
+  physicalCardIds: string[];
+  card?: MtgCard;
+  cards?: MtgCard[];
+  sourceCollectionName?: string;
+  sourceDeckName?: string;
+}) {
   h.dragState = {
     item: {
       kind: "physical",
-      physicalCardIds: (cards ?? [makeCard("c1")]).map((c) => c.id),
-      card: makeCard("c1"),
-      cards
+      physicalCardIds: opts.physicalCardIds,
+      card: opts.card ?? makeCard("c1"),
+      cards: opts.cards,
+      origin: opts.origin,
+      sourceCollectionName: opts.sourceCollectionName,
+      sourceDeckName: opts.sourceDeckName
     },
     itemType: PHYSICAL_CARD,
     currentOffset: { x: 200, y: 300 }
   };
 }
 
-function resetDrag() {
+function reset() {
   h.dragState = { item: null, itemType: null, currentOffset: null };
 }
 
 describe("DeckColumnDragLayer", () => {
   it("renders nothing when there is no active drag", () => {
-    resetDrag();
+    reset();
     const { container } = render(React.createElement(DeckColumnDragLayer));
     expect(container.firstChild).toBeNull();
   });
 
   it("renders nothing when the item type does not match", () => {
+    reset();
     h.dragState = {
       item: { kind: "new", card: makeCard("c1") },
       itemType: "NEW_CARD",
@@ -67,24 +78,60 @@ describe("DeckColumnDragLayer", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders a single card when item.cards is absent (collection-row fallback)", () => {
-    activeDrag(undefined);
+  it("repeats the card to the group count for a collection-row drag", () => {
+    reset();
+    activeDrag({ origin: { type: "collection" }, physicalCardIds: ["a", "b", "c", "d"] });
     render(React.createElement(DeckColumnDragLayer));
-    expect(screen.getAllByTestId(/^card-art-/)).toHaveLength(1);
+    expect(screen.getAllByTestId(/^card-art-/)).toHaveLength(4);
+    expect(screen.getByText("×4")).toBeInTheDocument();
   });
 
-  it("renders all cards when item.cards has multiple entries", () => {
-    activeDrag([makeCard("a"), makeCard("b"), makeCard("c")]);
+  it("shows no count badge for a single-card drag", () => {
+    reset();
+    activeDrag({ origin: { type: "collection" }, physicalCardIds: ["a"] });
     render(React.createElement(DeckColumnDragLayer));
-    expect(screen.getAllByTestId(/^card-art-/)).toHaveLength(3);
+    expect(screen.getAllByTestId(/^card-art-/)).toHaveLength(1);
+    expect(screen.queryByText("×1")).not.toBeInTheDocument();
+  });
+
+  it("renders each distinct card for a deck-run drag", () => {
+    reset();
+    const cards = [makeCard("a"), makeCard("b"), makeCard("c")];
+    activeDrag({
+      origin: { type: "deck", sectionId: "s", columnId: "col" },
+      physicalCardIds: ["a", "b", "c"],
+      cards
+    });
+    render(React.createElement(DeckColumnDragLayer));
     expect(screen.getByTestId("card-art-a")).toBeInTheDocument();
     expect(screen.getByTestId("card-art-b")).toBeInTheDocument();
     expect(screen.getByTestId("card-art-c")).toBeInTheDocument();
+    expect(screen.getByText("×3")).toBeInTheDocument();
   });
 
-  it("caps the visible stack at 6 cards", () => {
-    activeDrag(Array.from({ length: 10 }, (_, i) => makeCard(`card-${i}`)));
+  it("caps the visible stack at 6 cards but still shows the true count", () => {
+    reset();
+    const ids = Array.from({ length: 10 }, (_, i) => `card-${i}`);
+    activeDrag({
+      origin: { type: "deck", sectionId: "s", columnId: "col" },
+      physicalCardIds: ids,
+      cards: ids.map(makeCard)
+    });
     render(React.createElement(DeckColumnDragLayer));
     expect(screen.getAllByTestId(/^card-art-/)).toHaveLength(6);
+    expect(screen.getByText("×10")).toBeInTheDocument();
+  });
+
+  it("renders membership badges for source collection and deck", () => {
+    reset();
+    activeDrag({
+      origin: { type: "collection" },
+      physicalCardIds: ["a"],
+      sourceCollectionName: "Main Collection",
+      sourceDeckName: "Mono Red"
+    });
+    render(React.createElement(DeckColumnDragLayer));
+    expect(screen.getByText("Main Collection")).toBeInTheDocument();
+    expect(screen.getByText("Mono Red")).toBeInTheDocument();
   });
 });

@@ -180,6 +180,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
                 >
                   <CollectionTableRow
                     collectionId={collection._id}
+                    collectionName={collection.name}
                     row={row}
                     onClick={(card) => {
                       setSelectedKey(row.key);

@@ -30,6 +30,9 @@ export interface PhysicalCardDragItem {
   cards?: MtgCard[];
   sourceCollectionId: string;
   sourceDeckId?: string | null;
+  /** Human-readable source names for the drag-layer membership badges. */
+  sourceCollectionName?: string;
+  sourceDeckName?: string;
   origin: PhysicalCardDragOrigin;
 }
 

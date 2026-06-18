@@ -24,6 +24,7 @@ import {
 
 interface DeckColumnProps {
   deckId: string;
+  deckName?: string;
   sectionId: string;
   column: DeckColumnData;
 }
@@ -31,6 +32,7 @@ interface DeckColumnProps {
 /** A single physical-card image within a column's overlapping stack. */
 function DeckCardImage({
   deckId,
+  deckName,
   sectionId,
   columnId,
   card,
@@ -39,6 +41,7 @@ function DeckCardImage({
   isFirst
 }: {
   deckId: string;
+  deckName?: string;
   sectionId: string;
   columnId: string;
   card: DetailedPhysicalCard;
@@ -58,6 +61,8 @@ function DeckCardImage({
     cards,
     sourceCollectionId: card.collectionId,
     sourceDeckId: deckId,
+    sourceCollectionName: card.collectionName,
+    sourceDeckName: deckName,
     origin: { type: "deck", sectionId, columnId }
   });
 
@@ -152,7 +157,7 @@ function DeckCardImage({
   );
 }
 
-export default function DeckColumn({ deckId, sectionId, column }: DeckColumnProps) {
+export default function DeckColumn({ deckId, deckName, sectionId, column }: DeckColumnProps) {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const deleteColumn = useDeleteColumn();
 
@@ -200,6 +205,7 @@ export default function DeckColumn({ deckId, sectionId, column }: DeckColumnProp
               <DeckCardImage
                 key={card._id}
                 deckId={deckId}
+                deckName={deckName}
                 sectionId={sectionId}
                 columnId={column._id}
                 card={card}
