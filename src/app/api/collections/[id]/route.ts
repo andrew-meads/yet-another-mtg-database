@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/collec
     }
 
     const collection = await CollectionModel.findOneAndUpdate({ _id: id, owner: userId }, update, {
-      new: true,
+      returnDocument: "after",
       runValidators: true
     }).lean();
 

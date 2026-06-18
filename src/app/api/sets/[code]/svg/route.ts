@@ -32,9 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         return NextResponse.json({ error: "Set SVG not found" }, { status: 404 });
       }
 
-      // Save to DB for future requests
-      const newSetSvg = new SetSvgModel({ setCode, svgContent: setSvg });
-      await newSetSvg.save();
+      // Save to DB for future requests (upsert handles concurrent requests for the same set)
+      await SetSvgModel.findOneAndUpdate({ setCode }, { svgContent: setSvg }, { upsert: true });
     }
 
     return new NextResponse(setSvg, {

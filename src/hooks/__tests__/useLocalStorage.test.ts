@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -30,8 +30,11 @@ describe("useLocalStorage", () => {
   });
 
   it("recovers from malformed stored JSON", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     window.localStorage.setItem("k", "{not json");
     const { result } = renderHook(() => useLocalStorage("k", "fallback"));
     expect(result.current[0]).toBe("fallback");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"k"'), expect.any(Error));
+    warn.mockRestore();
   });
 });
