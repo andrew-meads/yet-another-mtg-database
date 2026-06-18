@@ -199,77 +199,73 @@ export default function CollectionTableRow({
             wrapper so it is not clipped by that overflow. */}
         <div className="relative self-stretch flex items-center">
           <div className="flex items-center gap-2 font-medium truncate w-full">
-          <span className="truncate">{nameText}</span>
-          {row.notes && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <StickyNote className="h-3 w-3 shrink-0 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs text-xs">{row.notes}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {row.tags && row.tags.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Tag className="h-3 w-3 shrink-0 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          </div>
-          {row.quantity > 1 && (
-            <div
-              className="absolute right-0 inset-y-0 z-10 flex items-center gap-0.5 rounded-md border bg-background/95 px-1 shadow-sm opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-              onWheel={(e) => {
-                e.stopPropagation();
-                setDragCount((n) =>
-                  e.deltaY < 0
-                    ? Math.min(row.quantity, n + 1)
-                    : Math.max(1, n - 1)
-                );
-              }}
-            >
+            <span className="truncate">{nameText}</span>
+            {row.notes && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span
-                    className="flex h-6 w-5 cursor-grab items-center justify-center text-muted-foreground"
-                    aria-label="Drag handle"
-                  >
-                    <GripVertical className="h-4 w-4" />
-                  </span>
+                  <StickyNote className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  Drag {dragCount} {dragCount === 1 ? "copy" : "copies"} — hold Alt to drag one
+                  <p className="max-w-xs text-xs">{row.notes}</p>
                 </TooltipContent>
               </Tooltip>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                disabled={dragCount <= 1}
-                onClick={() => setDragCount((n) => Math.max(1, n - 1))}
-                aria-label="Decrease drag amount"
-              >
-                <Minus className="h-3 w-3" />
-              </Button>
-              <span className="w-5 text-center text-xs font-semibold tabular-nums">{dragCount}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                disabled={dragCount >= row.quantity}
-                onClick={() => setDragCount((n) => Math.min(row.quantity, n + 1))}
-                aria-label="Increase drag amount"
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
+            )}
+            {row.tags && row.tags.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Tag className="h-3 w-3 shrink-0 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <div
+            className="absolute right-0 inset-y-0 z-10 flex items-center gap-0.5 rounded-md border bg-background/95 px-1 shadow-sm opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => {
+              e.stopPropagation();
+              setDragCount((n) =>
+                e.deltaY < 0 ? Math.min(row.quantity, n + 1) : Math.max(1, n - 1)
+              );
+            }}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="flex h-6 w-5 cursor-grab items-center justify-center text-muted-foreground"
+                  aria-label="Drag handle"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                Drag {dragCount} {dragCount === 1 ? "copy" : "copies"} — hold Alt to drag one
+              </TooltipContent>
+            </Tooltip>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              disabled={dragCount <= 1}
+              onClick={() => setDragCount((n) => Math.max(1, n - 1))}
+              aria-label="Decrease drag amount"
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <span className="w-5 text-center text-xs font-semibold tabular-nums">{dragCount}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              disabled={dragCount >= row.quantity}
+              onClick={() => setDragCount((n) => Math.min(row.quantity, n + 1))}
+              aria-label="Increase drag amount"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
         {/* Mana */}

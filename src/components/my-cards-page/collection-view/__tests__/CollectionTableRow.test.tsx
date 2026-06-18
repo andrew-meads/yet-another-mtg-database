@@ -73,9 +73,9 @@ describe("CollectionTableRow drag-count control", () => {
     expect(screen.getByLabelText("Increase drag amount")).toBeInTheDocument();
   });
 
-  it("does not render the control for a single-copy row", () => {
+  it("renders the control for a single-copy row", () => {
     renderRow(makeRow({ physicalCardIds: ["p1"], quantity: 1 }));
-    expect(screen.queryByLabelText("Drag handle")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Drag handle")).toBeInTheDocument();
   });
 
   it("drags every copy by default", () => {
