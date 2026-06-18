@@ -5,11 +5,23 @@ import { MtgCard } from "@/types/MtgCard";
 import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronRight, StickyNote, Tag, Layers, Minus, Plus } from "lucide-react";
+import {
+  Trash2,
+  ChevronRight,
+  StickyNote,
+  Tag,
+  Layers,
+  Minus,
+  Plus,
+  GripVertical
+} from "lucide-react";
 import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
+import { useAltKeyRef } from "@/hooks/drag-drop/useAltKeyRef";
+import { dragCountForItem } from "@/hooks/drag-drop/dragCount";
+import { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useRemoveCardGroup } from "@/hooks/react-query/useRemoveCardGroup";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import EntryNotesAndTags from "../EntryNotesAndTags";
 import { SetSvg } from "@/components/SetSvg";
 import { cn } from "@/lib/utils";
@@ -50,6 +62,20 @@ export default function CollectionTableRow({
   const createCard = useCreatePhysicalCard();
   const removeGroup = useRemoveCardGroup();
 
+  // How many copies the next drag carries. Defaults to the whole row so the existing
+  // "drag the row" behavior is unchanged unless the user dials it down.
+  const [dragCount, setDragCount] = useState(row.quantity);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setDragCount(row.quantity), [row.quantity]);
+
+  // getItem runs at drag start and is captured once by useDrag, so read the live count
+  // and Alt state from refs rather than closed-over values.
+  const dragCountRef = useRef(dragCount);
+  useEffect(() => {
+    dragCountRef.current = dragCount;
+  }, [dragCount]);
+  const altRef = useAltKeyRef();
+
   const { isDragging, dragRef } = usePhysicalCardDragSource({
     physicalCardIds: row.physicalCardIds,
     card,
@@ -58,12 +84,30 @@ export default function CollectionTableRow({
     sourceCollectionName: collectionName,
     sourceDeckName: row.deckName,
     origin: { type: "collection" },
-    canDrag: !isSearchActive
+    canDrag: !isSearchActive,
+    getItem: (): PhysicalCardDragItem => ({
+      kind: "physical",
+      physicalCardIds: dragCountForItem({
+        ids: row.physicalCardIds,
+        count: dragCountRef.current,
+        altHeld: altRef.current
+      }),
+      card,
+      sourceCollectionId: collectionId,
+      sourceDeckId: row.deckId,
+      sourceCollectionName: collectionName,
+      sourceDeckName: row.deckName,
+      origin: { type: "collection" }
+    })
   });
 
   useEffect(() => {
     onDragStateChange?.(isDragging);
-  }, [isDragging, onDragStateChange]);
+    // Once a drag finishes, snap the count back to the full row so the next drag defaults
+    // to "all" again.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!isDragging) setDragCount(row.quantity);
+  }, [isDragging, onDragStateChange, row.quantity]);
 
   const [localQty, setLocalQty] = useState(String(row.quantity));
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -125,8 +169,9 @@ export default function CollectionTableRow({
     <div className={cn("border-b", isDragging && "opacity-40")}>
       <div
         ref={dragRef as unknown as React.Ref<HTMLDivElement>}
+        data-testid={`collection-row-${row.key}`}
         className={cn(
-          "grid items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-muted/50 text-sm",
+          "group relative grid items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-muted/50 text-sm",
           isSelected && "bg-accent"
         )}
         style={{ gridTemplateColumns: COLLECTION_GRID }}
@@ -148,8 +193,12 @@ export default function CollectionTableRow({
           <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} />
         </Button>
 
-        {/* Name */}
-        <div className="flex items-center gap-2 font-medium truncate">
+        {/* Name — outer wrapper is the positioning context for the drag-count control so the
+            control sits at the right edge of this column (just before mana cost). The inner
+            div carries overflow:hidden for text truncation; the control lives in the outer
+            wrapper so it is not clipped by that overflow. */}
+        <div className="relative self-stretch flex items-center">
+          <div className="flex items-center gap-2 font-medium truncate w-full">
           <span className="truncate">{nameText}</span>
           {row.notes && (
             <Tooltip>
@@ -170,6 +219,56 @@ export default function CollectionTableRow({
                 <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
               </TooltipContent>
             </Tooltip>
+          )}
+          </div>
+          {row.quantity > 1 && (
+            <div
+              className="absolute right-0 inset-y-0 z-10 flex items-center gap-0.5 rounded-md border bg-background/95 px-1 shadow-sm opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => {
+                e.stopPropagation();
+                setDragCount((n) =>
+                  e.deltaY < 0
+                    ? Math.min(row.quantity, n + 1)
+                    : Math.max(1, n - 1)
+                );
+              }}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="flex h-6 w-5 cursor-grab items-center justify-center text-muted-foreground"
+                    aria-label="Drag handle"
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Drag {dragCount} {dragCount === 1 ? "copy" : "copies"} — hold Alt to drag one
+                </TooltipContent>
+              </Tooltip>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                disabled={dragCount <= 1}
+                onClick={() => setDragCount((n) => Math.max(1, n - 1))}
+                aria-label="Decrease drag amount"
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <span className="w-5 text-center text-xs font-semibold tabular-nums">{dragCount}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                disabled={dragCount >= row.quantity}
+                onClick={() => setDragCount((n) => Math.min(row.quantity, n + 1))}
+                aria-label="Increase drag amount"
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
           )}
         </div>
 

@@ -54,6 +54,29 @@ const CARDS: Array<Record<string, unknown>> = [
     border_color: "black",
     image_status: "highres_scan",
     finishes: ["nonfoil"]
+  },
+  {
+    // Only ever held as loose copies in the Main Collection — used by
+    // dragCollectionPartial.spec.ts to drag a subset of a row's copies.
+    id: "e2e-grizzly",
+    name: "Grizzly Bears",
+    lang: "en",
+    layout: "normal",
+    cmc: 2,
+    colors: ["G"],
+    color_identity: ["G"],
+    keywords: [],
+    type_line: "Creature — Bear",
+    oracle_text: "",
+    power: "2",
+    toughness: "2",
+    rarity: "common",
+    set: "lea",
+    set_name: "Limited Edition Alpha",
+    collector_number: "201",
+    border_color: "black",
+    image_status: "highres_scan",
+    finishes: ["nonfoil"]
   }
 ];
 
@@ -110,6 +133,19 @@ async function globalSetup() {
       cardId: cardIds[i],
       collectionId,
       deckId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })) as never
+  );
+
+  // Two loose (no-deck) copies of Grizzly Bears in the Main Collection so a partial-drag
+  // test can split one copy off via the drag-count control.
+  await db.collection("physicalcards").insertMany(
+    [new Types.ObjectId(), new Types.ObjectId()].map((_id) => ({
+      _id,
+      owner: userId,
+      cardId: "e2e-grizzly",
+      collectionId,
       createdAt: new Date(),
       updatedAt: new Date()
     })) as never
