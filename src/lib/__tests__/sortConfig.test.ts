@@ -38,16 +38,16 @@ describe("buildAggregationSort - power/toughness", () => {
     const cfg = getSortConfig("power")!;
     const asc = cfg.buildAggregationSort!(1);
     expect(asc[0].$addFields.powerNumeric.$cond.else).toBe(-1);
-    expect(asc[1].$sort).toEqual({ powerNumeric: 1 });
+    expect(asc[1].$sort).toEqual({ powerNumeric: 1, _id: 1 });
 
     const desc = cfg.buildAggregationSort!(-1);
     expect(desc[0].$addFields.powerNumeric.$cond.else).toBe(999999);
-    expect(desc[1].$sort).toEqual({ powerNumeric: -1 });
+    expect(desc[1].$sort).toEqual({ powerNumeric: -1, _id: 1 });
   });
 
   it("uses the toughness field for toughness sort", () => {
     const desc = getSortConfig("toughness")!.buildAggregationSort!(-1);
-    expect(desc[1].$sort).toEqual({ toughnessNumeric: -1 });
+    expect(desc[1].$sort).toEqual({ toughnessNumeric: -1, _id: 1 });
   });
 });
 
@@ -60,7 +60,7 @@ describe("buildAggregationSort - rarity", () => {
       "rare",
       "mythic"
     ]);
-    expect(stages[1].$sort).toEqual({ rarityOrder: 1 });
+    expect(stages[1].$sort).toEqual({ rarityOrder: 1, _id: 1 });
   });
 });
 
@@ -68,7 +68,7 @@ describe("buildAggregationSort - color / identity", () => {
   it("sorts on a WUBRG-ordered index and ends with a $sort", () => {
     const stages = getSortConfig("color")!.buildAggregationSort!(1);
     const last = stages[stages.length - 1];
-    expect(last.$sort).toEqual({ final_colors_order: 1 });
+    expect(last.$sort).toEqual({ final_colors_order: 1, _id: 1 });
     // unknown combinations are pushed to the end when ascending
     expect(stages[2].$addFields.final_colors_order.$cond.then).toBe(999999);
   });
@@ -76,7 +76,7 @@ describe("buildAggregationSort - color / identity", () => {
   it("pushes unknown combinations to the front when descending", () => {
     const stages = getSortConfig("identity")!.buildAggregationSort!(-1);
     const last = stages[stages.length - 1];
-    expect(last.$sort).toEqual({ final_color_identity_order: -1 });
+    expect(last.$sort).toEqual({ final_color_identity_order: -1, _id: 1 });
     expect(stages[2].$addFields.final_color_identity_order.$cond.then).toBe(-1);
   });
 });

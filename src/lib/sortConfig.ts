@@ -42,7 +42,8 @@ export const sortConfigs: Record<string, SortConfig> = {
         }
       },
       {
-        $sort: { powerNumeric: direction }
+        // `_id` tiebreaker keeps ties in a stable, total order across paginated queries.
+        $sort: { powerNumeric: direction, _id: 1 }
       }
     ]
   },
@@ -64,7 +65,8 @@ export const sortConfigs: Record<string, SortConfig> = {
         }
       },
       {
-        $sort: { toughnessNumeric: direction }
+        // `_id` tiebreaker keeps ties in a stable, total order across paginated queries.
+        $sort: { toughnessNumeric: direction, _id: 1 }
       }
     ]
   },
@@ -83,7 +85,8 @@ export const sortConfigs: Record<string, SortConfig> = {
           }
         },
         {
-          $sort: { rarityOrder: direction }
+          // `_id` tiebreaker keeps ties in a stable, total order across paginated queries.
+          $sort: { rarityOrder: direction, _id: 1 }
         }
       ];
     }
@@ -226,7 +229,8 @@ function buildColorSortPipeline(fieldName: string, direction: 1 | -1): any[] {
       }
     },
     {
-      $sort: { [finalFieldName]: direction }
+      // `_id` tiebreaker keeps ties in a stable, total order across paginated queries.
+      $sort: { [finalFieldName]: direction, _id: 1 }
     }
   ];
 }
