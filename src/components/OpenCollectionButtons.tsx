@@ -201,6 +201,9 @@ function OpenEntityButton({ entity, onClose }: OpenEntityButtonProps) {
             {pinned ? "Unpin from bar" : "Pin to bar"}
           </ContextMenuItem>
         )}
+        <ContextMenuItem onClick={() => onClose(entity)}>
+          Close
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
