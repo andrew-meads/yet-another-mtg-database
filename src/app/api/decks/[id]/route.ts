@@ -111,7 +111,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
     }
 
     const deck = await DeckModel.findOneAndUpdate({ _id: id, owner: userId }, update, {
-      new: true
+      returnDocument: "after"
     }).lean();
     if (!deck) {
       return Response.json({ error: "Deck not found" }, { status: 404 });

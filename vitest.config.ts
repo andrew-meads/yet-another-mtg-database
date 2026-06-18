@@ -1,5 +1,4 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 /**
  * Three projects:
@@ -10,6 +9,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
  *  - jsdom:       React components, hooks, and contexts via Testing Library.
  */
 export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
   test: {
     coverage: {
       provider: "v8",
@@ -26,7 +28,7 @@ export default defineConfig({
     },
     projects: [
       {
-        plugins: [tsconfigPaths()],
+        resolve: { tsconfigPaths: true },
         test: {
           name: "unit",
           environment: "node",
@@ -35,7 +37,7 @@ export default defineConfig({
         }
       },
       {
-        plugins: [tsconfigPaths()],
+        resolve: { tsconfigPaths: true },
         test: {
           name: "integration",
           environment: "node",
@@ -52,7 +54,7 @@ export default defineConfig({
         }
       },
       {
-        plugins: [tsconfigPaths()],
+        resolve: { tsconfigPaths: true },
         test: {
           name: "jsdom",
           environment: "jsdom",

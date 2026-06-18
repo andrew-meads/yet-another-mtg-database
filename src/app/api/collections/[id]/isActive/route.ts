@@ -37,7 +37,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const updatedCollection = await CollectionModel.findOneAndUpdate(
       { _id: id, owner: userId },
       { isActive: body.isActive },
-      { new: true }
+      { returnDocument: "after" }
     ).lean();
 
     return NextResponse.json({ ...updatedCollection, kind: "collection" });
