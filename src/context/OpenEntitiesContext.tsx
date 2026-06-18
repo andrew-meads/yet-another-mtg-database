@@ -11,12 +11,25 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 interface OpenEntityRef {
   id: string;
   kind: "collection" | "deck";
+  /** Whether the user has pinned this entity to the main bar. Missing = unpinned. */
+  pinned?: boolean;
 }
 
 interface OpenEntitiesContextType {
   addOpenEntity: (entity: OpenEntitySummary) => void;
   removeOpenEntity: (id: string) => void;
   openEntities: OpenEntitySummary[];
+  /**
+   * Open entities the user has pinned to the main bar (the active collection is
+   * always treated as pinned). These render inline as drop targets.
+   */
+  pinnedEntities: OpenEntitySummary[];
+  /** Open entities that are not pinned. These live behind the "More" menu. */
+  unpinnedEntities: OpenEntitySummary[];
+  /** Whether an open entity is effectively pinned (explicit pin or active collection). */
+  isPinned: (id: string) => boolean;
+  /** Toggle the pin flag for an open entity. No-op for the active collection. */
+  togglePin: (id: string) => void;
   /** The user's active collection (decks cannot be active), or null. */
   activeCollection: CollectionSummary | null;
   setActiveCollection: (collection: CollectionSummary) => void;
@@ -60,10 +73,41 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
 
   const activeCollection = collections.find((c) => c.isActive) ?? null;
 
+  /** An entity is effectively pinned if explicitly pinned or it is the active collection. */
+  const isPinned = (id: string) => {
+    if (activeCollection?._id === id) return true;
+    return openRefs.some((ref) => ref.id === id && ref.pinned === true);
+  };
+
+  const { pinnedEntities, unpinnedEntities } = useMemo(() => {
+    const pinned: OpenEntitySummary[] = [];
+    const unpinned: OpenEntitySummary[] = [];
+    for (const entity of openEntities) {
+      const ref = openRefs.find((r) => r.id === entity._id);
+      const effectivelyPinned =
+        ref?.pinned === true || (entity.kind === "collection" && entity.isActive === true);
+      if (effectivelyPinned) pinned.push(entity);
+      else unpinned.push(entity);
+    }
+    // Active collection sorts first within the pinned strip.
+    pinned.sort((a, b) => {
+      const aActive = a.kind === "collection" && a.isActive ? 0 : 1;
+      const bActive = b.kind === "collection" && b.isActive ? 0 : 1;
+      return aActive - bActive;
+    });
+    return { pinnedEntities: pinned, unpinnedEntities: unpinned };
+  }, [openEntities, openRefs]);
+
   const addOpenEntity = (entity: OpenEntitySummary) => {
     if (justRemovedRef.current === entity._id) return;
     if (openRefs.some((ref) => ref.id === entity._id)) return;
     setOpenRefs([...openRefs, { id: entity._id, kind: entity.kind }]);
+  };
+
+  const togglePin = (id: string) => {
+    // The active collection is always pinned; pinning is a no-op there.
+    if (activeCollection?._id === id) return;
+    setOpenRefs(openRefs.map((ref) => (ref.id === id ? { ...ref, pinned: !ref.pinned } : ref)));
   };
 
   const removeOpenEntity = (id: string) => {
@@ -84,6 +128,10 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
         addOpenEntity,
         removeOpenEntity,
         openEntities,
+        pinnedEntities,
+        unpinnedEntities,
+        isPinned,
+        togglePin,
         activeCollection,
         setActiveCollection
       }}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ModeToggle } from "./ui/ModeToggle";
 import { Button } from "@/components/ui/button";
-import { OpenCollectionsList } from "./OpenCollectionButtons";
+import OpenCollectionButtons, { OpenCollectionsList } from "./OpenCollectionButtons";
 import { useSession, signOut } from "next-auth/react";
 import {
   DropdownMenu,
@@ -35,14 +35,14 @@ export default function AppBar() {
 
   return (
     <header className="bg-background border-b">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
+      <div className="w-full px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground truncate">
-              <span className="hidden sm:inline">Yet another MTG Database</span>
-              <span className="sm:hidden">YAMTG DB</span>
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground shrink-0">
+              <span className="hidden xl:inline">Yet another MTG Database</span>
+              <span className="xl:hidden">YAMTG DB</span>
             </h1>
-            <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-2">
+            <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
               {status === "authenticated" && mounted && (
                 <>
                   {isDesktop ? (
@@ -108,28 +108,29 @@ export default function AppBar() {
  */
 function DesktopNav({ pathname }: { pathname: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <Button asChild variant={pathname === "/search" ? "default" : "outline"} size="sm">
-        <Link href="/search">
-          <Search className="mr-2 h-4 w-4" />
-          Card Search
-        </Link>
-      </Button>
-      <Button asChild variant={pathname === "/scan" ? "default" : "outline"} size="sm">
-        <Link href="/scan">
-          <Camera className="mr-2 h-4 w-4" />
-          Scan
-        </Link>
-      </Button>
-      <Button asChild variant={pathname === "/my-cards" ? "default" : "outline"} size="sm">
-        <Link href="/my-cards">
-          <FolderOpen className="mr-2 h-4 w-4" />
-          My cards
-        </Link>
-      </Button>
+    <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-center gap-2 shrink-0">
+        <Button asChild variant={pathname === "/search" ? "default" : "outline"} size="sm">
+          <Link href="/search">
+            <Search className="mr-2 h-4 w-4" />
+            Card Search
+          </Link>
+        </Button>
+        <Button asChild variant={pathname === "/scan" ? "default" : "outline"} size="sm">
+          <Link href="/scan">
+            <Camera className="mr-2 h-4 w-4" />
+            Scan
+          </Link>
+        </Button>
+        <Button asChild variant={pathname === "/my-cards" ? "default" : "outline"} size="sm">
+          <Link href="/my-cards">
+            <FolderOpen className="mr-2 h-4 w-4" />
+            My cards
+          </Link>
+        </Button>
+      </div>
 
-      {/* <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1" />
-      <OpenCollectionButtons /> */}
+      <OpenCollectionButtons />
     </div>
   );
 }

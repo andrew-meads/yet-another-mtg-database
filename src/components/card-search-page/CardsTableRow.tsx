@@ -150,6 +150,7 @@ export default function CardsTableRow({
       <ContextMenuTrigger asChild>
         <TableRow
           ref={combinedRef as unknown as React.LegacyRef<HTMLTableRowElement>}
+          data-testid={`search-card-${card.id}`}
           className={clsx(
             "cursor-pointer",
             isDragging && "opacity-50",

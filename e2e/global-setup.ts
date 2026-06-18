@@ -67,16 +67,30 @@ async function globalSetup() {
 
   const userId = new Types.ObjectId();
   const collectionId = new Types.ObjectId();
+  const sideCollectionId = new Types.ObjectId();
   await db.collection("users").insertOne({ _id: userId, emailAddress: "e2e@example.com" });
-  await db.collection("collections").insertOne({
-    _id: collectionId,
-    name: "Main Collection",
-    description: "",
-    isActive: true,
-    owner: userId,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  });
+  await db.collection("collections").insertMany([
+    {
+      _id: collectionId,
+      name: "Main Collection",
+      description: "",
+      isActive: true,
+      owner: userId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      // A second, non-active collection used by appbarPins.spec.ts for pin/unpin
+      // and search → pinned-collection drop tests.
+      _id: sideCollectionId,
+      name: "Side Binder",
+      description: "",
+      isActive: false,
+      owner: userId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ] as never);
   await db.collection("cards").insertMany(CARDS as never);
 
   // A deck with one "Main" section, two columns: column A holds an ordered run of
@@ -131,7 +145,9 @@ async function globalSetup() {
         sectionId: sectionId.toString(),
         columnA: colAId.toString(),
         columnB: colBId.toString(),
-        physicalCardIds: pcIds.map((id) => id.toString())
+        physicalCardIds: pcIds.map((id) => id.toString()),
+        mainCollectionId: collectionId.toString(),
+        sideCollectionId: sideCollectionId.toString()
       },
       null,
       2

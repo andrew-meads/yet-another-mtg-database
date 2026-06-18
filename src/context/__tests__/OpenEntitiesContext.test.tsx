@@ -84,4 +84,56 @@ describe("OpenEntitiesContext", () => {
     });
     expect(h.mutateActive).toHaveBeenCalledWith({ collectionId: "c2", isActive: true });
   });
+
+  it("togglePin flips the pinned flag and persists it", () => {
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    act(() => result.current.addOpenEntity({ _id: "d1", kind: "deck" } as any));
+
+    expect(result.current.isPinned("d1")).toBe(false);
+    act(() => result.current.togglePin("d1"));
+
+    expect(result.current.isPinned("d1")).toBe(true);
+    expect(JSON.parse(window.localStorage.getItem("open-entity-ids")!)).toEqual([
+      { id: "d1", kind: "deck", pinned: true }
+    ]);
+
+    act(() => result.current.togglePin("d1"));
+    expect(result.current.isPinned("d1")).toBe(false);
+  });
+
+  it("partitions open entities into pinned and unpinned", () => {
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    act(() => result.current.addOpenEntity({ _id: "c2", kind: "collection" } as any));
+    act(() => result.current.addOpenEntity({ _id: "d1", kind: "deck" } as any));
+
+    // Nothing pinned yet, and neither is the active collection.
+    expect(result.current.pinnedEntities.map((e) => e._id)).toEqual([]);
+    expect(result.current.unpinnedEntities.map((e) => e._id)).toEqual(["c2", "d1"]);
+
+    act(() => result.current.togglePin("d1"));
+    expect(result.current.pinnedEntities.map((e) => e._id)).toEqual(["d1"]);
+    expect(result.current.unpinnedEntities.map((e) => e._id)).toEqual(["c2"]);
+  });
+
+  it("treats the active collection as always pinned and refuses to unpin it", () => {
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    // c1 is the active collection per the hoisted state.
+    act(() => result.current.addOpenEntity({ _id: "c1", kind: "collection" } as any));
+
+    expect(result.current.isPinned("c1")).toBe(true);
+    expect(result.current.pinnedEntities.map((e) => e._id)).toEqual(["c1"]);
+
+    act(() => result.current.togglePin("c1"));
+    expect(result.current.isPinned("c1")).toBe(true);
+  });
+
+  it("honors a pre-seeded pinned ref on mount", () => {
+    window.localStorage.setItem(
+      "open-entity-ids",
+      JSON.stringify([{ id: "d1", kind: "deck", pinned: true }])
+    );
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    expect(result.current.isPinned("d1")).toBe(true);
+    expect(result.current.pinnedEntities.map((e) => e._id)).toEqual(["d1"]);
+  });
 });
