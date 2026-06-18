@@ -102,8 +102,10 @@ export async function GET(request: NextRequest) {
       if (sortConfig.useAggregation && sortConfig.buildAggregationSort) {
         pipeline.push(...sortConfig.buildAggregationSort(sortDirection));
       } else {
-        // Use simple sort in pipeline
-        pipeline.push({ $sort: { [sortConfig.field]: sortDirection } });
+        // Use simple sort in pipeline. Include `_id` as a unique tiebreaker so the
+        // ordering is total and stable across paginated queries (otherwise tied
+        // sort-key values can be dropped or duplicated across pages).
+        pipeline.push({ $sort: { [sortConfig.field]: sortDirection, _id: 1 } });
       }
 
       // Add pagination
@@ -129,8 +131,10 @@ export async function GET(request: NextRequest) {
       const countResult = await CardData.aggregate(countPipeline);
       total = countResult.length > 0 ? countResult[0].total : 0;
     } else {
-      // Simple sort
-      const sortObject: { [key: string]: 1 | -1 } = { [sortConfig.field]: sortDirection };
+      // Simple sort. Include `_id` as a unique tiebreaker so the ordering is total
+      // and stable across paginated queries (otherwise tied sort-key values can be
+      // dropped or duplicated across pages).
+      const sortObject: { [key: string]: 1 | -1 } = { [sortConfig.field]: sortDirection, _id: 1 };
       cards = await CardData.find(searchQuery)
         .sort(sortObject)
         .limit(limit)

@@ -63,4 +63,57 @@ describe("GET /api/cards", () => {
     expect((await searchCards(jsonRequest("/api/cards?dir=sideways", "GET"))).status).toBe(400);
     expect((await searchCards(jsonRequest("/api/cards?page=0", "GET"))).status).toBe(400);
   });
+
+  /** Page through every page of a query and collect the returned card ids. */
+  async function collectAllPages(query: string, pageLen: number): Promise<string[]> {
+    const ids: string[] = [];
+    let page = 1;
+    // Guard against runaway loops if hasMore never goes false.
+    for (let i = 0; i < 100; i++) {
+      const res = await searchCards(
+        jsonRequest(`/api/cards?${query}&page=${page}&page-len=${pageLen}`, "GET")
+      );
+      const json = await res.json();
+      for (const c of json.cards as { id: string }[]) ids.push(c.id);
+      if (!json.pagination.hasMore) break;
+      page++;
+    }
+    return ids;
+  }
+
+  it("paginates a tie-heavy name sort without dropping or duplicating results", async () => {
+    // Many cards share the same name -> ties on the default `name` sort. Without a
+    // unique tiebreaker, MongoDB orders ties inconsistently per query, so paging
+    // with skip/limit drops some results and repeats others.
+    const total = 10;
+    for (let i = 0; i < total; i++) {
+      await seedCard({ id: `crusade-${i}`, name: "Crusade", set: `s${i}` });
+    }
+
+    const ids = await collectAllPages("q=Crusade", 2);
+
+    expect(new Set(ids).size).toBe(total); // no duplicates across pages
+    expect(ids.sort()).toEqual(
+      Array.from({ length: total }, (_, i) => `crusade-${i}`).sort()
+    ); // nothing missing
+  });
+
+  it("paginates a tie-heavy custom (rarity) sort without dropping or duplicating results", async () => {
+    // Exercises the aggregation-pipeline sort path in sortConfig.ts. Rarity has only
+    // a few distinct values, so every same-rarity card ties.
+    const total = 10;
+    for (let i = 0; i < total; i++) {
+      await seedCard({ id: `rare-${i}`, name: `Card ${i}`, rarity: "rare" });
+    }
+
+    const ids = await collectAllPages("order=rarity", 2);
+
+    // The three uniquely-named cards from beforeEach are commons; all share rarity
+    // ties too. Just assert the rare cards all appear exactly once.
+    const rareIds = ids.filter((id) => id.startsWith("rare-"));
+    expect(new Set(rareIds).size).toBe(total);
+    expect(rareIds.sort()).toEqual(
+      Array.from({ length: total }, (_, i) => `rare-${i}`).sort()
+    );
+  });
 });
