@@ -1,13 +1,15 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { useDeleteCollection } from "@/hooks/react-query/useDeleteEntity";
+import { useUpdateCollection } from "@/hooks/react-query/useUpdateCollection";
 import { getEntityIcon } from "@/lib/collectionUtils";
 import CollectionTable from "@/components/my-cards-page/collection-view/CollectionTable";
+import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface PageProps {
@@ -20,6 +22,8 @@ export default function CollectionPage({ params }: PageProps) {
   const { addOpenEntity } = useOpenEntitiesContext();
   const { data, isLoading, error } = useRetrieveCollectionDetails(id);
   const deleteCollection = useDeleteCollection();
+  const updateCollection = useUpdateCollection();
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (data?.collection) addOpenEntity(data.collection);
@@ -60,13 +64,38 @@ export default function CollectionPage({ params }: PageProps) {
             {collection.description || "No description provided"}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleDelete} aria-label="Delete collection">
-          <Trash2 className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-2 lg:mr-3">
+          <Button
+            variant="outline"
+            size="icon"
+            className="cursor-pointer"
+            onClick={() => setEditOpen(true)}
+            aria-label="Edit collection"
+          >
+            <Pencil className="h-[1.2rem] w-[1.2rem]" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="cursor-pointer"
+            onClick={handleDelete}
+            aria-label="Delete collection"
+          >
+            <Trash2 className="h-[1.2rem] w-[1.2rem]" />
+          </Button>
+        </div>
       </div>
       <div className="flex-1 min-h-0">
         <CollectionTable collection={collection} />
       </div>
+      <NewCollectionDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        entityLabel="Collection"
+        initialValues={{ name: collection.name, description: collection.description }}
+        onSave={(data) => updateCollection.mutate({ collectionId: id, ...data })}
+        isSaving={updateCollection.isPending}
+      />
     </div>
   );
 }

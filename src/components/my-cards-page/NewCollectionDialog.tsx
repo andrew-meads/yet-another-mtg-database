@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,12 @@ interface NewEntityDialogProps {
   onOpenChange: (open: boolean) => void;
   /** "Collection" or "Deck" — drives the title and labels. */
   entityLabel: string;
-  onCreate: (data: { name: string; description: string }) => void;
+  onCreate?: (data: { name: string; description: string }) => void;
   isCreating?: boolean;
+  /** When provided, activates edit mode: pre-populates the form and calls onSave on submit. */
+  initialValues?: { name: string; description: string };
+  onSave?: (data: { name: string; description: string }) => void;
+  isSaving?: boolean;
 }
 
 export function NewCollectionDialog({
@@ -28,35 +32,68 @@ export function NewCollectionDialog({
   onOpenChange,
   entityLabel,
   onCreate,
-  isCreating = false
+  isCreating = false,
+  initialValues,
+  onSave,
+  isSaving = false
 }: NewEntityDialogProps) {
+  const isEditMode = !!initialValues;
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  const reset = () => {
-    setName("");
-    setDescription("");
-  };
+  useEffect(() => {
+    if (open) {
+      if (isEditMode) {
+        setName(initialValues.name);
+        setDescription(initialValues.description);
+      }
+      // In create mode, leave fields empty (they were reset on close)
+    } else {
+      if (!isEditMode) {
+        setName("");
+        setDescription("");
+      }
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCreate = () => {
-    if (name.trim()) {
-      onCreate({ name: name.trim(), description: description.trim() });
-      reset();
+  const handleSubmit = () => {
+    if (!name.trim()) return;
+    if (isEditMode) {
+      onSave?.({ name: name.trim(), description: description.trim() });
+      onOpenChange(false);
+    } else {
+      onCreate?.({ name: name.trim(), description: description.trim() });
+      setName("");
+      setDescription("");
       onOpenChange(false);
     }
   };
 
   const handleCancel = () => {
-    reset();
+    if (isEditMode) {
+      setName(initialValues.name);
+      setDescription(initialValues.description);
+    } else {
+      setName("");
+      setDescription("");
+    }
     onOpenChange(false);
   };
+
+  const isPending = isCreating || isSaving;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New {entityLabel}</DialogTitle>
-          <DialogDescription>Enter the details for your new {entityLabel.toLowerCase()}.</DialogDescription>
+          <DialogTitle>
+            {isEditMode ? `Edit ${entityLabel}` : `Create New ${entityLabel}`}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditMode
+              ? `Update the details for this ${entityLabel.toLowerCase()}.`
+              : `Enter the details for your new ${entityLabel.toLowerCase()}.`}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -67,7 +104,7 @@ export function NewCollectionDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && name.trim()) handleCreate();
+                if (e.key === "Enter" && name.trim()) handleSubmit();
               }}
             />
           </div>
@@ -83,11 +120,17 @@ export function NewCollectionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isCreating}>
+          <Button variant="outline" onClick={handleCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!name.trim() || isCreating}>
-            {isCreating ? "Creating..." : "Create"}
+          <Button onClick={handleSubmit} disabled={!name.trim() || isPending}>
+            {isEditMode
+              ? isSaving
+                ? "Saving..."
+                : "Save"
+              : isCreating
+                ? "Creating..."
+                : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>
