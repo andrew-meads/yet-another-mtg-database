@@ -1,13 +1,15 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useRetrieveDeckDetails } from "@/hooks/react-query/useRetrieveDeckDetails";
 import { useDeleteDeck } from "@/hooks/react-query/useDeleteEntity";
+import { useUpdateDeck } from "@/hooks/react-query/useUpdateDeck";
 import { getEntityIcon } from "@/lib/collectionUtils";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
+import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface PageProps {
@@ -20,6 +22,8 @@ export default function DeckPage({ params }: PageProps) {
   const { addOpenEntity } = useOpenEntitiesContext();
   const { data, isLoading, error } = useRetrieveDeckDetails(id);
   const deleteDeck = useDeleteDeck();
+  const updateDeck = useUpdateDeck();
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (data?.deck) addOpenEntity(data.deck);
@@ -58,13 +62,38 @@ export default function DeckPage({ params }: PageProps) {
           </h2>
           <p className="text-muted-foreground">{deck.description || "No description provided"}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleDelete} aria-label="Delete deck">
-          <Trash2 className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-2 lg:mr-3">
+          <Button
+            variant="outline"
+            size="icon"
+            className="cursor-pointer"
+            onClick={() => setEditOpen(true)}
+            aria-label="Edit deck"
+          >
+            <Pencil className="h-[1.2rem] w-[1.2rem]" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="cursor-pointer"
+            onClick={handleDelete}
+            aria-label="Delete deck"
+          >
+            <Trash2 className="h-[1.2rem] w-[1.2rem]" />
+          </Button>
+        </div>
       </div>
       <div className="flex-1 min-h-0">
         <DeckView deck={deck} />
       </div>
+      <NewCollectionDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        entityLabel="Deck"
+        initialValues={{ name: deck.name, description: deck.description }}
+        onSave={(data) => updateDeck.mutate({ deckId: id, ...data })}
+        isSaving={updateDeck.isPending}
+      />
     </div>
   );
 }
