@@ -21,15 +21,16 @@ interface DeckSectionProps {
 function NewColumnDropZone({ deckId, sectionId }: { deckId: string; sectionId: string }) {
   const { dropRef, isOver } = useDeckNewColumnDropTarget(deckId, sectionId);
   return (
-    <div
-      ref={dropRef}
-      className={cn(
-        "shrink-0 rounded-md border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground transition-colors",
-        isOver ? "border-primary bg-primary/10" : "border-muted-foreground/30"
-      )}
-      style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
-    >
-      New column
+    <div ref={dropRef} className="shrink-0 rounded-[5px] border border-transparent p-1">
+      <div
+        className={cn(
+          "rounded-md border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground transition-colors",
+          isOver ? "border-primary bg-primary/10" : "border-muted-foreground/30"
+        )}
+        style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
+      >
+        New column
+      </div>
     </div>
   );
 }

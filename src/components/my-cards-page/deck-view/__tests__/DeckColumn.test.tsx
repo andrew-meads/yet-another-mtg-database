@@ -19,6 +19,10 @@ vi.mock("@/hooks/drag-drop/useDeckDropTargets", () => ({
   useDeckColumnDropTarget: () => ({ dropRef: vi.fn(), isOver: false })
 }));
 
+vi.mock("react-dnd", () => ({
+  useDragLayer: () => ({ dragClientOffset: null })
+}));
+
 vi.mock("@/hooks/react-query/useDeckCardOp", () => ({
   useDeckCardOp: () => ({ mutate: vi.fn() })
 }));
