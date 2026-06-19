@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 
 const h = vi.hoisted(() => ({
   mutateActive: vi.fn(),
+  dragging: false,
   state: {
     collections: [
       { _id: "c1", name: "Main", kind: "collection", isActive: true, owner: "o" },
@@ -13,6 +14,16 @@ const h = vi.hoisted(() => ({
     decks: [{ _id: "d1", name: "Burn", kind: "deck", owner: "o" }] as any[]
   }
 }));
+
+// Drive the global drag-in-progress state used to highlight inline drop targets.
+vi.mock("react-dnd", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-dnd")>();
+  return {
+    ...actual,
+    useDragLayer: (selector: (monitor: { isDragging: () => boolean }) => unknown) =>
+      selector({ isDragging: () => h.dragging })
+  };
+});
 
 vi.mock("@/hooks/react-query/useUpdateActiveCollection", () => ({
   useUpdateActiveCollection: () => ({ mutateAsync: h.mutateActive })
@@ -50,6 +61,7 @@ beforeAll(() => {
 beforeEach(() => {
   window.localStorage.clear();
   vi.clearAllMocks();
+  h.dragging = false;
 });
 
 describe("OpenCollectionButtons", () => {
@@ -119,5 +131,33 @@ describe("OpenCollectionButtons", () => {
 
     // Now rendered inline as a drop target.
     expect(await screen.findByTestId("open-entity-d1")).toBeInTheDocument();
+  });
+
+  it("does not show a drop zone when nothing is being dragged", () => {
+    window.localStorage.setItem(
+      "open-entity-ids",
+      JSON.stringify([{ id: "c2", kind: "collection", pinned: true }])
+    );
+    renderButtons();
+
+    // The drop zone div is always in the DOM, but has no data-drag-active
+    // attribute while nothing is being dragged.
+    const wrapper = screen.getByTestId("open-entity-c2");
+    expect(wrapper.querySelector("[data-drag-active]")).toBeNull();
+  });
+
+  it("shows the drop zone below the button while dragging", () => {
+    h.dragging = true;
+    window.localStorage.setItem(
+      "open-entity-ids",
+      JSON.stringify([{ id: "c2", kind: "collection", pinned: true }])
+    );
+    renderButtons();
+
+    const wrapper = screen.getByTestId("open-entity-c2");
+    const dropZone = wrapper.querySelector("[data-drag-active]");
+    expect(dropZone).not.toBeNull();
+    // Drop zone is visible (invisible class removed when dragging).
+    expect(dropZone).not.toHaveClass("invisible");
   });
 });

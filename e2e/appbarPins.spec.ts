@@ -92,7 +92,7 @@ test("a pinned collection button is a drop target for search cards", async ({ pa
   await expect(page.getByTestId("search-card-e2e-shivan")).toBeVisible({ timeout: 30_000 });
 
   // Drag a search card onto the pinned collection button.
-  await html5DragAndDrop(page, "search-card-e2e-shivan", `open-entity-${sideCollectionId}`);
+  await html5DragAndDrop(page, "search-card-e2e-shivan", `drop-zone-${sideCollectionId}`);
 
   // The card now lives in the (previously empty) Side Binder collection.
   await page.goto(`/my-cards/collections/${sideCollectionId}`);
