@@ -18,8 +18,9 @@ import {
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { getEntityIcon, entityHref } from "@/lib/collectionUtils";
 import { OpenEntitySummary } from "@/types/Deck";
-import { X, Star, Pin, PinOff, ChevronDown } from "lucide-react";
+import { X, Star, Pin, PinOff, ChevronDown, CirclePlus } from "lucide-react";
 import { useEntityButtonDropTarget } from "@/hooks/drag-drop/useEntityButtonDropTarget";
+import { useDragLayer } from "react-dnd";
 import clsx from "clsx";
 import { Separator } from "./ui/separator";
 
@@ -122,6 +123,11 @@ export default function OpenCollectionButtons() {
   const pathname = usePathname();
   const { pinnedEntities, unpinnedEntities, removeOpenEntity } = useOpenEntitiesContext();
 
+  // While any card is being dragged, the divs in the inline buttons are made visible and
+  // advertise themselves as drop targets (expand + dashed outline).
+  // Only NEW_CARD / PHYSICAL_CARD drags exist, so a plain isDragging() is sufficient.
+  const isDragging = useDragLayer((monitor) => monitor.isDragging());
+
   const handleCloseButton = (entity: OpenEntitySummary) => {
     removeOpenEntity(entity._id);
     if (pathname === entityHref(entity)) router.push("/my-cards");
@@ -132,9 +138,14 @@ export default function OpenCollectionButtons() {
   return (
     <div className="flex items-center gap-2 min-w-0 flex-1">
       <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1 shrink-0" />
-      <div className="flex items-center gap-2 overflow-x-auto min-w-0">
+      <div className="flex items-center gap-2 min-w-0 transition-all">
         {pinnedEntities.map((entity) => (
-          <OpenEntityButton key={entity._id} entity={entity} onClose={handleCloseButton} />
+          <OpenEntityButton
+            key={entity._id}
+            entity={entity}
+            onClose={handleCloseButton}
+            isDragging={isDragging}
+          />
         ))}
       </div>
       {unpinnedEntities.length > 0 && (
@@ -147,9 +158,10 @@ export default function OpenCollectionButtons() {
 interface OpenEntityButtonProps {
   entity: OpenEntitySummary;
   onClose: (entity: OpenEntitySummary) => void;
+  isDragging: boolean;
 }
 
-function OpenEntityButton({ entity, onClose }: OpenEntityButtonProps) {
+function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps) {
   const pathname = usePathname();
   const { setActiveCollection, isPinned, togglePin } = useOpenEntitiesContext();
   const href = entityHref(entity);
@@ -161,14 +173,11 @@ function OpenEntityButton({ entity, onClose }: OpenEntityButtonProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div ref={dropRef} data-testid={`open-entity-${entity._id}`} className="shrink-0">
+        <div data-testid={`open-entity-${entity._id}`} className="shrink-0 transition-all relative">
           <Button
             variant={pathname === href ? "default" : "outline"}
             size="sm"
-            className={clsx(
-              "gap-1.5 pr-2 transition-all",
-              isOver && "ring-4 ring-primary ring-offset-2 bg-primary/20"
-            )}
+            className={clsx("gap-1.5 pr-2 transition-all", isDragging && "rounded-b-none")}
             asChild
           >
             <Link href={href}>
@@ -188,22 +197,42 @@ function OpenEntityButton({ entity, onClose }: OpenEntityButtonProps) {
               </button>
             </Link>
           </Button>
+
+          {/* Drop zone — absolutely positioned below the button. Invisible and
+              non-interactive until a drag starts, then becomes a labelled target. */}
+          <div
+            ref={dropRef}
+            data-testid={`drop-zone-${entity._id}`}
+            data-drag-active={isDragging ? "" : undefined}
+            className={clsx(
+              "absolute top-full left-0 w-full border-x border-b h-20 rounded-b-md",
+              !isDragging && "pointer-events-none invisible",
+              isOver
+                ? "border-primary bg-primary/50"
+                : "border-dashed border-primary/50 bg-primary/20"
+            )}
+          >
+            <div className="flex h-full items-center justify-center">
+              <CirclePlus
+                className={clsx(
+                  "h-5 w-5 transition-colors",
+                  isOver ? "text-primary" : "text-primary/50"
+                )}
+              />
+            </div>
+          </div>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
         {entity.kind === "collection" && !isActiveCollection && (
-          <ContextMenuItem onClick={() => setActiveCollection(entity)}>
-            Make active
-          </ContextMenuItem>
+          <ContextMenuItem onClick={() => setActiveCollection(entity)}>Make active</ContextMenuItem>
         )}
         {!isActiveCollection && (
           <ContextMenuItem onClick={() => togglePin(entity._id)}>
             {pinned ? "Unpin from bar" : "Pin to bar"}
           </ContextMenuItem>
         )}
-        <ContextMenuItem onClick={() => onClose(entity)}>
-          Close
-        </ContextMenuItem>
+        <ContextMenuItem onClick={() => onClose(entity)}>Close</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );

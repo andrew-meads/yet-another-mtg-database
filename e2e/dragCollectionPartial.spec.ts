@@ -78,7 +78,7 @@ test("dragging with the drag-count control moves only the chosen number of copie
   await row.getByLabel("Decrease drag amount").click();
 
   // Drag the row onto the Side Binder button — only the single chosen copy should move.
-  await html5DragAndDrop(page, GRIZZLY_ROW, `open-entity-${sideCollectionId}`);
+  await html5DragAndDrop(page, GRIZZLY_ROW, `drop-zone-${sideCollectionId}`);
 
   // One copy remains loose in the Main Collection…
   await expect(row.getByRole("spinbutton")).toHaveValue("1", { timeout: 15_000 });
