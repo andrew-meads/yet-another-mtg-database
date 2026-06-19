@@ -27,7 +27,8 @@ export default function CardDragLayer() {
         left: 0,
         top: 0,
         transform,
-        height: "204px"
+        height: "204px",
+        opacity: 0.9
       }}
     >
       <CardArtView card={item.card} variant="small" />
