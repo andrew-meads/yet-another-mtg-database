@@ -35,7 +35,7 @@ export default function AppBar() {
 
   return (
     <header className="bg-background border-b">
-      <div className="w-full lg:px-8 p-2 sm:p-4">
+      <div className="w-full p-2 sm:p-4 lg:px-8">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
             <h1 className="text-foreground shrink-0 text-base font-bold sm:text-xl md:text-2xl">
@@ -60,7 +60,7 @@ export default function AppBar() {
                 <DropdownMenu>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <button className="border-border hover:border-primary relative flex cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 transition-colors size-8 sm:size-10">
+                      <button className="border-border hover:border-primary relative flex size-8 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 transition-colors sm:size-10">
                         {session.user.image ? (
                           <Image
                             src={session.user.image}
@@ -70,7 +70,7 @@ export default function AppBar() {
                             className="object-cover"
                           />
                         ) : (
-                          <div className="bg-primary/10 flex items-center justify-center text-sm font-semibold size-full">
+                          <div className="bg-primary/10 flex size-full items-center justify-center text-sm font-semibold">
                             {session.user.name?.charAt(0).toUpperCase() || "?"}
                           </div>
                         )}

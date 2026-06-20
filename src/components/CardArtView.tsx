@@ -149,12 +149,12 @@ export default function CardArtView({
       >
         <div
           onClick={handleFlip}
-          className="group relative flex cursor-pointer items-center justify-center size-full"
+          className="group relative flex size-full cursor-pointer items-center justify-center"
         >
           {images.map((image, index) => (
             <div
               key={index}
-              className="flex items-center justify-center transition-opacity duration-800 size-full"
+              className="flex size-full items-center justify-center transition-opacity duration-800"
               style={{
                 position: index === 0 ? "relative" : "absolute",
                 top: index === 0 ? "auto" : 0,
@@ -167,7 +167,7 @@ export default function CardArtView({
             </div>
           ))}
           <div
-            className="pointer-events-none absolute flex items-center justify-center bg-gray-700/20 text-lg font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 inset-y-0"
+            className="pointer-events-none absolute inset-y-0 flex items-center justify-center bg-gray-700/20 text-lg font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
             style={{ left: 0, right: 0 }}
           >
             Click to flip
@@ -188,7 +188,7 @@ export default function CardArtView({
       style={containerStyle}
     >
       {imagesToRender.map((image, index) => (
-        <div key={index} className="flex items-center justify-center size-full">
+        <div key={index} className="flex size-full items-center justify-center">
           <CardImage {...image} />
         </div>
       ))}

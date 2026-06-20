@@ -65,7 +65,7 @@ export function OpenCollectionsList() {
                 {entity.kind === "collection" &&
                   (isActiveCollection ? (
                     <div className="rounded-sm p-1">
-                      <Star className="fill-current size-3" />
+                      <Star className="size-3 fill-current" />
                     </div>
                   ) : (
                     <button
@@ -183,7 +183,7 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
             <Link href={href}>
               <span>{getEntityIcon(entity.kind)}</span>
               <span>{entity.name}</span>
-              {isActiveCollection && <Star className="fill-current size-3" />}
+              {isActiveCollection && <Star className="size-3 fill-current" />}
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -215,7 +215,7 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
             <div className="flex h-full items-center justify-center">
               <CirclePlus
                 className={clsx(
-                  "transition-colors size-5",
+                  "size-5 transition-colors",
                   isOver ? "text-primary" : "text-primary/50"
                 )}
               />

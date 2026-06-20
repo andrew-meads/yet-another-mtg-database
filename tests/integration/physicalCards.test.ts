@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST as createPhysicalCards } from "@/app/api/physical-cards/route";
-import { PATCH as patchPhysicalCard, DELETE as deletePhysicalCard } from "@/app/api/physical-cards/[id]/route";
+import {
+  PATCH as patchPhysicalCard,
+  DELETE as deletePhysicalCard
+} from "@/app/api/physical-cards/[id]/route";
 import { POST as removeGroup } from "@/app/api/physical-cards/remove-group/route";
 import { PhysicalCardModel, DeckModel, TagModel } from "@/db/schema";
 import {
@@ -128,7 +131,10 @@ describe("DELETE /api/physical-cards/[id]", () => {
     deck.markModified("sections");
     await deck.save();
 
-    const res = await deletePhysicalCard(jsonRequest(`/api/physical-cards/${id}`, "DELETE"), ctx({ id }));
+    const res = await deletePhysicalCard(
+      jsonRequest(`/api/physical-cards/${id}`, "DELETE"),
+      ctx({ id })
+    );
     expect(res.status).toBe(204);
     expect(await PhysicalCardModel.findById(id)).toBeNull();
     const fresh = await DeckModel.findById(deck._id).lean();
@@ -147,7 +153,8 @@ describe("DELETE /api/physical-cards/[id]", () => {
 describe("POST /api/physical-cards/remove-group", () => {
   it("deletes only the requested quantity from an exactly-matching group", async () => {
     // 3 loose copies with tag "a", plus 1 with different tags (must be untouched)
-    for (let i = 0; i < 3; i++) await seedPhysicalCard(owner, cardId, collectionId, { tags: ["a"] });
+    for (let i = 0; i < 3; i++)
+      await seedPhysicalCard(owner, cardId, collectionId, { tags: ["a"] });
     await seedPhysicalCard(owner, cardId, collectionId, { tags: ["b"] });
 
     const res = await removeGroup(

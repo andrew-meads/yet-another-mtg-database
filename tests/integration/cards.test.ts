@@ -93,9 +93,7 @@ describe("GET /api/cards", () => {
     const ids = await collectAllPages("q=Crusade", 2);
 
     expect(new Set(ids).size).toBe(total); // no duplicates across pages
-    expect(ids.sort()).toEqual(
-      Array.from({ length: total }, (_, i) => `crusade-${i}`).sort()
-    ); // nothing missing
+    expect(ids.sort()).toEqual(Array.from({ length: total }, (_, i) => `crusade-${i}`).sort()); // nothing missing
   });
 
   it("paginates a tie-heavy custom (rarity) sort without dropping or duplicating results", async () => {
@@ -112,8 +110,6 @@ describe("GET /api/cards", () => {
     // ties too. Just assert the rare cards all appear exactly once.
     const rareIds = ids.filter((id) => id.startsWith("rare-"));
     expect(new Set(rareIds).size).toBe(total);
-    expect(rareIds.sort()).toEqual(
-      Array.from({ length: total }, (_, i) => `rare-${i}`).sort()
-    );
+    expect(rareIds.sort()).toEqual(Array.from({ length: total }, (_, i) => `rare-${i}`).sort());
   });
 });

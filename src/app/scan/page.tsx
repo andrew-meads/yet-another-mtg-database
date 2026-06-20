@@ -183,7 +183,7 @@ export default function ScanPage() {
       <div className="relative flex flex-1 items-center justify-center overflow-hidden">
         {error ? (
           <div className="max-w-md p-6 text-center text-white">
-            <AlertCircle className="mx-auto mb-3 text-red-400 size-8" />
+            <AlertCircle className="mx-auto mb-3 size-8 text-red-400" />
             <p className="mb-2">{error}</p>
             <p className="text-sm text-white/70">
               You can still upload a photo using the button below.
@@ -197,7 +197,7 @@ export default function ScanPage() {
               playsInline
               muted
               onClick={handleVideoTap}
-              className="object-cover size-full"
+              className="size-full object-cover"
             />
             <canvas ref={canvasRef} className="hidden" />
 
@@ -211,7 +211,7 @@ export default function ScanPage() {
             {/* Tap-to-focus ring */}
             {focusPoint && (
               <div
-                className="pointer-events-none absolute animate-ping rounded-full border-2 border-white size-16 -translate-1/2"
+                className="pointer-events-none absolute size-16 -translate-1/2 animate-ping rounded-full border-2 border-white"
                 style={{ left: focusPoint.x, top: focusPoint.y }}
               />
             )}
@@ -222,7 +222,7 @@ export default function ScanPage() {
         {isPending && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-3 rounded-lg bg-white/10 p-6 backdrop-blur-md">
-              <div className="animate-spin rounded-full border-3 border-white border-t-transparent size-8" />
+              <div className="size-8 animate-spin rounded-full border-3 border-white border-t-transparent" />
               <p className="text-sm font-medium text-white">Scanning…</p>
             </div>
           </div>
@@ -233,7 +233,7 @@ export default function ScanPage() {
           <div className="absolute inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-lg bg-white/10 p-6 backdrop-blur-md">
               <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 shrink-0 text-red-400 size-6" />
+                <AlertCircle className="mt-0.5 size-6 shrink-0 text-red-400" />
                 <div className="flex-1">
                   <h3 className="mb-2 font-semibold text-white">Scan Failed</h3>
                   <p className="mb-4 text-sm text-white/90">{scanError}</p>
@@ -260,7 +260,7 @@ export default function ScanPage() {
             variant="ghost"
             onClick={handleSwitchCamera}
             disabled={!hasMultipleCameras || isPending}
-            className="rounded-full text-white hover:bg-white/20 disabled:opacity-30 size-12"
+            className="size-12 rounded-full text-white hover:bg-white/20 disabled:opacity-30"
             title="Switch camera"
           >
             <SwitchCamera className="size-5" />
@@ -272,11 +272,11 @@ export default function ScanPage() {
             size="lg"
             onClick={handleCapture}
             disabled={!stream || isPending}
-            className="rounded-full p-0 size-16"
+            className="size-16 rounded-full p-0"
             title="Capture photo"
           >
             {isPending ? (
-              <div className="animate-spin rounded-full border-2 border-white border-t-transparent size-6" />
+              <div className="size-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <Camera className="size-6" />
             )}
@@ -288,7 +288,7 @@ export default function ScanPage() {
           variant="ghost"
           onClick={handleUploadClick}
           disabled={isPending}
-          className="rounded-full text-white hover:bg-white/20 disabled:opacity-30 size-12"
+          className="size-12 rounded-full text-white hover:bg-white/20 disabled:opacity-30"
           title="Upload photo"
         >
           <Upload className="size-5" />

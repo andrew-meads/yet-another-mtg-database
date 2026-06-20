@@ -2,9 +2,7 @@ import { test, expect, Page } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const fixtures = JSON.parse(
-  readFileSync(join(__dirname, ".auth", "fixtures.json"), "utf-8")
-) as {
+const fixtures = JSON.parse(readFileSync(join(__dirname, ".auth", "fixtures.json"), "utf-8")) as {
   mainCollectionId: string;
   sideCollectionId: string;
 };

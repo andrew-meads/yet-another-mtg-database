@@ -109,7 +109,7 @@ function Tag({ label, onClose }: TagProps) {
   return (
     <span className="bg-primary text-primary-foreground flex flex-row items-center gap-1 rounded-lg px-2 py-1 text-xs">
       <span>{label}</span>
-      <X className="cursor-pointer size-3" onClick={onClose} />
+      <X className="size-3 cursor-pointer" onClick={onClose} />
     </span>
   );
 }

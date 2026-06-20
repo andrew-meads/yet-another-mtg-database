@@ -141,7 +141,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
 
       {/* Header */}
       <div
-        className="bg-muted/40 text-muted-foreground grid items-center gap-2 border-b text-xs font-medium uppercase p-2"
+        className="bg-muted/40 text-muted-foreground grid items-center gap-2 border-b p-2 text-xs font-medium uppercase"
         style={{ gridTemplateColumns: COLLECTION_GRID }}
       >
         <span />

@@ -1,12 +1,6 @@
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
-import {
-  CardData,
-  CollectionModel,
-  DeckModel,
-  PhysicalCardModel,
-  UserModel
-} from "@/db/schema";
+import { CardData, CollectionModel, DeckModel, PhysicalCardModel, UserModel } from "@/db/schema";
 import { MtgCard } from "@/types/MtgCard";
 
 /** Point getServerSession at a given user id (or null for "signed out"). */
@@ -99,17 +93,16 @@ export async function seedPhysicalCard(
 }
 
 /** Construct a NextRequest with an optional JSON body. */
-export function jsonRequest(
-  url: string,
-  method: string,
-  body?: unknown
-): NextRequest {
+export function jsonRequest(url: string, method: string, body?: unknown): NextRequest {
   const init: { method: string; body?: string; headers?: Record<string, string> } = { method };
   if (body !== undefined) {
     init.body = JSON.stringify(body);
     init.headers = { "content-type": "application/json" };
   }
-  return new NextRequest(`http://localhost${url}`, init as ConstructorParameters<typeof NextRequest>[1]);
+  return new NextRequest(
+    `http://localhost${url}`,
+    init as ConstructorParameters<typeof NextRequest>[1]
+  );
 }
 
 /** Build the `{ params }` second-arg App Router handlers receive (Next 16: async params). */

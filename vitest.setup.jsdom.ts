@@ -29,7 +29,16 @@ vi.mock("next/navigation", () => ({
 // next/image — render a plain <img> so jsdom can handle it.
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: ({ src, alt, fill: _fill, priority: _priority, quality: _quality, loader: _loader, sizes: _sizes, ...rest }: any) =>
+  default: ({
+    src,
+    alt,
+    fill: _fill,
+    priority: _priority,
+    quality: _quality,
+    loader: _loader,
+    sizes: _sizes,
+    ...rest
+  }: any) =>
     React.createElement("img", { src: typeof src === "string" ? src : "", alt: alt ?? "", ...rest })
 }));
 

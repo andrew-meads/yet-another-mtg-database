@@ -28,9 +28,7 @@ beforeEach(async () => {
 
 describe("POST /api/collections", () => {
   it("creates a collection and 400s without a name", async () => {
-    const ok = await createCollection(
-      jsonRequest("/api/collections", "POST", { name: "Binder" })
-    );
+    const ok = await createCollection(jsonRequest("/api/collections", "POST", { name: "Binder" }));
     expect(ok.status).toBe(201);
     expect(ok.headers.get("Location")).toMatch(/^\/api\/collections\//);
 

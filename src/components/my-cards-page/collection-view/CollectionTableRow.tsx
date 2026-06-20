@@ -203,7 +203,7 @@ export default function CollectionTableRow({
             {row.notes && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <StickyNote className="text-muted-foreground shrink-0 size-3" />
+                  <StickyNote className="text-muted-foreground size-3 shrink-0" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs text-xs">{row.notes}</p>
@@ -213,7 +213,7 @@ export default function CollectionTableRow({
             {row.tags && row.tags.length > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Tag className="text-muted-foreground shrink-0 size-3" />
+                  <Tag className="text-muted-foreground size-3 shrink-0" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>

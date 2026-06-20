@@ -130,7 +130,7 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
-          <div className="text-muted-foreground grid place-items-center p-4 size-full">
+          <div className="text-muted-foreground grid size-full place-items-center p-4">
             <div className="space-y-2 text-center">
               <div className="text-lg font-semibold">Card Details</div>
               <div className="text-sm">Select a card to see its art and rules text</div>

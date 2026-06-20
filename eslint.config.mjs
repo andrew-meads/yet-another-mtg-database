@@ -12,13 +12,13 @@ const eslintConfig = defineConfig([
       ...tailwindcss.configs.recommended.settings,
       tailwindcss: {
         ...tailwindcss.configs.recommended.settings?.tailwindcss,
-        cssConfigPath: "src/app/globals.css",
-      },
+        cssConfigPath: "src/app/globals.css"
+      }
     },
     rules: {
       ...tailwindcss.configs.recommended.rules,
-      "tailwindcss/classnames-order": "off",
-    },
+      "tailwindcss/classnames-order": "off"
+    }
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
@@ -28,7 +28,7 @@ const eslintConfig = defineConfig([
     ".next-e2e/**",
     "out/**",
     "build/**",
-    "next-env.d.ts",
+    "next-env.d.ts"
   ]),
   // Honour the common _underscore convention for intentionally unused vars/args.
   {
@@ -39,18 +39,18 @@ const eslintConfig = defineConfig([
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           destructuredArrayIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-        },
-      ],
-    },
+          caughtErrorsIgnorePattern: "^_"
+        }
+      ]
+    }
   },
   // test / setup files: any is legitimately needed for mocks and spy types.
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "vitest.setup.*.ts"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
+      "@typescript-eslint/no-explicit-any": "off"
+    }
+  }
 ]);
 
 export default eslintConfig;

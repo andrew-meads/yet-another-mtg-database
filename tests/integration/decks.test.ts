@@ -139,7 +139,10 @@ describe("DELETE /api/decks/[id]", () => {
     const deckId = deck._id.toString();
     const pcId = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
 
-    const res = await deleteDeck(jsonRequest(`/api/decks/${deckId}`, "DELETE"), ctx({ id: deckId }));
+    const res = await deleteDeck(
+      jsonRequest(`/api/decks/${deckId}`, "DELETE"),
+      ctx({ id: deckId })
+    );
     expect(res.status).toBe(204);
     expect(await DeckModel.findById(deckId)).toBeNull();
     const pc = await PhysicalCardModel.findById(pcId).lean();

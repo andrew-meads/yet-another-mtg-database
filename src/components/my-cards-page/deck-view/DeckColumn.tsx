@@ -131,7 +131,7 @@ function DeckCardImage({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex max-w-[120px] items-center gap-1 rounded bg-black/70 px-1 py-0.5">
-                    <Library className="shrink-0 text-white size-3" />
+                    <Library className="size-3 shrink-0 text-white" />
                     {/* <span className="text-[10px] text-white truncate">{card.collectionName}</span> */}
                   </div>
                 </TooltipTrigger>
@@ -147,7 +147,7 @@ function DeckCardImage({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="rounded bg-black/70 p-1">
-                      <StickyNote className="text-white size-3" />
+                      <StickyNote className="size-3 text-white" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -159,7 +159,7 @@ function DeckCardImage({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="rounded bg-black/70 p-1">
-                      <Tag className="text-white size-3" />
+                      <Tag className="size-3 text-white" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -298,14 +298,14 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
       )}
       {dropIndex !== null && (
         <div
-          className="pointer-events-none absolute z-10 flex items-center -inset-x-2"
+          className="pointer-events-none absolute -inset-x-2 z-10 flex items-center"
           style={{ top: `${CONTAINER_OFFSET + dropIndex * OVERLAP_OFFSET - 5}px` }}
         >
           {/* Left arrow: ▶ pointing into the column */}
-          <div className="border-l-primary shrink-0 border-l-[8px] size-0 border-y-[5px] border-y-transparent" />
+          <div className="border-l-primary size-0 shrink-0 border-y-[5px] border-l-[8px] border-y-transparent" />
           <div className="bg-primary h-1 flex-1" />
           {/* Right arrow: ◀ pointing into the column */}
-          <div className="border-r-primary shrink-0 border-r-[8px] size-0 border-y-[5px] border-y-transparent" />
+          <div className="border-r-primary size-0 shrink-0 border-y-[5px] border-r-[8px] border-y-transparent" />
         </div>
       )}
     </div>

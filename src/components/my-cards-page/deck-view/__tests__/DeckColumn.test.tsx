@@ -19,7 +19,11 @@ vi.mock("@/hooks/drag-drop/usePhysicalCardDragSource", () => ({
     cards?: MtgCard[];
     getItem?: () => PhysicalCardDragItem;
   }) => {
-    h.dragCalls.push({ physicalCardIds: props.physicalCardIds, cards: props.cards, getItem: props.getItem });
+    h.dragCalls.push({
+      physicalCardIds: props.physicalCardIds,
+      cards: props.cards,
+      getItem: props.getItem
+    });
     return { isDragging: false, dragRef: vi.fn(), draggedItem: undefined };
   }
 }));
