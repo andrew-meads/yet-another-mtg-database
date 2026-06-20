@@ -11,6 +11,7 @@ A personal Magic: The Gathering card database and collection manager. Next.js 16
 Any non-trivial plan must include steps for:
 1. **Tests** — add or update unit, integration, component, and/or e2e tests as appropriate for the change. Do not skip this even if the task description doesn't mention it.
 2. **Lint** — run `npm run lint` at the end and fix all errors and warnings before considering the task done.
+3. **Documentation** - Make sure `README.md` and `CLAUDE.md` are both kept up-to-date.
 
 ## Commands
 
