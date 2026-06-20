@@ -133,7 +133,9 @@ export default function SearchResults({ children }: SearchResultsProps) {
       // Reset to page 1 when search params change
       setPage(1);
     },
-    [] // Remove setSearchParams from dependencies - it's stable from useLocalStorage
+    // setSearchParams is stable from useLocalStorage
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const handlePrevPage = useCallback(() => {

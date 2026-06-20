@@ -32,7 +32,9 @@ export default function CardsInfiniteList({
   const allCards = cardPages?.flat(1) || [];
   const uniqueCards = Array.from(new Map(allCards.map((card) => [card.id, card])).values());
 
-  // Initialize virtualizer
+  // Initialize virtualizer. The React Compiler intentionally skips memoizing the value
+  // returned by TanStack Virtual's useVirtualizer (it returns non-memoizable functions).
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: uniqueCards.length + (hasNextPage ? 1 : 0), // +1 for loading indicator
     getScrollElement: () => scrollContainerRef.current,
@@ -67,6 +69,9 @@ export default function CardsInfiniteList({
     } else {
       hasRestoredScroll.current = true;
     }
+    // Runs once after the first cards load to restore the saved scroll; intentionally
+    // keyed only on uniqueCards.length (virtualizer is read lazily, not a real dep).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uniqueCards.length]);
 
   // Save scroll position on scroll
@@ -91,9 +96,11 @@ export default function CardsInfiniteList({
     }
   }, [cardPages.length]);
 
+  const virtualItems = virtualizer.getVirtualItems();
+
   // Trigger infinite scroll when scrolling near bottom
   useEffect(() => {
-    const [lastItem] = [...virtualizer.getVirtualItems()].reverse();
+    const [lastItem] = [...virtualItems].reverse();
 
     if (!lastItem) return;
 
@@ -101,15 +108,7 @@ export default function CardsInfiniteList({
     if (lastItem.index >= uniqueCards.length - 1 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-    virtualizer.getVirtualItems(),
-    uniqueCards.length
-  ]);
-
-  const virtualItems = virtualizer.getVirtualItems();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, virtualItems, uniqueCards.length]);
 
   return (
     <div className="rounded-md border overflow-hidden">

@@ -50,6 +50,9 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { dropRef, isOver } = useCollectionDropTarget(collection._id, searchFilters === null);
 
+  // The React Compiler intentionally skips memoizing the value returned by TanStack
+  // Virtual's useVirtualizer (it returns non-memoizable functions).
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,

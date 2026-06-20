@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -41,20 +41,23 @@ export function NewCollectionDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
+  // Sync the form to the `open` prop as it changes, without an effect: in edit mode
+  // seed the fields from initialValues when opening; in create mode clear them on close.
+  // See https://react.dev/learn/you-might-not-need-an-effect (adjusting state on prop change).
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       if (isEditMode) {
         setName(initialValues.name);
         setDescription(initialValues.description);
       }
       // In create mode, leave fields empty (they were reset on close)
-    } else {
-      if (!isEditMode) {
-        setName("");
-        setDescription("");
-      }
+    } else if (!isEditMode) {
+      setName("");
+      setDescription("");
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const handleSubmit = () => {
     if (!name.trim()) return;

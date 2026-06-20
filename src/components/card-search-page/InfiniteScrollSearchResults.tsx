@@ -101,7 +101,9 @@ export default function InfiniteScrollSearchResults({
       // When search params change, the query key changes and React Query automatically
       // resets to page 1 and clears previous pages
     },
-    [] // setSearchParams is stable from useLocalStorage
+    // setSearchParams is stable from useLocalStorage
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   // Flatten all pages into a single cards array

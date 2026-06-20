@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MtgCard } from "@/types/MtgCard";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
@@ -104,7 +104,10 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
 
   // Get active collection and open collections from context
   const { activeCollection, openEntities } = useOpenEntitiesContext();
-  const openCollections = openEntities.filter((e) => e.kind === "collection");
+  const openCollections = useMemo(
+    () => openEntities.filter((e) => e.kind === "collection"),
+    [openEntities]
+  );
 
   // Mutation to add a physical card to a collection
   const { mutate: createPhysicalCard } = useCreatePhysicalCard();
@@ -147,24 +150,27 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   /**
    * Handle add to collection button click
    */
-  const handleAddToCollection = (card: MtgCard, collectionId?: string) => {
-    // Determine target collection
-    let targetCollection;
+  const handleAddToCollection = useCallback(
+    (card: MtgCard, collectionId?: string) => {
+      // Determine target collection
+      let targetCollection;
 
-    if (collectionId === undefined) {
-      // Use active collection if no specific collection ID provided
-      targetCollection = activeCollection;
-    } else {
-      // Find collection in open collections by ID
-      targetCollection = openCollections.find((c) => c._id === collectionId);
-    }
+      if (collectionId === undefined) {
+        // Use active collection if no specific collection ID provided
+        targetCollection = activeCollection;
+      } else {
+        // Find collection in open collections by ID
+        targetCollection = openCollections.find((c) => c._id === collectionId);
+      }
 
-    // Return early if no valid collection found
-    if (!targetCollection) return;
+      // Return early if no valid collection found
+      if (!targetCollection) return;
 
-    // Add card to collection
-    createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id });
-  };
+      // Add card to collection
+      createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id });
+    },
+    [activeCollection, openCollections, createPhysicalCard]
+  );
 
   // === KEYBOARD NAVIGATION ===
 
@@ -224,7 +230,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedCard, cards, setSelectedCard]);
+  }, [selectedCard, cards, setSelectedCard, handleAddToCollection]);
 
   // === HOVER POPUP MANAGEMENT ===
 

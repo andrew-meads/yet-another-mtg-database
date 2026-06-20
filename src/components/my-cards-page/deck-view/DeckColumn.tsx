@@ -5,7 +5,7 @@ import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import { MtgCard } from "@/types/MtgCard";
 import { DeckColumn as DeckColumnData } from "@/types/Deck";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET, CONTAINER_OFFSET } from "./card-dimensions";
 import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
@@ -75,7 +75,7 @@ function DeckCardImage({
 
   useEffect(() => {
     onDragIndexChange(isDragging ? cardIndex : null);
-  }, [isDragging]);
+  }, [isDragging, cardIndex, onDragIndexChange]);
 
   return (
     <ContextMenu>
@@ -173,14 +173,17 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
   const deleteColumn = useDeleteColumn();
   const [dragOriginIndex, setDragOriginIndex] = useState<number | null>(null);
 
-  const computeIndex = (offset: { x: number; y: number } | null) => {
-    const el = columnRef.current;
-    if (!el || !offset) return column.cards.length;
-    const rect = el.getBoundingClientRect();
-    const relativeY = offset.y - rect.top - CONTAINER_OFFSET;
-    const idx = Math.floor(relativeY / OVERLAP_OFFSET);
-    return Math.max(0, Math.min(idx, column.cards.length));
-  };
+  const computeIndex = useCallback(
+    (offset: { x: number; y: number } | null) => {
+      const el = columnRef.current;
+      if (!el || !offset) return column.cards.length;
+      const rect = el.getBoundingClientRect();
+      const relativeY = offset.y - rect.top - CONTAINER_OFFSET;
+      const idx = Math.floor(relativeY / OVERLAP_OFFSET);
+      return Math.max(0, Math.min(idx, column.cards.length));
+    },
+    [column.cards.length]
+  );
 
   const { dropRef, isOver } = useDeckColumnDropTarget({
     deckId,
@@ -196,7 +199,17 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
   }));
 
   const isEmpty = column.cards.length === 0;
-  const dropIndex = isOver && !isEmpty ? computeIndex(dragClientOffset) : null;
+
+  // Derive the drop-indicator position from the live pointer offset (an external system
+  // surfaced by useDragLayer) via an effect, rather than measuring the column ref during
+  // render. setDropIndex here is the sanctioned "sync to an external system" use.
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  useEffect(() => {
+    // Syncing the indicator to the live pointer offset (an external system from
+    // useDragLayer) is the sanctioned external-subscription use of setState in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDropIndex(isOver && !isEmpty ? computeIndex(dragClientOffset) : null);
+  }, [isOver, isEmpty, dragClientOffset, computeIndex]);
 
   return (
     <ContextMenu>
