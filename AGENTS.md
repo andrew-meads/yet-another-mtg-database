@@ -1,10 +1,16 @@
-# AGENTS.md
+# CLAUDE.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Overview
 
 A personal Magic: The Gathering card database and collection manager. Next.js 16 (App Router, React 19) frontend + API routes, backed by MongoDB via Mongoose. Card data originates from Scryfall bulk JSON. Features include Scryfall-style search, collection and deck management, drag-and-drop card organization, and camera-based card scanning (proxied to an external card-scanner backend).
+
+## Planning & implementation checklist
+
+Any non-trivial plan must include steps for:
+1. **Tests** — add or update unit, integration, component, and/or e2e tests as appropriate for the change. Do not skip this even if the task description doesn't mention it.
+2. **Lint** — run `npm run lint` at the end and fix all errors and warnings before considering the task done.
 
 ## Commands
 
