@@ -165,27 +165,27 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
+    <div className="fixed inset-0 flex flex-col bg-black">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm z-10">
-        <h1 className="text-white text-lg font-semibold">Scan Cards</h1>
+      <div className="z-10 flex items-center justify-between bg-black/50 p-4 backdrop-blur-sm">
+        <h1 className="text-lg font-semibold text-white">Scan Cards</h1>
         <Button
           variant="ghost"
           size="icon"
           onClick={handleClose}
           className="text-white hover:bg-white/20"
         >
-          <X className="h-5 w-5" />
+          <X className="size-5" />
         </Button>
       </div>
 
       {/* Camera Feed */}
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden">
         {error ? (
-          <div className="text-white text-center p-6 max-w-md">
-            <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+          <div className="max-w-md p-6 text-center text-white">
+            <AlertCircle className="mx-auto mb-3 text-red-400 size-8" />
             <p className="mb-2">{error}</p>
-            <p className="text-white/70 text-sm">
+            <p className="text-sm text-white/70">
               You can still upload a photo using the button below.
             </p>
           </div>
@@ -197,13 +197,13 @@ export default function ScanPage() {
               playsInline
               muted
               onClick={handleVideoTap}
-              className="w-full h-full object-cover"
+              className="object-cover size-full"
             />
             <canvas ref={canvasRef} className="hidden" />
 
             {/* Framing hint */}
-            <div className="absolute bottom-4 inset-x-0 flex justify-center pointer-events-none">
-              <p className="text-white/80 text-sm bg-black/40 rounded-full px-3 py-1">
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+              <p className="rounded-full bg-black/40 px-3 py-1 text-sm text-white/80">
                 Place cards on a contrasting surface
               </p>
             </div>
@@ -211,7 +211,7 @@ export default function ScanPage() {
             {/* Tap-to-focus ring */}
             {focusPoint && (
               <div
-                className="absolute w-16 h-16 border-2 border-white rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2 animate-ping"
+                className="pointer-events-none absolute animate-ping rounded-full border-2 border-white size-16 -translate-1/2"
                 style={{ left: focusPoint.x, top: focusPoint.y }}
               />
             )}
@@ -221,22 +221,22 @@ export default function ScanPage() {
         {/* Scanning status overlay */}
         {isPending && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 flex flex-col items-center gap-3">
-              <div className="h-8 w-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
-              <p className="text-white text-sm font-medium">Scanning…</p>
+            <div className="flex flex-col items-center gap-3 rounded-lg bg-white/10 p-6 backdrop-blur-md">
+              <div className="animate-spin rounded-full border-3 border-white border-t-transparent size-8" />
+              <p className="text-sm font-medium text-white">Scanning…</p>
             </div>
           </div>
         )}
 
         {/* Scan error overlay */}
         {scanError && !isPending && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 max-w-md w-full">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-lg bg-white/10 p-6 backdrop-blur-md">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-6 w-6 text-red-400 shrink-0 mt-0.5" />
+                <AlertCircle className="mt-0.5 shrink-0 text-red-400 size-6" />
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-2">Scan Failed</h3>
-                  <p className="text-white/90 text-sm mb-4">{scanError}</p>
+                  <h3 className="mb-2 font-semibold text-white">Scan Failed</h3>
+                  <p className="mb-4 text-sm text-white/90">{scanError}</p>
                   <Button
                     onClick={() => setScanError(null)}
                     variant="secondary"
@@ -253,17 +253,17 @@ export default function ScanPage() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-6 bg-black/50 backdrop-blur-sm z-10 flex justify-center items-center gap-4">
+      <div className="z-10 flex items-center justify-center gap-4 bg-black/50 p-6 backdrop-blur-sm">
         {!error && (
           <Button
             size="icon"
             variant="ghost"
             onClick={handleSwitchCamera}
             disabled={!hasMultipleCameras || isPending}
-            className="rounded-full w-12 h-12 text-white hover:bg-white/20 disabled:opacity-30"
+            className="rounded-full text-white hover:bg-white/20 disabled:opacity-30 size-12"
             title="Switch camera"
           >
-            <SwitchCamera className="h-5 w-5" />
+            <SwitchCamera className="size-5" />
           </Button>
         )}
 
@@ -272,13 +272,13 @@ export default function ScanPage() {
             size="lg"
             onClick={handleCapture}
             disabled={!stream || isPending}
-            className="rounded-full w-16 h-16 p-0"
+            className="rounded-full p-0 size-16"
             title="Capture photo"
           >
             {isPending ? (
-              <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="animate-spin rounded-full border-2 border-white border-t-transparent size-6" />
             ) : (
-              <Camera className="h-6 w-6" />
+              <Camera className="size-6" />
             )}
           </Button>
         )}
@@ -288,10 +288,10 @@ export default function ScanPage() {
           variant="ghost"
           onClick={handleUploadClick}
           disabled={isPending}
-          className="rounded-full w-12 h-12 text-white hover:bg-white/20 disabled:opacity-30"
+          className="rounded-full text-white hover:bg-white/20 disabled:opacity-30 size-12"
           title="Upload photo"
         >
-          <Upload className="h-5 w-5" />
+          <Upload className="size-5" />
         </Button>
 
         <input

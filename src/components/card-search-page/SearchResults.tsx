@@ -248,8 +248,8 @@ function PaginationControls() {
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex flex-col sm:flex-row items-center sm:justify-between border-t pt-2 sm:pt-4 gap-2 sm:gap-4">
-      <p className="text-sm text-muted-foreground text-center sm:text-left">
+    <div className="flex flex-col items-center gap-2 border-t pt-2 sm:flex-row sm:justify-between sm:gap-4 sm:pt-4">
+      <p className="text-muted-foreground text-center text-sm sm:text-left">
         Page {currentPage} of {totalPages} • {pagination.total} total cards
       </p>
       <Pagination key={`pages-${totalPages}`} className="mx-0 w-auto">

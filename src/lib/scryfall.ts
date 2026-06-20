@@ -9,7 +9,8 @@
 
 /** Headers Scryfall requires on every API request. */
 export const SCRYFALL_HEADERS: Record<string, string> = {
-  "User-Agent": "yet-another-mtg-database/0.1.0 (+https://github.com/andrew-meads/yet-another-mtg-database)",
+  "User-Agent":
+    "yet-another-mtg-database/0.1.0 (+https://github.com/andrew-meads/yet-another-mtg-database)",
   Accept: "*/*"
 };
 

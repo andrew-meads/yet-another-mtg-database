@@ -141,20 +141,20 @@ export default function CardArtView({
       <div
         ref={dragRef as unknown as React.LegacyRef<HTMLDivElement>}
         className={clsx(
-          "flex flex-col gap-2 items-center justify-center",
+          "flex flex-col items-center justify-center gap-2",
           isDragging && "opacity-50",
-          className
+          className // eslint-disable-line tailwindcss/no-custom-classname
         )}
         style={containerStyle}
       >
         <div
           onClick={handleFlip}
-          className="cursor-pointer relative group h-full w-full flex items-center justify-center"
+          className="group relative flex cursor-pointer items-center justify-center size-full"
         >
           {images.map((image, index) => (
             <div
               key={index}
-              className="transition-opacity duration-800 h-full w-full flex items-center justify-center"
+              className="flex items-center justify-center transition-opacity duration-800 size-full"
               style={{
                 position: index === 0 ? "relative" : "absolute",
                 top: index === 0 ? "auto" : 0,
@@ -167,7 +167,7 @@ export default function CardArtView({
             </div>
           ))}
           <div
-            className="absolute top-0 bottom-0 bg-gray-700/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-semibold text-lg pointer-events-none"
+            className="pointer-events-none absolute flex items-center justify-center bg-gray-700/20 text-lg font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 inset-y-0"
             style={{ left: 0, right: 0 }}
           >
             Click to flip
@@ -181,14 +181,14 @@ export default function CardArtView({
     <div
       ref={dragRef as unknown as React.LegacyRef<HTMLDivElement>}
       className={clsx(
-        "flex flex-row gap-2 items-center justify-center",
+        "flex flex-row items-center justify-center gap-2",
         isDragging && "opacity-50",
-        className
+        className // eslint-disable-line tailwindcss/no-custom-classname
       )}
       style={containerStyle}
     >
       {imagesToRender.map((image, index) => (
-        <div key={index} className="flex h-full w-full items-center justify-center">
+        <div key={index} className="flex items-center justify-center size-full">
           <CardImage {...image} />
         </div>
       ))}
@@ -224,7 +224,7 @@ function CardImage({
   // Render a container that allows the image to scale down to fit its parent height
   if (!imageUri) {
     return (
-      <div className="bg-gray-200 flex items-center justify-center text-gray-500" style={style}>
+      <div className="flex items-center justify-center bg-gray-200 text-gray-500" style={style}>
         No image available{alt !== "" && ` for ${alt}`}
       </div>
     );

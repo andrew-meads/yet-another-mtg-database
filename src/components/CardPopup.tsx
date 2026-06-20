@@ -26,7 +26,7 @@ export default function CardPopup({ card, position }: CardPopupProps) {
     const ro = new ResizeObserver(() => {
       const w = el.offsetWidth;
       const h = el.offsetHeight;
-      setSize(prev => (prev.w !== w || prev.h !== h ? { w, h } : prev));
+      setSize((prev) => (prev.w !== w || prev.h !== h ? { w, h } : prev));
     });
     ro.observe(el);
     // Prime the size on first mount
@@ -52,11 +52,14 @@ export default function CardPopup({ card, position }: CardPopupProps) {
       // top-right
       { x: pos.x + offset, y: pos.y - elH - offset },
       // top-left
-      { x: pos.x - elW - offset, y: pos.y - elH - offset },
+      { x: pos.x - elW - offset, y: pos.y - elH - offset }
     ];
 
     const fits = (c: { x: number; y: number }) =>
-      c.x >= margin && c.y >= margin && c.x + elW <= viewportW - margin && c.y + elH <= viewportH - margin;
+      c.x >= margin &&
+      c.y >= margin &&
+      c.x + elW <= viewportW - margin &&
+      c.y + elH <= viewportH - margin;
 
     const best = candidates.find(fits);
     if (best) return best;
@@ -75,7 +78,6 @@ export default function CardPopup({ card, position }: CardPopupProps) {
     const next = computePlacement(lastPosRef.current, { w: elW, h: elH });
     setCoords(next);
     setReady(true);
-     
   }, [position.x, position.y, size.w, size.h]);
 
   // Recompute on window resize (async is fine post-initial)
@@ -91,9 +93,14 @@ export default function CardPopup({ card, position }: CardPopupProps) {
     <div
       ref={containerRef}
       className="pointer-events-none z-50"
-      style={{ position: "fixed", left: ready ? coords.x : -10000, top: ready ? coords.y : -10000, opacity: ready ? 1 : 0 }}
+      style={{
+        position: "fixed",
+        left: ready ? coords.x : -10000,
+        top: ready ? coords.y : -10000,
+        opacity: ready ? 1 : 0
+      }}
     >
-      <div className="rounded-md shadow-lg ring-1 ring-black/10 overflow-hidden bg-background p-1 h-[400px]">
+      <div className="bg-background h-[400px] overflow-hidden rounded-md p-1 shadow-lg ring-1 ring-black/10">
         <CardArtView card={card} variant="normal" flippable={false} />
       </div>
     </div>

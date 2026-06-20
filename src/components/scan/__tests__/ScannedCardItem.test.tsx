@@ -21,8 +21,20 @@ function renderItem(card: any, activeCollection: any) {
 const twoMatches = {
   url: "/cards/crop-1.jpg",
   matches: [
-    { scryfallId: "alpha-id", name: "Alpha", set: "lea", collectorNumber: "1", imageUrl: "http://img/a" },
-    { scryfallId: "beta-id", name: "Beta", set: "leb", collectorNumber: "2", imageUrl: "http://img/b" }
+    {
+      scryfallId: "alpha-id",
+      name: "Alpha",
+      set: "lea",
+      collectorNumber: "1",
+      imageUrl: "http://img/a"
+    },
+    {
+      scryfallId: "beta-id",
+      name: "Beta",
+      set: "leb",
+      collectorNumber: "2",
+      imageUrl: "http://img/b"
+    }
   ]
 };
 

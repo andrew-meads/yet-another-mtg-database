@@ -125,7 +125,9 @@ export default function SearchControls({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Use default filters <em className="text-muted">(lang:en exclude:extra)</em></p>
+                    <p>
+                      Use default filters <em className="text-muted">(lang:en exclude:extra)</em>
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </div>

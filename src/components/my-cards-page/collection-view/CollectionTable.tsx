@@ -103,10 +103,10 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
   const isEmpty = !collection.cards || collection.cards.length === 0;
 
   return (
-    <div className="h-full rounded-md border overflow-hidden flex flex-col">
+    <div className="flex h-full flex-col overflow-hidden rounded-md border">
       {/* Controls */}
-      <div className="border-b p-3 flex justify-between items-center gap-2 bg-background">
-        <div className="text-sm text-muted-foreground">
+      <div className="bg-background flex items-center justify-between gap-2 border-b p-3">
+        <div className="text-muted-foreground text-sm">
           {rows.reduce((sum, r) => sum + r.quantity, 0)} cards
         </div>
         <div className="flex gap-2">
@@ -116,7 +116,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
             onClick={() => setIsSearchDialogOpen(true)}
             className="gap-2"
           >
-            <Search className="h-4 w-4" />
+            <Search className="size-4" />
             Search
           </Button>
           {searchFilters && (
@@ -126,7 +126,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
               onClick={() => setSearchFilters(null)}
               className="gap-2"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
               Clear Search
             </Button>
           )}
@@ -141,7 +141,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
 
       {/* Header */}
       <div
-        className="grid items-center gap-2 px-2 py-2 border-b bg-muted/40 text-xs font-medium text-muted-foreground uppercase"
+        className="bg-muted/40 text-muted-foreground grid items-center gap-2 border-b text-xs font-medium uppercase p-2"
         style={{ gridTemplateColumns: COLLECTION_GRID }}
       >
         <span />
@@ -152,7 +152,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
         <span className="text-center">CMC</span>
         <span className="text-center">P/T</span>
         <span className="text-center">Deck</span>
-        <span className="text-right pr-1">Quantity</span>
+        <span className="pr-1 text-right">Quantity</span>
       </div>
 
       {/* Virtualized rows */}
@@ -161,9 +161,9 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
         className={cn("flex-1 overflow-auto", isOver && "bg-primary/5")}
       >
         {isEmpty ? (
-          <div className="p-8 text-center text-muted-foreground">No cards in this collection</div>
+          <div className="text-muted-foreground p-8 text-center">No cards in this collection</div>
         ) : rows.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">No cards match your search</div>
+          <div className="text-muted-foreground p-8 text-center">No cards match your search</div>
         ) : (
           <div style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {

@@ -3,13 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -20,7 +14,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
@@ -30,7 +24,7 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-4">
           {error && (
-            <div className="w-full p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+            <div className="bg-destructive/10 border-destructive/20 text-destructive w-full rounded-md border p-3 text-center text-sm">
               {error === "AccessDenied"
                 ? "Access denied. Your account is not authorized to access this application."
                 : "An error occurred during sign in. Please try again."}
@@ -38,11 +32,11 @@ export default function LoginPage() {
           )}
           <Button
             onClick={handleGoogleSignIn}
-            className="cursor-pointer w-full max-w-xs flex items-center justify-center gap-3"
+            className="flex w-full max-w-xs cursor-pointer items-center justify-center gap-3"
             size="lg"
             variant="outline"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="size-5" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

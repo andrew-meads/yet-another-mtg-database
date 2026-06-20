@@ -18,15 +18,15 @@ export interface SortConfig {
  */
 export const sortConfigs: Record<string, SortConfig> = {
   name: {
-    field: 'name',
+    field: "name"
   },
-  
+
   cmc: {
-    field: 'cmc',
+    field: "cmc"
   },
-  
+
   power: {
-    field: 'power',
+    field: "power",
     useAggregation: true,
     buildAggregationSort: (direction) => [
       {
@@ -34,8 +34,8 @@ export const sortConfigs: Record<string, SortConfig> = {
           // Convert power to number, use -1 for non-numeric values
           powerNumeric: {
             $cond: {
-              if: { $regexMatch: { input: '$power', regex: /^[0-9]+$/ } },
-              then: { $toInt: '$power' },
+              if: { $regexMatch: { input: "$power", regex: /^[0-9]+$/ } },
+              then: { $toInt: "$power" },
               else: direction === 1 ? -1 : 999999 // Non-numeric first if asc, last if desc
             }
           }
@@ -47,9 +47,9 @@ export const sortConfigs: Record<string, SortConfig> = {
       }
     ]
   },
-  
+
   toughness: {
-    field: 'toughness',
+    field: "toughness",
     useAggregation: true,
     buildAggregationSort: (direction) => [
       {
@@ -57,8 +57,8 @@ export const sortConfigs: Record<string, SortConfig> = {
           // Convert toughness to number, use -1 for non-numeric values
           toughnessNumeric: {
             $cond: {
-              if: { $regexMatch: { input: '$toughness', regex: /^[0-9]+$/ } },
-              then: { $toInt: '$toughness' },
+              if: { $regexMatch: { input: "$toughness", regex: /^[0-9]+$/ } },
+              then: { $toInt: "$toughness" },
               else: direction === 1 ? -1 : 999999 // Non-numeric first if asc, last if desc
             }
           }
@@ -70,17 +70,17 @@ export const sortConfigs: Record<string, SortConfig> = {
       }
     ]
   },
-  
+
   rarity: {
-    field: 'rarity',
+    field: "rarity",
     useAggregation: true,
     buildAggregationSort: (direction) => {
-      const rarityOrder = ['common', 'uncommon', 'rare', 'mythic'];
+      const rarityOrder = ["common", "uncommon", "rare", "mythic"];
       return [
         {
           $addFields: {
             rarityOrder: {
-              $indexOfArray: [rarityOrder, '$rarity']
+              $indexOfArray: [rarityOrder, "$rarity"]
             }
           }
         },
@@ -91,21 +91,21 @@ export const sortConfigs: Record<string, SortConfig> = {
       ];
     }
   },
-  
+
   set: {
-    field: 'set',
+    field: "set"
   },
-  
+
   color: {
-    field: 'colors',
+    field: "colors",
     useAggregation: true,
-    buildAggregationSort: (direction) => buildColorSortPipeline('colors', direction)
+    buildAggregationSort: (direction) => buildColorSortPipeline("colors", direction)
   },
-  
+
   identity: {
-    field: 'color_identity',
+    field: "color_identity",
     useAggregation: true,
-    buildAggregationSort: (direction) => buildColorSortPipeline('color_identity', direction)
+    buildAggregationSort: (direction) => buildColorSortPipeline("color_identity", direction)
   }
 };
 
@@ -113,37 +113,37 @@ export const sortConfigs: Record<string, SortConfig> = {
  * Define the color combination order (WUBRG)
  */
 const COLOR_COMBINATION_ORDER = [
-  ['W'],
-  ['U'],
-  ['B'],
-  ['R'],
-  ['G'],
-  ['W', 'U'],
-  ['W', 'B'],
-  ['W', 'R'],
-  ['W', 'G'],
-  ['U', 'B'],
-  ['U', 'R'],
-  ['U', 'G'],
-  ['B', 'R'],
-  ['B', 'G'],
-  ['R', 'G'],
-  ['W', 'U', 'B'],
-  ['W', 'U', 'R'],
-  ['W', 'U', 'G'],
-  ['W', 'B', 'R'],
-  ['W', 'B', 'G'],
-  ['W', 'R', 'G'],
-  ['U', 'B', 'R'],
-  ['U', 'B', 'G'],
-  ['U', 'R', 'G'],
-  ['B', 'R', 'G'],
-  ['W', 'U', 'B', 'R'],
-  ['W', 'U', 'B', 'G'],
-  ['W', 'U', 'R', 'G'],
-  ['W', 'B', 'R', 'G'],
-  ['U', 'B', 'R', 'G'],
-  ['W', 'U', 'B', 'R', 'G'],
+  ["W"],
+  ["U"],
+  ["B"],
+  ["R"],
+  ["G"],
+  ["W", "U"],
+  ["W", "B"],
+  ["W", "R"],
+  ["W", "G"],
+  ["U", "B"],
+  ["U", "R"],
+  ["U", "G"],
+  ["B", "R"],
+  ["B", "G"],
+  ["R", "G"],
+  ["W", "U", "B"],
+  ["W", "U", "R"],
+  ["W", "U", "G"],
+  ["W", "B", "R"],
+  ["W", "B", "G"],
+  ["W", "R", "G"],
+  ["U", "B", "R"],
+  ["U", "B", "G"],
+  ["U", "R", "G"],
+  ["B", "R", "G"],
+  ["W", "U", "B", "R"],
+  ["W", "U", "B", "G"],
+  ["W", "U", "R", "G"],
+  ["W", "B", "R", "G"],
+  ["U", "B", "R", "G"],
+  ["W", "U", "B", "R", "G"],
   [] // colorless
 ];
 
@@ -168,13 +168,13 @@ function buildColorSortPipeline(fieldName: string, direction: 1 | -1): any[] {
             else: {
               $let: {
                 vars: {
-                  colorOrder: ['W', 'U', 'B', 'R', 'G']
+                  colorOrder: ["W", "U", "B", "R", "G"]
                 },
                 in: {
                   $filter: {
-                    input: '$$colorOrder',
-                    as: 'color',
-                    cond: { $in: ['$$color', fieldPath] }
+                    input: "$$colorOrder",
+                    as: "color",
+                    cond: { $in: ["$$color", fieldPath] }
                   }
                 }
               }
@@ -189,27 +189,31 @@ function buildColorSortPipeline(fieldName: string, direction: 1 | -1): any[] {
         [keyFieldName]: {
           $cond: {
             if: { $eq: [`$${sortedFieldName}`, []] },
-            then: '', // colorless
-            else: { $reduce: {
-              input: `$${sortedFieldName}`,
-              initialValue: '',
-              in: { $concat: ['$$value', '$$this'] }
-            }}
+            then: "", // colorless
+            else: {
+              $reduce: {
+                input: `$${sortedFieldName}`,
+                initialValue: "",
+                in: { $concat: ["$$value", "$$this"] }
+              }
+            }
           }
         },
         // Find the index in our color order
         [indexFieldName]: {
           $indexOfArray: [
-            COLOR_COMBINATION_ORDER.map(colors => colors.join('')),
+            COLOR_COMBINATION_ORDER.map((colors) => colors.join("")),
             {
               $cond: {
                 if: { $eq: [`$${sortedFieldName}`, []] },
-                then: '',
-                else: { $reduce: {
-                  input: `$${sortedFieldName}`,
-                  initialValue: '',
-                  in: { $concat: ['$$value', '$$this'] }
-                }}
+                then: "",
+                else: {
+                  $reduce: {
+                    input: `$${sortedFieldName}`,
+                    initialValue: "",
+                    in: { $concat: ["$$value", "$$this"] }
+                  }
+                }
               }
             }
           ]
@@ -234,7 +238,6 @@ function buildColorSortPipeline(fieldName: string, direction: 1 | -1): any[] {
     }
   ];
 }
-
 
 /**
  * Get the list of valid sort field names

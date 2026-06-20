@@ -31,7 +31,7 @@ export default function CardsList({ cards, isLoading, error }: CardsListProps) {
   // === EARLY RETURNS FOR SPECIAL STATES ===
   if (error) {
     return (
-      <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-destructive">
+      <div className="border-destructive bg-destructive/10 text-destructive rounded-md border p-4">
         <p className="font-semibold">Error loading cards</p>
         <p className="text-sm">{error.message}</p>
       </div>
@@ -40,7 +40,7 @@ export default function CardsList({ cards, isLoading, error }: CardsListProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-md border bg-muted/50 p-8 text-center text-muted-foreground">
+      <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
         Loading cards...
       </div>
     );
@@ -48,15 +48,15 @@ export default function CardsList({ cards, isLoading, error }: CardsListProps) {
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="rounded-md border bg-muted/50 p-8 text-center text-muted-foreground">
+      <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
         No cards found
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
-      <div className="overflow-y-auto max-h-[calc(100vh-20rem)]">
+    <div className="overflow-hidden rounded-md border">
+      <div className="max-h-[calc(100vh-20rem)] overflow-y-auto">
         {cards.map((card, index) => (
           <CardListItem key={card.id} card={card} priority={index < 4} />
         ))}

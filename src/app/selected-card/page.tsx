@@ -21,12 +21,12 @@ export default function SelectedCardPage() {
 
   if (!selectedCard) {
     return (
-      <div className="h-screen w-full grid place-items-center text-muted-foreground p-4">
-        <div className="text-center space-y-4">
-          <div className="font-semibold text-lg">No Card Selected</div>
+      <div className="text-muted-foreground grid h-screen w-full place-items-center p-4">
+        <div className="space-y-4 text-center">
+          <div className="text-lg font-semibold">No Card Selected</div>
           <div className="text-sm">Select a card from search to view its details</div>
           <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 size-4" />
             Go Back
           </Button>
         </div>
@@ -35,23 +35,23 @@ export default function SelectedCardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       {/* Header with back button */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="px-4 py-3 flex items-center gap-3">
+      <div className="bg-background sticky top-0 z-10 border-b">
+        <div className="flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="size-5" />
           </Button>
-          <h1 className="font-semibold text-lg truncate">
+          <h1 className="truncate text-lg font-semibold">
             {selectedCard.flavor_name || selectedCard.name}
           </h1>
         </div>
       </div>
 
       {/* Card details */}
-      <div className="overflow-y-auto space-y-4 p-4">
+      <div className="space-y-4 overflow-y-auto p-4">
         {/* Card Image */}
-        <div className="w-full aspect-5/7 max-w-md mx-auto">
+        <div className="mx-auto aspect-5/7 w-full max-w-md">
           <CardArtView
             card={selectedCard}
             variant="large"
@@ -64,7 +64,7 @@ export default function SelectedCardPage() {
 
         {/* Card Locations */}
         <div>
-          <h3 className="font-semibold text-sm mb-2">Locations</h3>
+          <h3 className="mb-2 text-sm font-semibold">Locations</h3>
           <CardLocationsView cardName={selectedCard.name} />
         </div>
 

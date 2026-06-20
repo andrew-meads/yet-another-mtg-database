@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { tokenizeQuery, parseTerm, ParsedTerm } from './parser';
-import { findOperatorConfig } from './config';
-import { escapeRegex } from './helpers';
+import { tokenizeQuery, parseTerm, ParsedTerm } from "./parser";
+import { findOperatorConfig } from "./config";
+import { escapeRegex } from "./helpers";
 
 /**
  * Main query builder that converts a search string into a MongoDB query.
- * 
+ *
  * @param queryString - The search query (e.g., "c:red t:creature mv>=3")
  * @returns MongoDB query object
- * 
+ *
  * Examples:
  *   buildSearchQuery("c:red") => { colors: { $all: ["R"] } }
  *   buildSearchQuery("t:creature mv>=3") => { $and: [{ type_line: /creature/i }, { cmc: { $gte: 3 } }] }
@@ -17,7 +17,7 @@ import { escapeRegex } from './helpers';
  *   buildSearchQuery("c:red (t:goblin or t:elf)") => { $and: [{ colors: { $all: ["R"] } }, { $or: [...] }] }
  */
 export function buildSearchQuery(queryString: string): any {
-  if (!queryString || queryString.trim() === '') {
+  if (!queryString || queryString.trim() === "") {
     return {};
   }
 
@@ -39,26 +39,26 @@ function parseExpression(tokens: string[], startIndex: number): { query: any; en
     const token = tokens[i];
 
     // End of grouped expression
-    if (token === ')') {
+    if (token === ")") {
       break;
     }
 
     // Handle OR operator
-    if (token.toLowerCase() === 'or') {
+    if (token.toLowerCase() === "or") {
       i++;
       continue;
     }
 
     // Handle opening parenthesis - parse nested expression
-    if (token === '(') {
+    if (token === "(") {
       const nested = parseExpression(tokens, i + 1);
       if (nested.query) {
         currentOrGroup.push(nested.query);
       }
       i = nested.endIndex + 1; // Skip past the closing parenthesis
-      
+
       // Check if next token is OR
-      if (i < tokens.length && tokens[i].toLowerCase() === 'or') {
+      if (i < tokens.length && tokens[i].toLowerCase() === "or") {
         i++;
         continue;
       } else {
@@ -82,7 +82,7 @@ function parseExpression(tokens: string[], startIndex: number): { query: any; en
     i++;
 
     // Check if next token is OR
-    if (i < tokens.length && tokens[i].toLowerCase() === 'or') {
+    if (i < tokens.length && tokens[i].toLowerCase() === "or") {
       // Continue building the OR group
       continue;
     } else {
@@ -125,8 +125,8 @@ function combineWithOr(queries: any[]): any {
  * Combine queries with AND operator
  */
 function combineWithAnd(queries: any[]): any {
-  const filtered = queries.filter(q => q !== null);
-  
+  const filtered = queries.filter((q) => q !== null);
+
   if (filtered.length === 0) {
     return {};
   } else if (filtered.length === 1) {
@@ -141,39 +141,36 @@ function combineWithAnd(queries: any[]): any {
  */
 function buildTermQuery(term: ParsedTerm): any {
   let query: any;
-  
+
   // If no key specified, treat as name search (including flavor_name)
   if (!term.key) {
-    const regex = new RegExp(escapeRegex(term.value), 'i');
+    const regex = new RegExp(escapeRegex(term.value), "i");
     query = {
-      $or: [
-        { name: regex },
-        { flavor_name: regex }
-      ]
+      $or: [{ name: regex }, { flavor_name: regex }]
     };
   } else {
     // Find the operator config
     const config = findOperatorConfig(term.key);
-    
+
     if (!config) {
       // Unknown operator, ignore
       return null;
     }
-    
+
     // Validate if validator exists
     if (config.validate && !config.validate(term.value)) {
       return null;
     }
-    
+
     // Build the query using the config
     query = config.buildQuery(term.value, term.operator);
   }
-  
+
   // Handle negation
   if (term.negated && query) {
     return { $nor: [query] };
   }
-  
+
   return query;
 }
 
@@ -185,6 +182,6 @@ export function parseSearchQuery(queryString: string | null | undefined): any {
   if (!queryString) {
     return {};
   }
-  
+
   return buildSearchQuery(queryString);
 }

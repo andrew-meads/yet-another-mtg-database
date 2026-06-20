@@ -54,8 +54,8 @@ export default function Page() {
     <>
       <div className="mx-auto space-y-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-            <HomeIcon className="h-6 w-6" />
+          <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
+            <HomeIcon className="size-6" />
             My Cards
           </h2>
           <p className="text-muted-foreground">
@@ -64,9 +64,9 @@ export default function Page() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="border rounded-lg p-6 space-y-4">
+          <div className="space-y-4 rounded-lg border p-6">
             <h3 className="text-xl font-semibold">Collections</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Track which cards you own and their quantities.
             </p>
             <Button className="w-full" onClick={() => setDialogKind("collection")}>
@@ -74,9 +74,9 @@ export default function Page() {
             </Button>
           </div>
 
-          <div className="border rounded-lg p-6 space-y-4">
+          <div className="space-y-4 rounded-lg border p-6">
             <h3 className="text-xl font-semibold">Decks</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Arrange your cards into decks with sections and columns.
             </p>
             <Button className="w-full" onClick={() => setDialogKind("deck")}>
@@ -86,12 +86,12 @@ export default function Page() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="border rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <div className="rounded-lg border p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
               {getEntityIcon("collection")} Collections
             </h3>
             {collections.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No collections yet.</p>
+              <p className="text-muted-foreground text-sm">No collections yet.</p>
             ) : (
               <ul className="space-y-1">
                 {collections.map((c) => (
@@ -105,12 +105,12 @@ export default function Page() {
             )}
           </div>
 
-          <div className="border rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <div className="rounded-lg border p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
               {getEntityIcon("deck")} Decks
             </h3>
             {decks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No decks yet.</p>
+              <p className="text-muted-foreground text-sm">No decks yet.</p>
             ) : (
               <ul className="space-y-1">
                 {decks.map((d) => (

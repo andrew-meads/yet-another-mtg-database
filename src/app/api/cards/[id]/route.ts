@@ -6,12 +6,12 @@ import { scryfallFetch } from "@/lib/scryfall";
 /**
  * GET /api/cards/[id]
  * Retrieves a single Magic: The Gathering card by its Scryfall ID.
- * 
+ *
  * Query Parameters:
  * - fetch: If "true", fetches the card from Scryfall API and updates the database
- * 
+ *
  * @returns The card object, or 404 if not found
- * 
+ *
  * Behavior:
  * - With ?fetch=true: Fetches from Scryfall, replaces existing card in DB, returns fresh data
  * - Without fetch param: Returns card from local database only

@@ -10,6 +10,6 @@ async function retrieveTags(): Promise<string[]> {
 export function useRetrieveTags(): UseQueryResult<string[], Error> {
   return useQuery({
     queryKey: ["tags"],
-    queryFn: retrieveTags,
+    queryFn: retrieveTags
   });
 }

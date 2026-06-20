@@ -67,9 +67,9 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
 
   return (
     <div>
-      {isLoading && <p className="text-sm text-muted-foreground">Loading locations...</p>}
+      {isLoading && <p className="text-muted-foreground text-sm">Loading locations...</p>}
       {!isLoading && locations.length === 0 && (
-        <p className="text-sm text-muted-foreground">No locations found</p>
+        <p className="text-muted-foreground text-sm">No locations found</p>
       )}
       {locations.length > 0 && (
         <Table stickyHeader>

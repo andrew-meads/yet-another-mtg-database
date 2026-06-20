@@ -8,7 +8,7 @@ export default async function MainLayout({ children }: React.PropsWithChildren) 
   if (!session) return redirect("/login");
 
   return (
-    <main className="w-full mx-auto p-1 md:p-2">
+    <main className="mx-auto w-full p-1 md:p-2">
       <MainWorkspace>{children}</MainWorkspace>
     </main>
   );

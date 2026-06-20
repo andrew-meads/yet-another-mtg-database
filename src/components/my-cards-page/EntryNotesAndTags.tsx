@@ -16,7 +16,11 @@ interface EntryNotesAndTagsProps {
  * Editor for a grouped row's shared notes/tags. Applies changes to every physical
  * card in the group so they stay grouped together.
  */
-export default function EntryNotesAndTags({ notes, tags, physicalCardIds }: EntryNotesAndTagsProps) {
+export default function EntryNotesAndTags({
+  notes,
+  tags,
+  physicalCardIds
+}: EntryNotesAndTagsProps) {
   const { mutate: updateCard } = useUpdatePhysicalCard();
   const [localNotes, setLocalNotes] = useState(notes || "");
   const debouncedNotes = useDebouncedValue(localNotes, 500);

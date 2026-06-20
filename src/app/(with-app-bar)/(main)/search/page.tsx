@@ -13,12 +13,12 @@ function DesktopSearchPageContent() {
   const { cards, isLoading, error, searchParams, onSearchChange } = useSearchResults();
 
   return (
-    <div className="h-full flex flex-col gap-6">
+    <div className="flex h-full flex-col gap-6">
       <SearchControls onChange={onSearchChange} initial={searchParams} />
 
       <SearchResults.PaginationControls />
 
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         <CardsTable cards={cards} isLoading={isLoading} error={error} />
       </div>
 
@@ -39,10 +39,10 @@ function MobileSearchPageContent() {
     onSearchChange
   } = useInfiniteScrollSearchResults();
   return (
-    <div className="h-full flex flex-col gap-6">
+    <div className="flex h-full flex-col gap-6">
       <SearchControls onChange={onSearchChange} initial={searchParams} />
 
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         <CardsInfiniteList
           cardPages={cardPages}
           isLoading={isLoading}

@@ -36,7 +36,7 @@ export function SetSvg({ setCode, rarityCode, width = 24, height = 24, className
 
   if (isLoading) {
     return (
-      <div className={cn("animate-pulse bg-muted rounded", className)} style={{ width, height }} />
+      <div className={cn("bg-muted animate-pulse rounded", className)} style={{ width, height }} />
     );
   }
 
@@ -44,7 +44,7 @@ export function SetSvg({ setCode, rarityCode, width = 24, height = 24, className
     return (
       <div
         className={cn(
-          "bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground",
+          "bg-muted/50 text-muted-foreground flex items-center justify-center rounded text-xs",
           className
         )}
         style={{ width, height }}

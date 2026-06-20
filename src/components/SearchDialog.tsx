@@ -154,7 +154,7 @@ export default function SearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Advanced Search</DialogTitle>
           <DialogDescription>
@@ -171,7 +171,7 @@ export default function SearchDialog({
           </TabsList>
 
           {/* BASIC FILTERS TAB */}
-          <TabsContent value="basic" className="space-y-4 mt-4">
+          <TabsContent value="basic" className="mt-4 space-y-4">
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Card Name</Label>
@@ -218,7 +218,7 @@ export default function SearchDialog({
           </TabsContent>
 
           {/* STATS FILTERS TAB */}
-          <TabsContent value="stats" className="space-y-4 mt-4">
+          <TabsContent value="stats" className="mt-4 space-y-4">
             {/* Mana Value / CMC */}
             <div className="space-y-2">
               <Label htmlFor="cmc">Mana Value (CMC)</Label>
@@ -343,7 +343,7 @@ export default function SearchDialog({
           </TabsContent>
 
           {/* COLORS FILTERS TAB */}
-          <TabsContent value="colors" className="space-y-6 mt-4">
+          <TabsContent value="colors" className="mt-4 space-y-6">
             {/* Color */}
             <div className="space-y-3">
               <Label>Color</Label>
@@ -355,7 +355,7 @@ export default function SearchDialog({
                     checked={filters.colors?.includes("W") || false}
                     onCheckedChange={() => toggleColor("W")}
                   />
-                  <Label htmlFor="color-w" className="cursor-pointer flex items-center">
+                  <Label htmlFor="color-w" className="flex cursor-pointer items-center">
                     <ManaCost cost="{W}" />
                   </Label>
                 </div>
@@ -366,7 +366,7 @@ export default function SearchDialog({
                     checked={filters.colors?.includes("U") || false}
                     onCheckedChange={() => toggleColor("U")}
                   />
-                  <Label htmlFor="color-u" className="cursor-pointer flex items-center">
+                  <Label htmlFor="color-u" className="flex cursor-pointer items-center">
                     <ManaCost cost="{U}" />
                   </Label>
                 </div>
@@ -377,7 +377,7 @@ export default function SearchDialog({
                     checked={filters.colors?.includes("B") || false}
                     onCheckedChange={() => toggleColor("B")}
                   />
-                  <Label htmlFor="color-b" className="cursor-pointer flex items-center">
+                  <Label htmlFor="color-b" className="flex cursor-pointer items-center">
                     <ManaCost cost="{B}" />
                   </Label>
                 </div>
@@ -388,7 +388,7 @@ export default function SearchDialog({
                     checked={filters.colors?.includes("R") || false}
                     onCheckedChange={() => toggleColor("R")}
                   />
-                  <Label htmlFor="color-r" className="cursor-pointer flex items-center">
+                  <Label htmlFor="color-r" className="flex cursor-pointer items-center">
                     <ManaCost cost="{R}" />
                   </Label>
                 </div>
@@ -399,7 +399,7 @@ export default function SearchDialog({
                     checked={filters.colors?.includes("G") || false}
                     onCheckedChange={() => toggleColor("G")}
                   />
-                  <Label htmlFor="color-g" className="cursor-pointer flex items-center">
+                  <Label htmlFor="color-g" className="flex cursor-pointer items-center">
                     <ManaCost cost="{G}" />
                   </Label>
                 </div>
@@ -433,7 +433,7 @@ export default function SearchDialog({
                     checked={filters.colorIdentity?.includes("W") || false}
                     onCheckedChange={() => toggleColorIdentity("W")}
                   />
-                  <Label htmlFor="identity-w" className="cursor-pointer flex items-center">
+                  <Label htmlFor="identity-w" className="flex cursor-pointer items-center">
                     <ManaCost cost="{W}" />
                   </Label>
                 </div>
@@ -444,7 +444,7 @@ export default function SearchDialog({
                     checked={filters.colorIdentity?.includes("U") || false}
                     onCheckedChange={() => toggleColorIdentity("U")}
                   />
-                  <Label htmlFor="identity-u" className="cursor-pointer flex items-center">
+                  <Label htmlFor="identity-u" className="flex cursor-pointer items-center">
                     <ManaCost cost="{U}" />
                   </Label>
                 </div>
@@ -455,7 +455,7 @@ export default function SearchDialog({
                     checked={filters.colorIdentity?.includes("B") || false}
                     onCheckedChange={() => toggleColorIdentity("B")}
                   />
-                  <Label htmlFor="identity-b" className="cursor-pointer flex items-center">
+                  <Label htmlFor="identity-b" className="flex cursor-pointer items-center">
                     <ManaCost cost="{B}" />
                   </Label>
                 </div>
@@ -466,7 +466,7 @@ export default function SearchDialog({
                     checked={filters.colorIdentity?.includes("R") || false}
                     onCheckedChange={() => toggleColorIdentity("R")}
                   />
-                  <Label htmlFor="identity-r" className="cursor-pointer flex items-center">
+                  <Label htmlFor="identity-r" className="flex cursor-pointer items-center">
                     <ManaCost cost="{R}" />
                   </Label>
                 </div>
@@ -477,7 +477,7 @@ export default function SearchDialog({
                     checked={filters.colorIdentity?.includes("G") || false}
                     onCheckedChange={() => toggleColorIdentity("G")}
                   />
-                  <Label htmlFor="identity-g" className="cursor-pointer flex items-center">
+                  <Label htmlFor="identity-g" className="flex cursor-pointer items-center">
                     <ManaCost cost="{G}" />
                   </Label>
                 </div>

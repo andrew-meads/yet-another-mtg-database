@@ -49,11 +49,15 @@ describe("searchPredicate", () => {
   });
 
   it("supports color contains / exactly / does-not-contain", () => {
-    expect(match({ colors: ["R"], colorMode: "contains" }, card({ colors: ["R", "G"] }))).toBe(true);
-    expect(match({ colors: ["R"], colorMode: "exactly" }, card({ colors: ["R", "G"] }))).toBe(false);
-    expect(
-      match({ colors: ["U"], colorMode: "does-not-contain" }, card({ colors: ["R"] }))
-    ).toBe(true);
+    expect(match({ colors: ["R"], colorMode: "contains" }, card({ colors: ["R", "G"] }))).toBe(
+      true
+    );
+    expect(match({ colors: ["R"], colorMode: "exactly" }, card({ colors: ["R", "G"] }))).toBe(
+      false
+    );
+    expect(match({ colors: ["U"], colorMode: "does-not-contain" }, card({ colors: ["R"] }))).toBe(
+      true
+    );
   });
 
   it("filters by set and oracle text", () => {

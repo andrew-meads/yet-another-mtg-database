@@ -7,7 +7,7 @@ import { getValidSortFields, getSortConfig } from "@/lib/sortConfig";
 /**
  * GET /api/cards
  * Searches and retrieves Magic: The Gathering cards with pagination and sorting.
- * 
+ *
  * Query Parameters:
  * - q: Search query string (optional)
  * - page: Page number (default: 1)
@@ -15,7 +15,7 @@ import { getValidSortFields, getSortConfig } from "@/lib/sortConfig";
  * - order: Sort field (default: "name")
  * - dir: Sort direction: "asc" or "desc" (default: "asc")
  * - owned: If "true", only return cards that exist in any collection (optional)
- * 
+ *
  * @returns Response containing cards array, pagination info, and sort configuration
  */
 export async function GET(request: NextRequest) {
@@ -39,10 +39,16 @@ export async function GET(request: NextRequest) {
     // Validate sort parameters
     const validOrders = getValidSortFields();
     if (!validOrders.includes(order))
-      return Response.json({ error: `Invalid order parameter. Valid values: ${validOrders.join(', ')}` }, { status: 400 });
-    
+      return Response.json(
+        { error: `Invalid order parameter. Valid values: ${validOrders.join(", ")}` },
+        { status: 400 }
+      );
+
     if (dir !== "asc" && dir !== "desc")
-      return Response.json({ error: "Invalid dir parameter. Must be 'asc' or 'desc'" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid dir parameter. Must be 'asc' or 'desc'" },
+        { status: 400 }
+      );
 
     // Calculate skip and limit from page and page-len
     const skip = (page - 1) * pageLen;
@@ -109,25 +115,20 @@ export async function GET(request: NextRequest) {
       }
 
       // Add pagination
-      pipeline.push(
-        { $skip: skip },
-        { $limit: limit }
-      );
+      pipeline.push({ $skip: skip }, { $limit: limit });
 
       cards = await CardData.aggregate(pipeline);
-      
+
       // Get total count with a separate aggregation
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const countPipeline: any[] = [
-        { $match: searchQuery }
-      ];
+      const countPipeline: any[] = [{ $match: searchQuery }];
 
       // Add owned filter to count pipeline
       if (owned) {
         countPipeline.push(...buildOwnedFilterStages().slice(0, 2)); // Only lookup and match, skip project
       }
 
-      countPipeline.push({ $count: 'total' });
+      countPipeline.push({ $count: "total" });
       const countResult = await CardData.aggregate(countPipeline);
       total = countResult.length > 0 ? countResult[0].total : 0;
     } else {
@@ -135,11 +136,7 @@ export async function GET(request: NextRequest) {
       // and stable across paginated queries (otherwise tied sort-key values can be
       // dropped or duplicated across pages).
       const sortObject: { [key: string]: 1 | -1 } = { [sortConfig.field]: sortDirection, _id: 1 };
-      cards = await CardData.find(searchQuery)
-        .sort(sortObject)
-        .limit(limit)
-        .skip(skip)
-        .lean();
+      cards = await CardData.find(searchQuery).sort(sortObject).limit(limit).skip(skip).lean();
       total = await CardData.countDocuments(searchQuery);
     }
 

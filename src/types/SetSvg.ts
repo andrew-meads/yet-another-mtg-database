@@ -1,4 +1,4 @@
 export interface SetSvg {
-    setCode: string;
-    svgContent: string;
+  setCode: string;
+  svgContent: string;
 }

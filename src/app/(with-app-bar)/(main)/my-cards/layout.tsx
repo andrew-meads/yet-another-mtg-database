@@ -7,7 +7,7 @@ export default function MyCardsLayout({ children }: React.PropsWithChildren) {
   // const { isDesktop, mounted } = useIsDesktop();
 
   return (
-    <div className="flex-1 p-1 h-full">
+    <div className="h-full flex-1 p-1">
       {/* {mounted && isDesktop && (
         <div className="flex gap-2 mb-2">
           <OpenCollectionButtons />

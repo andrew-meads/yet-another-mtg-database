@@ -4,10 +4,10 @@ import { useState } from "react";
 
 /**
  * A hook that works like useState but persists the value to localStorage.
- * 
+ *
  * If a value exists in localStorage for the given key, it will be used as the initial value.
  * Whenever the setter is called, the value is automatically saved to localStorage.
- * 
+ *
  * @param key - The localStorage key to use
  * @param initialValue - The initial value to use if no value exists in localStorage
  * @returns A tuple of [value, setValue] similar to useState
@@ -22,7 +22,7 @@ export function useLocalStorage<T>(
     if (typeof window === "undefined") {
       return initialValue;
     }
-    
+
     try {
       // Get from local storage by key
       const item = window.localStorage.getItem(key);
@@ -41,10 +41,10 @@ export function useLocalStorage<T>(
     try {
       // Allow value to be a function so we have same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value;
-      
+
       // Save state
       setStoredValue(valueToStore);
-      
+
       // Save to local storage
       if (typeof window !== "undefined") {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));

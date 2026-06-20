@@ -40,13 +40,13 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
     <div
       onClick={handleClick}
       className={cn(
-        "flex gap-3 p-3 border-b cursor-pointer transition-colors",
+        "flex cursor-pointer gap-3 border-b p-3 transition-colors",
         "hover:bg-accent/50 active:bg-accent",
         isSelected && "bg-accent"
       )}
     >
       {/* Card thumbnail */}
-      <div className="shrink-0 w-30 sm:w-20">
+      <div className="w-30 shrink-0 sm:w-20">
         <CardArtView
           card={card}
           variant="small"
@@ -59,23 +59,23 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
       </div>
 
       {/* Card details */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
         {/* Card name */}
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm sm:text-base truncate">
+          <h3 className="truncate text-sm font-semibold sm:text-base">
             {card.flavor_name || card.name}
           </h3>
           <SetSvg setCode={card.set} rarityCode={card.rarity} width={24} height={24} />
         </div>
 
         {/* Set info */}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {card.set_name} ({card.set.toUpperCase()})
           {card.collector_number && ` #${card.collector_number}`}
         </p>
 
         {/* Type line */}
-        <p className="text-xs text-muted-foreground truncate">{card.type_line}</p>
+        <p className="text-muted-foreground truncate text-xs">{card.type_line}</p>
 
         {/* Mana cost and P/T */}
         <div className="flex items-center gap-2 text-xs">

@@ -51,11 +51,9 @@ function renderButtons() {
 
 // Radix menus rely on pointer-capture APIs that jsdom doesn't implement.
 beforeAll(() => {
-  if (!Element.prototype.hasPointerCapture)
-    Element.prototype.hasPointerCapture = () => false;
+  if (!Element.prototype.hasPointerCapture) Element.prototype.hasPointerCapture = () => false;
   if (!Element.prototype.setPointerCapture) Element.prototype.setPointerCapture = () => {};
-  if (!Element.prototype.releasePointerCapture)
-    Element.prototype.releasePointerCapture = () => {};
+  if (!Element.prototype.releasePointerCapture) Element.prototype.releasePointerCapture = () => {};
 });
 
 beforeEach(() => {
@@ -116,10 +114,7 @@ describe("OpenCollectionButtons", () => {
 
   it("pinning from the More menu moves the entity inline", async () => {
     const user = userEvent.setup();
-    window.localStorage.setItem(
-      "open-entity-ids",
-      JSON.stringify([{ id: "d1", kind: "deck" }])
-    );
+    window.localStorage.setItem("open-entity-ids", JSON.stringify([{ id: "d1", kind: "deck" }]));
     renderButtons();
 
     // Initially behind the More menu, not inline.
