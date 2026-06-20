@@ -193,6 +193,7 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
   const altRef = useAltKeyRef();
   const [dragOriginIndex, setDragOriginIndex] = useState<number | null>(null);
   const [isSingleDrag, setIsSingleDrag] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const onDragChange = useCallback((index: number | null, single: boolean) => {
     setDragOriginIndex(index);
@@ -220,8 +221,9 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
 
   // useDragLayer fires on every pointer move during a drag, giving us a live offset
   // for the drop position indicator. useDrop's collect only fires on enter/leave/canDrop.
-  const { dragClientOffset } = useDragLayer((monitor) => ({
-    dragClientOffset: monitor.isDragging() ? monitor.getClientOffset() : null
+  const { dragClientOffset, isDragging } = useDragLayer((monitor) => ({
+    dragClientOffset: monitor.isDragging() ? monitor.getClientOffset() : null,
+    isDragging: monitor.isDragging()
   }));
 
   const isEmpty = column.cards.length === 0;
@@ -238,71 +240,74 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
   }, [isOver, isEmpty, dragClientOffset, computeIndex]);
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
+    <div
+      ref={(node) => {
+        columnRef.current = node;
+        if (typeof dropRef === "function") dropRef(node);
+      }}
+      data-testid={`deck-column-${column._id}`}
+      className={cn(
+        "relative flex min-w-min flex-col rounded-[5px] border p-1 transition-colors",
+        isOver ? "border-primary bg-primary/10" : "border-transparent"
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isEmpty ? (
         <div
-          ref={(node) => {
-            columnRef.current = node;
-            if (typeof dropRef === "function") dropRef(node);
-          }}
-          data-testid={`deck-column-${column._id}`}
-          className={cn(
-            "relative flex min-w-min flex-col rounded-[5px] border p-1 transition-colors",
-            isOver ? "border-primary bg-primary/10" : "border-transparent"
-          )}
+          className="border-muted-foreground/30 text-muted-foreground flex items-center justify-center rounded-md border-2 border-dashed text-xs"
+          style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
         >
-          {isEmpty ? (
-            <div
-              className="border-muted-foreground/30 text-muted-foreground flex items-center justify-center rounded-md border-2 border-dashed text-xs"
-              style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
-            >
-              Drop here
-            </div>
+          {isHovered && !isDragging ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded p-2 transition-colors"
+                  onClick={() => deleteColumn.mutate({ deckId, sectionId, columnId: column._id })}
+                >
+                  <Trash2 className="size-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Delete column</TooltipContent>
+            </Tooltip>
           ) : (
-            column.cards.map((card, i) => (
-              <DeckCardImage
-                key={card._id}
-                deckId={deckId}
-                deckName={deckName}
-                sectionId={sectionId}
-                columnId={column._id}
-                card={card}
-                physicalCardIds={column.cards.slice(i).map((c) => c._id)}
-                cards={column.cards.slice(i).map((c) => c.card)}
-                isFirst={i === 0}
-                cardIndex={i}
-                isBeingDragged={
-                  dragOriginIndex !== null &&
-                  (isSingleDrag ? i === dragOriginIndex : i >= dragOriginIndex)
-                }
-                onDragChange={onDragChange}
-                altRef={altRef}
-              />
-            ))
-          )}
-          {dropIndex !== null && (
-            <div
-              className="pointer-events-none absolute z-10 flex items-center -inset-x-2"
-              style={{ top: `${CONTAINER_OFFSET + dropIndex * OVERLAP_OFFSET - 5}px` }}
-            >
-              {/* Left arrow: ▶ pointing into the column */}
-              <div className="border-l-primary shrink-0 border-l-[8px] size-0 border-y-[5px] border-y-transparent" />
-              <div className="bg-primary h-1 flex-1" />
-              {/* Right arrow: ◀ pointing into the column */}
-              <div className="border-r-primary shrink-0 border-r-[8px] size-0 border-y-[5px] border-y-transparent" />
-            </div>
+            "Drop here"
           )}
         </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          disabled={!isEmpty}
-          onClick={() => deleteColumn.mutate({ deckId, sectionId, columnId: column._id })}
+      ) : (
+        column.cards.map((card, i) => (
+          <DeckCardImage
+            key={card._id}
+            deckId={deckId}
+            deckName={deckName}
+            sectionId={sectionId}
+            columnId={column._id}
+            card={card}
+            physicalCardIds={column.cards.slice(i).map((c) => c._id)}
+            cards={column.cards.slice(i).map((c) => c.card)}
+            isFirst={i === 0}
+            cardIndex={i}
+            isBeingDragged={
+              dragOriginIndex !== null &&
+              (isSingleDrag ? i === dragOriginIndex : i >= dragOriginIndex)
+            }
+            onDragChange={onDragChange}
+            altRef={altRef}
+          />
+        ))
+      )}
+      {dropIndex !== null && (
+        <div
+          className="pointer-events-none absolute z-10 flex items-center -inset-x-2"
+          style={{ top: `${CONTAINER_OFFSET + dropIndex * OVERLAP_OFFSET - 5}px` }}
         >
-          <Trash2 className="mr-2 size-4" />
-          Delete column{!isEmpty && " (empty it first)"}
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+          {/* Left arrow: ▶ pointing into the column */}
+          <div className="border-l-primary shrink-0 border-l-[8px] size-0 border-y-[5px] border-y-transparent" />
+          <div className="bg-primary h-1 flex-1" />
+          {/* Right arrow: ◀ pointing into the column */}
+          <div className="border-r-primary shrink-0 border-r-[8px] size-0 border-y-[5px] border-y-transparent" />
+        </div>
+      )}
+    </div>
   );
 }
