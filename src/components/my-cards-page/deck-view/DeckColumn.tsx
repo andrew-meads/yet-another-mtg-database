@@ -9,6 +9,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET, CONTAINER_OFFSET } from "./card-dimensions";
 import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
+import { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
+import { useAltKeyRef } from "@/hooks/drag-drop/useAltKeyRef";
 import { useDeckColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
 import { useDragLayer } from "react-dnd";
 import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
@@ -42,25 +44,43 @@ function DeckCardImage({
   isFirst,
   cardIndex,
   isBeingDragged,
-  onDragIndexChange
+  onDragChange,
+  altRef
 }: {
   deckId: string;
   deckName?: string;
   sectionId: string;
   columnId: string;
   card: DetailedPhysicalCard;
-  /** The physical card ids to drag together: this card plus every card on top of it. */
+  /** The physical card ids to drag together: this card plus every card below it. */
   physicalCardIds: string[];
   /** Full card data for every card in the run (for the drag preview). */
   cards: MtgCard[];
   isFirst: boolean;
   cardIndex: number;
   isBeingDragged: boolean;
-  onDragIndexChange: (index: number | null) => void;
+  /** Called when drag starts/ends; `single` reflects whether Alt was held at drag start. */
+  onDragChange: (index: number | null, single: boolean) => void;
+  altRef: React.RefObject<boolean>;
 }) {
   const { setSelectedCard } = useCardSelection();
   const deckCardOp = useDeckCardOp();
   const deleteCard = useDeletePhysicalCard();
+
+  const getItem = useCallback((): PhysicalCardDragItem => {
+    const single = altRef.current;
+    return {
+      kind: "physical",
+      physicalCardIds: single ? [physicalCardIds[0]] : physicalCardIds,
+      card: card.card,
+      cards: single ? [cards[0]] : cards,
+      sourceCollectionId: card.collectionId,
+      sourceDeckId: deckId,
+      sourceCollectionName: card.collectionName,
+      sourceDeckName: deckName,
+      origin: { type: "deck", sectionId, columnId }
+    };
+  }, [altRef, physicalCardIds, cards, card, deckId, deckName, sectionId, columnId]);
 
   const { isDragging, dragRef } = usePhysicalCardDragSource({
     physicalCardIds,
@@ -70,12 +90,13 @@ function DeckCardImage({
     sourceDeckId: deckId,
     sourceCollectionName: card.collectionName,
     sourceDeckName: deckName,
-    origin: { type: "deck", sectionId, columnId }
+    origin: { type: "deck", sectionId, columnId },
+    getItem
   });
 
   useEffect(() => {
-    onDragIndexChange(isDragging ? cardIndex : null);
-  }, [isDragging, cardIndex, onDragIndexChange]);
+    onDragChange(isDragging ? cardIndex : null, isDragging ? (altRef.current ?? false) : false);
+  }, [isDragging, cardIndex, onDragChange, altRef]);
 
   return (
     <ContextMenu>
@@ -169,7 +190,14 @@ function DeckCardImage({
 export default function DeckColumn({ deckId, deckName, sectionId, column }: DeckColumnProps) {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const deleteColumn = useDeleteColumn();
+  const altRef = useAltKeyRef();
   const [dragOriginIndex, setDragOriginIndex] = useState<number | null>(null);
+  const [isSingleDrag, setIsSingleDrag] = useState(false);
+
+  const onDragChange = useCallback((index: number | null, single: boolean) => {
+    setDragOriginIndex(index);
+    setIsSingleDrag(single);
+  }, []);
 
   const computeIndex = useCallback(
     (offset: { x: number; y: number } | null) => {
@@ -243,8 +271,12 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
                 cards={column.cards.slice(i).map((c) => c.card)}
                 isFirst={i === 0}
                 cardIndex={i}
-                isBeingDragged={dragOriginIndex !== null && i >= dragOriginIndex}
-                onDragIndexChange={setDragOriginIndex}
+                isBeingDragged={
+                  dragOriginIndex !== null &&
+                  (isSingleDrag ? i === dragOriginIndex : i >= dragOriginIndex)
+                }
+                onDragChange={onDragChange}
+                altRef={altRef}
               />
             ))
           )}

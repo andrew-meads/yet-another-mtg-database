@@ -1,16 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render } from "@testing-library/react";
+import { render, act } from "@testing-library/react";
 import type { MtgCard } from "@/types/MtgCard";
+import type { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 
 // Capture the props the drag source is created with, per card, in render order.
 const h = vi.hoisted(() => ({
-  dragCalls: [] as Array<{ physicalCardIds: string[]; cards: MtgCard[] | undefined }>
+  dragCalls: [] as Array<{
+    physicalCardIds: string[];
+    cards: MtgCard[] | undefined;
+    getItem?: () => PhysicalCardDragItem;
+  }>
 }));
 
 vi.mock("@/hooks/drag-drop/usePhysicalCardDragSource", () => ({
-  usePhysicalCardDragSource: (props: { physicalCardIds: string[]; cards?: MtgCard[] }) => {
-    h.dragCalls.push({ physicalCardIds: props.physicalCardIds, cards: props.cards });
+  usePhysicalCardDragSource: (props: {
+    physicalCardIds: string[];
+    cards?: MtgCard[];
+    getItem?: () => PhysicalCardDragItem;
+  }) => {
+    h.dragCalls.push({ physicalCardIds: props.physicalCardIds, cards: props.cards, getItem: props.getItem });
     return { isDragging: false, dragRef: vi.fn(), draggedItem: undefined };
   }
 }));
@@ -95,5 +104,63 @@ describe("DeckColumn drag selection", () => {
     );
     expect(h.dragCalls[0].physicalCardIds).toEqual(["solo"]);
     expect(h.dragCalls[0].cards?.map((m) => m.id)).toEqual(["card-solo"]);
+  });
+});
+
+describe("DeckColumn Alt-key single-card drag", () => {
+  it("getItem() without Alt returns the full run from the grabbed card", () => {
+    render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeColumn(["p0", "p1", "p2"])
+      })
+    );
+    // Card at index 1 has a run of ["p1","p2"]
+    const item = h.dragCalls[1].getItem?.();
+    expect(item?.physicalCardIds).toEqual(["p1", "p2"]);
+    expect(item?.cards?.map((c) => c.id)).toEqual(["card-p1", "card-p2"]);
+  });
+
+  it("getItem() with Alt held returns only the grabbed card", () => {
+    render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeColumn(["p0", "p1", "p2"])
+      })
+    );
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Alt" }));
+    });
+
+    const item = h.dragCalls[1].getItem?.();
+    expect(item?.physicalCardIds).toEqual(["p1"]);
+    expect(item?.cards?.map((c) => c.id)).toEqual(["card-p1"]);
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keyup", { key: "Alt" }));
+    });
+  });
+
+  it("getItem() reverts to run after Alt is released", () => {
+    render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeColumn(["p0", "p1", "p2"])
+      })
+    );
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Alt" }));
+    });
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keyup", { key: "Alt" }));
+    });
+
+    const item = h.dragCalls[1].getItem?.();
+    expect(item?.physicalCardIds).toEqual(["p1", "p2"]);
   });
 });
