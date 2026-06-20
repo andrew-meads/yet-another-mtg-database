@@ -115,7 +115,7 @@ export function useInfiniteCardsSearch(
     const dir: "asc" | "desc" = params.dir ?? "asc";
     const q = params.q?.trim() ?? "";
     const owned = params.owned ?? false;
-    return { q, pageLen, order, dir, owned } as Required<Omit<InfiniteCardsQueryParams, "enabled">>;
+    return { q, pageLen, order, dir, owned };
   }, [params.q, params.pageLen, params.order, params.dir, params.owned]);
 
   return useInfiniteQuery<
