@@ -31,11 +31,11 @@ export function CardTextView({ card }: { card: MtgCard }) {
     card.card_faces?.map((f) => f.oracle_text).filter((t) => t && t.trim() !== "") || [];
   if (card.oracle_text && card.oracle_text.trim() !== "") oracleTexts.unshift(card.oracle_text);
   return (
-    <div className="flex flex-col gap-5 text-foreground">
+    <div className="text-foreground flex flex-col gap-5">
       {faces.map((face, index) => (
         <Fragment key={index}>
           <CardFace face={face} />
-          {index < faces.length - 1 && <hr className="border-t border-muted" />}
+          {index < faces.length - 1 && <hr className="border-muted border-t" />}
         </Fragment>
       ))}
     </div>
@@ -54,13 +54,13 @@ function CardFace({ face }: { face: IFace }) {
   return (
     <div className="text-foreground">
       {/* Card Face Header - Name and Mana Cost */}
-      <div className="flex justify-between items-center gap-4">
+      <div className="flex items-center justify-between gap-4">
         <h3 className="text-lg font-bold">{face.name}</h3>
         {face.mana_cost && <ManaCost cost={face.mana_cost} />}
       </div>
 
       {/* Type line */}
-      <p className="italic mb-2">{face.type_line}</p>
+      <p className="mb-2 italic">{face.type_line}</p>
 
       {/* Rules Text */}
       <div className="flex flex-col gap-3">
@@ -78,13 +78,13 @@ function CardFace({ face }: { face: IFace }) {
 
       {/* Power/Toughness or Loyalty */}
       {(face.power || face.loyalty) && (
-        <div className="flex justify-end mt-2">
+        <div className="mt-2 flex justify-end">
           {face.loyalty ? (
             <LoyaltyDisplay loyalty={face.loyalty} />
           ) : (
             face.power &&
             face.toughness && (
-              <div className="font-bold text-lg">
+              <div className="text-lg font-bold">
                 {face.power}/{face.toughness}
               </div>
             )
@@ -105,7 +105,7 @@ export function ManaCost({ cost }: { cost: string }) {
   const symbols = cost.match(/\{[^}]+\}/g) || [];
 
   return (
-    <div className="flex gap-1 items-center">
+    <div className="flex items-center gap-1">
       {symbols.map((symbol, index) => (
         <Symbol key={index} symbol={symbol.slice(1, -1)} />
       ))}
@@ -182,7 +182,7 @@ function SagaAbility({ chapters, ability }: { chapters: string; ability: string 
   const chapterList = chapters.split(/,\s*/);
 
   return (
-    <p className="flex gap-2 items-center">
+    <p className="flex items-center gap-2">
       <span className="flex flex-col gap-1">
         {chapterList.map((chapter, index) => (
           <SagaChapter key={index} chapter={chapter.trim()} />
@@ -205,7 +205,7 @@ function SagaAbility({ chapters, ability }: { chapters: string; ability: string 
  */
 function LoyaltyAbility({ cost, ability }: { cost: string; ability: string }) {
   return (
-    <p className="flex gap-2 items-center">
+    <p className="flex items-center gap-2">
       <LoyaltyCost cost={cost} />
       <span className="flex-1">
         <TextWithSymbols text={ability} />

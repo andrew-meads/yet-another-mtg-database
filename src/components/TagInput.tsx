@@ -62,7 +62,7 @@ export default function TagInput({
           <input
             ref={inputRef}
             type="text"
-            className=" px-2 placeholder:text-muted-foreground flex-1 outline-0"
+            className="placeholder:text-muted-foreground flex-1 px-2 outline-0"
             value={inputValue}
             onFocus={() => setPopoverOpen(true)}
             onBlur={() => setPopoverOpen(false)}
@@ -78,13 +78,13 @@ export default function TagInput({
             }}
           />
         </PopoverTrigger>
-        <PopoverContent side="bottom" align="start" className="p-0 w-full">
+        <PopoverContent side="bottom" align="start" className="w-full p-0">
           {filteredTags.length > 0 ? (
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {filteredTags.map((tag) => (
                 <li
                   key={tag}
-                  className="px-3 py-2 cursor-pointer hover:bg-accent"
+                  className="hover:bg-accent cursor-pointer px-3 py-2"
                   onMouseDown={() => handleAddTag(tag)}
                 >
                   {tag}
@@ -92,7 +92,7 @@ export default function TagInput({
               ))}
             </ul>
           ) : (
-            <div className="px-3 py-2 text-muted-foreground text-sm">No matches</div>
+            <div className="text-muted-foreground px-3 py-2 text-sm">No matches</div>
           )}
         </PopoverContent>
       </div>
@@ -107,9 +107,9 @@ interface TagProps {
 
 function Tag({ label, onClose }: TagProps) {
   return (
-    <span className="flex flex-row bg-primary text-primary-foreground rounded-lg px-2 py-1 text-xs gap-1 items-center">
+    <span className="bg-primary text-primary-foreground flex flex-row items-center gap-1 rounded-lg px-2 py-1 text-xs">
       <span>{label}</span>
-      <X className="cursor-pointer h-3 w-3" onClick={onClose} />
+      <X className="cursor-pointer size-3" onClick={onClose} />
     </span>
   );
 }

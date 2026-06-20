@@ -52,20 +52,20 @@ export function OpenCollectionsList() {
           <div key={entity._id}>
             <div
               className={clsx(
-                "flex items-center justify-between gap-2 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors",
+                "hover:bg-accent flex cursor-pointer items-center justify-between gap-2 rounded-md p-2 transition-colors",
                 isCurrentPage && "bg-accent"
               )}
               onClick={() => router.push(href)}
             >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <span>{getEntityIcon(entity.kind)}</span>
                 <span className="truncate">{entity.name}</span>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex shrink-0 items-center gap-1">
                 {entity.kind === "collection" &&
                   (isActiveCollection ? (
                     <div className="rounded-sm p-1">
-                      <Star className="h-3 w-3 fill-current" />
+                      <Star className="fill-current size-3" />
                     </div>
                   ) : (
                     <button
@@ -74,10 +74,10 @@ export function OpenCollectionsList() {
                         e.stopPropagation();
                         setActiveCollection(entity);
                       }}
-                      className="rounded-sm p-1 hover:bg-accent transition-colors"
+                      className="hover:bg-accent rounded-sm p-1 transition-colors"
                       aria-label={`Make ${entity.name} active`}
                     >
-                      <Star className="h-3 w-3" />
+                      <Star className="size-3" />
                     </button>
                   ))}
                 {!isActiveCollection && (
@@ -87,10 +87,10 @@ export function OpenCollectionsList() {
                       e.stopPropagation();
                       togglePin(entity._id);
                     }}
-                    className="rounded-sm p-1 hover:bg-accent transition-colors"
+                    className="hover:bg-accent rounded-sm p-1 transition-colors"
                     aria-label={pinned ? `Unpin ${entity.name}` : `Pin ${entity.name}`}
                   >
-                    {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                    {pinned ? <PinOff className="size-3" /> : <Pin className="size-3" />}
                   </button>
                 )}
                 <button
@@ -99,10 +99,10 @@ export function OpenCollectionsList() {
                     e.stopPropagation();
                     handleCloseButton(entity);
                   }}
-                  className="rounded-sm p-1 hover:bg-accent transition-colors"
+                  className="hover:bg-accent rounded-sm p-1 transition-colors"
                   aria-label={`Close ${entity.name}`}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="size-3" />
                 </button>
               </div>
             </div>
@@ -136,9 +136,9 @@ export default function OpenCollectionButtons() {
   if (pinnedEntities.length === 0 && unpinnedEntities.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 min-w-0 flex-1">
-      <Separator orientation="vertical" className="h-6! bg-foreground/20 mx-1 shrink-0" />
-      <div className="flex items-center gap-2 min-w-0 transition-all">
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <Separator orientation="vertical" className="bg-foreground/20 mx-1 h-6! shrink-0" />
+      <div className="flex min-w-0 items-center gap-2 transition-all">
         {pinnedEntities.map((entity) => (
           <OpenEntityButton
             key={entity._id}
@@ -173,7 +173,7 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div data-testid={`open-entity-${entity._id}`} className="shrink-0 transition-all relative">
+        <div data-testid={`open-entity-${entity._id}`} className="relative shrink-0 transition-all">
           <Button
             variant={pathname === href ? "default" : "outline"}
             size="sm"
@@ -183,17 +183,17 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
             <Link href={href}>
               <span>{getEntityIcon(entity.kind)}</span>
               <span>{entity.name}</span>
-              {isActiveCollection && <Star className="h-3 w-3 fill-current" />}
+              {isActiveCollection && <Star className="fill-current size-3" />}
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   onClose(entity);
                 }}
-                className="ml-1 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+                className="ml-1 rounded-sm opacity-70 transition-opacity hover:opacity-100"
                 aria-label={`Close ${entity.name}`}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </button>
             </Link>
           </Button>
@@ -205,17 +205,17 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
             data-testid={`drop-zone-${entity._id}`}
             data-drag-active={isDragging ? "" : undefined}
             className={clsx(
-              "absolute top-full left-0 w-full border-x border-b h-20 rounded-b-md",
+              "absolute top-full left-0 h-20 w-full rounded-b-md border-x border-b",
               !isDragging && "pointer-events-none invisible",
               isOver
                 ? "border-primary bg-primary/50"
-                : "border-dashed border-primary/50 bg-primary/20"
+                : "border-primary/50 bg-primary/20 border-dashed"
             )}
           >
             <div className="flex h-full items-center justify-center">
               <CirclePlus
                 className={clsx(
-                  "h-5 w-5 transition-colors",
+                  "transition-colors size-5",
                   isOver ? "text-primary" : "text-primary/50"
                 )}
               />
@@ -262,7 +262,7 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
         >
           More
           <span className="text-xs opacity-70">({entities.length})</span>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="size-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
@@ -272,7 +272,7 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
             data-testid={`open-entity-menu-${entity._id}`}
             className="flex items-center gap-1 pr-1"
           >
-            <DropdownMenuItem asChild className="flex-1 min-w-0">
+            <DropdownMenuItem asChild className="min-w-0 flex-1">
               <Link href={entityHref(entity)}>
                 <span>{getEntityIcon(entity.kind)}</span>
                 <span className="truncate">{entity.name}</span>
@@ -284,11 +284,11 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
                 e.stopPropagation();
                 togglePin(entity._id);
               }}
-              className="rounded-sm p-1.5 hover:bg-accent transition-colors"
+              className="hover:bg-accent rounded-sm p-1.5 transition-colors"
               aria-label={`Pin ${entity.name}`}
               data-testid={`pin-toggle-${entity._id}`}
             >
-              <Pin className="h-3.5 w-3.5" />
+              <Pin className="size-3.5" />
             </button>
             <button
               onClick={(e) => {
@@ -296,10 +296,10 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
                 e.stopPropagation();
                 onClose(entity);
               }}
-              className="rounded-sm p-1.5 hover:bg-accent transition-colors"
+              className="hover:bg-accent rounded-sm p-1.5 transition-colors"
               aria-label={`Close ${entity.name}`}
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="size-3.5" />
             </button>
           </div>
         ))}

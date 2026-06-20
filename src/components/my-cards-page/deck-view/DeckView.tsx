@@ -18,7 +18,7 @@ function NewSectionDropZone({ deckId }: { deckId: string }) {
     <div
       ref={dropRef}
       className={cn(
-        "flex-1 min-w-40 h-12 rounded-md border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground transition-colors",
+        "text-muted-foreground flex h-12 min-w-40 flex-1 items-center justify-center rounded-md border-2 border-dashed text-xs transition-colors",
         isOver ? "border-primary bg-primary/10" : "border-muted-foreground/30"
       )}
     >
@@ -31,23 +31,18 @@ export default function DeckView({ deck }: DeckViewProps) {
   const addSection = useAddSection();
 
   return (
-    <div className="h-full rounded-md border overflow-auto p-4 space-y-8">
+    <div className="h-full space-y-8 overflow-auto rounded-md border p-4">
       {deck.sections.map((section) => (
-        <DeckSection
-          key={section._id}
-          deckId={deck._id}
-          deckName={deck.name}
-          section={section}
-        />
+        <DeckSection key={section._id} deckId={deck._id} deckName={deck.name} section={section} />
       ))}
 
       <div className="flex items-center gap-3 pt-2">
         <Button
           variant="outline"
-          className="gap-2 shrink-0"
+          className="shrink-0 gap-2"
           onClick={() => addSection.mutate({ deckId: deck._id, name: "New Section" })}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           Add section
         </Button>
         <NewSectionDropZone deckId={deck._id} />

@@ -1,7 +1,7 @@
 /**
  * Tokenizes a search query string into individual search terms.
  * Handles quoted strings and splits on spaces.
- * 
+ *
  * Examples:
  *   "c:red t:creature" => ["c:red", "t:creature"]
  *   'o:"draw a card"' => ["o:draw a card"]
@@ -9,9 +9,9 @@
  */
 export function tokenizeQuery(query: string): string[] {
   const tokens: string[] = [];
-  let current = '';
+  let current = "";
   let inQuotes = false;
-  let quoteChar = '';
+  let quoteChar = "";
 
   for (let i = 0; i < query.length; i++) {
     const char = query[i];
@@ -24,7 +24,7 @@ export function tokenizeQuery(query: string): string[] {
       continue;
     } else if (char === quoteChar && inQuotes) {
       inQuotes = false;
-      quoteChar = '';
+      quoteChar = "";
       continue;
     }
 
@@ -35,20 +35,20 @@ export function tokenizeQuery(query: string): string[] {
     }
 
     // Handle parentheses as separate tokens
-    if (char === '(' || char === ')') {
+    if (char === "(" || char === ")") {
       if (current.trim()) {
         tokens.push(current.trim());
-        current = '';
+        current = "";
       }
       tokens.push(char);
       continue;
     }
 
     // Split on whitespace when not in quotes
-    if (char === ' ' || char === '\t' || char === '\n') {
+    if (char === " " || char === "\t" || char === "\n") {
       if (current.trim()) {
         tokens.push(current.trim());
-        current = '';
+        current = "";
       }
       continue;
     }
@@ -66,7 +66,7 @@ export function tokenizeQuery(query: string): string[] {
 
 /**
  * Parses a search term into its key and value.
- * 
+ *
  * Examples:
  *   "c:red" => { key: "c", value: "red" }
  *   "mv>=3" => { key: "mv", operator: ">=", value: "3" }
@@ -82,7 +82,7 @@ export interface ParsedTerm {
 
 export function parseTerm(term: string): ParsedTerm {
   // Check for negation
-  const negated = term.startsWith('-');
+  const negated = term.startsWith("-");
   if (negated) {
     term = term.substring(1);
   }
@@ -99,7 +99,7 @@ export function parseTerm(term: string): ParsedTerm {
   }
 
   // Check for key:value format
-  const colonIndex = term.indexOf(':');
+  const colonIndex = term.indexOf(":");
   if (colonIndex > 0) {
     return {
       key: term.substring(0, colonIndex),

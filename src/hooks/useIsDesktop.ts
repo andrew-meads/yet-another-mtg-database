@@ -14,9 +14,9 @@ import { useState, useEffect } from "react";
  * ```tsx
  * function ResponsiveComponent() {
  *   const { isDesktop, mounted } = useIsDesktop();
- *   
+ *
  *   if (!mounted) return <div />; // Prevent hydration mismatch
- *   
+ *
  *   return isDesktop ? <DesktopView /> : <MobileView />;
  * }
  * ```
@@ -28,7 +28,7 @@ export function useIsDesktop() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    
+
     // Set initial value
     const mediaQuery = window.matchMedia("(min-width: 768px)");
     setIsDesktop(mediaQuery.matches);

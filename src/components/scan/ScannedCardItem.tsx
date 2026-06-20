@@ -58,7 +58,7 @@ export default function ScannedCardItem({ card, activeCollection }: ScannedCardI
   };
 
   return (
-    <div className="rounded-lg border bg-card p-3 sm:p-4">
+    <div className="bg-card rounded-lg border p-3 sm:p-4">
       <div className="flex gap-4">
         {/* De-skewed crop (proxied through the Next.js backend) */}
         <div className="shrink-0">
@@ -66,12 +66,12 @@ export default function ScannedCardItem({ card, activeCollection }: ScannedCardI
           <img
             src={cropProxyUrl(card.url)}
             alt="Scanned card"
-            className="w-28 sm:w-32 rounded-md border bg-muted object-contain"
+            className="bg-muted w-28 rounded-md border object-contain sm:w-32"
           />
         </div>
 
         {/* Candidates + controls */}
-        <div className="flex-1 min-w-0 space-y-3">
+        <div className="min-w-0 flex-1 space-y-3">
           {hasMatches ? (
             <>
               {/* Candidate strip (scrolls horizontally on narrow screens) */}
@@ -85,13 +85,13 @@ export default function ScannedCardItem({ card, activeCollection }: ScannedCardI
                       onClick={() => setSelectedMatchIndex(index)}
                       title={`${match.name} (${match.set.toUpperCase()} #${match.collectorNumber})`}
                       className={cn(
-                        "shrink-0 w-24 rounded-md border-2 overflow-hidden text-left transition-colors",
+                        "w-24 shrink-0 overflow-hidden rounded-md border-2 text-left transition-colors",
                         selected
-                          ? "border-primary ring-2 ring-primary"
-                          : "border-transparent hover:border-muted-foreground/40"
+                          ? "border-primary ring-primary ring-2"
+                          : "hover:border-muted-foreground/40 border-transparent"
                       )}
                     >
-                      <div className="relative aspect-[488/680] bg-muted">
+                      <div className="bg-muted relative aspect-[488/680]">
                         <Image
                           src={match.imageUrl}
                           alt={match.name}
@@ -100,14 +100,14 @@ export default function ScannedCardItem({ card, activeCollection }: ScannedCardI
                           className="object-contain"
                         />
                         {selected && (
-                          <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
-                            <Check className="h-3 w-3" />
+                          <div className="bg-primary text-primary-foreground absolute top-1 right-1 rounded-full p-0.5">
+                            <Check className="size-3" />
                           </div>
                         )}
                       </div>
                       <div className="p-1">
-                        <p className="text-xs font-medium truncate">{match.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">
+                        <p className="truncate text-xs font-medium">{match.name}</p>
+                        <p className="text-muted-foreground truncate text-[10px]">
                           {match.set.toUpperCase()} #{match.collectorNumber}
                         </p>
                       </div>
@@ -117,48 +117,44 @@ export default function ScannedCardItem({ card, activeCollection }: ScannedCardI
               </div>
 
               {/* Quantity stepper + Add */}
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="size-8"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
                     aria-label="Decrease quantity"
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className="size-4" />
                   </Button>
                   <span className="w-8 text-center font-medium tabular-nums">{quantity}</span>
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="size-8"
                     onClick={() => setQuantity((q) => q + 1)}
                     aria-label="Increase quantity"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="size-4" />
                   </Button>
                 </div>
-                <Button
-                  type="button"
-                  onClick={handleAdd}
-                  disabled={!activeCollection || isPending}
-                >
+                <Button type="button" onClick={handleAdd} disabled={!activeCollection || isPending}>
                   {isPending ? "Adding…" : "Add"}
                 </Button>
               </div>
 
               {!activeCollection && (
-                <p className="text-sm text-muted-foreground italic">
+                <p className="text-muted-foreground text-sm italic">
                   No active collection. Open a collection to add cards.
                 </p>
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground py-8">No matches found for this card.</p>
+            <p className="text-muted-foreground py-8 text-sm">No matches found for this card.</p>
           )}
         </div>
       </div>

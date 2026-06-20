@@ -47,7 +47,7 @@ export default function CardsTable({
   // === EARLY RETURNS FOR SPECIAL STATES ===
   if (error) {
     return (
-      <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-destructive">
+      <div className="border-destructive bg-destructive/10 text-destructive rounded-md border p-4">
         <p className="font-semibold">Error loading cards</p>
         <p className="text-sm">{error.message}</p>
       </div>
@@ -56,7 +56,7 @@ export default function CardsTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-md border bg-muted/50 p-8 text-center text-muted-foreground">
+      <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
         Loading cards...
       </div>
     );
@@ -64,7 +64,7 @@ export default function CardsTable({
 
   if (!cards || cards.length === 0) {
     return (
-      <div className="rounded-md border bg-muted/50 p-8 text-center text-muted-foreground">
+      <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
         No cards found
       </div>
     );

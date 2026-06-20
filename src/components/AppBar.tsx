@@ -35,14 +35,14 @@ export default function AppBar() {
 
   return (
     <header className="bg-background border-b">
-      <div className="w-full px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
+      <div className="w-full lg:px-8 p-2 sm:p-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground shrink-0">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+            <h1 className="text-foreground shrink-0 text-base font-bold sm:text-xl md:text-2xl">
               <span className="hidden xl:inline">Yet another MTG Database</span>
               <span className="xl:hidden">YAMTG DB</span>
             </h1>
-            <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+            <nav aria-label="Primary" className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
               {status === "authenticated" && mounted && (
                 <>
                   {isDesktop ? (
@@ -54,13 +54,13 @@ export default function AppBar() {
               )}
             </nav>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {status === "authenticated" && session?.user ? (
               <Tooltip>
                 <DropdownMenu>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <button className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center cursor-pointer">
+                      <button className="border-border hover:border-primary relative flex cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 transition-colors size-8 sm:size-10">
                         {session.user.image ? (
                           <Image
                             src={session.user.image}
@@ -70,7 +70,7 @@ export default function AppBar() {
                             className="object-cover"
                           />
                         ) : (
-                          <div className="h-full w-full bg-primary/10 flex items-center justify-center text-sm font-semibold">
+                          <div className="bg-primary/10 flex items-center justify-center text-sm font-semibold size-full">
                             {session.user.name?.charAt(0).toUpperCase() || "?"}
                           </div>
                         )}
@@ -79,7 +79,7 @@ export default function AppBar() {
                   </TooltipTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <LogOut className="mr-2 size-4" />
                       Sign out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -90,7 +90,7 @@ export default function AppBar() {
               </Tooltip>
             ) : (
               <Button className="cursor-pointer" variant="outline" size="sm" onClick={handleSignIn}>
-                <LogIn className="mr-2 h-4 w-4" />
+                <LogIn className="mr-2 size-4" />
                 <span className="hidden sm:inline">Login</span>
               </Button>
             )}
@@ -108,23 +108,23 @@ export default function AppBar() {
  */
 function DesktopNav({ pathname }: { pathname: string }) {
   return (
-    <div className="flex items-center gap-2 min-w-0 flex-1">
-      <div className="flex items-center gap-2 shrink-0">
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <Button asChild variant={pathname === "/search" ? "default" : "outline"} size="sm">
           <Link href="/search">
-            <Search className="mr-2 h-4 w-4" />
+            <Search className="mr-2 size-4" />
             Card Search
           </Link>
         </Button>
         <Button asChild variant={pathname === "/scan" ? "default" : "outline"} size="sm">
           <Link href="/scan">
-            <Camera className="mr-2 h-4 w-4" />
+            <Camera className="mr-2 size-4" />
             Scan
           </Link>
         </Button>
         <Button asChild variant={pathname === "/my-cards" ? "default" : "outline"} size="sm">
           <Link href="/my-cards">
-            <FolderOpen className="mr-2 h-4 w-4" />
+            <FolderOpen className="mr-2 size-4" />
             My cards
           </Link>
         </Button>
@@ -150,10 +150,10 @@ function MobileNav({ pathname }: { pathname: string }) {
             asChild
             variant={pathname === "/search" ? "default" : "outline"}
             size="icon"
-            className="h-9 w-9"
+            className="size-9"
           >
             <Link href="/search">
-              <Search className="h-4 w-4" />
+              <Search className="size-4" />
             </Link>
           </Button>
         </TooltipTrigger>
@@ -166,10 +166,10 @@ function MobileNav({ pathname }: { pathname: string }) {
             asChild
             variant={pathname === "/scan" ? "default" : "outline"}
             size="icon"
-            className="h-9 w-9"
+            className="size-9"
           >
             <Link href="/scan">
-              <Camera className="h-4 w-4" />
+              <Camera className="size-4" />
             </Link>
           </Button>
         </TooltipTrigger>
@@ -182,10 +182,10 @@ function MobileNav({ pathname }: { pathname: string }) {
             asChild
             variant={pathname === "/my-cards" ? "default" : "outline"}
             size="icon"
-            className="h-9 w-9"
+            className="size-9"
           >
             <Link href="/my-cards">
-              <FolderOpen className="h-4 w-4" />
+              <FolderOpen className="size-4" />
             </Link>
           </Button>
         </TooltipTrigger>
@@ -197,8 +197,8 @@ function MobileNav({ pathname }: { pathname: string }) {
         <Tooltip>
           <TooltipTrigger asChild>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <Menu className="h-4 w-4" />
+              <Button variant="outline" size="icon" className="size-9">
+                <Menu className="size-4" />
               </Button>
             </SheetTrigger>
           </TooltipTrigger>

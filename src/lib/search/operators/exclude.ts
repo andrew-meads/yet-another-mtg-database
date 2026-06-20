@@ -18,9 +18,9 @@ export const excludeOperator: SearchOperatorConfig = {
   buildQuery: (value) => {
     if (value !== "extras") return null;
 
-    return { 
-      layout: { $nin: INVALID_LAYOUTS }, 
-      type_line: { $ne: "Card" } 
+    return {
+      layout: { $nin: INVALID_LAYOUTS },
+      type_line: { $ne: "Card" }
     };
   }
 };

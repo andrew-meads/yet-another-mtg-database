@@ -171,7 +171,7 @@ export default function CollectionTableRow({
         ref={dragRef as unknown as React.Ref<HTMLDivElement>}
         data-testid={`collection-row-${row.key}`}
         className={cn(
-          "group relative grid items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-muted/50 text-sm",
+          "group hover:bg-muted/50 relative grid cursor-pointer items-center gap-2 px-2 py-1.5 text-sm",
           isSelected && "bg-accent"
         )}
         style={{ gridTemplateColumns: COLLECTION_GRID }}
@@ -184,7 +184,7 @@ export default function CollectionTableRow({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6"
+          className="size-6"
           onClick={(e) => {
             e.stopPropagation();
             onExpand?.();
@@ -197,13 +197,13 @@ export default function CollectionTableRow({
             control sits at the right edge of this column (just before mana cost). The inner
             div carries overflow:hidden for text truncation; the control lives in the outer
             wrapper so it is not clipped by that overflow. */}
-        <div className="relative self-stretch flex items-center">
-          <div className="flex items-center gap-2 font-medium truncate w-full">
+        <div className="relative flex items-center self-stretch">
+          <div className="flex w-full items-center gap-2 truncate font-medium">
             <span className="truncate">{nameText}</span>
             {row.notes && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <StickyNote className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <StickyNote className="text-muted-foreground shrink-0 size-3" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs text-xs">{row.notes}</p>
@@ -213,7 +213,7 @@ export default function CollectionTableRow({
             {row.tags && row.tags.length > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Tag className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <Tag className="text-muted-foreground shrink-0 size-3" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
@@ -222,7 +222,7 @@ export default function CollectionTableRow({
             )}
           </div>
           <div
-            className="absolute right-0 inset-y-0 z-10 flex items-center gap-0.5 rounded-md border bg-background/95 px-1 shadow-sm opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
+            className="bg-background/95 pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center gap-0.5 rounded-md border px-1 opacity-0 shadow-sm transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => {
               e.stopPropagation();
@@ -234,10 +234,10 @@ export default function CollectionTableRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="flex h-6 w-5 cursor-grab items-center justify-center text-muted-foreground"
+                  className="text-muted-foreground flex h-6 w-5 cursor-grab items-center justify-center"
                   aria-label="Drag handle"
                 >
-                  <GripVertical className="h-4 w-4" />
+                  <GripVertical className="size-4" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -247,29 +247,29 @@ export default function CollectionTableRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="size-6"
               disabled={dragCount <= 1}
               onClick={() => setDragCount((n) => Math.max(1, n - 1))}
               aria-label="Decrease drag amount"
             >
-              <Minus className="h-3 w-3" />
+              <Minus className="size-3" />
             </Button>
             <span className="w-5 text-center text-xs font-semibold tabular-nums">{dragCount}</span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="size-6"
               disabled={dragCount >= row.quantity}
               onClick={() => setDragCount((n) => Math.min(row.quantity, n + 1))}
               aria-label="Increase drag amount"
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="size-3" />
             </Button>
           </div>
         </div>
 
         {/* Mana */}
-        <div className="flex justify-center items-center gap-1">
+        <div className="flex items-center justify-center gap-1">
           {manaCosts.map((cost, idx) => (
             <div key={idx} className="flex items-center gap-1">
               {idx > 0 && <span className="text-muted-foreground">{"//"}</span>}
@@ -279,7 +279,7 @@ export default function CollectionTableRow({
         </div>
 
         {/* Type */}
-        <div className="truncate text-muted-foreground">
+        <div className="text-muted-foreground truncate">
           {card.type_line.length > 40 ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -302,7 +302,7 @@ export default function CollectionTableRow({
             </TooltipTrigger>
             <TooltipContent>
               {card.set_name}{" "}
-              <em className="text-xs text-muted-foreground">({card.set.toUpperCase()})</em>{" "}
+              <em className="text-muted-foreground text-xs">({card.set.toUpperCase()})</em>{" "}
               {card.rarity}
             </TooltipContent>
           </Tooltip>
@@ -317,8 +317,8 @@ export default function CollectionTableRow({
         {/* Deck badge */}
         <div className="flex justify-center">
           {row.deckId ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs">
-              <Layers className="h-3 w-3" />
+            <span className="bg-secondary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs">
+              <Layers className="size-3" />
               <span className="max-w-24 truncate">{row.deckName ?? "Deck"}</span>
             </span>
           ) : (
@@ -333,11 +333,11 @@ export default function CollectionTableRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="size-7"
                 onClick={() => removeCopies(1)}
                 aria-label="Remove one"
               >
-                <Minus className="h-3.5 w-3.5" />
+                <Minus className="size-3.5" />
               </Button>
               <Input
                 type="number"
@@ -353,11 +353,11 @@ export default function CollectionTableRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="size-7"
                 onClick={() => addCopies(1)}
                 aria-label="Add one"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="size-3.5" />
               </Button>
             </>
           ) : (
@@ -368,11 +368,11 @@ export default function CollectionTableRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="size-7"
                 onClick={() => removeCopies(row.quantity)}
                 aria-label="Delete all copies"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>

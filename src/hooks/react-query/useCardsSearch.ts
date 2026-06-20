@@ -88,6 +88,6 @@ export function useCardsSearch<TData = CardsResponse>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     placeholderData: (prev) => prev as any,
     enabled: params.enabled ?? true,
-    ...options,
+    ...options
   });
 }

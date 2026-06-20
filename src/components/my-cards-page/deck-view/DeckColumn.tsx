@@ -84,8 +84,8 @@ function DeckCardImage({
           ref={dragRef as unknown as React.Ref<HTMLDivElement>}
           data-testid={`deck-card-${card._id}`}
           className={cn(
-            "shrink-0 relative select-none cursor-grab active:cursor-grabbing transition-all duration-200",
-            isBeingDragged ? "grayscale blur-[1px]" : "hover:brightness-125"
+            "relative shrink-0 cursor-grab transition-all duration-200 select-none active:cursor-grabbing",
+            isBeingDragged ? "blur-[1px] grayscale" : "hover:brightness-125"
           )}
           style={{
             width: `${CARD_WIDTH}px`,
@@ -109,8 +109,8 @@ function DeckCardImage({
             <div className="absolute top-1 left-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="bg-black/70 rounded px-1 py-0.5 flex items-center gap-1 max-w-[120px]">
-                    <Library className="h-3 w-3 text-white shrink-0" />
+                  <div className="flex max-w-[120px] items-center gap-1 rounded bg-black/70 px-1 py-0.5">
+                    <Library className="shrink-0 text-white size-3" />
                     {/* <span className="text-[10px] text-white truncate">{card.collectionName}</span> */}
                   </div>
                 </TooltipTrigger>
@@ -125,8 +125,8 @@ function DeckCardImage({
               {card.notes && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="bg-black/70 rounded p-1">
-                      <StickyNote className="h-3 w-3 text-white" />
+                    <div className="rounded bg-black/70 p-1">
+                      <StickyNote className="text-white size-3" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -137,8 +137,8 @@ function DeckCardImage({
               {card.tags && card.tags.length > 0 && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="bg-black/70 rounded p-1">
-                      <Tag className="h-3 w-3 text-white" />
+                    <div className="rounded bg-black/70 p-1">
+                      <Tag className="text-white size-3" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -152,15 +152,13 @@ function DeckCardImage({
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem
-          onClick={() =>
-            deckCardOp.mutate({ deckId, op: "remove", physicalCardId: card._id })
-          }
+          onClick={() => deckCardOp.mutate({ deckId, op: "remove", physicalCardId: card._id })}
         >
-          <Layers className="mr-2 h-4 w-4" />
+          <Layers className="mr-2 size-4" />
           Remove from deck
         </ContextMenuItem>
         <ContextMenuItem onClick={() => deleteCard.mutate(card._id)}>
-          <Trash2 className="mr-2 h-4 w-4" />
+          <Trash2 className="mr-2 size-4" />
           Delete card
         </ContextMenuItem>
       </ContextMenuContent>
@@ -221,13 +219,13 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
           }}
           data-testid={`deck-column-${column._id}`}
           className={cn(
-            "relative flex flex-col min-w-min rounded-[5px] border p-1 transition-colors",
+            "relative flex min-w-min flex-col rounded-[5px] border p-1 transition-colors",
             isOver ? "border-primary bg-primary/10" : "border-transparent"
           )}
         >
           {isEmpty ? (
             <div
-              className="rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-xs text-muted-foreground"
+              className="border-muted-foreground/30 text-muted-foreground flex items-center justify-center rounded-md border-2 border-dashed text-xs"
               style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
             >
               Drop here
@@ -252,14 +250,14 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
           )}
           {dropIndex !== null && (
             <div
-              className="absolute -left-2 -right-2 flex items-center pointer-events-none z-10"
+              className="pointer-events-none absolute z-10 flex items-center -inset-x-2"
               style={{ top: `${CONTAINER_OFFSET + dropIndex * OVERLAP_OFFSET - 5}px` }}
             >
               {/* Left arrow: ▶ pointing into the column */}
-              <div className="w-0 h-0 shrink-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-primary" />
-              <div className="flex-1 h-1 bg-primary" />
+              <div className="border-l-primary shrink-0 border-l-[8px] size-0 border-y-[5px] border-y-transparent" />
+              <div className="bg-primary h-1 flex-1" />
               {/* Right arrow: ◀ pointing into the column */}
-              <div className="w-0 h-0 shrink-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[8px] border-r-primary" />
+              <div className="border-r-primary shrink-0 border-r-[8px] size-0 border-y-[5px] border-y-transparent" />
             </div>
           )}
         </div>
@@ -269,7 +267,7 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
           disabled={!isEmpty}
           onClick={() => deleteColumn.mutate({ deckId, sectionId, columnId: column._id })}
         >
-          <Trash2 className="mr-2 h-4 w-4" />
+          <Trash2 className="mr-2 size-4" />
           Delete column{!isEmpty && " (empty it first)"}
         </ContextMenuItem>
       </ContextMenuContent>

@@ -164,7 +164,7 @@ export default function CardsTableRow({
           <TableCell className="font-medium">{displayName}</TableCell>
           <TableCell className="text-center">
             {manaCosts.length > 0 && (
-              <div className="flex justify-center items-center gap-1">
+              <div className="flex items-center justify-center gap-1">
                 {manaCosts.map((cost, idx) => (
                   <div key={idx} className="flex items-center gap-1">
                     {idx > 0 && <span className="text-muted-foreground">{"//"}</span>}
@@ -195,7 +195,7 @@ export default function CardsTableRow({
               </TooltipTrigger>
               <TooltipContent>
                 {card.set_name}{" "}
-                <em className="text-xs text-muted-foreground">({card.set.toUpperCase()})</em>{" "}
+                <em className="text-muted-foreground text-xs">({card.set.toUpperCase()})</em>{" "}
                 {card.rarity}
               </TooltipContent>
             </Tooltip>
@@ -214,16 +214,16 @@ export default function CardsTableRow({
                     handleAddToCollection();
                   }}
                 >
-                  <Star className="h-4 w-4" />
+                  <Star className="size-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <div className="flex flex-col">
                   <span>Add to active collection</span>
                   {activeCollection && (
-                    <span className="text-xs text-muted-foreground">{activeCollection.name}</span>
+                    <span className="text-muted-foreground text-xs">{activeCollection.name}</span>
                   )}
-                  <span className="text-xs text-muted-foreground">Press + or =</span>
+                  <span className="text-muted-foreground text-xs">Press + or =</span>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -232,20 +232,20 @@ export default function CardsTableRow({
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={handleAddToCollection}>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-1 flex-col">
             <div className="flex items-center">
-              <Star className="mr-2 h-4 w-4" />
+              <Star className="mr-2 size-4" />
               Add to active collection
-              <span className="ml-auto pl-4 text-xs text-muted-foreground">+ or =</span>
+              <span className="text-muted-foreground ml-auto pl-4 text-xs">+ or =</span>
             </div>
             {activeCollection && (
-              <span className="ml-6 text-xs text-muted-foreground">{activeCollection.name}</span>
+              <span className="text-muted-foreground ml-6 text-xs">{activeCollection.name}</span>
             )}
           </div>
         </ContextMenuItem>
         <ContextMenuSub>
           <ContextMenuSubTrigger>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 size-4" />
             Add to collection
           </ContextMenuSubTrigger>
           <ContextMenuSubContent>

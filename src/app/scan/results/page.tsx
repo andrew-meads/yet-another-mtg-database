@@ -26,20 +26,20 @@ export default function ScanResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
+      <div className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-10 border-b backdrop-blur">
         <div className="flex items-center gap-3 p-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold truncate">Scan Results</h1>
-            <p className="text-sm text-muted-foreground truncate">
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-semibold">Scan Results</h1>
+            <p className="text-muted-foreground truncate text-sm">
               {activeCollection
                 ? `Adding to: ${activeCollection.name}`
                 : "No active collection selected"}
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={handleClose} className="shrink-0">
-            <X className="h-5 w-5" />
+            <X className="size-5" />
           </Button>
         </div>
       </div>
@@ -47,15 +47,15 @@ export default function ScanResultsPage() {
       {/* Content */}
       <div className="p-4">
         {cards.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground space-y-4">
+          <div className="text-muted-foreground space-y-4 py-16 text-center">
             <p>No cards were detected. Try another photo.</p>
             <Button variant="secondary" onClick={handleClose}>
               Go Back
             </Button>
           </div>
         ) : (
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <p className="text-sm text-muted-foreground">
+          <div className="mx-auto max-w-3xl space-y-4">
+            <p className="text-muted-foreground text-sm">
               Detected {cards.length} card{cards.length !== 1 ? "s" : ""}
             </p>
             <div className="space-y-3">

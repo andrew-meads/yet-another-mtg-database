@@ -98,8 +98,13 @@ async function fetchCardsPage(
 export function useInfiniteCardsSearch(
   params: InfiniteCardsQueryParams,
   options?: Omit<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    UseInfiniteQueryOptions<CardsPageResponse, Error, InfiniteData<CardsPageResponse>, any[], number>,
+    UseInfiniteQueryOptions<
+      CardsPageResponse,
+      Error,
+      InfiniteData<CardsPageResponse>,
+      [string, string, number, string, "asc" | "desc", boolean],
+      number
+    >,
     "queryKey" | "queryFn" | "getNextPageParam" | "initialPageParam"
   >
 ) {
@@ -113,24 +118,31 @@ export function useInfiniteCardsSearch(
     return { q, pageLen, order, dir, owned } as Required<Omit<InfiniteCardsQueryParams, "enabled">>;
   }, [params.q, params.pageLen, params.order, params.dir, params.owned]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return useInfiniteQuery<CardsPageResponse, Error, InfiniteData<CardsPageResponse>, any[], number>({
-    queryKey: [
-      "cards-infinite",
-      normalized.q,
-      normalized.pageLen,
-      normalized.order,
-      normalized.dir,
-      normalized.owned
-    ],
-    queryFn: ({ pageParam, signal }) => fetchCardsPage(normalized, pageParam, signal),
-    getNextPageParam: (lastPage) => {
-      // Return next page number if there are more pages, otherwise undefined
-      return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
-    },
-    initialPageParam: 1,
-    staleTime: 15_000,
-    enabled: params.enabled ?? true,
-    ...options
-  });
+  return useInfiniteQuery<
+    CardsPageResponse,
+    Error,
+    InfiniteData<CardsPageResponse>,
+    [string, string, number, string, "asc" | "desc", boolean],
+    number
+  >(
+    {
+      queryKey: [
+        "cards-infinite",
+        normalized.q,
+        normalized.pageLen,
+        normalized.order,
+        normalized.dir,
+        normalized.owned
+      ],
+      queryFn: ({ pageParam, signal }) => fetchCardsPage(normalized, pageParam, signal),
+      getNextPageParam: (lastPage) => {
+        // Return next page number if there are more pages, otherwise undefined
+        return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
+      },
+      initialPageParam: 1,
+      staleTime: 15_000,
+      enabled: params.enabled ?? true,
+      ...options
+    }
+  );
 }

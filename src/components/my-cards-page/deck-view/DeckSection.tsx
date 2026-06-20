@@ -24,7 +24,7 @@ function NewColumnDropZone({ deckId, sectionId }: { deckId: string; sectionId: s
     <div ref={dropRef} className="shrink-0 rounded-[5px] border border-transparent p-1">
       <div
         className={cn(
-          "rounded-md border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground transition-colors",
+          "text-muted-foreground flex items-center justify-center rounded-md border-2 border-dashed text-xs transition-colors",
           isOver ? "border-primary bg-primary/10" : "border-muted-foreground/30"
         )}
         style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
@@ -64,7 +64,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
           onKeyDown={(e) => {
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
           }}
-          className="h-8 w-auto min-w-40 max-w-80 font-semibold"
+          className="h-8 w-auto max-w-80 min-w-40 font-semibold"
         />
         <Button
           variant="ghost"
@@ -72,18 +72,18 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
           className="gap-1"
           onClick={() => addColumn.mutate({ deckId, sectionId: section._id })}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           Column
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="size-8"
           disabled={!isEmpty}
           title={isEmpty ? "Delete section" : "Empty the section first"}
           onClick={() => deleteSection.mutate({ deckId, sectionId: section._id })}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="size-4" />
         </Button>
       </div>
 

@@ -12,9 +12,9 @@ export default function QueryProvider({ children }: PropsWithChildren) {
             staleTime: 15_000,
             gcTime: 5 * 60 * 1000,
             retry: 1,
-            refetchOnWindowFocus: false,
-          },
-        },
+            refetchOnWindowFocus: false
+          }
+        }
       })
   );
 

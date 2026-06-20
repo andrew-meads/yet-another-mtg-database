@@ -35,9 +35,9 @@ export default function CollectionPage({ params }: PageProps) {
   }
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
-        <h3 className="text-lg font-semibold text-destructive mb-2">Error Loading Collection</h3>
-        <p className="text-sm text-destructive/90">{error.message}</p>
+      <div className="border-destructive bg-destructive/10 rounded-lg border p-4">
+        <h3 className="text-destructive mb-2 text-lg font-semibold">Error Loading Collection</h3>
+        <p className="text-destructive/90 text-sm">{error.message}</p>
       </div>
     );
   }
@@ -53,10 +53,10 @@ export default function CollectionPage({ params }: PageProps) {
   };
 
   return (
-    <div className="mx-auto space-y-6 h-full flex flex-col">
-      <div className="flex items-start justify-between shrink-0">
+    <div className="mx-auto flex h-full flex-col space-y-6">
+      <div className="flex shrink-0 items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+          <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
             {getEntityIcon("collection", "h-6 w-6")}
             {collection.name}
           </h2>
@@ -72,7 +72,7 @@ export default function CollectionPage({ params }: PageProps) {
             onClick={() => setEditOpen(true)}
             aria-label="Edit collection"
           >
-            <Pencil className="h-[1.2rem] w-[1.2rem]" />
+            <Pencil className="size-[1.2rem]" />
           </Button>
           <Button
             variant="outline"
@@ -81,11 +81,11 @@ export default function CollectionPage({ params }: PageProps) {
             onClick={handleDelete}
             aria-label="Delete collection"
           >
-            <Trash2 className="h-[1.2rem] w-[1.2rem]" />
+            <Trash2 className="size-[1.2rem]" />
           </Button>
         </div>
       </div>
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         <CollectionTable collection={collection} />
       </div>
       <NewCollectionDialog

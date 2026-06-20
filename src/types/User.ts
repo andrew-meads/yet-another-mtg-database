@@ -1,4 +1,4 @@
 export interface User {
-    _id: string;
-    emailAddress: string;
+  _id: string;
+  emailAddress: string;
 }

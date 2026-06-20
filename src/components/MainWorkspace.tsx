@@ -29,9 +29,9 @@ export default function MainWorkspace({ children }: React.PropsWithChildren) {
   // console.log("MainWorkspace isDesktop:", isDesktop);
 
   return (
-    <div className="w-full h-[calc(100dvh-64px)] md:h-[calc(100vh-120px)] min-h-[600px]">
+    <div className="h-[calc(100dvh-64px)] min-h-[600px] w-full md:h-[calc(100vh-120px)]">
       {!mounted ? (
-        <div className="w-full h-full" />
+        <div className="size-full" />
       ) : isDesktop ? (
         <DesktopMainWorkspace>{children}</DesktopMainWorkspace>
       ) : (
@@ -97,8 +97,8 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
         {selectedCard ? (
           <ResizablePanelGroup direction="vertical">
             {/* Top: Card Image */}
-            <ResizablePanel defaultSize={45} minSize={30} className="p-4 overflow-hidden">
-              <div className="h-full w-full">
+            <ResizablePanel defaultSize={45} minSize={30} className="overflow-hidden p-4">
+              <div className="size-full">
                 <CardArtView
                   card={selectedCard}
                   variant="large"
@@ -115,7 +115,7 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
 
             {/* Middle: Card locations */}
             <ResizablePanel defaultSize={20} minSize={10}>
-              <div className="h-full p-4 overflow-y-auto">
+              <div className="h-full overflow-y-auto p-4">
                 <CardLocationsView cardName={selectedCard?.name} />
               </div>
             </ResizablePanel>
@@ -124,15 +124,15 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
 
             {/* Bottom: Card Text */}
             <ResizablePanel defaultSize={35} minSize={30}>
-              <div className="h-full p-4 overflow-y-auto">
+              <div className="h-full overflow-y-auto p-4">
                 <CardTextView card={selectedCard} />
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
-          <div className="h-full w-full grid place-items-center text-muted-foreground p-4">
-            <div className="text-center space-y-2">
-              <div className="font-semibold text-lg">Card Details</div>
+          <div className="text-muted-foreground grid place-items-center p-4 size-full">
+            <div className="space-y-2 text-center">
+              <div className="text-lg font-semibold">Card Details</div>
               <div className="text-sm">Select a card to see its art and rules text</div>
             </div>
           </div>

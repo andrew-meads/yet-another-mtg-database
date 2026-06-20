@@ -127,13 +127,7 @@ export function NewCollectionDialog({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!name.trim() || isPending}>
-            {isEditMode
-              ? isSaving
-                ? "Saving..."
-                : "Save"
-              : isCreating
-                ? "Creating..."
-                : "Create"}
+            {isEditMode ? (isSaving ? "Saving..." : "Save") : isCreating ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

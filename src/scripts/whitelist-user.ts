@@ -22,12 +22,12 @@ async function run() {
     console.log("Connected to MongoDB");
 
     const emailAddress = program.args[0];
-    
+
     if (!emailAddress) {
       console.error("Error: Email address is required");
       program.help();
     }
-    
+
     console.log(`Whitelisting user: ${emailAddress}`);
 
     const userExists = (await UserModel.countDocuments({ emailAddress })) > 0;

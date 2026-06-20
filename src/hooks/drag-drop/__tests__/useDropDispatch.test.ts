@@ -114,8 +114,14 @@ describe("useDropDispatch", () => {
       columnId: "col1",
       index: 3
     } as never);
-    expect(m.deck).toHaveBeenNthCalledWith(1, expect.objectContaining({ physicalCardId: "p1", index: 3 }));
-    expect(m.deck).toHaveBeenNthCalledWith(2, expect.objectContaining({ physicalCardId: "p2", index: 4 }));
+    expect(m.deck).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ physicalCardId: "p1", index: 3 })
+    );
+    expect(m.deck).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ physicalCardId: "p2", index: 4 })
+    );
   });
 
   it("deck → collection removes from the deck then moves collection", async () => {
@@ -153,7 +159,11 @@ describe("useDropDispatch", () => {
   });
 
   it("dropping on a new column creates the column first, then places into it", async () => {
-    await dispatcher()(physical(), { kind: "deck-new-column", deckId: "d1", sectionId: "s1" } as never);
+    await dispatcher()(physical(), {
+      kind: "deck-new-column",
+      deckId: "d1",
+      sectionId: "s1"
+    } as never);
     expect(m.addCol).toHaveBeenCalledWith({ deckId: "d1", sectionId: "s1" });
     expect(m.deck).toHaveBeenCalledWith(
       expect.objectContaining({ deckId: "d1", columnId: "new-col", op: "place" })

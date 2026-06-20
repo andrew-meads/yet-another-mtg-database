@@ -111,10 +111,10 @@ export default function CardsInfiniteList({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, virtualItems, uniqueCards.length]);
 
   return (
-    <div className="rounded-md border overflow-hidden">
-      <div ref={scrollContainerRef} className="overflow-y-auto max-h-[calc(100vh-20rem)]">
+    <div className="overflow-hidden rounded-md border">
+      <div ref={scrollContainerRef} className="max-h-[calc(100vh-20rem)] overflow-y-auto">
         {uniqueCards.length === 0 && !isLoading && (
-          <div className="rounded-md border bg-muted/50 p-8 text-center text-muted-foreground">
+          <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
             No cards found
           </div>
         )}
@@ -148,12 +148,12 @@ export default function CardsInfiniteList({
                 {isLoaderRow ? (
                   // Loading indicator at bottom
                   hasNextPage ? (
-                    <div className="p-4 text-center text-muted-foreground">
+                    <div className="text-muted-foreground p-4 text-center">
                       {isFetchingNextPage ? "Loading more..." : "Scroll to load more"}
                     </div>
                   ) : (
                     // End of results indicator
-                    <div className="p-4 text-center text-muted-foreground text-sm">
+                    <div className="text-muted-foreground p-4 text-center text-sm">
                       End of results
                     </div>
                   )
