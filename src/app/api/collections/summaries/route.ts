@@ -1,8 +1,7 @@
 import connectDB from "@/db/mongoose";
 import { CollectionModel } from "@/db/schema";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /**
  * GET /api/collections/summaries
@@ -14,7 +13,7 @@ export async function GET(_request: NextRequest) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const collections = await CollectionModel.find(

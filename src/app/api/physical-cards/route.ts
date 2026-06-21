@@ -3,8 +3,7 @@ import { PhysicalCardModel, CollectionModel, DeckModel } from "@/db/schema";
 import { upsertTags } from "@/lib/server/cardDetails";
 import { findOrCreateColumn } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 interface CreatePhysicalCardBody {
   cardId: string;
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const body = (await request.json()) as CreatePhysicalCardBody;

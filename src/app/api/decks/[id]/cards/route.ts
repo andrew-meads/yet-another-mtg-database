@@ -2,8 +2,7 @@ import connectDB from "@/db/mongoose";
 import { DeckModel, PhysicalCardModel } from "@/db/schema";
 import { findOrCreateColumn, pullCardFromAllDecks } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 interface DeckCardsBody {
   op: "place" | "move" | "remove";
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;

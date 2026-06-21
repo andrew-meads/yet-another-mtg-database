@@ -1,13 +1,22 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthMode } from "@/context/AuthModeContext";
 
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const { disableLogin } = useAuthMode();
+
+  // In no-auth mode there is nothing to log into — send users straight to the app.
+  useEffect(() => {
+    if (disableLogin) router.replace("/search");
+  }, [disableLogin, router]);
 
   const handleGoogleSignIn = async () => {
     await signIn("google", { callbackUrl: "/search" });

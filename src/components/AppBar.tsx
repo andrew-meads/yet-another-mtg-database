@@ -14,15 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogIn, LogOut, Camera, Search, FolderOpen, Menu } from "lucide-react";
+import { LogIn, LogOut, Camera, Search, FolderOpen, Menu, ShieldOff } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { useAuthMode } from "@/context/AuthModeContext";
 
 export default function AppBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { disableLogin } = useAuthMode();
   const { isDesktop, mounted } = useIsDesktop();
 
   const handleSignOut = async () => {
@@ -43,7 +45,7 @@ export default function AppBar() {
               <span className="xl:hidden">YAMTG DB</span>
             </h1>
             <nav aria-label="Primary" className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
-              {status === "authenticated" && mounted && (
+              {(status === "authenticated" || disableLogin) && mounted && (
                 <>
                   {isDesktop ? (
                     <DesktopNav pathname={pathname} />
@@ -55,7 +57,19 @@ export default function AppBar() {
             </nav>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {status === "authenticated" && session?.user ? (
+            {disableLogin ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="border-border text-muted-foreground flex h-8 cursor-default items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium sm:h-10 sm:px-3 sm:text-sm">
+                    <ShieldOff className="size-4" />
+                    <span className="hidden sm:inline">No-auth mode</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Login is disabled — acting as the local shared user.</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : status === "authenticated" && session?.user ? (
               <Tooltip>
                 <DropdownMenu>
                   <TooltipTrigger asChild>

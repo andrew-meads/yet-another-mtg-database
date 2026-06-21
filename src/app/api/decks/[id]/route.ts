@@ -4,8 +4,7 @@ import { DeckWithCards } from "@/types/Deck";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { findOrCreateColumn } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[i
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
@@ -96,7 +95,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
@@ -132,7 +131,7 @@ export async function DELETE(_request: NextRequest, ctx: RouteContext<"/api/deck
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;

@@ -1,8 +1,7 @@
 import connectDB from "@/db/mongoose";
 import { DeckModel } from "@/db/schema";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /**
  * GET /api/decks
@@ -14,7 +13,7 @@ export async function GET(_request: NextRequest) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const decks = await DeckModel.find({ owner: userId }, { _id: 1, name: 1, owner: 1 })
@@ -40,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { name, description } = await request.json();
