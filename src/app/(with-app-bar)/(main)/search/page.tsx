@@ -8,6 +8,8 @@ import InfiniteScrollSearchResults, {
   useInfiniteScrollSearchResults
 } from "@/components/card-search-page/InfiniteScrollSearchResults";
 import CardsInfiniteList from "@/components/card-search-page/mobile/CardsInfiniteList";
+import { SearchAddMetaProvider } from "@/context/SearchAddMetaContext";
+import SearchAddMetaInput from "@/components/card-search-page/SearchAddMetaInput";
 
 function DesktopSearchPageContent() {
   const { cards, isLoading, error, searchParams, onSearchChange } = useSearchResults();
@@ -15,6 +17,7 @@ function DesktopSearchPageContent() {
   return (
     <div className="flex h-full flex-col gap-6">
       <SearchControls onChange={onSearchChange} initial={searchParams} />
+      <SearchAddMetaInput />
 
       <SearchResults.PaginationControls />
 
@@ -41,6 +44,7 @@ function MobileSearchPageContent() {
   return (
     <div className="flex h-full flex-col gap-6">
       <SearchControls onChange={onSearchChange} initial={searchParams} />
+      <SearchAddMetaInput />
 
       <div className="min-h-0 flex-1">
         <CardsInfiniteList
@@ -61,15 +65,19 @@ export default function SearchPage() {
 
   if (isDesktop) {
     return (
-      <SearchResults>
-        <DesktopSearchPageContent />
-      </SearchResults>
+      <SearchAddMetaProvider>
+        <SearchResults>
+          <DesktopSearchPageContent />
+        </SearchResults>
+      </SearchAddMetaProvider>
     );
   }
 
   return (
-    <InfiniteScrollSearchResults>
-      <MobileSearchPageContent />
-    </InfiniteScrollSearchResults>
+    <SearchAddMetaProvider>
+      <InfiniteScrollSearchResults>
+        <MobileSearchPageContent />
+      </InfiniteScrollSearchResults>
+    </SearchAddMetaProvider>
   );
 }

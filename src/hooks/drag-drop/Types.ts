@@ -8,6 +8,8 @@ export const PHYSICAL_CARD = "PHYSICAL_CARD";
 export interface NewCardDragItem {
   kind: "new";
   card: MtgCard;
+  notes?: string;
+  tags?: string[];
 }
 
 /** Where a physical-card drag originated (drives the drag layer + index recompute). */

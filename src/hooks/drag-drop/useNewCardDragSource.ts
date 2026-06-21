@@ -7,15 +7,20 @@ import { NEW_CARD, NewCardDragItem } from "./Types";
 /**
  * Makes a component a drag source for a brand-new card (from search results).
  */
-export function useNewCardDragSource(card: MtgCard, canDrag: boolean = true) {
+export function useNewCardDragSource(
+  card: MtgCard,
+  canDrag: boolean = true,
+  notes?: string,
+  tags?: string[]
+) {
   const [{ isDragging }, dragRef, preview] = useDrag(
     () => ({
       type: NEW_CARD,
-      item: (): NewCardDragItem => ({ kind: "new", card }),
+      item: (): NewCardDragItem => ({ kind: "new", card, notes, tags }),
       canDrag,
       collect: (monitor) => ({ isDragging: monitor.isDragging() })
     }),
-    [card, canDrag]
+    [card, canDrag, notes, tags]
   );
 
   // Hide the default browser drag preview (we render a custom drag layer)

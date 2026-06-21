@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
+import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
 import CardPopup from "@/components/CardPopup";
 import CardsTableRow from "@/components/card-search-page/CardsTableRow";
 
@@ -112,6 +113,9 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   // Mutation to add a physical card to a collection
   const { mutate: createPhysicalCard } = useCreatePhysicalCard();
 
+  // Notes and tags to apply when adding cards from the search page
+  const { notes, tags } = useSearchAddMeta();
+
   // === REFS ===
 
   // Track last mouse position for hover popup positioning
@@ -166,10 +170,15 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
       // Return early if no valid collection found
       if (!targetCollection) return;
 
-      // Add card to collection
-      createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id });
+      // Add card to collection, carrying any notes/tags set in the search UI
+      createPhysicalCard({
+        cardId: card.id,
+        collectionId: targetCollection._id,
+        notes: notes || undefined,
+        tags: tags.length ? tags : undefined
+      });
     },
-    [activeCollection, openCollections, createPhysicalCard]
+    [activeCollection, openCollections, createPhysicalCard, notes, tags]
   );
 
   // === KEYBOARD NAVIGATION ===

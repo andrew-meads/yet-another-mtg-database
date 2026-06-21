@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { ManaCost } from "@/components/CardTextView";
 import { useNewCardDragSource } from "@/hooks/drag-drop/useNewCardDragSource";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
+import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
 import { getEntityIcon } from "@/lib/collectionUtils";
 import { Star, Plus } from "lucide-react";
 import clsx from "clsx";
@@ -68,8 +69,14 @@ export default function CardsTableRow({
   rowRef
 }: CardsTableRowProps) {
   // === DRAG AND DROP ===
-  // Make the row draggable using react-dnd
-  const { isDragging, dragRef } = useNewCardDragSource(card);
+  // Make the row draggable using react-dnd, carrying any notes/tags from the search UI
+  const { notes, tags } = useSearchAddMeta();
+  const { isDragging, dragRef } = useNewCardDragSource(
+    card,
+    true,
+    notes || undefined,
+    tags.length ? tags : undefined
+  );
 
   // === CONTEXT ===
   // Get open collections from context (decks can't receive a raw "add to collection")

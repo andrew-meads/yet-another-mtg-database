@@ -39,6 +39,9 @@ function dispatcher() {
 }
 
 const newCard = { kind: "new", card: { id: "card-1" } } as never;
+function newCardWithMeta(notes?: string, tags?: string[]) {
+  return { kind: "new", card: { id: "card-1" }, notes, tags } as never;
+}
 function physical(over: Record<string, unknown> = {}) {
   return {
     kind: "physical",
@@ -156,6 +159,39 @@ describe("useDropDispatch", () => {
     } as never);
     expect(m.deck).not.toHaveBeenCalled();
     expect(m.update).toHaveBeenCalledWith({ physicalCardId: "p1", collectionId: "c2" });
+  });
+
+  it("search → collection passes notes and tags from the drag item", async () => {
+    await dispatcher()(
+      newCardWithMeta("foil", ["commander"]),
+      { kind: "collection", collectionId: "c1" } as never
+    );
+    expect(m.create).toHaveBeenCalledWith({
+      cardId: "card-1",
+      collectionId: "c1",
+      notes: "foil",
+      tags: ["commander"]
+    });
+  });
+
+  it("search → deck passes notes and tags from the drag item", async () => {
+    await dispatcher()(newCardWithMeta("signed", ["foil"]), {
+      kind: "deck-column",
+      deckId: "d1",
+      sectionId: "s1",
+      columnId: "col1",
+      index: 0
+    } as never);
+    expect(m.create).toHaveBeenCalledWith({
+      cardId: "card-1",
+      collectionId: "active-coll",
+      deckId: "d1",
+      sectionId: "s1",
+      columnId: "col1",
+      index: 0,
+      notes: "signed",
+      tags: ["foil"]
+    });
   });
 
   it("dropping on a new column creates the column first, then places into it", async () => {

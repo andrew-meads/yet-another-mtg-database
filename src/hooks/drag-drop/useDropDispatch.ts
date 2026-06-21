@@ -41,7 +41,9 @@ export function useDropDispatch() {
         if (concrete.kind === "collection") {
           await createCard.mutateAsync({
             cardId: item.card.id,
-            collectionId: concrete.collectionId
+            collectionId: concrete.collectionId,
+            ...(item.notes && { notes: item.notes }),
+            ...(item.tags?.length && { tags: item.tags })
           });
           return;
         }
@@ -55,7 +57,9 @@ export function useDropDispatch() {
           deckId: concrete.deckId,
           sectionId: concrete.sectionId,
           columnId: concrete.columnId,
-          index: concrete.index
+          index: concrete.index,
+          ...(item.notes && { notes: item.notes }),
+          ...(item.tags?.length && { tags: item.tags })
         });
         return;
       }
