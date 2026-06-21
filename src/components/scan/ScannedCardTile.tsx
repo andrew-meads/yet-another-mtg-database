@@ -65,10 +65,7 @@ export default function ScannedCardTile({ card, state, onOpen }: ScannedCardTile
           <p className="text-muted-foreground py-1 text-sm italic">No match</p>
         )}
         <p
-          className={cn(
-            "text-xs",
-            added ? "text-primary font-medium" : "text-muted-foreground/70"
-          )}
+          className={cn("text-xs", added ? "text-primary font-medium" : "text-muted-foreground/70")}
         >
           {added ? `Added ×${state.addedCount}` : hasMatches ? "Tap to choose" : "Tap to view"}
         </p>

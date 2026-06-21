@@ -124,66 +124,73 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
             {totalFree < totalQuantity && `, ${totalFree} free`}
           </p>
           <Table stickyHeader>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Location</TableHead>
-              <TableHead className="text-center">Set</TableHead>
-              <TableHead className="text-center">Notes</TableHead>
-              <TableHead className="text-center">Tags</TableHead>
-              <TableHead className="text-center">Qty</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {locations.map((loc) => {
-              const isSelected = selection?.cardName === cardName && selection?.key === loc.key;
-              const qtyLabel =
-                loc.type === "collection" && loc.freeQuantity < loc.quantity
-                  ? `${loc.quantity} (${loc.freeQuantity} free)`
-                  : `${loc.quantity}`;
-              return (
-                <TableRow
-                  key={loc.key}
-                  className={cn(
-                    "cursor-pointer",
-                    isSelected && "bg-primary/10 hover:bg-primary/15"
-                  )}
-                  onClick={() => handleClick(loc)}
-                  onDoubleClick={() => handleDoubleClick(loc)}
-                >
-                  <TableCell>
-                    <span className="flex items-center gap-1.5">
-                      {loc.type === "collection" ? (
-                        <Library className="text-muted-foreground size-3.5 shrink-0" />
-                      ) : (
-                        <Layers className="text-muted-foreground size-3.5 shrink-0" />
-                      )}
-                      {loc.locationName}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="inline-flex items-center justify-center">
-                          <SetSvg setCode={loc.card.set} rarityCode={loc.card.rarity} width={22} height={22} />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {loc.card.set_name}{" "}
-                        <em className="text-muted-foreground text-xs">({loc.card.set.toUpperCase()})</em>{" "}
-                        {loc.card.rarity}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell className="text-center">{loc.notes || "—"}</TableCell>
-                  <TableCell className="text-center">
-                    {loc.tags.length > 0 ? loc.tags.join(", ") : "—"}
-                  </TableCell>
-                  <TableCell className="text-center">{qtyLabel}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Location</TableHead>
+                <TableHead className="text-center">Set</TableHead>
+                <TableHead className="text-center">Notes</TableHead>
+                <TableHead className="text-center">Tags</TableHead>
+                <TableHead className="text-center">Qty</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {locations.map((loc) => {
+                const isSelected = selection?.cardName === cardName && selection?.key === loc.key;
+                const qtyLabel =
+                  loc.type === "collection" && loc.freeQuantity < loc.quantity
+                    ? `${loc.quantity} (${loc.freeQuantity} free)`
+                    : `${loc.quantity}`;
+                return (
+                  <TableRow
+                    key={loc.key}
+                    className={cn(
+                      "cursor-pointer",
+                      isSelected && "bg-primary/10 hover:bg-primary/15"
+                    )}
+                    onClick={() => handleClick(loc)}
+                    onDoubleClick={() => handleDoubleClick(loc)}
+                  >
+                    <TableCell>
+                      <span className="flex items-center gap-1.5">
+                        {loc.type === "collection" ? (
+                          <Library className="text-muted-foreground size-3.5 shrink-0" />
+                        ) : (
+                          <Layers className="text-muted-foreground size-3.5 shrink-0" />
+                        )}
+                        {loc.locationName}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="inline-flex items-center justify-center">
+                            <SetSvg
+                              setCode={loc.card.set}
+                              rarityCode={loc.card.rarity}
+                              width={22}
+                              height={22}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {loc.card.set_name}{" "}
+                          <em className="text-muted-foreground text-xs">
+                            ({loc.card.set.toUpperCase()})
+                          </em>{" "}
+                          {loc.card.rarity}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-center">{loc.notes || "—"}</TableCell>
+                    <TableCell className="text-center">
+                      {loc.tags.length > 0 ? loc.tags.join(", ") : "—"}
+                    </TableCell>
+                    <TableCell className="text-center">{qtyLabel}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </>
       )}
     </div>

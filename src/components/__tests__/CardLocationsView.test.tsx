@@ -25,7 +25,11 @@ vi.mock("@/context/CardSelectionContext", () => ({
 
 vi.mock("@/components/SetSvg", () => ({
   SetSvg: ({ setCode, rarityCode }: { setCode: string; rarityCode?: string }) =>
-    React.createElement("span", { "data-testid": "set-svg", "data-set": setCode, "data-rarity": rarityCode })
+    React.createElement("span", {
+      "data-testid": "set-svg",
+      "data-set": setCode,
+      "data-rarity": rarityCode
+    })
 }));
 
 import CardLocationsView from "@/components/CardLocationsView";
@@ -404,9 +408,7 @@ describe("CardLocationsView", () => {
           {
             collectionId: "coll-1",
             collectionName: "Main",
-            cards: [
-              { _id: "pc-1", card: mockCard, collectionId: "coll-1", collectionName: "Main" }
-            ]
+            cards: [{ _id: "pc-1", card: mockCard, collectionId: "coll-1", collectionName: "Main" }]
           }
         ]
       };
@@ -522,9 +524,7 @@ describe("CardLocationsView", () => {
           {
             collectionId: "coll-1",
             collectionName: "Main Collection",
-            cards: [
-              { _id: "pc-1", card: mockCard, collectionId: "coll-1", collectionName: "Main" }
-            ]
+            cards: [{ _id: "pc-1", card: mockCard, collectionId: "coll-1", collectionName: "Main" }]
           }
         ]
       };

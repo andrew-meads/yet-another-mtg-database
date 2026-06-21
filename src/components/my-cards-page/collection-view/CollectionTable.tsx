@@ -79,8 +79,12 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
       const currentIndex = selectedKey ? rows.findIndex((r) => r.key === selectedKey) : -1;
       const nextIndex =
         e.key === "ArrowDown"
-          ? currentIndex === -1 ? 0 : Math.min(currentIndex + 1, rows.length - 1)
-          : currentIndex === -1 ? 0 : Math.max(currentIndex - 1, 0);
+          ? currentIndex === -1
+            ? 0
+            : Math.min(currentIndex + 1, rows.length - 1)
+          : currentIndex === -1
+            ? 0
+            : Math.max(currentIndex - 1, 0);
 
       if (nextIndex !== currentIndex && rows[nextIndex]) {
         const nextRow = rows[nextIndex];

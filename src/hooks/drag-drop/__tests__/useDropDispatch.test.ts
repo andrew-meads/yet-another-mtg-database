@@ -162,10 +162,10 @@ describe("useDropDispatch", () => {
   });
 
   it("search → collection passes notes and tags from the drag item", async () => {
-    await dispatcher()(
-      newCardWithMeta("foil", ["commander"]),
-      { kind: "collection", collectionId: "c1" } as never
-    );
+    await dispatcher()(newCardWithMeta("foil", ["commander"]), {
+      kind: "collection",
+      collectionId: "c1"
+    } as never);
     expect(m.create).toHaveBeenCalledWith({
       cardId: "card-1",
       collectionId: "c1",
