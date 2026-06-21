@@ -8,6 +8,7 @@ services:
       - MONGO_DB_URI=mongodb://yamtgd-database:27017/yet-another-mtg-database
       - SCANNER_BASE_URL=http://card-scanner:8000
       - NODE_ENV=production
+      - DISABLE_LOGIN=true
     ports:
       - "3000:3000"
     depends_on:
