@@ -35,7 +35,6 @@ interface CollectionTableRowProps {
   isSelected?: boolean;
   isExpanded?: boolean;
   onExpand?: () => void;
-  isSearchActive?: boolean;
   onHoverEnter?: () => void;
   onHoverLeave?: () => void;
   onHoverMove?: (e: React.MouseEvent<HTMLDivElement>) => void;
@@ -50,7 +49,6 @@ export default function CollectionTableRow({
   isSelected = false,
   isExpanded = false,
   onExpand,
-  isSearchActive = false,
   onHoverEnter,
   onHoverLeave,
   onHoverMove,
@@ -74,6 +72,18 @@ export default function CollectionTableRow({
   useEffect(() => {
     dragCountRef.current = dragCount;
   }, [dragCount]);
+
+  const dragControlRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = dragControlRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      setDragCount((n) => (e.deltaY < 0 ? Math.min(row.quantity, n + 1) : Math.max(1, n - 1)));
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [row.quantity]);
   const altRef = useAltKeyRef();
 
   const { isDragging, dragRef } = usePhysicalCardDragSource({
@@ -84,7 +94,6 @@ export default function CollectionTableRow({
     sourceCollectionName: collectionName,
     sourceDeckName: row.deckName,
     origin: { type: "collection" },
-    canDrag: !isSearchActive,
     getItem: (): PhysicalCardDragItem => ({
       kind: "physical",
       physicalCardIds: dragCountForItem({
@@ -222,14 +231,9 @@ export default function CollectionTableRow({
             )}
           </div>
           <div
+            ref={dragControlRef}
             className="bg-background/95 pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center gap-0.5 rounded-md border px-1 opacity-0 shadow-sm transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
-            onWheel={(e) => {
-              e.stopPropagation();
-              setDragCount((n) =>
-                e.deltaY < 0 ? Math.min(row.quantity, n + 1) : Math.max(1, n - 1)
-              );
-            }}
           >
             <Tooltip>
               <TooltipTrigger asChild>

@@ -48,7 +48,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
   }, [collection.cards, searchFilters]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { dropRef, isOver } = useCollectionDropTarget(collection._id, searchFilters === null);
+  const { dropRef, isOver } = useCollectionDropTarget(collection._id);
 
   // The React Compiler intentionally skips memoizing the value returned by TanStack
   // Virtual's useVirtualizer (it returns non-memoizable functions).
@@ -60,6 +60,39 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
     overscan: 8,
     getItemKey: (index) => rows[index].key
   });
+
+  // Keep a stable ref to the virtualizer so the keyboard effect doesn't re-run when
+  // virtualizer changes identity (TanStack Virtual is not memoized by the React Compiler).
+  const virtualizerRef = useRef(virtualizer);
+  virtualizerRef.current = virtualizer;
+
+  // Keyboard navigation — arrow up/down to move through rows.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!scrollRef.current?.contains(document.activeElement)) return;
+      // Don't hijack keys when an input inside a row has focus.
+      const tag = (document.activeElement as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      e.preventDefault();
+
+      const currentIndex = selectedKey ? rows.findIndex((r) => r.key === selectedKey) : -1;
+      const nextIndex =
+        e.key === "ArrowDown"
+          ? currentIndex === -1 ? 0 : Math.min(currentIndex + 1, rows.length - 1)
+          : currentIndex === -1 ? 0 : Math.max(currentIndex - 1, 0);
+
+      if (nextIndex !== currentIndex && rows[nextIndex]) {
+        const nextRow = rows[nextIndex];
+        setSelectedKey(nextRow.key);
+        setSelectedCard(nextRow.card);
+        virtualizerRef.current.scrollToIndex(nextIndex, { align: "auto" });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedKey, rows, setSelectedCard]);
 
   // Hover popup management
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -159,6 +192,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
       <div
         ref={setScrollAndDropRef}
         className={cn("flex-1 overflow-auto", isOver && "bg-primary/5")}
+        tabIndex={0}
       >
         {isEmpty ? (
           <div className="text-muted-foreground p-8 text-center">No cards in this collection</div>
@@ -192,7 +226,6 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
                     isSelected={selectedKey === row.key}
                     isExpanded={expandedKey === row.key}
                     onExpand={() => setExpandedKey(expandedKey === row.key ? null : row.key)}
-                    isSearchActive={searchFilters !== null}
                     onHoverEnter={() => handleRowEnter(row.card)}
                     onHoverLeave={handleRowLeave}
                     onHoverMove={handleRowMove}
