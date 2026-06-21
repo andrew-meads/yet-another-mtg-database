@@ -1,8 +1,7 @@
 import connectDB from "@/db/mongoose";
 import { DeckModel } from "@/db/schema";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -17,7 +16,7 @@ async function loadDeck(id: string, userId: string) {
 export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[id]/sections">) {
   try {
     await connectDB();
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
     const { id } = await ctx.params;
     const { name } = await request.json();
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[
 export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/[id]/sections">) {
   try {
     await connectDB();
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
     const { id } = await ctx.params;
     const { sectionId, name, order } = await request.json();
@@ -79,7 +78,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
 export async function DELETE(request: NextRequest, ctx: RouteContext<"/api/decks/[id]/sections">) {
   try {
     await connectDB();
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
     const { id } = await ctx.params;
     const { sectionId } = await request.json();

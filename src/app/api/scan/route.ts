@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 import connectDB from "@/db/mongoose";
 import { CardData } from "@/db/schema";
 import { MtgCard } from "@/types/MtgCard";
@@ -31,7 +30,7 @@ const SCANNER_BASE_URL = process.env.SCANNER_BASE_URL || "http://localhost:8000"
  */
 export async function POST(request: NextRequest) {
   // Auth check (the proxy middleware also guards /api/* routes).
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

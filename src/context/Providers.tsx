@@ -10,30 +10,35 @@ import { CardSelectionProvider } from "@/context/CardSelectionContext";
 import CardDragLayer from "@/components/dnd/CardDragLayer";
 import DeckColumnDragLayer from "@/components/dnd/DeckColumnDragLayer";
 import { ScanContextProvider } from "@/context/ScanContext";
+import { AuthModeProvider } from "@/context/AuthModeContext";
 
 export function Providers({
   children,
-  session
+  session,
+  disableLogin = false
 }: {
   children: React.ReactNode;
   session: Session | null;
+  disableLogin?: boolean;
 }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <SessionProvider session={session}>
-        <QueryProvider>
-          <ReactDndProvider>
-            <OpenEntitiesProvider>
-              <CardSelectionProvider>
-                <ScanContextProvider>{children}</ScanContextProvider>
-              </CardSelectionProvider>
-            </OpenEntitiesProvider>
+        <AuthModeProvider disableLogin={disableLogin}>
+          <QueryProvider>
+            <ReactDndProvider>
+              <OpenEntitiesProvider>
+                <CardSelectionProvider>
+                  <ScanContextProvider>{children}</ScanContextProvider>
+                </CardSelectionProvider>
+              </OpenEntitiesProvider>
 
-            {/* Drag layers */}
-            <CardDragLayer />
-            <DeckColumnDragLayer />
-          </ReactDndProvider>
-        </QueryProvider>
+              {/* Drag layers */}
+              <CardDragLayer />
+              <DeckColumnDragLayer />
+            </ReactDndProvider>
+          </QueryProvider>
+        </AuthModeProvider>
       </SessionProvider>
     </ThemeProvider>
   );

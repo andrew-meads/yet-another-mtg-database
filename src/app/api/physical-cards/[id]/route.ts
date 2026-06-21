@@ -3,8 +3,7 @@ import { PhysicalCardModel, CollectionModel } from "@/db/schema";
 import { upsertTags } from "@/lib/server/cardDetails";
 import { pullCardFromAllDecks } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 interface PatchPhysicalCardBody {
   notes?: string;
@@ -21,7 +20,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/physic
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
@@ -64,7 +63,7 @@ export async function DELETE(_request: NextRequest, ctx: RouteContext<"/api/phys
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;

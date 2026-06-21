@@ -3,8 +3,7 @@ import { CollectionModel, PhysicalCardModel, DeckModel } from "@/db/schema";
 import { CollectionWithCards } from "@/types/Collection";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /**
  * GET /api/collections/[id]
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
@@ -68,7 +67,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/collec
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
@@ -113,7 +112,7 @@ export async function DELETE(request: NextRequest, ctx: RouteContext<"/api/colle
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const { id } = await ctx.params;

@@ -1,8 +1,7 @@
 import connectDB from "@/db/mongoose";
 import { CollectionModel } from "@/db/schema";
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /**
  * PATCH /api/collections/[id]/isActive
@@ -22,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "isActive must be a boolean value" }, { status: 400 });
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const existingCollection = await CollectionModel.findOne({ _id: id, owner: userId });

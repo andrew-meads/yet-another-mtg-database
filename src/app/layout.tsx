@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Roboto, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/context/Providers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession, isLoginDisabled } from "@/auth";
 import { Toaster } from "sonner";
 
 const roboto = Roboto({
@@ -23,12 +22,15 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<React.PropsWithChildren>) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
+  const disableLogin = isLoginDisabled();
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${roboto.variable} ${firaCode.variable} antialiased`}>
-        <Providers session={session}>{children}</Providers>
+        <Providers session={session} disableLogin={disableLogin}>
+          {children}
+        </Providers>
         <Toaster />
       </body>
     </html>

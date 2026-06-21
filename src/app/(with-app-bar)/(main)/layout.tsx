@@ -1,10 +1,9 @@
 import MainWorkspace from "@/components/MainWorkspace";
-import { authOptions } from "@/auth";
-import { getServerSession } from "next-auth";
+import { getAuthSession } from "@/auth";
 import { redirect } from "next/navigation";
 
 export default async function MainLayout({ children }: React.PropsWithChildren) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   if (!session) return redirect("/login");
 
   return (

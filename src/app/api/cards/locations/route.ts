@@ -3,8 +3,7 @@ import { CardData, PhysicalCardModel } from "@/db/schema";
 import { CardLocation } from "@/types/CardLocation";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getAuthSession } from "@/auth";
 
 /**
  * GET /api/cards/locations?name=CardName
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
     const matchingCardIds = matchingCards.map((card) => card.id);
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     const userId = session!.user._id;
 
     const physicalCards = await PhysicalCardModel.find({
