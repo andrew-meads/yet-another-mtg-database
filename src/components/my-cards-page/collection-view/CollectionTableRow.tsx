@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Trash2,
+  LogOut,
   ChevronRight,
   StickyNote,
   Tag,
@@ -21,6 +22,7 @@ import { dragCountForItem } from "@/hooks/drag-drop/dragCount";
 import { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useRemoveCardGroup } from "@/hooks/react-query/useRemoveCardGroup";
+import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
 import { useEffect, useRef, useState } from "react";
 import EntryNotesAndTags from "../EntryNotesAndTags";
 import { SetSvg } from "@/components/SetSvg";
@@ -143,6 +145,16 @@ export default function CollectionTableRow({
       deckId: row.deckId,
       quantity: n
     });
+  };
+
+  const deckOp = useDeckCardOp();
+
+  const removeFromDeck = () => {
+    Promise.all(
+      row.physicalCardIds.map((id) =>
+        deckOp.mutateAsync({ deckId: row.deckId!, op: "remove", physicalCardId: id })
+      )
+    );
   };
 
   const commitQuantity = () => {
@@ -352,7 +364,7 @@ export default function CollectionTableRow({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") commitQuantity();
                 }}
-                className="w-14 text-center font-semibold"
+                className="w-16 text-center font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
               <Button
                 variant="ghost"
@@ -365,26 +377,48 @@ export default function CollectionTableRow({
               </Button>
             </>
           ) : (
-            <span className="w-8 text-center font-semibold">{row.quantity}</span>
+            <>
+              <span className="size-7 shrink-0" />
+              <Input
+                readOnly
+                type="text"
+                value={row.quantity}
+                className="w-16 text-center font-semibold"
+              />
+              <span className="size-7 shrink-0" />
+            </>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={() => removeCopies(row.quantity)}
-                aria-label="Delete all copies"
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {isLoose
-                ? "Delete these copies"
-                : "Delete these copies (removes them from the deck too)"}
-            </TooltipContent>
-          </Tooltip>
+          {isLoose ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={() => removeCopies(row.quantity)}
+                  aria-label="Delete all copies"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete these copies</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={removeFromDeck}
+                  aria-label="Remove from deck"
+                >
+                  <LogOut className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remove from deck</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
 

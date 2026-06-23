@@ -192,7 +192,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
         <span className="text-center">CMC</span>
         <span className="text-center">P/T</span>
         <span className="text-center">Deck</span>
-        <span className="pr-1 text-right">Quantity</span>
+        <span className="text-center">Quantity</span>
       </div>
 
       {/* Virtualized rows */}

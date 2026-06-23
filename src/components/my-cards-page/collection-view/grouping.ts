@@ -16,7 +16,7 @@ export interface CollectionGroupRow {
 
 /** Shared CSS grid template for the collection table header + rows. */
 export const COLLECTION_GRID =
-  "2.25rem minmax(160px,1.6fr) 7rem minmax(120px,1fr) 3.5rem 3rem 3.5rem 7rem 9rem";
+  "2.25rem minmax(160px,1.6fr) 7rem minmax(120px,1fr) 3.5rem 3rem 3.5rem 7rem 10rem";
 
 export function groupCollectionCards(cards: DetailedPhysicalCard[]): CollectionGroupRow[] {
   const map = new Map<string, CollectionGroupRow>();
