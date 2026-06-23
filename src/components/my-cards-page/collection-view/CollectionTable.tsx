@@ -9,6 +9,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import CardPopup from "@/components/CardPopup";
 import SearchDialog, { SearchFilters, searchPredicate } from "@/components/SearchDialog";
 import { useCardSelection } from "@/context/CardSelectionContext";
+import { useCardPreviewSettings } from "@/context/SettingsContext";
 import CollectionTableRow from "@/components/my-cards-page/collection-view/CollectionTableRow";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 import {
@@ -38,6 +39,7 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
   const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
 
   const { setSelectedCard } = useCardSelection();
+  const { cardPreview } = useCardPreviewSettings();
 
   const rows = useMemo(() => {
     const grouped = groupCollectionCards(collection.cards ?? []);
@@ -117,9 +119,10 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
 
   const handleRowEnter = (card: MtgCard) => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
+    if (!cardPreview.enabled) return;
     showTimerRef.current = setTimeout(() => {
       setHovered({ card, pos: lastMousePosRef.current });
-    }, 500);
+    }, cardPreview.delayMs);
   };
 
   const handleRowLeave = () => {
@@ -242,7 +245,9 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
         )}
       </div>
 
-      {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
+      {cardPreview.enabled && hovered && !isAnyRowDragging && (
+        <CardPopup card={hovered.card} position={hovered.pos} size={cardPreview.size} />
+      )}
     </div>
   );
 }
