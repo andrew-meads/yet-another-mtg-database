@@ -106,6 +106,6 @@ export function jsonRequest(url: string, method: string, body?: unknown): NextRe
 }
 
 /** Build the `{ params }` second-arg App Router handlers receive (Next 16: async params). */
-export function ctx(params: Record<string, string>) {
+export function ctx<T extends Record<string, string>>(params: T) {
   return { params: Promise.resolve(params) };
 }

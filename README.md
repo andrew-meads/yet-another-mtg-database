@@ -32,6 +32,10 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from
   the database; mana symbols rendered via `mana-font`.
+- **Hover card preview** — hovering a row in search results or a collection shows a card
+  image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
+  bar): toggle it on/off, pick a size (small/normal/large), and set the show delay
+  (500–2000 ms). Preferences save to the browser's local storage and apply immediately.
 - **Google sign-in** — NextAuth Google OAuth with a deny-by-default email whitelist.
 
 ## Tech stack

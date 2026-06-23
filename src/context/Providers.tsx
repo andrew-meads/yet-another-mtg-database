@@ -11,6 +11,7 @@ import CardDragLayer from "@/components/dnd/CardDragLayer";
 import DeckColumnDragLayer from "@/components/dnd/DeckColumnDragLayer";
 import { ScanContextProvider } from "@/context/ScanContext";
 import { AuthModeProvider } from "@/context/AuthModeContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 
 export function Providers({
   children,
@@ -29,7 +30,9 @@ export function Providers({
             <ReactDndProvider>
               <OpenEntitiesProvider>
                 <CardSelectionProvider>
-                  <ScanContextProvider>{children}</ScanContextProvider>
+                  <SettingsProvider>
+                    <ScanContextProvider>{children}</ScanContextProvider>
+                  </SettingsProvider>
                 </CardSelectionProvider>
               </OpenEntitiesProvider>
 

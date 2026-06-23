@@ -26,10 +26,12 @@ interface CollectionDoc {
 }
 
 interface DeckColumnDoc {
+  _id?: Types.ObjectId;
   cards: Types.ObjectId[];
 }
 
 interface DeckSectionDoc {
+  _id?: Types.ObjectId;
   name: string;
   columns: DeckColumnDoc[];
 }

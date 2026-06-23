@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogIn, LogOut, Camera, Search, FolderOpen, Menu, ShieldOff } from "lucide-react";
+import { LogIn, LogOut, Camera, Search, FolderOpen, Menu, ShieldOff, Settings } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -107,6 +107,23 @@ export default function AppBar() {
                 <LogIn className="mr-2 size-4" />
                 <span className="hidden sm:inline">Login</span>
               </Button>
+            )}
+            {(status === "authenticated" || disableLogin) && mounted && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    asChild
+                    variant={pathname === "/settings" ? "default" : "outline"}
+                    size="icon"
+                    className="size-8 sm:size-10"
+                  >
+                    <Link href="/settings" aria-label="Settings">
+                      <Settings className="size-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Settings</TooltipContent>
+              </Tooltip>
             )}
             <ModeToggle />
           </div>

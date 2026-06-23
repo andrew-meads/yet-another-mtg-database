@@ -4,6 +4,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { MtgCard } from "@/types/MtgCard";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
+import { useCardPreviewSettings } from "@/context/SettingsContext";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
@@ -115,6 +116,9 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
 
   // Notes and tags to apply when adding cards from the search page
   const { notes, tags } = useSearchAddMeta();
+
+  // User-configurable hover preview settings (enabled / size / delay)
+  const { cardPreview } = useCardPreviewSettings();
 
   // === REFS ===
 
@@ -269,9 +273,10 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
    */
   const handleRowEnter = (card: MtgCard) => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
+    if (!cardPreview.enabled) return;
     showTimerRef.current = setTimeout(() => {
       setHovered({ card, pos: lastMousePosRef.current });
-    }, 500);
+    }, cardPreview.delayMs);
   };
 
   /**
@@ -338,8 +343,10 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
           ))}
         </TableBody>
       </Table>
-      {/* Show hover popup only when hovering and not dragging */}
-      {hovered && !isAnyRowDragging && <CardPopup card={hovered.card} position={hovered.pos} />}
+      {/* Show hover popup only when enabled, hovering, and not dragging */}
+      {cardPreview.enabled && hovered && !isAnyRowDragging && (
+        <CardPopup card={hovered.card} position={hovered.pos} size={cardPreview.size} />
+      )}
     </div>
   );
 }
