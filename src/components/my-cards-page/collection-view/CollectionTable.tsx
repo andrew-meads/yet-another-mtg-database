@@ -1,13 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
 import { CollectionWithCards } from "@/types/Collection";
 import { MtgCard } from "@/types/MtgCard";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import CardPopup from "@/components/CardPopup";
-import SearchDialog, { SearchFilters, searchPredicate } from "@/components/SearchDialog";
+import CardSearchBar from "@/components/search/CardSearchBar";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useCardPreviewSettings } from "@/context/SettingsContext";
 import CollectionTableRow from "@/components/my-cards-page/collection-view/CollectionTableRow";
@@ -21,33 +19,42 @@ import { cn } from "@/lib/utils";
 
 export interface CollectionTableProps {
   collection: CollectionWithCards;
+  /**
+   * Emitted (debounced) when the Scryfall-style search query changes. The page
+   * feeds it back into the collection-details query, so `collection.cards` is
+   * already filtered server-side by the time it reaches this component.
+   */
+  onSearchChange: (query: string) => void;
 }
 
 /**
  * Virtualized table for a collection. Rows are grouped by card + notes + tags +
  * deck membership (loose copies before deck copies for the same card) and shown
  * with a quantity and a deck badge. No pagination — rows are virtualized.
+ *
+ * Search uses the shared Scryfall-style engine: the query is run server-side via
+ * `GET /api/collections/[id]?q=...`, so the cards passed in are already filtered.
  */
-export default function CollectionTable({ collection }: CollectionTableProps) {
+export default function CollectionTable({ collection, onSearchChange }: CollectionTableProps) {
   const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
     null
   );
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
+  const [activeQuery, setActiveQuery] = useState("");
 
   const { setSelectedCard } = useCardSelection();
   const { cardPreview } = useCardPreviewSettings();
 
   const rows = useMemo(() => {
-    const grouped = groupCollectionCards(collection.cards ?? []);
-    const filtered = searchFilters
-      ? grouped.filter((r) => searchPredicate(searchFilters)(r.card))
-      : grouped;
-    return sortGroupRows(filtered);
-  }, [collection.cards, searchFilters]);
+    return sortGroupRows(groupCollectionCards(collection.cards ?? []));
+  }, [collection.cards]);
+
+  const handleQueryChange = (query: string) => {
+    setActiveQuery(query);
+    onSearchChange(query);
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const { dropRef, isOver } = useCollectionDropTarget(collection._id);
@@ -140,44 +147,17 @@ export default function CollectionTable({ collection }: CollectionTableProps) {
     if (typeof dropRef === "function") dropRef(node);
   };
 
-  const isEmpty = !collection.cards || collection.cards.length === 0;
+  const isEmpty = rows.length === 0 && activeQuery.trim().length === 0;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-md border">
       {/* Controls */}
-      <div className="bg-background flex items-center justify-between gap-2 border-b p-3">
-        <div className="text-muted-foreground text-sm">
+      <div className="bg-background flex items-center justify-between gap-3 border-b p-3">
+        <div className="text-muted-foreground shrink-0 text-sm">
           {rows.reduce((sum, r) => sum + r.quantity, 0)} cards
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsSearchDialogOpen(true)}
-            className="gap-2"
-          >
-            <Search className="size-4" />
-            Search
-          </Button>
-          {searchFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSearchFilters(null)}
-              className="gap-2"
-            >
-              <X className="size-4" />
-              Clear Search
-            </Button>
-          )}
-        </div>
+        <CardSearchBar onQueryChange={handleQueryChange} className="flex-1" />
       </div>
-
-      <SearchDialog
-        open={isSearchDialogOpen}
-        onOpenChange={setIsSearchDialogOpen}
-        onSearch={setSearchFilters}
-      />
 
       {/* Header */}
       <div

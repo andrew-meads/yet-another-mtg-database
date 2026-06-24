@@ -7,8 +7,14 @@ export interface CollectionDetailsResponse {
   collection: CollectionWithCards;
 }
 
-async function fetchCollectionDetails(collectionId: string): Promise<CollectionDetailsResponse> {
-  const res = await fetch(`/api/collections/${collectionId}?details=true`, {
+async function fetchCollectionDetails(
+  collectionId: string,
+  q?: string
+): Promise<CollectionDetailsResponse> {
+  const params = new URLSearchParams({ details: "true" });
+  if (q && q.trim().length > 0) params.set("q", q.trim());
+
+  const res = await fetch(`/api/collections/${collectionId}?${params.toString()}`, {
     cache: "no-store"
   });
 
@@ -23,12 +29,14 @@ async function fetchCollectionDetails(collectionId: string): Promise<CollectionD
 }
 
 export function useRetrieveCollectionDetails(
-  collectionId: string | null
+  collectionId: string | null,
+  q?: string
 ): UseQueryResult<CollectionDetailsResponse, Error> {
   return useQuery({
-    queryKey: ["collection-details", collectionId],
-    queryFn: () => fetchCollectionDetails(collectionId!),
+    queryKey: ["collection-details", collectionId, q ?? ""],
+    queryFn: () => fetchCollectionDetails(collectionId!, q),
     enabled: !!collectionId, // Only run query if collectionId is provided
-    staleTime: 30_000 // Consider data fresh for 30 seconds
+    staleTime: 30_000, // Consider data fresh for 30 seconds
+    placeholderData: (prev) => prev // Keep showing previous results while refetching on query change
   });
 }
