@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Field, FieldContent, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -13,10 +12,8 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { ArrowDownAZ, ArrowUpAZ, Package, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import CardSearchBar from "@/components/search/CardSearchBar";
 
 export type SortField =
   | "name"
@@ -70,12 +67,10 @@ export default function SearchControls({
   const [owned, setOwned] = useState<boolean>(initial?.owned ?? false);
   const [useDefaultFilters, setUseDefaultFilters] = useState<boolean>(true);
 
-  const debouncedQ = useDebouncedValue(q, 350);
-
-  // Emit changes
+  // Emit changes (`q` is already debounced by CardSearchBar).
   useEffect(() => {
-    onChange?.({ q: debouncedQ, useDefaultFilters, order, dir, pageLen, owned });
-  }, [debouncedQ, order, dir, pageLen, owned, onChange, useDefaultFilters]);
+    onChange?.({ q, useDefaultFilters, order, dir, pageLen, owned });
+  }, [q, order, dir, pageLen, owned, onChange, useDefaultFilters]);
 
   return (
     <div className={cn("w-full", className)}>
@@ -85,52 +80,17 @@ export default function SearchControls({
           <Field>
             <FieldLabel htmlFor="search-q">Search</FieldLabel>
             <FieldContent>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="search-q"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  placeholder={compact ? "Search..." : "Try: t:creature c:gr (flying or trample)"}
-                  className={compact ? "h-8" : undefined}
-                />
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant={owned ? "default" : "outline"}
-                      size="icon-sm"
-                      onClick={() => setOwned(!owned)}
-                      aria-label="Filter to owned cards only"
-                    >
-                      <Package />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Owned cards only</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant={useDefaultFilters ? "default" : "outline"}
-                      size="icon-sm"
-                      onClick={() => setUseDefaultFilters(!useDefaultFilters)}
-                      aria-label="Use default filters"
-                    >
-                      <Filter />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Use default filters <em className="text-muted">(lang:en exclude:extra)</em>
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <CardSearchBar
+                initialQuery={initial?.q ?? ""}
+                onQueryChange={setQ}
+                compact={compact}
+                showOwned
+                owned={owned}
+                onOwnedChange={setOwned}
+                showDefaultFilters
+                useDefaultFilters={useDefaultFilters}
+                onDefaultFiltersChange={setUseDefaultFilters}
+              />
             </FieldContent>
           </Field>
 

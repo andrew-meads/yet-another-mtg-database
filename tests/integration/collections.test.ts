@@ -70,6 +70,87 @@ describe("GET /api/collections/[id]?details=true", () => {
   });
 });
 
+describe("GET /api/collections/[id]?details=true&q=... (Scryfall search scope)", () => {
+  let collectionId: string;
+
+  beforeEach(async () => {
+    collectionId = await seedCollection(owner);
+    const goblin = await seedCard({
+      name: "Goblin Guide",
+      type_line: "Creature — Goblin",
+      colors: ["R"],
+      color_identity: ["R"],
+      cmc: 1,
+      rarity: "rare"
+    });
+    const angel = await seedCard({
+      name: "Serra Angel",
+      type_line: "Creature — Angel",
+      colors: ["W"],
+      color_identity: ["W"],
+      cmc: 5,
+      rarity: "uncommon"
+    });
+    const bolt = await seedCard({
+      name: "Lightning Bolt",
+      type_line: "Instant",
+      colors: ["R"],
+      color_identity: ["R"],
+      cmc: 1,
+      rarity: "common"
+    });
+    await seedPhysicalCard(owner, goblin.id, collectionId);
+    await seedPhysicalCard(owner, angel.id, collectionId);
+    await seedPhysicalCard(owner, bolt.id, collectionId);
+  });
+
+  const search = async (q: string) => {
+    const res = await getCollection(
+      jsonRequest(`/api/collections/${collectionId}?details=true&q=${encodeURIComponent(q)}`, "GET"),
+      ctx({ id: collectionId })
+    );
+    expect(res.status).toBe(200);
+    const { collection } = await res.json();
+    return (collection.cards as { card: { name: string } }[]).map((c) => c.card.name).sort();
+  };
+
+  it("returns all cards when q is omitted", async () => {
+    const res = await getCollection(
+      jsonRequest(`/api/collections/${collectionId}?details=true`, "GET"),
+      ctx({ id: collectionId })
+    );
+    const { collection } = await res.json();
+    expect(collection.cards).toHaveLength(3);
+  });
+
+  it("filters by type", async () => {
+    expect(await search("t:creature")).toEqual(["Goblin Guide", "Serra Angel"]);
+  });
+
+  it("filters by color", async () => {
+    expect(await search("c:r")).toEqual(["Goblin Guide", "Lightning Bolt"]);
+  });
+
+  it("filters by a combined query (type + color)", async () => {
+    expect(await search("t:creature c:r")).toEqual(["Goblin Guide"]);
+  });
+
+  it("filters by rarity comparison", async () => {
+    expect(await search("r>=rare")).toEqual(["Goblin Guide"]);
+  });
+
+  it("returns an empty list when nothing matches", async () => {
+    expect(await search("t:planeswalker")).toEqual([]);
+  });
+
+  it("does not leak cards from other collections", async () => {
+    const other = await seedCollection(owner, { name: "Other" });
+    const dragon = await seedCard({ name: "Shivan Dragon", type_line: "Creature — Dragon" });
+    await seedPhysicalCard(owner, dragon.id, other);
+    expect(await search("t:creature")).toEqual(["Goblin Guide", "Serra Angel"]);
+  });
+});
+
 describe("PATCH /api/collections/[id]", () => {
   it("updates name/description and 400s on an empty body", async () => {
     const collectionId = await seedCollection(owner);

@@ -24,6 +24,9 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 - **Scryfall-style search** — a full query parser supporting `key:value` operators
   (color, type, oracle text, mana value, set, rarity, …), comparison operators
   (`>= <= > < =`), negation, `or`, and parenthesized groups, plus configurable sorting.
+  The same search bar works on both the card-search page and inside a collection
+  (collection results are filtered server-side by the same engine), with an
+  **Advanced Search** dialog that builds the query string from form fields.
 - **Collections, decks & wishlists** — group cards into named collections of type
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
 - **Drag-and-drop organization** — move and copy cards between collections with

@@ -1,7 +1,8 @@
 import connectDB from "@/db/mongoose";
-import { CollectionModel, PhysicalCardModel, DeckModel } from "@/db/schema";
+import { CardData, CollectionModel, PhysicalCardModel, DeckModel } from "@/db/schema";
 import { CollectionWithCards } from "@/types/Collection";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
+import { parseSearchQuery } from "@/lib/search/queryBuilder";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
 
@@ -12,6 +13,9 @@ import { getAuthSession } from "@/auth";
  * Query Parameters:
  * - details: If "true", includes the collection's physical cards joined with card
  *   data and deck badges (flat list; the client groups + sorts).
+ * - q: Optional Scryfall-style search string. When present (with details=true),
+ *   only cards in this collection matching the query are returned. Uses the same
+ *   `parseSearchQuery` engine as GET /api/cards.
  */
 export async function GET(request: NextRequest, ctx: RouteContext<"/api/collections/[id]">) {
   try {
@@ -39,7 +43,24 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
     if (!includeCardDetails) return Response.json({ collection: summary });
 
     const physicalCards = await PhysicalCardModel.find({ collectionId: id, owner: userId }).lean();
-    const cards = await detailPhysicalCards(physicalCards);
+
+    // Optional Scryfall-style search, scoped to this collection. We resolve the
+    // query against CardData (intersected with the cards present here) and keep
+    // only the physical cards whose Scryfall id matches.
+    const queryString = request.nextUrl.searchParams.get("q");
+    let filteredPhysicalCards = physicalCards;
+    if (queryString && queryString.trim().length > 0) {
+      const searchQuery = parseSearchQuery(queryString);
+      const cardIds = [...new Set(physicalCards.map((c) => c.cardId))];
+      const matches = await CardData.find(
+        { $and: [searchQuery, { id: { $in: cardIds } }] },
+        { id: 1 }
+      ).lean();
+      const matchingIds = new Set(matches.map((m) => m.id));
+      filteredPhysicalCards = physicalCards.filter((c) => matchingIds.has(c.cardId));
+    }
+
+    const cards = await detailPhysicalCards(filteredPhysicalCards);
 
     const detailsCollection: CollectionWithCards = {
       ...summary,

@@ -20,7 +20,8 @@ export default function CollectionPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { addOpenEntity } = useOpenEntitiesContext();
-  const { data, isLoading, error } = useRetrieveCollectionDetails(id);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data, isLoading, error } = useRetrieveCollectionDetails(id, searchQuery);
   const deleteCollection = useDeleteCollection();
   const updateCollection = useUpdateCollection();
   const [editOpen, setEditOpen] = useState(false);
@@ -86,7 +87,7 @@ export default function CollectionPage({ params }: PageProps) {
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <CollectionTable collection={collection} />
+        <CollectionTable collection={collection} onSearchChange={setSearchQuery} />
       </div>
       <NewCollectionDialog
         open={editOpen}
