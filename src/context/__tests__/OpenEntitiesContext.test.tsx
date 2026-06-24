@@ -77,6 +77,19 @@ describe("OpenEntitiesContext", () => {
     expect(result.current.openEntities).toHaveLength(0);
   });
 
+  it("clears the collection's persisted search string on close", () => {
+    window.localStorage.setItem("collection-search-c2", JSON.stringify("t:creature"));
+    window.localStorage.setItem("collection-search-other", JSON.stringify("t:land"));
+
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    act(() => result.current.addOpenEntity({ _id: "c2", kind: "collection" } as any));
+    act(() => result.current.removeOpenEntity("c2"));
+
+    expect(window.localStorage.getItem("collection-search-c2")).toBeNull();
+    // Other collections' searches are untouched.
+    expect(window.localStorage.getItem("collection-search-other")).not.toBeNull();
+  });
+
   it("delegates setActiveCollection to the mutation", async () => {
     const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
     await act(async () => {

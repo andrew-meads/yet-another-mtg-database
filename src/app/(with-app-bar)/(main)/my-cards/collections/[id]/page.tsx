@@ -5,7 +5,8 @@ import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { useDeleteCollection } from "@/hooks/react-query/useDeleteEntity";
 import { useUpdateCollection } from "@/hooks/react-query/useUpdateCollection";
-import { getEntityIcon } from "@/lib/collectionUtils";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { getEntityIcon, collectionSearchStorageKey } from "@/lib/collectionUtils";
 import CollectionTable from "@/components/my-cards-page/collection-view/CollectionTable";
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,15 @@ interface PageProps {
 
 export default function CollectionPage({ params }: PageProps) {
   const { id } = use(params);
+  // Keyed by id so the body (and its persisted search state) remounts when the
+  // route param changes — App Router does not remount the page component itself.
+  return <CollectionPageContent key={id} id={id} />;
+}
+
+function CollectionPageContent({ id }: { id: string }) {
   const router = useRouter();
   const { addOpenEntity } = useOpenEntitiesContext();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useLocalStorage(collectionSearchStorageKey(id), "");
   const { data, isLoading, error } = useRetrieveCollectionDetails(id, searchQuery);
   const deleteCollection = useDeleteCollection();
   const updateCollection = useUpdateCollection();
@@ -87,7 +94,11 @@ export default function CollectionPage({ params }: PageProps) {
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <CollectionTable collection={collection} onSearchChange={setSearchQuery} />
+        <CollectionTable
+          collection={collection}
+          initialQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
       </div>
       <NewCollectionDialog
         open={editOpen}

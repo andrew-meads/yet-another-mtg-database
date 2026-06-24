@@ -17,6 +17,11 @@ describe("CardSearchBar", () => {
     expect(onQueryChange).toHaveBeenLastCalledWith("t:creature");
   });
 
+  it("seeds the input from initialQuery", () => {
+    render(<CardSearchBar onQueryChange={vi.fn()} initialQuery="t:creature" />);
+    expect((screen.getByPlaceholderText(/Try:/) as HTMLInputElement).value).toBe("t:creature");
+  });
+
   it("only shows owned / default-filter toggles when enabled", () => {
     const { rerender } = render(<CardSearchBar onQueryChange={vi.fn()} />);
     expect(screen.queryByLabelText("Filter to owned cards only")).not.toBeInTheDocument();

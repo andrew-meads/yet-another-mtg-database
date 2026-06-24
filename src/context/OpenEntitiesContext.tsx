@@ -7,6 +7,7 @@ import { CollectionSummary } from "@/types/Collection";
 import { OpenEntitySummary } from "@/types/Deck";
 import { createContext, useContext, useMemo, useRef } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { collectionSearchStorageKey } from "@/lib/collectionUtils";
 
 interface OpenEntityRef {
   id: string;
@@ -112,6 +113,11 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
 
   const removeOpenEntity = (id: string) => {
     setOpenRefs(openRefs.filter((ref) => ref.id !== id));
+    // Forget the closed collection's persisted search string. No-op for deck ids
+    // (the key never existed).
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(collectionSearchStorageKey(id));
+    }
     justRemovedRef.current = id;
     setTimeout(() => {
       if (justRemovedRef.current === id) justRemovedRef.current = null;

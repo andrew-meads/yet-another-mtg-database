@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 
 export interface CollectionTableProps {
   collection: CollectionWithCards;
+  /** Initial search query (persisted per collection in localStorage by the page). */
+  initialQuery?: string;
   /**
    * Emitted (debounced) when the Scryfall-style search query changes. The page
    * feeds it back into the collection-details query, so `collection.cards` is
@@ -35,14 +37,18 @@ export interface CollectionTableProps {
  * Search uses the shared Scryfall-style engine: the query is run server-side via
  * `GET /api/collections/[id]?q=...`, so the cards passed in are already filtered.
  */
-export default function CollectionTable({ collection, onSearchChange }: CollectionTableProps) {
+export default function CollectionTable({
+  collection,
+  initialQuery,
+  onSearchChange
+}: CollectionTableProps) {
   const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
     null
   );
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const [activeQuery, setActiveQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState(initialQuery ?? "");
 
   const { setSelectedCard } = useCardSelection();
   const { cardPreview } = useCardPreviewSettings();
@@ -156,7 +162,11 @@ export default function CollectionTable({ collection, onSearchChange }: Collecti
         <div className="text-muted-foreground shrink-0 text-sm">
           {rows.reduce((sum, r) => sum + r.quantity, 0)} cards
         </div>
-        <CardSearchBar onQueryChange={handleQueryChange} className="flex-1" />
+        <CardSearchBar
+          initialQuery={initialQuery}
+          onQueryChange={handleQueryChange}
+          className="flex-1"
+        />
       </div>
 
       {/* Header */}
