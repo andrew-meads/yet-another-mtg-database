@@ -5,6 +5,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import CardArtView from "@/components/CardArtView";
 import { CardTextView } from "@/components/CardTextView";
 import { useCardSelection } from "@/context/CardSelectionContext";
+import { useSearchDocs } from "@/context/SearchDocsContext";
+import SearchDocsPanel from "@/components/search/SearchDocsPanel";
 import CardLocationsView from "./CardLocationsView";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -54,7 +56,13 @@ export default function MainWorkspace({ children }: React.PropsWithChildren) {
  * @param props.children - Content to display in the mobile workspace
  */
 function MobileMainWorkspace({ children }: React.PropsWithChildren) {
-  return <div className="h-full overflow-y-auto">{children}</div>;
+  const { open: docsOpen } = useSearchDocs();
+  return (
+    <div className="flex h-full flex-col gap-2">
+      {docsOpen && <SearchDocsPanel className="max-h-[50%] shrink-0" />}
+      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+    </div>
+  );
 }
 
 /**
@@ -82,69 +90,75 @@ function MobileMainWorkspace({ children }: React.PropsWithChildren) {
  */
 function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
   const { selectedCard } = useCardSelection();
+  const { open: docsOpen } = useSearchDocs();
   const [layout, setLayout] = useLocalStorage<number[]>(STORAGE_KEY, [20, 80]);
 
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      onLayout={(sizes) => {
-        setLayout(sizes);
-      }}
-      className="rounded-md border"
-    >
-      {/* Left: Card Details - split into image (top) and text (bottom) */}
-      <ResizablePanel defaultSize={layout[0]} minSize={15} collapsible>
-        {selectedCard ? (
-          <ResizablePanelGroup direction="vertical">
-            {/* Top: Card Image */}
-            <ResizablePanel defaultSize={45} minSize={30} className="overflow-hidden p-4">
-              <div className="size-full">
-                <CardArtView
-                  card={selectedCard}
-                  variant="large"
-                  flippable={true}
-                  draggable={true}
-                  width="100%"
-                  height="100%"
-                  priority
-                />
+    <div className="flex size-full gap-2">
+      <ResizablePanelGroup
+        direction="horizontal"
+        onLayout={(sizes) => {
+          setLayout(sizes);
+        }}
+        className="min-w-0 flex-1 rounded-md border"
+      >
+        {/* Left: Card Details - split into image (top) and text (bottom) */}
+        <ResizablePanel defaultSize={layout[0]} minSize={15} collapsible>
+          {selectedCard ? (
+            <ResizablePanelGroup direction="vertical">
+              {/* Top: Card Image */}
+              <ResizablePanel defaultSize={45} minSize={30} className="overflow-hidden p-4">
+                <div className="size-full">
+                  <CardArtView
+                    card={selectedCard}
+                    variant="large"
+                    flippable={true}
+                    draggable={true}
+                    width="100%"
+                    height="100%"
+                    priority
+                  />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Middle: Card locations */}
+              <ResizablePanel defaultSize={20} minSize={10}>
+                <div className="h-full overflow-y-auto p-4">
+                  <CardLocationsView cardName={selectedCard?.name} />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Bottom: Card Text */}
+              <ResizablePanel defaultSize={35} minSize={30}>
+                <div className="h-full overflow-y-auto p-4">
+                  <CardTextView card={selectedCard} />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="text-muted-foreground grid size-full place-items-center p-4">
+              <div className="space-y-2 text-center">
+                <div className="text-lg font-semibold">Card Details</div>
+                <div className="text-sm">Select a card to see its art and rules text</div>
               </div>
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Middle: Card locations */}
-            <ResizablePanel defaultSize={20} minSize={10}>
-              <div className="h-full overflow-y-auto p-4">
-                <CardLocationsView cardName={selectedCard?.name} />
-              </div>
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Bottom: Card Text */}
-            <ResizablePanel defaultSize={35} minSize={30}>
-              <div className="h-full overflow-y-auto p-4">
-                <CardTextView card={selectedCard} />
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        ) : (
-          <div className="text-muted-foreground grid size-full place-items-center p-4">
-            <div className="space-y-2 text-center">
-              <div className="text-lg font-semibold">Card Details</div>
-              <div className="text-sm">Select a card to see its art and rules text</div>
             </div>
-          </div>
-        )}
-      </ResizablePanel>
+          )}
+        </ResizablePanel>
 
-      <ResizableHandle withHandle />
+        <ResizableHandle withHandle />
 
-      {/* Right: Page content (search or other) */}
-      <ResizablePanel defaultSize={layout[1]} minSize={30} className="p-2">
-        {children}
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        {/* Right: Page content (search or other) */}
+        <ResizablePanel defaultSize={layout[1]} minSize={30} className="p-2">
+          {children}
+        </ResizablePanel>
+      </ResizablePanelGroup>
+
+      {/* Docked search-syntax docs panel — reflows the workspace, never overlays it */}
+      {docsOpen && <SearchDocsPanel className="w-96 max-w-[90vw] shrink-0" />}
+    </div>
   );
 }

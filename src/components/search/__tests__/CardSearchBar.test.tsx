@@ -1,6 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import CardSearchBar from "@/components/search/CardSearchBar";
+import SearchDocsPanel from "@/components/search/SearchDocsPanel";
+import { SearchDocsProvider, useSearchDocs } from "@/context/SearchDocsContext";
+
+/**
+ * Mirrors how MainWorkspace hosts the docked docs panel: the bar and the panel
+ * share a SearchDocsProvider, and the panel only mounts while `open`.
+ */
+function DocsHost(props: React.ComponentProps<typeof CardSearchBar>) {
+  const { open } = useSearchDocs();
+  return (
+    <>
+      <CardSearchBar {...props} />
+      {open && <SearchDocsPanel />}
+    </>
+  );
+}
+
+function SearchBarWithDocs(props: React.ComponentProps<typeof CardSearchBar>) {
+  return (
+    <SearchDocsProvider>
+      <DocsHost {...props} />
+    </SearchDocsProvider>
+  );
+}
 
 describe("CardSearchBar", () => {
   beforeEach(() => vi.useFakeTimers());
@@ -55,6 +79,36 @@ describe("CardSearchBar", () => {
 
     act(() => vi.advanceTimersByTime(350));
     expect(onQueryChange).toHaveBeenLastCalledWith("");
+  });
+
+  it("toggles the docked docs panel from the Help button", () => {
+    render(<SearchBarWithDocs onQueryChange={vi.fn()} />);
+
+    expect(screen.queryByText("Search syntax")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Search help"));
+    expect(screen.getByText("Search syntax")).toBeInTheDocument();
+    // Clicking Help again closes it.
+    fireEvent.click(screen.getByLabelText("Search help"));
+    expect(screen.queryByText("Search syntax")).not.toBeInTheDocument();
+  });
+
+  it("appends a clicked docs example to the existing query without closing the panel", () => {
+    const onQueryChange = vi.fn();
+    render(
+      <SearchBarWithDocs onQueryChange={onQueryChange} initialQuery="t:creature" debounceMs={300} />
+    );
+
+    fireEvent.click(screen.getByLabelText("Search help"));
+    fireEvent.click(screen.getByRole("button", { name: "mv>=5" }));
+
+    const input = screen.getByPlaceholderText(/Try:/) as HTMLInputElement;
+    // Appended (space-separated), not replaced.
+    expect(input.value).toBe("t:creature mv>=5");
+    // The panel stays open so users can compose from several examples.
+    expect(screen.getByText("Search syntax")).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(350));
+    expect(onQueryChange).toHaveBeenLastCalledWith("t:creature mv>=5");
   });
 
   it("builds a query string from the Advanced dialog and writes it into the bar", async () => {

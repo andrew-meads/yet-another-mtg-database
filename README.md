@@ -26,7 +26,11 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   (`>= <= > < =`), negation, `or`, and parenthesized groups, plus configurable sorting.
   The same search bar works on both the card-search page and inside a collection
   (collection results are filtered server-side by the same engine), with an
-  **Advanced Search** dialog that builds the query string from form fields.
+  **Advanced Search** dialog that builds the query string from form fields and a
+  **Search help** panel (the `?` button) that docks beside the workspace —
+  reflowing the page instead of overlaying it, so the reference stays visible
+  while you type. It documents every operator with click-to-add examples that
+  append to your query.
 - **Collections, decks & wishlists** — group cards into named collections of type
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
 - **Drag-and-drop organization** — move and copy cards between collections with

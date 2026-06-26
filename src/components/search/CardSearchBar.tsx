@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { Package, Filter, Wand2, X } from "lucide-react";
+import { Package, Filter, Wand2, X, CircleHelp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AdvancedSearchDialog from "@/components/search/AdvancedSearchDialog";
+import { useSearchDocs } from "@/context/SearchDocsContext";
 
 export interface CardSearchBarProps {
   /** Initial text query. */
@@ -49,12 +50,20 @@ export default function CardSearchBar({
 }: CardSearchBarProps) {
   const [q, setQ] = useState(initialQuery ?? "");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const { open: docsOpen, toggle: toggleDocs, registerInserter } = useSearchDocs();
   const debouncedQ = useDebouncedValue(q, debounceMs);
 
   useEffect(() => {
     onQueryChange(debouncedQ);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQ]);
+
+  // Route docs example clicks into this bar by appending (space-separated) so
+  // users can compose a query from several examples without losing prior terms.
+  useEffect(() => {
+    registerInserter((text) => setQ((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text)));
+    return () => registerInserter(null);
+  }, [registerInserter]);
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -81,6 +90,23 @@ export default function CardSearchBar({
         </TooltipTrigger>
         <TooltipContent>
           <p>Search builder</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant={docsOpen ? "default" : "outline"}
+            size="icon-sm"
+            onClick={toggleDocs}
+            aria-label="Search help"
+          >
+            <CircleHelp />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Search help</p>
         </TooltipContent>
       </Tooltip>
 
