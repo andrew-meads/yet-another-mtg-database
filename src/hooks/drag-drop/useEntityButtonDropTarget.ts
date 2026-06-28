@@ -1,6 +1,6 @@
 import { useDrop } from "react-dnd";
 import React from "react";
-import { AnyDragItem, NEW_CARD, PHYSICAL_CARD } from "./Types";
+import { AnyDragItem, isEphemeralItem, NEW_CARD, PHYSICAL_CARD, PhysicalCardDragItem } from "./Types";
 import { OpenEntitySummary } from "@/types/Deck";
 import { useDropDispatch } from "./useDropDispatch";
 
@@ -12,6 +12,11 @@ export function useEntityButtonDropTarget(entity: OpenEntitySummary) {
   const dispatch = useDropDispatch();
   const [{ isOver }, dropRef] = useDrop<AnyDragItem, void, { isOver: boolean }>({
     accept: [NEW_CARD, PHYSICAL_CARD],
+    // Ephemeral cards may only return to their own deck — never a collection or
+    // a different deck button.
+    canDrop: (item) =>
+      !isEphemeralItem(item) ||
+      (entity.kind === "deck" && entity._id === (item as PhysicalCardDragItem).sourceDeckId),
     drop: (item, monitor) => {
       if (monitor.didDrop()) return;
       void dispatch(item, { kind: "entity-button", entity });

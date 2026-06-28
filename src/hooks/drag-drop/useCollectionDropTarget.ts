@@ -1,6 +1,6 @@
 import { useDrop } from "react-dnd";
 import React from "react";
-import { AnyDragItem, NEW_CARD, PHYSICAL_CARD } from "./Types";
+import { AnyDragItem, isEphemeralItem, NEW_CARD, PHYSICAL_CARD } from "./Types";
 import { useDropDispatch } from "./useDropDispatch";
 
 /**
@@ -17,7 +17,8 @@ export function useCollectionDropTarget(collectionId: string, allowDrop: boolean
     { isOver: boolean; canDrop: boolean }
   >({
     accept: [NEW_CARD, PHYSICAL_CARD],
-    canDrop: () => allowDrop,
+    // Ephemeral cards can never enter a collection.
+    canDrop: (item) => allowDrop && !isEphemeralItem(item),
     drop: (item, monitor) => {
       if (monitor.didDrop()) return;
       void dispatch(item, { kind: "collection", collectionId });

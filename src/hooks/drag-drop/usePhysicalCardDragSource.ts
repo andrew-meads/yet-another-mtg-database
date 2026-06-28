@@ -9,11 +9,13 @@ interface UsePhysicalCardDragSourceProps {
   card: MtgCard;
   /** Full card data for every card in the dragged run (deck-column drags only). */
   cards?: MtgCard[];
-  sourceCollectionId: string;
+  sourceCollectionId: string | null;
   sourceDeckId?: string | null;
   /** Human-readable source names for the drag-layer membership badges. */
   sourceCollectionName?: string;
   sourceDeckName?: string;
+  /** True when the dragged card(s) are ephemeral (deck-only). */
+  isEphemeral?: boolean;
   origin: PhysicalCardDragOrigin;
   canDrag?: boolean;
   hideDefaultPreview?: boolean;
@@ -32,6 +34,7 @@ export function usePhysicalCardDragSource({
   sourceDeckId,
   sourceCollectionName,
   sourceDeckName,
+  isEphemeral,
   origin,
   canDrag = true,
   hideDefaultPreview = true,
@@ -51,6 +54,7 @@ export function usePhysicalCardDragSource({
           sourceDeckId,
           sourceCollectionName,
           sourceDeckName,
+          isEphemeral,
           origin
         })),
       canDrag,
@@ -67,6 +71,7 @@ export function usePhysicalCardDragSource({
       sourceDeckId,
       sourceCollectionName,
       sourceDeckName,
+      isEphemeral,
       origin,
       canDrag
     ]

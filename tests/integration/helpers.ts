@@ -92,6 +92,17 @@ export async function seedPhysicalCard(
   return pc._id.toString();
 }
 
+/** Create an ephemeral (deck-only, no collection) physical card. */
+export async function seedEphemeralCard(owner: string, cardId: string, deckId: string) {
+  const pc = await PhysicalCardModel.create({
+    owner: new Types.ObjectId(owner),
+    cardId,
+    collectionId: null,
+    deckId: new Types.ObjectId(deckId)
+  });
+  return pc._id.toString();
+}
+
 /** Construct a NextRequest with an optional JSON body. */
 export function jsonRequest(url: string, method: string, body?: unknown): NextRequest {
   const init: { method: string; body?: string; headers?: Record<string, string> } = { method };

@@ -7,7 +7,8 @@ import { getAuthSession } from "@/auth";
 
 interface CreatePhysicalCardBody {
   cardId: string;
-  collectionId: string;
+  /** Owning collection. Omit (or null) to create an ephemeral, deck-only card. */
+  collectionId?: string | null;
   notes?: string;
   tags?: string[];
   /** If set, the created card(s) are also assigned to this deck. */
@@ -21,8 +22,13 @@ interface CreatePhysicalCardBody {
 
 /**
  * POST /api/physical-cards
- * Creates one or more physical cards in a collection, optionally placing them in
- * a deck. Powers search-add, scan-add, and grouped-row increment.
+ * Creates one or more physical cards, optionally placing them in a deck. Powers
+ * search-add, scan-add, grouped-row increment, and ephemeral (deck-only) adds.
+ *
+ * Two modes:
+ *  - collectionId given → cards belong to that collection (deck optional).
+ *  - collectionId omitted → ephemeral cards (collectionId null); deckId required,
+ *    since an ephemeral card with no deck would be unreachable.
  *
  * Write order: create the cards (with deckId back-ref) first, then splice them
  * into the deck arrangement — so a mid-failure is reconciled on the next deck read.
@@ -38,16 +44,26 @@ export async function POST(request: NextRequest) {
     const { cardId, collectionId, notes, tags, deckId, sectionId, columnId, index } = body;
     const quantity = Math.max(1, Math.floor(body.quantity ?? 1));
 
-    if (!cardId || !collectionId) {
-      return Response.json({ error: "cardId and collectionId are required" }, { status: 400 });
+    if (!cardId) {
+      return Response.json({ error: "cardId is required" }, { status: 400 });
     }
 
-    const collection = await CollectionModel.findOne(
-      { _id: collectionId, owner: userId },
-      { _id: 1 }
-    ).lean();
-    if (!collection) {
-      return Response.json({ error: "Collection not found" }, { status: 404 });
+    const isEphemeral = !collectionId;
+    if (isEphemeral && !deckId) {
+      return Response.json(
+        { error: "deckId is required when creating an ephemeral card (no collectionId)" },
+        { status: 400 }
+      );
+    }
+
+    if (!isEphemeral) {
+      const collection = await CollectionModel.findOne(
+        { _id: collectionId, owner: userId },
+        { _id: 1 }
+      ).lean();
+      if (!collection) {
+        return Response.json({ error: "Collection not found" }, { status: 404 });
+      }
     }
 
     let deck = null;
@@ -64,7 +80,7 @@ export async function POST(request: NextRequest) {
       Array.from({ length: quantity }, () => ({
         owner: userId,
         cardId,
-        collectionId,
+        collectionId: collectionId ?? null,
         deckId: deckId ?? null,
         notes,
         tags

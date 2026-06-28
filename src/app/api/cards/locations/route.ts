@@ -35,10 +35,12 @@ export async function GET(request: NextRequest) {
 
     const detailed = await detailPhysicalCards(physicalCards);
 
-    // Group by collection.
+    // Group by collection. Ephemeral (deck-only) cards have no collection, so
+    // they don't appear in this collection-location view.
     const byCollection = new Map<string, CardLocation>();
     for (const card of detailed) {
       const key = card.collectionId;
+      if (!key) continue;
       if (!byCollection.has(key)) {
         byCollection.set(key, {
           collectionId: key,

@@ -8,6 +8,7 @@ import {
   seedCard,
   seedCollection,
   seedDeck,
+  seedEphemeralCard,
   seedPhysicalCard,
   seedUser,
   setTestUser
@@ -120,6 +121,25 @@ describe("POST /api/decks/[id]/cards", () => {
     expect(fresh!.sections[0].columns[0].cards).toHaveLength(0);
   });
 
+  it("remove deletes an ephemeral card entirely (no collection to fall back to)", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const pcId = await seedEphemeralCard(owner, cardId, deckId);
+    deck.sections[0].columns[0].cards.push(pcId as never);
+    deck.markModified("sections");
+    await deck.save();
+
+    const res = await deckCardsOp(
+      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "remove", physicalCardId: pcId }),
+      ctx({ id: deckId })
+    );
+    expect(res.status).toBe(200);
+
+    expect(await PhysicalCardModel.findById(pcId)).toBeNull();
+    const fresh = await DeckModel.findById(deckId).lean();
+    expect(fresh!.sections[0].columns[0].cards).toHaveLength(0);
+  });
+
   it("404s for a physical card the user does not own", async () => {
     const deck = await seedDeck(owner);
     const res = await deckCardsOp(
@@ -130,6 +150,28 @@ describe("POST /api/decks/[id]/cards", () => {
       ctx({ id: deck._id.toString() })
     );
     expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /api/decks/[id]?details=true (ephemeral cards)", () => {
+  it("returns ephemeral cards flagged isEphemeral with no collection name", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const pcId = await seedEphemeralCard(owner, cardId, deckId);
+
+    const res = await getDeck(
+      jsonRequest(`/api/decks/${deckId}?details=true`, "GET"),
+      ctx({ id: deckId })
+    );
+    expect(res.status).toBe(200);
+    const { deck: detailed } = await res.json();
+    const card = detailed.sections
+      .flatMap((s: any) => s.columns.flatMap((c: any) => c.cards))
+      .find((c: any) => c._id === pcId);
+    expect(card).toBeDefined();
+    expect(card.isEphemeral).toBe(true);
+    expect(card.collectionId).toBeNull();
+    expect(card.collectionName).toBeUndefined();
   });
 });
 
@@ -148,5 +190,22 @@ describe("DELETE /api/decks/[id]", () => {
     const pc = await PhysicalCardModel.findById(pcId).lean();
     expect(pc).not.toBeNull();
     expect(pc!.deckId).toBeNull();
+  });
+
+  it("deletes ephemeral cards along with the deck, but keeps collection-backed ones", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const keepId = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    const ephemeralId = await seedEphemeralCard(owner, cardId, deckId);
+
+    const res = await deleteDeck(
+      jsonRequest(`/api/decks/${deckId}`, "DELETE"),
+      ctx({ id: deckId })
+    );
+    expect(res.status).toBe(204);
+    expect(await PhysicalCardModel.findById(ephemeralId)).toBeNull();
+    const kept = await PhysicalCardModel.findById(keepId).lean();
+    expect(kept).not.toBeNull();
+    expect(kept!.deckId).toBeNull();
   });
 });

@@ -12,7 +12,8 @@ import { SetSvg } from "@/types/SetSvg";
 interface PhysicalCardDoc {
   owner: Types.ObjectId;
   cardId: string;
-  collectionId: Types.ObjectId;
+  /** Owning collection, or null for an ephemeral (deck-only) card. */
+  collectionId?: Types.ObjectId | null;
   deckId?: Types.ObjectId | null;
   notes?: string;
   tags?: string[];
@@ -136,13 +137,21 @@ const cardSchema = new Schema<MtgCard>(
   { strict: true, collection: "cards" }
 );
 
-// A single physical card copy. Belongs to exactly one collection and optionally
-// one deck. These back-references are the source of truth for membership.
+// A single physical card copy. Belongs to at most one collection and optionally
+// one deck. These back-references are the source of truth for membership. A card
+// with collectionId === null is "ephemeral": it lives only inside its deck and is
+// deleted when removed from it.
 const physicalCardSchema = new Schema<PhysicalCardDoc>(
   {
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     cardId: { type: String, required: true },
-    collectionId: { type: Schema.Types.ObjectId, ref: "Collection", required: true, index: true },
+    collectionId: {
+      type: Schema.Types.ObjectId,
+      ref: "Collection",
+      required: false,
+      default: null,
+      index: true
+    },
     deckId: { type: Schema.Types.ObjectId, ref: "Deck", default: null, index: true },
     notes: String,
     tags: [String]

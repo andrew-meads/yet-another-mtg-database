@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeckColumn from "./DeckColumn";
+import AddBasicLandButton from "./AddBasicLandButton";
 import { useUpdateSection, useDeleteSection } from "@/hooks/react-query/useDeckSections";
 import { useAddColumn } from "@/hooks/react-query/useDeckColumns";
 import { useDeckNewColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
@@ -75,6 +76,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
           <Plus className="size-4" />
           Column
         </Button>
+        <AddBasicLandButton deckId={deckId} sectionId={section._id} />
         <Button
           variant="ghost"
           size="icon"

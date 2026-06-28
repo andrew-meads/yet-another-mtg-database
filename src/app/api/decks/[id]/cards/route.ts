@@ -18,8 +18,9 @@ interface DeckCardsBody {
  *
  * - "place"/"move": assign the card to this deck (clearing any prior deck) and
  *   splice it into the target section/column at `index`.
- * - "remove": clear the card's deck assignment and pull it from all deck arrays.
- *   The card stays in its collection.
+ * - "remove": pull the card from all deck arrays. A normal card keeps its
+ *   collection (deck assignment cleared); an ephemeral card (no collection) is
+ *   deleted entirely, since it would otherwise be unreachable.
  *
  * Write order: update the deckId back-ref first, then fix up the arrays.
  */
@@ -40,9 +41,14 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[
     }
 
     if (op === "remove") {
-      card.deckId = null;
-      await card.save();
       await pullCardFromAllDecks(userId, physicalCardId);
+      if (!card.collectionId) {
+        // Ephemeral card: it has no collection to fall back to, so delete it.
+        await PhysicalCardModel.deleteOne({ _id: physicalCardId, owner: userId });
+      } else {
+        card.deckId = null;
+        await card.save();
+      }
       return Response.json({ ok: true });
     }
 
