@@ -79,6 +79,8 @@ Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `G
 
 Scryfall requires a custom `User-Agent` and an `Accept` header on every API request, and a max of 10 requests/second — all Scryfall `fetch`es go through `scryfallFetch` / `SCRYFALL_HEADERS` in `src/lib/scryfall.ts`, which attaches the headers and rate-limits starts to <= 10/s via an in-process serialized queue (relies on the server being a long-lived singleton; not coordinated across instances).
 
+Scryfall's image CDN (`cards.scryfall.io`) **also** rejects requests sent with an HTTP-library-default `User-Agent` (`400 { subcode: "generic_user_agent" }`). Next's `<Image>` optimizer fetches those images server-side via the global `fetch` (undici), and Next exposes no way to set a `User-Agent` on that request. So **`src/instrumentation.ts`** (the Next server-boot hook) calls `installDefaultUserAgentFetch()` from **`src/lib/server/defaultUserAgent.ts`**, which wraps `globalThis.fetch` to attach a default `User-Agent` (the same one as `SCRYFALL_HEADERS`) **only when the caller didn't set one** — so `scryfallFetch` and any explicit-UA caller pass through untouched. Without this, optimized Scryfall card images 400 with `"url" parameter is valid but upstream response is invalid`. Note `instrumentation.ts` only runs `register()` at server **boot**, so a running dev server must be restarted to pick it up.
+
 ## Architecture
 
 ### Data layer (`src/db/`, `src/types/`)

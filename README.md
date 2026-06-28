@@ -169,7 +169,9 @@ src/
 ├── hooks/        # TanStack Query hooks and react-dnd drag/drop hooks
 ├── lib/          # Search query parser/builder, sort config, utilities
 ├── scripts/      # CLI scripts (init-db, whitelist-user) run via tsx
-└── types/        # TypeScript interfaces — source of truth for document shapes
+├── types/        # TypeScript interfaces — source of truth for document shapes
+└── instrumentation.ts  # Server boot hook: gives the global fetch a custom User-Agent
+                        # so Next's image optimizer can load Scryfall card images
 ```
 
 See [`CLAUDE.md`](CLAUDE.md) for a deeper tour of the architecture (search engine, auth,
