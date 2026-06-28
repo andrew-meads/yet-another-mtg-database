@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { AnyDragItem, DropTarget } from "./Types";
+import { AnyDragItem, DropTarget, PhysicalCardDragItem } from "./Types";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useUpdatePhysicalCard } from "@/hooks/react-query/useUpdatePhysicalCard";
@@ -33,6 +33,12 @@ export function useDropDispatch() {
 
   return useCallback(
     async (item: AnyDragItem, target: DropTarget) => {
+      // Ephemeral (deck-only) cards may only be reordered within their own deck.
+      // Reject before resolving the target so we never create empty columns/sections.
+      if (item.kind === "physical" && item.isEphemeral && !ephemeralDropAllowed(item, target)) {
+        return;
+      }
+
       const concrete = await resolveTarget(target, addColumn, addSection);
       if (!concrete) return;
 
@@ -102,6 +108,23 @@ export function useDropDispatch() {
     },
     [activeCollection, createCard, updateCard, deckCardOp, addColumn, addSection]
   );
+}
+
+/**
+ * An ephemeral card may only be dropped back onto its own deck (any column/section,
+ * including new ones). Dropping onto a collection or a different deck is a no-op.
+ */
+export function ephemeralDropAllowed(item: PhysicalCardDragItem, target: DropTarget): boolean {
+  switch (target.kind) {
+    case "collection":
+      return false;
+    case "entity-button":
+      return target.entity.kind === "deck" && target.entity._id === item.sourceDeckId;
+    case "deck-column":
+    case "deck-new-column":
+    case "deck-new-section":
+      return target.deckId === item.sourceDeckId;
+  }
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

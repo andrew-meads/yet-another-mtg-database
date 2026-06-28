@@ -16,7 +16,7 @@ import { useDragLayer } from "react-dnd";
 import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
 import { useDeletePhysicalCard } from "@/hooks/react-query/useDeletePhysicalCard";
 import { useDeleteColumn } from "@/hooks/react-query/useDeckColumns";
-import { StickyNote, Tag, Library, Trash2, Layers } from "lucide-react";
+import { StickyNote, Tag, Library, Trash2, Layers, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ContextMenu,
@@ -78,6 +78,7 @@ function DeckCardImage({
       sourceDeckId: deckId,
       sourceCollectionName: card.collectionName,
       sourceDeckName: deckName,
+      isEphemeral: card.isEphemeral,
       origin: { type: "deck", sectionId, columnId }
     };
   }, [altRef, physicalCardIds, cards, card, deckId, deckName, sectionId, columnId]);
@@ -90,6 +91,7 @@ function DeckCardImage({
     sourceDeckId: deckId,
     sourceCollectionName: card.collectionName,
     sourceDeckName: deckName,
+    isEphemeral: card.isEphemeral,
     origin: { type: "deck", sectionId, columnId },
     getItem
   });
@@ -104,6 +106,7 @@ function DeckCardImage({
         <div
           ref={dragRef as unknown as React.Ref<HTMLDivElement>}
           data-testid={`deck-card-${card._id}`}
+          data-ephemeral={card.isEphemeral ? "true" : undefined}
           className={cn(
             "relative shrink-0 cursor-grab transition-all duration-200 select-none active:cursor-grabbing",
             isBeingDragged ? "blur-[1px] grayscale" : "hover:brightness-125"
@@ -124,6 +127,20 @@ function DeckCardImage({
             width={CARD_WIDTH}
             height={CARD_HEIGHT}
           />
+
+          {/* Ephemeral badge: this card exists only in this deck (no collection). */}
+          {card.isEphemeral && (
+            <div className="absolute top-1 right-1" data-testid={`ephemeral-badge-${card._id}`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 rounded bg-black/70 px-1 py-0.5">
+                    <Sparkles className="size-3 shrink-0 text-white" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Ephemeral — exists only in this deck</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
 
           {/* Collection badge (which collection this physical card belongs to) */}
           {card.collectionName && (
@@ -172,16 +189,20 @@ function DeckCardImage({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
+        {/* Removing an ephemeral card deletes it entirely (it has no collection
+            to fall back to), so a single action serves both purposes. */}
         <ContextMenuItem
           onClick={() => deckCardOp.mutate({ deckId, op: "remove", physicalCardId: card._id })}
         >
           <Layers className="mr-2 size-4" />
           Remove from deck
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => deleteCard.mutate(card._id)}>
-          <Trash2 className="mr-2 size-4" />
-          Delete card
-        </ContextMenuItem>
+        {!card.isEphemeral && (
+          <ContextMenuItem onClick={() => deleteCard.mutate(card._id)}>
+            <Trash2 className="mr-2 size-4" />
+            Delete card
+          </ContextMenuItem>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );

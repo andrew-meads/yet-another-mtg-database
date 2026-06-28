@@ -35,6 +35,10 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
 - **Drag-and-drop organization** — move and copy cards between collections with
   react-dnd.
+- **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
+  straight into a deck from a per-section "Add land" picker, without first adding them
+  to a collection. These "ephemeral" copies live only in the deck and are removed from
+  existence when taken out of it; they can only be reordered within their own deck.
 - **Camera card scanning** — capture one or more physical cards (or upload an image)
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from

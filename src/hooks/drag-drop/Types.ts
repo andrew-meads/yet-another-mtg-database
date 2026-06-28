@@ -30,8 +30,11 @@ export interface PhysicalCardDragItem {
   /** Full card data for every card in the dragged run, in order. Present when
    *  dragging from a deck column; absent for collection-row drags. */
   cards?: MtgCard[];
-  sourceCollectionId: string;
+  /** Owning collection of the dragged copies, or null when ephemeral (deck-only). */
+  sourceCollectionId: string | null;
   sourceDeckId?: string | null;
+  /** True when the dragged card(s) are ephemeral: only same-deck reorder is allowed. */
+  isEphemeral?: boolean;
   /** Human-readable source names for the drag-layer membership badges. */
   sourceCollectionName?: string;
   sourceDeckName?: string;
@@ -39,6 +42,11 @@ export interface PhysicalCardDragItem {
 }
 
 export type AnyDragItem = NewCardDragItem | PhysicalCardDragItem;
+
+/** True when the dragged item is an ephemeral (deck-only) physical card. */
+export function isEphemeralItem(item: AnyDragItem | null | undefined): boolean {
+  return !!item && item.kind === "physical" && !!item.isEphemeral;
+}
 
 /** A concrete drop destination handed to the dispatcher. */
 export type DropTarget =

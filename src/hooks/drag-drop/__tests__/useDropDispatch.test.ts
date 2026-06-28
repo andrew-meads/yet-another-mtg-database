@@ -205,4 +205,45 @@ describe("useDropDispatch", () => {
       expect.objectContaining({ deckId: "d1", columnId: "new-col", op: "place" })
     );
   });
+
+  // --- Ephemeral (deck-only) cards ---
+  const ephemeral = (over: Record<string, unknown> = {}) =>
+    physical({ isEphemeral: true, sourceCollectionId: null, sourceDeckId: "d1", ...over });
+
+  it("ephemeral → collection is a no-op", async () => {
+    await dispatcher()(ephemeral(), { kind: "collection", collectionId: "c2" } as never);
+    expect(m.update).not.toHaveBeenCalled();
+    expect(m.deck).not.toHaveBeenCalled();
+  });
+
+  it("ephemeral → a different deck is a no-op (no column/section created)", async () => {
+    await dispatcher()(ephemeral(), {
+      kind: "deck-new-column",
+      deckId: "d2",
+      sectionId: "s2"
+    } as never);
+    expect(m.addCol).not.toHaveBeenCalled();
+    expect(m.deck).not.toHaveBeenCalled();
+  });
+
+  it("ephemeral → its own deck reorders (place is called)", async () => {
+    await dispatcher()(ephemeral(), {
+      kind: "deck-column",
+      deckId: "d1",
+      sectionId: "s1",
+      columnId: "col1",
+      index: 2
+    } as never);
+    expect(m.deck).toHaveBeenCalledWith(
+      expect.objectContaining({ deckId: "d1", op: "place", physicalCardId: "p1", index: 2 })
+    );
+  });
+
+  it("ephemeral → a different deck via its app-bar button is a no-op", async () => {
+    await dispatcher()(ephemeral(), {
+      kind: "entity-button",
+      entity: { _id: "d2", kind: "deck" }
+    } as never);
+    expect(m.deck).not.toHaveBeenCalled();
+  });
 });

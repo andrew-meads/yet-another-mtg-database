@@ -80,6 +80,37 @@ describe("POST /api/physical-cards", () => {
     expect(fresh!.sections[0].columns[0].cards).toHaveLength(2);
     expect(await PhysicalCardModel.countDocuments({ deckId: deck._id })).toBe(2);
   });
+
+  it("creates ephemeral (no-collection) cards and places them in a deck", async () => {
+    const deck = await seedDeck(owner);
+    const sectionId = deck.sections[0]._id!.toString();
+    const columnId = deck.sections[0].columns[0]._id!.toString();
+
+    const res = await createPhysicalCards(
+      jsonRequest("/api/physical-cards", "POST", {
+        cardId,
+        deckId: deck._id.toString(),
+        sectionId,
+        columnId,
+        quantity: 2
+      })
+    );
+    expect(res.status).toBe(201);
+
+    const created = await PhysicalCardModel.find({ deckId: deck._id }).lean();
+    expect(created).toHaveLength(2);
+    expect(created.every((c) => c.collectionId == null)).toBe(true);
+    const fresh = await DeckModel.findById(deck._id).lean();
+    expect(fresh!.sections[0].columns[0].cards).toHaveLength(2);
+  });
+
+  it("400s when creating an ephemeral card without a deck", async () => {
+    const res = await createPhysicalCards(
+      jsonRequest("/api/physical-cards", "POST", { cardId })
+    );
+    expect(res.status).toBe(400);
+    expect(await PhysicalCardModel.countDocuments()).toBe(0);
+  });
 });
 
 describe("PATCH /api/physical-cards/[id]", () => {

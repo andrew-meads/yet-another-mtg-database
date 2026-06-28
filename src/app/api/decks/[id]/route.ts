@@ -125,7 +125,9 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
 
 /**
  * DELETE /api/decks/[id]
- * Deletes a deck. Its cards stay in their collections (deckId cleared first).
+ * Deletes a deck. Collection-backed cards stay in their collections (deckId
+ * cleared first); ephemeral (no-collection) cards are deleted with the deck,
+ * since they have no collection to fall back to.
  */
 export async function DELETE(_request: NextRequest, ctx: RouteContext<"/api/decks/[id]">) {
   try {
@@ -140,7 +142,17 @@ export async function DELETE(_request: NextRequest, ctx: RouteContext<"/api/deck
       return Response.json({ error: "Deck not found" }, { status: 404 });
     }
 
-    await PhysicalCardModel.updateMany({ deckId: id, owner: userId }, { deckId: null });
+    // Ephemeral cards (no collection) cannot survive without a deck — delete them.
+    await PhysicalCardModel.deleteMany({
+      deckId: id,
+      owner: userId,
+      collectionId: null
+    });
+    // Collection-backed cards just lose their deck assignment.
+    await PhysicalCardModel.updateMany(
+      { deckId: id, owner: userId, collectionId: { $ne: null } },
+      { deckId: null }
+    );
     await DeckModel.deleteOne({ _id: id, owner: userId });
 
     return new Response(null, { status: 204 });

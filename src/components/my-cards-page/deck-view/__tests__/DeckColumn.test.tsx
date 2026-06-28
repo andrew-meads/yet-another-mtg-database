@@ -55,16 +55,21 @@ import DeckColumn from "@/components/my-cards-page/deck-view/DeckColumn";
 import type { DeckColumn as DeckColumnData } from "@/types/Deck";
 import type { DetailedPhysicalCard } from "@/types/PhysicalCard";
 
-function makeCard(id: string): DetailedPhysicalCard {
+function makeCard(id: string, ephemeral = false): DetailedPhysicalCard {
   return {
     _id: id,
     card: { id: `card-${id}`, name: id } as never,
-    collectionId: "coll-1"
+    collectionId: ephemeral ? null : "coll-1",
+    isEphemeral: ephemeral || undefined
   };
 }
 
 function makeColumn(ids: string[]): DeckColumnData {
-  return { _id: "col-1", cards: ids.map(makeCard) };
+  return { _id: "col-1", cards: ids.map((id) => makeCard(id)) };
+}
+
+function makeEphemeralColumn(ids: string[]): DeckColumnData {
+  return { _id: "col-1", cards: ids.map((id) => makeCard(id, true)) };
 }
 
 beforeEach(() => {
@@ -166,5 +171,33 @@ describe("DeckColumn Alt-key single-card drag", () => {
 
     const item = h.dragCalls[1].getItem?.();
     expect(item?.physicalCardIds).toEqual(["p1", "p2"]);
+  });
+});
+
+describe("DeckColumn ephemeral cards", () => {
+  it("renders the ephemeral badge and marks the drag item ephemeral", () => {
+    const { queryByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeEphemeralColumn(["e0"])
+      })
+    );
+
+    expect(queryByTestId("ephemeral-badge-e0")).not.toBeNull();
+    const item = h.dragCalls[0].getItem?.();
+    expect(item?.isEphemeral).toBe(true);
+    expect(item?.sourceCollectionId).toBeNull();
+  });
+
+  it("does not render the ephemeral badge for a collection-backed card", () => {
+    const { queryByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeColumn(["p0"])
+      })
+    );
+    expect(queryByTestId("ephemeral-badge-p0")).toBeNull();
   });
 });

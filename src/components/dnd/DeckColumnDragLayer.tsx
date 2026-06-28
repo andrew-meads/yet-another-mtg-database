@@ -1,7 +1,7 @@
 "use client";
 
 import { useDragLayer } from "react-dnd";
-import { Library, Layers } from "lucide-react";
+import { Library, Layers, Sparkles } from "lucide-react";
 import { SimpleCardArtView } from "@/components/CardArtView";
 import { AnyDragItem, PHYSICAL_CARD } from "@/hooks/drag-drop/Types";
 import { MtgCard } from "@/types/MtgCard";
@@ -39,7 +39,7 @@ export default function DeckColumnDragLayer() {
   const totalHeight = CARD_HEIGHT + (stackCards.length - 1) * OVERLAP_OFFSET;
   const transform = `translate(${currentOffset.x - CARD_WIDTH / 2}px, ${currentOffset.y - CARD_HEIGHT / 2}px)`;
 
-  const hasBadges = item.sourceCollectionName || item.sourceDeckName;
+  const hasBadges = item.sourceCollectionName || item.sourceDeckName || item.isEphemeral;
 
   return (
     <div
@@ -82,6 +82,12 @@ export default function DeckColumnDragLayer() {
       {/* Membership badges */}
       {hasBadges && (
         <div className="absolute top-1 left-1 flex flex-col gap-1">
+          {item.isEphemeral && (
+            <span className="inline-flex items-center gap-1 rounded bg-black/75 px-1.5 py-0.5 text-[10px] text-white">
+              <Sparkles className="size-3 shrink-0" />
+              <span className="truncate">Ephemeral</span>
+            </span>
+          )}
           {item.sourceCollectionName && (
             <span className="inline-flex max-w-[130px] items-center gap-1 rounded bg-black/75 px-1.5 py-0.5 text-[10px] text-white">
               <Library className="size-3 shrink-0" />

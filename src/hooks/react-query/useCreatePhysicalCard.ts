@@ -5,7 +5,8 @@ import { invalidateCardMembership } from "./invalidate";
 
 export interface CreatePhysicalCardRequest {
   cardId: string;
-  collectionId: string;
+  /** Owning collection. Omit to create an ephemeral, deck-only card (requires deckId). */
+  collectionId?: string;
   notes?: string;
   tags?: string[];
   /** If set, also assign the new card(s) to this deck slot. */
