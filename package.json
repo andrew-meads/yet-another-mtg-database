@@ -20,7 +20,8 @@
     "test:e2e:install": "playwright install chromium",
     "test:all": "vitest run && playwright test",
     "format": "prettier --write .",
-    "compose:up": "docker compose up --build -d",
+    "compose:up": "docker compose up -d",
+    "compose:build": "docker compose up --build -d",
     "compose:dev": "docker compose -f docker-compose-dev.yml up -d",
     "compose:down": "docker compose down"
   },
