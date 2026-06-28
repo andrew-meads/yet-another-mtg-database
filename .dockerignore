@@ -48,3 +48,7 @@ next-env.d.ts
 # bulk-data folder and all its contents
 /bulk-data/
 /data/**
+
+# Backup database files
+backup
+backup/**

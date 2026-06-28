@@ -12,3 +12,7 @@ package-lock.json
 yarn.lock
 
 *.md
+
+# Backup database files
+backup
+backup/**
