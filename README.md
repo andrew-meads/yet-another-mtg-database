@@ -43,6 +43,9 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from
   the database; mana symbols rendered via `mana-font`.
+- **Card pricing** — up-to-date USD prices for a card or a list of cards, pulled from
+  Scryfall and cached for 24h, plus conversion into a chosen currency using a live
+  exchange rate (Frankfurter).
 - **Hover card preview** — hovering a row in search results or a collection shows a card
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay
@@ -109,7 +112,8 @@ Copy `.env.example` to `.env` and fill in the values:
 | --- | --- |
 | `MONGO_DB_URI` | MongoDB connection string (default `mongodb://127.0.0.1:27017/yet-another-mtg-database`) |
 | `ALL_CARDS_FILE` | Default path to the Scryfall bulk JSON used by `init-db` |
-| `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards and set icons on demand |
+| `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards, set icons, and card prices on demand |
+| `EXCHANGE_RATE_API_BASE_URL` | Base URL of the currency exchange-rate API used to convert USD card prices (default `https://api.frankfurter.dev/v1` — free, no API key) |
 | `DISABLE_LOGIN` | Set to `"true"` to run without authentication as a single shared local user (see [Authentication](#authentication)). Defaults to off; the Google OAuth vars below are not needed when enabled |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |

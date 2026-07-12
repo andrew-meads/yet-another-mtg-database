@@ -1,7 +1,17 @@
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
-import { CardData, CollectionModel, DeckModel, PhysicalCardModel, UserModel } from "@/db/schema";
+import {
+  CardData,
+  CardPriceModel,
+  CollectionModel,
+  DeckModel,
+  ExchangeRateModel,
+  PhysicalCardModel,
+  UserModel
+} from "@/db/schema";
 import { MtgCard } from "@/types/MtgCard";
+import { CardPrices } from "@/types/CardPrice";
+import { EMPTY_PRICES } from "@/lib/server/cardPrices";
 
 /** Point getServerSession at a given user id (or null for "signed out"). */
 export function setTestUser(userId: string | null) {
@@ -101,6 +111,40 @@ export async function seedEphemeralCard(owner: string, cardId: string, deckId: s
     deckId: new Types.ObjectId(deckId)
   });
   return pc._id.toString();
+}
+
+/**
+ * Seed a cached price record. Pass `updatedAt` to control staleness (the timestamp
+ * is written with timestamps disabled so it isn't overwritten with "now").
+ */
+export async function seedCardPrice(
+  cardId: string,
+  prices: Partial<CardPrices> = {},
+  updatedAt?: Date
+) {
+  const doc = await CardPriceModel.create({ cardId, prices: { ...EMPTY_PRICES, ...prices } });
+  if (updatedAt) {
+    await CardPriceModel.updateOne({ _id: doc._id }, { $set: { updatedAt } }, { timestamps: false });
+  }
+  return doc;
+}
+
+/** Seed a cached USD -> target exchange rate (optionally back-dated via `updatedAt`). */
+export async function seedExchangeRate(
+  target: string,
+  rate: number,
+  updatedAt?: Date,
+  base = "USD"
+) {
+  const doc = await ExchangeRateModel.create({ base, target, rate });
+  if (updatedAt) {
+    await ExchangeRateModel.updateOne(
+      { _id: doc._id },
+      { $set: { updatedAt } },
+      { timestamps: false }
+    );
+  }
+  return doc;
 }
 
 /** Construct a NextRequest with an optional JSON body. */

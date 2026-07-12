@@ -3,6 +3,7 @@ import { MtgCard } from "@/types/MtgCard";
 import { Tag } from "@/types/Tag";
 import { User } from "@/types/User";
 import { SetSvg } from "@/types/SetSvg";
+import { CardPrices } from "@/types/CardPrice";
 
 // ---------------------------------------------------------------------------
 // Mongoose document shapes (ObjectId-typed; the plain TS interfaces in
@@ -42,6 +43,25 @@ interface DeckDoc {
   description: string;
   owner: Types.ObjectId;
   sections: DeckSectionDoc[];
+}
+
+// Cached Scryfall price data for a single card (keyed by Scryfall id). Stored in
+// its own collection rather than on CardData because bulk-import prices go stale
+// and CardData is strict:true; `updatedAt` (from timestamps) drives staleness.
+interface CardPriceDoc {
+  cardId: string;
+  prices: CardPrices;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Cached currency exchange rate (base is always "USD").
+interface ExchangeRateDoc {
+  base: string;
+  target: string;
+  rate: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const userSchema = new Schema<User>(
@@ -203,6 +223,34 @@ export const SetSvgSchema = new Schema<SetSvg>({
   svgContent: { type: String, required: true }
 });
 
+// Prices cache. Each finish defaults to null so a missing finish is represented
+// explicitly. `timestamps` supplies updatedAt (refreshed on every upsert).
+export const CardPriceSchema = new Schema<CardPriceDoc>(
+  {
+    cardId: { type: String, required: true, unique: true },
+    prices: {
+      usd: { type: String, default: null },
+      usd_foil: { type: String, default: null },
+      usd_etched: { type: String, default: null },
+      eur: { type: String, default: null },
+      eur_foil: { type: String, default: null },
+      tix: { type: String, default: null }
+    }
+  },
+  { timestamps: true }
+);
+
+// Exchange-rate cache, one document per (base, target) pair.
+export const ExchangeRateSchema = new Schema<ExchangeRateDoc>(
+  {
+    base: { type: String, required: true },
+    target: { type: String, required: true },
+    rate: { type: Number, required: true }
+  },
+  { timestamps: true }
+);
+ExchangeRateSchema.index({ base: 1, target: 1 }, { unique: true });
+
 export const UserModel = (mongoose.models.User ||
   mongoose.model<User>("User", userSchema)) as Model<User>;
 
@@ -223,3 +271,9 @@ export const DeckModel = (mongoose.models.Deck ||
 
 export const SetSvgModel = (mongoose.models.SetSvg ||
   mongoose.model<SetSvg>("SetSvg", SetSvgSchema)) as Model<SetSvg>;
+
+export const CardPriceModel = (mongoose.models.CardPrice ||
+  mongoose.model<CardPriceDoc>("CardPrice", CardPriceSchema)) as Model<CardPriceDoc>;
+
+export const ExchangeRateModel = (mongoose.models.ExchangeRate ||
+  mongoose.model<ExchangeRateDoc>("ExchangeRate", ExchangeRateSchema)) as Model<ExchangeRateDoc>;

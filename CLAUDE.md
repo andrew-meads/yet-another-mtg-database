@@ -75,7 +75,7 @@ npm run whitelist-user -- user@example.com
 
 ## Environment
 
-Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` (NextAuth Google OAuth), `SCANNER_BASE_URL` (external card-scanner backend the `/api/scan` route proxies to — defaults to `http://localhost:8000`), `ALL_CARDS_FILE` (default bulk import path), `SCRYFALL_API_BASE_URL` (Scryfall API base, defaults to `https://api.scryfall.com`; used by the card-refresh and set-icon routes), `DISABLE_LOGIN` (`"true"` runs the app without auth — see Auth below).
+Copy `.env.example` to `.env`. Key vars: `MONGO_DB_URI`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` (NextAuth Google OAuth), `SCANNER_BASE_URL` (external card-scanner backend the `/api/scan` route proxies to — defaults to `http://localhost:8000`), `ALL_CARDS_FILE` (default bulk import path), `SCRYFALL_API_BASE_URL` (Scryfall API base, defaults to `https://api.scryfall.com`; used by the card-refresh, set-icon, and card-price routes), `EXCHANGE_RATE_API_BASE_URL` (currency exchange-rate API base for the price-conversion feature, defaults to `https://api.frankfurter.dev/v1` — free, no API key), `DISABLE_LOGIN` (`"true"` runs the app without auth — see Auth below).
 
 Scryfall requires a custom `User-Agent` and an `Accept` header on every API request, and a max of 10 requests/second — all Scryfall `fetch`es go through `scryfallFetch` / `SCRYFALL_HEADERS` in `src/lib/scryfall.ts`, which attaches the headers and rate-limits starts to <= 10/s via an in-process serialized queue (relies on the server being a long-lived singleton; not coordinated across instances).
 
@@ -123,7 +123,7 @@ App Router with route groups (folders in parentheses don't affect URL paths):
 - `(with-app-bar)/settings/` — the user **Settings page**, a sibling of `(main)` so it gets the app bar but **not** `MainWorkspace`'s two-pane layout. Its own `layout.tsx` mirrors the `(main)` auth gate (`getAuthSession()` → `/login`). Reached via the gear icon in `AppBar`.
 - `/my-cards` is a landing page (create/list collections + decks). Collections and decks are **distinct** entities with separate detail pages: `/my-cards/collections/[id]` (→ `CollectionTable`) and `/my-cards/decks/[id]` (→ `DeckView`). There is no longer a single page that toggles between table and deck views.
 - `/scan` + `/scan/results` — camera capture and recognition results (client-side, uses `ScanContext`).
-- API routes under `app/api/`: `cards`, `collections`, `decks`, `physical-cards`, `sets`, `tags`, `scan`, `auth`.
+- API routes under `app/api/`: `cards` (incl. `cards/prices`), `collections`, `decks`, `physical-cards`, `sets`, `tags`, `scan`, `exchange-rate`, `auth`.
 
 ### Card scanning (`src/app/api/scan/`, `src/app/scan/`)
 `POST /api/scan` (`src/app/api/scan/route.ts`) is a thin **auth-guarded proxy** to the external card-scanner backend (`ghcr.io/andrew-meads/card-scanner-backend`, defined in the compose files at port 8000). It validates the multipart `image` field, forwards it to `${SCANNER_BASE_URL}/api/scan` (default `http://localhost:8000`), and passes the scanner's JSON back verbatim — each detected card's de-skewed crop plus a pre-ranked list of candidate Scryfall printings (`{ count, cards: [{ id, url, width, height, matches }], debugUrl }`, typed in `src/types/ScanResult.ts`). Returns `502` if the scanner is unreachable. Touches no Mongo model.
@@ -135,6 +135,12 @@ The client flow lives in `src/app/scan/`:
 
 ### Set icons (`src/app/api/sets/[code]/svg/route.ts`)
 Lazily caches Scryfall set-symbol SVGs into the `setsvgs` collection on first request, then serves from DB with long-lived cache headers.
+
+### Card pricing & currency (`src/lib/server/cardPrices.ts`, `exchangeRate.ts`)
+Scryfall is the price source (its card objects carry a `prices` object: `usd`, `usd_foil`, `usd_etched`, `eur`, `eur_foil`, `tix`). Because `CardData`'s schema is `strict: true`, bulk-import prices are dropped — prices live in their **own cache collection** instead, mirroring the set-icon cache pattern.
+- **`cardprices`** (`CardPriceModel`) — `{ cardId (unique), prices, updatedAt }`. **`getCardPrices(ids)`** serves cached prices younger than `PRICE_STALENESS_MS` (24h, matching Scryfall's ~daily cadence) and batch-refreshes stale/missing ids from Scryfall's `POST /cards/collection` (max **75** identifiers/request, via `scryfallFetch`), upserting the results. Unknown ids resolve to all-null prices.
+- **`exchangerates`** (`ExchangeRateModel`) — `{ base ("USD"), target, rate, updatedAt }`, unique on `{ base, target }`. **`getExchangeRate(target)`** short-circuits `USD` to 1, else serves a cached rate < 24h old or fetches from Frankfurter (`EXCHANGE_RATE_API_BASE_URL`, free/no key, plain `fetch` — different host from Scryfall) and upserts.
+- **Routes** (public read data, gated only by `src/proxy.ts`): `POST /api/cards/prices` (body `{ ids: string[] }`, ≤ 500 → `{ prices: { [cardId]: CardPrices } }`; `400` on bad input, `502` on Scryfall failure) and `GET /api/exchange-rate?target=NZD` (`{ base, target, rate, updatedAt }`; `400` on a malformed code, `502` if the rate service is unreachable/unknown). USD is native; currency conversion (USD × rate) is done client-side so the backend stays stateless about the user's currency choice.
 
 ### Client state & data fetching
 - **TanStack Query** for all server state. Hooks live in `src/hooks/react-query/` (e.g. `useInfiniteCardsSearch`, `useRetrieveCollectionDetails`, `useRetrieveDeckDetails`, `useCreatePhysicalCard`, `useDeckCardOp`). Query keys: `["collection-summaries"]`, `["collection-details", id]`, `["deck-summaries"]`, `["deck-details", id]`, `["card-locations", name]`, `["tags"]`. Cross-kind moves (deck placement ↔ collection membership) change a badge on the "other" side, so the physical-card/deck mutations broadly invalidate both `["collection-details"]` and `["deck-details"]` plus `["card-locations"]` (see `src/hooks/react-query/invalidate.ts`). Provider in `src/context/QueryProvider.tsx`; all providers composed in `src/context/Providers.tsx`.
