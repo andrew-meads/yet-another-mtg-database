@@ -7,7 +7,7 @@ import { getAuthSession } from "@/auth";
  * GET /api/decks
  * Lightweight list of the authenticated user's decks.
  *
- * @returns { decks: [{ _id, name, kind: "deck", owner }] }
+ * @returns { decks: [{ _id, name, kind: "deck", isActive, owner }] }
  */
 export async function GET(_request: NextRequest) {
   try {
@@ -16,7 +16,10 @@ export async function GET(_request: NextRequest) {
     const session = await getAuthSession();
     const userId = session!.user._id;
 
-    const decks = await DeckModel.find({ owner: userId }, { _id: 1, name: 1, owner: 1 })
+    const decks = await DeckModel.find(
+      { owner: userId },
+      { _id: 1, name: 1, isActive: 1, owner: 1 }
+    )
       .sort({ updatedAt: -1 })
       .lean();
 

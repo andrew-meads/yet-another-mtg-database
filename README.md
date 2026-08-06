@@ -35,6 +35,13 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
 - **Drag-and-drop organization** — move and copy cards between collections with
   react-dnd.
+- **Active collection & active deck** — mark one collection and one deck as "active"
+  from the app bar (right-click an open collection/deck → **Make active**, or tap its
+  star on mobile). The two are independent, and they become the default target for
+  quick-add actions. On the card-search page, select a card and press `+` (or `=`) to
+  add it to the active collection, or `d` to add it to the active deck — the deck copy
+  is created in your active collection and placed in the deck's first column, exactly
+  like dragging the search result onto the deck.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from

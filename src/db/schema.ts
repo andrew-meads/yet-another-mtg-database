@@ -41,6 +41,7 @@ interface DeckSectionDoc {
 interface DeckDoc {
   name: string;
   description: string;
+  isActive?: boolean;
   owner: Types.ObjectId;
   sections: DeckSectionDoc[];
 }
@@ -207,6 +208,7 @@ const deckSchema = new Schema<DeckDoc>(
   {
     name: { type: String, required: true },
     description: { type: String, required: false, default: "" },
+    isActive: Boolean,
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     sections: [deckSectionSchema]
   },

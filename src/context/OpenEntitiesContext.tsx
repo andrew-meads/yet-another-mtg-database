@@ -1,10 +1,11 @@
 "use client";
 
 import { useUpdateActiveCollection } from "@/hooks/react-query/useUpdateActiveCollection";
+import { useUpdateActiveDeck } from "@/hooks/react-query/useUpdateActiveDeck";
 import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveCollectionSummaries";
 import { useRetrieveDeckSummaries } from "@/hooks/react-query/useRetrieveDeckSummaries";
 import { CollectionSummary } from "@/types/Collection";
-import { OpenEntitySummary } from "@/types/Deck";
+import { DeckSummary, OpenEntitySummary } from "@/types/Deck";
 import { createContext, useContext, useMemo, useRef } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { collectionSearchStorageKey } from "@/lib/collectionUtils";
@@ -21,19 +22,27 @@ interface OpenEntitiesContextType {
   removeOpenEntity: (id: string) => void;
   openEntities: OpenEntitySummary[];
   /**
-   * Open entities the user has pinned to the main bar (the active collection is
-   * always treated as pinned). These render inline as drop targets.
+   * Open entities the user has pinned to the main bar (the active collection and
+   * active deck are always treated as pinned). These render inline as drop targets.
    */
   pinnedEntities: OpenEntitySummary[];
   /** Open entities that are not pinned. These live behind the "More" menu. */
   unpinnedEntities: OpenEntitySummary[];
-  /** Whether an open entity is effectively pinned (explicit pin or active collection). */
+  /** Whether an open entity is effectively pinned (explicit pin or active entity). */
   isPinned: (id: string) => boolean;
-  /** Toggle the pin flag for an open entity. No-op for the active collection. */
+  /** Toggle the pin flag for an open entity. No-op for the active collection/deck. */
   togglePin: (id: string) => void;
-  /** The user's active collection (decks cannot be active), or null. */
+  /**
+   * The user's active collection, or null. Independent of the active deck — a
+   * collection and a deck can be active at the same time.
+   */
   activeCollection: CollectionSummary | null;
   setActiveCollection: (collection: CollectionSummary) => void;
+  /** The user's active deck, or null. */
+  activeDeck: DeckSummary | null;
+  setActiveDeck: (deck: DeckSummary) => void;
+  /** Makes an entity active, dispatching to the collection or deck mutation. */
+  setActiveEntity: (entity: OpenEntitySummary) => void;
 }
 
 const OpenEntitiesContext = createContext<OpenEntitiesContextType | undefined>(undefined);
@@ -53,7 +62,8 @@ export function useOpenEntitiesContext(): OpenEntitiesContextType {
  */
 export function OpenEntitiesProvider({ children }: { children: React.ReactNode }) {
   const [openRefs, setOpenRefs] = useLocalStorage<OpenEntityRef[]>("open-entity-ids", []);
-  const { mutateAsync } = useUpdateActiveCollection();
+  const { mutateAsync: mutateActiveCollection } = useUpdateActiveCollection();
+  const { mutateAsync: mutateActiveDeck } = useUpdateActiveDeck();
 
   const { data: collectionsData } = useRetrieveCollectionSummaries();
   const { data: decksData } = useRetrieveDeckSummaries();
@@ -73,10 +83,11 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
   }, [openRefs, collections, decks]);
 
   const activeCollection = collections.find((c) => c.isActive) ?? null;
+  const activeDeck = decks.find((d) => d.isActive) ?? null;
 
-  /** An entity is effectively pinned if explicitly pinned or it is the active collection. */
+  /** An entity is effectively pinned if explicitly pinned or it is an active entity. */
   const isPinned = (id: string) => {
-    if (activeCollection?._id === id) return true;
+    if (activeCollection?._id === id || activeDeck?._id === id) return true;
     return openRefs.some((ref) => ref.id === id && ref.pinned === true);
   };
 
@@ -85,17 +96,17 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
     const unpinned: OpenEntitySummary[] = [];
     for (const entity of openEntities) {
       const ref = openRefs.find((r) => r.id === entity._id);
-      const effectivelyPinned =
-        ref?.pinned === true || (entity.kind === "collection" && entity.isActive === true);
+      const effectivelyPinned = ref?.pinned === true || entity.isActive === true;
       if (effectivelyPinned) pinned.push(entity);
       else unpinned.push(entity);
     }
-    // Active collection sorts first within the pinned strip.
-    pinned.sort((a, b) => {
-      const aActive = a.kind === "collection" && a.isActive ? 0 : 1;
-      const bActive = b.kind === "collection" && b.isActive ? 0 : 1;
-      return aActive - bActive;
-    });
+    // Active entities sort first within the pinned strip (active collection, then
+    // active deck, then everything else).
+    const activeRank = (e: OpenEntitySummary) => {
+      if (!e.isActive) return 2;
+      return e.kind === "collection" ? 0 : 1;
+    };
+    pinned.sort((a, b) => activeRank(a) - activeRank(b));
     return { pinnedEntities: pinned, unpinnedEntities: unpinned };
   }, [openEntities, openRefs]);
 
@@ -106,8 +117,8 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
   };
 
   const togglePin = (id: string) => {
-    // The active collection is always pinned; pinning is a no-op there.
-    if (activeCollection?._id === id) return;
+    // Active entities are always pinned; pinning is a no-op there.
+    if (activeCollection?._id === id || activeDeck?._id === id) return;
     setOpenRefs(openRefs.map((ref) => (ref.id === id ? { ...ref, pinned: !ref.pinned } : ref)));
   };
 
@@ -125,7 +136,16 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
   };
 
   const setActiveCollection = async (collection: CollectionSummary) => {
-    await mutateAsync({ collectionId: collection._id, isActive: true });
+    await mutateActiveCollection({ collectionId: collection._id, isActive: true });
+  };
+
+  const setActiveDeck = async (deck: DeckSummary) => {
+    await mutateActiveDeck({ deckId: deck._id, isActive: true });
+  };
+
+  const setActiveEntity = (entity: OpenEntitySummary) => {
+    if (entity.kind === "collection") setActiveCollection(entity);
+    else setActiveDeck(entity);
   };
 
   return (
@@ -139,7 +159,10 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
         isPinned,
         togglePin,
         activeCollection,
-        setActiveCollection
+        setActiveCollection,
+        activeDeck,
+        setActiveDeck,
+        setActiveEntity
       }}
     >
       {children}

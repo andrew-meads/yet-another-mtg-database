@@ -3,17 +3,22 @@ import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-const h = vi.hoisted(() => ({
-  mutateActive: vi.fn(),
-  dragging: false,
-  state: {
+const h = vi.hoisted(() => {
+  const defaults = () => ({
     collections: [
       { _id: "c1", name: "Main", kind: "collection", isActive: true, owner: "o" },
       { _id: "c2", name: "Binder", kind: "collection", isActive: false, owner: "o" }
     ] as any[],
     decks: [{ _id: "d1", name: "Burn", kind: "deck", owner: "o" }] as any[]
-  }
-}));
+  });
+  return {
+    mutateActive: vi.fn(),
+    mutateActiveDeck: vi.fn(),
+    dragging: false,
+    defaults,
+    state: defaults()
+  };
+});
 
 // Drive the global drag-in-progress state used to highlight inline drop targets.
 vi.mock("react-dnd", async (importOriginal) => {
@@ -27,6 +32,9 @@ vi.mock("react-dnd", async (importOriginal) => {
 
 vi.mock("@/hooks/react-query/useUpdateActiveCollection", () => ({
   useUpdateActiveCollection: () => ({ mutateAsync: h.mutateActive })
+}));
+vi.mock("@/hooks/react-query/useUpdateActiveDeck", () => ({
+  useUpdateActiveDeck: () => ({ mutateAsync: h.mutateActiveDeck })
 }));
 vi.mock("@/hooks/react-query/useRetrieveCollectionSummaries", () => ({
   useRetrieveCollectionSummaries: () => ({ data: { collections: h.state.collections } })
@@ -60,6 +68,7 @@ beforeEach(() => {
   window.localStorage.clear();
   vi.clearAllMocks();
   h.dragging = false;
+  h.state = h.defaults();
 });
 
 describe("OpenCollectionButtons", () => {
@@ -97,6 +106,49 @@ describe("OpenCollectionButtons", () => {
     const activeButton = screen.getByTestId("open-entity-c1");
     // The active-collection star is the only fill-current icon in the button.
     expect(activeButton.querySelector(".fill-current")).not.toBeNull();
+  });
+
+  it("shows the active deck inline with a star, alongside the active collection", () => {
+    h.state.decks = [{ _id: "d1", name: "Burn", kind: "deck", isActive: true, owner: "o" }];
+    window.localStorage.setItem(
+      "open-entity-ids",
+      JSON.stringify([
+        { id: "c1", kind: "collection" },
+        { id: "d1", kind: "deck" }
+      ])
+    );
+    renderButtons();
+
+    // Both are effectively pinned (so both render inline) and both carry the star.
+    expect(screen.getByTestId("open-entity-c1").querySelector(".fill-current")).not.toBeNull();
+    expect(screen.getByTestId("open-entity-d1").querySelector(".fill-current")).not.toBeNull();
+  });
+
+  it("offers 'Make active' for a deck and delegates to the deck mutation", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      "open-entity-ids",
+      JSON.stringify([{ id: "d1", kind: "deck", pinned: true }])
+    );
+    renderButtons();
+
+    await user.pointer({ keys: "[MouseRight]", target: screen.getByTestId("open-entity-d1") });
+    await user.click(await screen.findByText("Make active"));
+
+    expect(h.mutateActiveDeck).toHaveBeenCalledWith({ deckId: "d1", isActive: true });
+    expect(h.mutateActive).not.toHaveBeenCalled();
+  });
+
+  it("hides 'Make active' and the pin toggle for the active deck", async () => {
+    const user = userEvent.setup();
+    h.state.decks = [{ _id: "d1", name: "Burn", kind: "deck", isActive: true, owner: "o" }];
+    window.localStorage.setItem("open-entity-ids", JSON.stringify([{ id: "d1", kind: "deck" }]));
+    renderButtons();
+
+    await user.pointer({ keys: "[MouseRight]", target: screen.getByTestId("open-entity-d1") });
+    expect(await screen.findByText("Close")).toBeInTheDocument();
+    expect(screen.queryByText("Make active")).not.toBeInTheDocument();
+    expect(screen.queryByText(/pin/i)).not.toBeInTheDocument();
   });
 
   it("closing an inline pinned entity removes it", async () => {

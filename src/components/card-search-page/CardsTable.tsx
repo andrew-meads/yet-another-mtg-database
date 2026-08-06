@@ -7,6 +7,7 @@ import { useCardSelection } from "@/context/CardSelectionContext";
 import { useCardPreviewSettings } from "@/context/SettingsContext";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
+import { useAddCardToActiveDeck } from "@/hooks/useAddCardToActiveDeck";
 import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
 import CardPopup from "@/components/CardPopup";
 import CardsTableRow from "@/components/card-search-page/CardsTableRow";
@@ -114,6 +115,10 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   // Mutation to add a physical card to a collection
   const { mutate: createPhysicalCard } = useCreatePhysicalCard();
 
+  // Adds a card to the active deck (or a specific deck), creating the copy in the
+  // active collection first — same semantics as dragging a search result onto a deck.
+  const addToDeck = useAddCardToActiveDeck();
+
   // Notes and tags to apply when adding cards from the search page
   const { notes, tags } = useSearchAddMeta();
 
@@ -193,6 +198,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
    * - Arrow Down: select next card
    * - Arrow Up: select previous card
    * - + or =: add selected card to active collection
+   * - d: add selected card to active deck
    * - Automatically scrolls selected row into view (centered)
    */
   useEffect(() => {
@@ -206,6 +212,20 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
       if ((e.key === "+" || e.key === "=") && selectedCard) {
         e.preventDefault();
         handleAddToCollection(selectedCard, undefined);
+        return;
+      }
+
+      // Handle d to add to the active deck. Modifier combos (Cmd/Ctrl+D etc.) are
+      // left to the browser.
+      if (
+        (e.key === "d" || e.key === "D") &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        selectedCard
+      ) {
+        e.preventDefault();
+        addToDeck(selectedCard);
         return;
       }
 
@@ -243,7 +263,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedCard, cards, setSelectedCard, handleAddToCollection]);
+  }, [selectedCard, cards, setSelectedCard, handleAddToCollection, addToDeck]);
 
   // === HOVER POPUP MANAGEMENT ===
 
@@ -337,6 +357,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
               onHoverMove={handleRowMove}
               onDragStateChange={setIsAnyRowDragging}
               onAddToCollection={handleAddToCollection}
+              onAddToDeck={addToDeck}
               isSelected={selectedCard?.id === card.id}
               rowRef={getRowRef(card.id)}
             />

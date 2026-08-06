@@ -2,19 +2,27 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import React from "react";
 import { renderHook, act } from "@testing-library/react";
 
-const h = vi.hoisted(() => ({
-  mutateActive: vi.fn(),
-  state: {
+const h = vi.hoisted(() => {
+  const defaults = () => ({
     collections: [
       { _id: "c1", name: "Main", kind: "collection", isActive: true, owner: "o" },
       { _id: "c2", name: "Binder", kind: "collection", isActive: false, owner: "o" }
     ] as any[],
     decks: [{ _id: "d1", name: "Burn", kind: "deck", owner: "o" }] as any[]
-  }
-}));
+  });
+  return {
+    mutateActive: vi.fn(),
+    mutateActiveDeck: vi.fn(),
+    defaults,
+    state: defaults()
+  };
+});
 
 vi.mock("@/hooks/react-query/useUpdateActiveCollection", () => ({
   useUpdateActiveCollection: () => ({ mutateAsync: h.mutateActive })
+}));
+vi.mock("@/hooks/react-query/useUpdateActiveDeck", () => ({
+  useUpdateActiveDeck: () => ({ mutateAsync: h.mutateActiveDeck })
 }));
 vi.mock("@/hooks/react-query/useRetrieveCollectionSummaries", () => ({
   useRetrieveCollectionSummaries: () => ({ data: { collections: h.state.collections } })
@@ -31,6 +39,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) =>
 beforeEach(() => {
   window.localStorage.clear();
   vi.clearAllMocks();
+  h.state = h.defaults();
 });
 
 describe("OpenEntitiesContext", () => {
@@ -138,6 +147,65 @@ describe("OpenEntitiesContext", () => {
 
     act(() => result.current.togglePin("c1"));
     expect(result.current.isPinned("c1")).toBe(true);
+  });
+
+  it("derives the active deck from the summaries, independently of the active collection", () => {
+    h.state.decks = [
+      { _id: "d1", name: "Burn", kind: "deck", isActive: false, owner: "o" },
+      { _id: "d2", name: "Elves", kind: "deck", isActive: true, owner: "o" }
+    ];
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+
+    // A collection and a deck are active at the same time.
+    expect(result.current.activeCollection?._id).toBe("c1");
+    expect(result.current.activeDeck?._id).toBe("d2");
+  });
+
+  it("reports a null active deck when no deck is active", () => {
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    expect(result.current.activeDeck).toBeNull();
+  });
+
+  it("delegates setActiveDeck to the deck mutation", async () => {
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    await act(async () => {
+      await result.current.setActiveDeck({ _id: "d1" } as any);
+    });
+    expect(h.mutateActiveDeck).toHaveBeenCalledWith({ deckId: "d1", isActive: true });
+    expect(h.mutateActive).not.toHaveBeenCalled();
+  });
+
+  it("setActiveEntity dispatches on the entity kind", async () => {
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+
+    await act(async () => result.current.setActiveEntity({ _id: "d1", kind: "deck" } as any));
+    expect(h.mutateActiveDeck).toHaveBeenCalledWith({ deckId: "d1", isActive: true });
+
+    await act(async () => result.current.setActiveEntity({ _id: "c2", kind: "collection" } as any));
+    expect(h.mutateActive).toHaveBeenCalledWith({ collectionId: "c2", isActive: true });
+  });
+
+  it("treats the active deck as always pinned and refuses to unpin it", () => {
+    h.state.decks = [{ _id: "d1", name: "Burn", kind: "deck", isActive: true, owner: "o" }];
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    act(() => result.current.addOpenEntity({ _id: "d1", kind: "deck" } as any));
+
+    expect(result.current.isPinned("d1")).toBe(true);
+    expect(result.current.pinnedEntities.map((e) => e._id)).toEqual(["d1"]);
+
+    act(() => result.current.togglePin("d1"));
+    expect(result.current.isPinned("d1")).toBe(true);
+  });
+
+  it("sorts the active collection ahead of the active deck in the pinned strip", () => {
+    h.state.decks = [{ _id: "d1", name: "Burn", kind: "deck", isActive: true, owner: "o" }];
+    const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
+    act(() => result.current.addOpenEntity({ _id: "d1", kind: "deck" } as any));
+    act(() => result.current.addOpenEntity({ _id: "c2", kind: "collection" } as any));
+    act(() => result.current.addOpenEntity({ _id: "c1", kind: "collection" } as any));
+    act(() => result.current.togglePin("c2"));
+
+    expect(result.current.pinnedEntities.map((e) => e._id)).toEqual(["c1", "d1", "c2"]);
   });
 
   it("honors a pre-seeded pinned ref on mount", () => {

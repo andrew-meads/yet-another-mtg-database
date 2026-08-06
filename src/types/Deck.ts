@@ -5,6 +5,7 @@ export interface DeckSummary {
   _id: string;
   name: string;
   kind: "deck";
+  isActive?: boolean;
   owner: string;
 }
 

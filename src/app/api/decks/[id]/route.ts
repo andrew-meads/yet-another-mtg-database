@@ -33,6 +33,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[i
       _id: String(deck._id),
       name: deck.name,
       description: deck.description ?? "",
+      isActive: deck.isActive ?? false,
       owner: String(deck.owner),
       kind: "deck" as const
     };

@@ -75,10 +75,15 @@ export async function seedCollection(
 }
 
 /** Create a deck with a single "Main" section containing one empty column. */
-export async function seedDeck(owner: string, name = "Test Deck") {
+export async function seedDeck(
+  owner: string,
+  name = "Test Deck",
+  fields: { isActive?: boolean } = {}
+) {
   const deck = await DeckModel.create({
     name,
     description: "",
+    isActive: fields.isActive,
     owner: new Types.ObjectId(owner),
     sections: [{ name: "Main", columns: [{ cards: [] }] }]
   });
@@ -124,7 +129,11 @@ export async function seedCardPrice(
 ) {
   const doc = await CardPriceModel.create({ cardId, prices: { ...EMPTY_PRICES, ...prices } });
   if (updatedAt) {
-    await CardPriceModel.updateOne({ _id: doc._id }, { $set: { updatedAt } }, { timestamps: false });
+    await CardPriceModel.updateOne(
+      { _id: doc._id },
+      { $set: { updatedAt } },
+      { timestamps: false }
+    );
   }
   return doc;
 }

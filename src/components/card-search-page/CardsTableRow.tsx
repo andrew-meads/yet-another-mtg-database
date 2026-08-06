@@ -41,6 +41,8 @@ interface CardsTableRowProps {
   onDragStateChange?: (isDragging: boolean) => void;
   /** Callback when add to collection button is clicked */
   onAddToCollection?: (card: MtgCard, collectionId?: string) => void;
+  /** Callback to add the card to a deck. Omit the deck id to target the active deck. */
+  onAddToDeck?: (card: MtgCard, deckId?: string) => void;
   /** Whether this row is currently selected */
   isSelected?: boolean;
   /** Ref for scroll-into-view functionality (keyboard navigation) */
@@ -65,6 +67,7 @@ export default function CardsTableRow({
   onHoverMove,
   onDragStateChange,
   onAddToCollection,
+  onAddToDeck,
   isSelected,
   rowRef
 }: CardsTableRowProps) {
@@ -80,8 +83,9 @@ export default function CardsTableRow({
 
   // === CONTEXT ===
   // Get open collections from context (decks can't receive a raw "add to collection")
-  const { activeCollection, openEntities } = useOpenEntitiesContext();
+  const { activeCollection, activeDeck, openEntities } = useOpenEntitiesContext();
   const openCollections = openEntities.filter((e) => e.kind === "collection");
+  const openDecks = openEntities.filter((e) => e.kind === "deck");
 
   // Notify parent component when drag state changes (used to hide hover popup)
   useEffect(() => {
@@ -91,6 +95,10 @@ export default function CardsTableRow({
   // === HANDLERS ===
   const handleAddToCollection = () => {
     onAddToCollection?.(card, undefined);
+  };
+
+  const handleAddToActiveDeck = () => {
+    onAddToDeck?.(card, undefined);
   };
 
   // Combine dragRef (for react-dnd) and rowRef (for scroll-into-view) into a single ref
@@ -250,6 +258,18 @@ export default function CardsTableRow({
             )}
           </div>
         </ContextMenuItem>
+        <ContextMenuItem onClick={handleAddToActiveDeck}>
+          <div className="flex flex-1 flex-col">
+            <div className="flex items-center">
+              {getEntityIcon("deck", "h-4 w-4 mr-2")}
+              Add to active deck
+              <span className="text-muted-foreground ml-auto pl-4 text-xs">d</span>
+            </div>
+            {activeDeck && (
+              <span className="text-muted-foreground ml-6 text-xs">{activeDeck.name}</span>
+            )}
+          </div>
+        </ContextMenuItem>
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <Plus className="mr-2 size-4" />
@@ -267,6 +287,22 @@ export default function CardsTableRow({
             ))}
           </ContextMenuSubContent>
         </ContextMenuSub>
+        {openDecks.length > 0 && (
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>
+              <Plus className="mr-2 size-4" />
+              Add to deck
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              {openDecks.map((deck) => (
+                <ContextMenuItem key={deck._id} onClick={() => onAddToDeck?.(card, deck._id)}>
+                  {getEntityIcon("deck", "h-4 w-4 mr-2")}
+                  {deck.name}
+                </ContextMenuItem>
+              ))}
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );

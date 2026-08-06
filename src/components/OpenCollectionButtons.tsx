@@ -31,7 +31,7 @@ import { Separator } from "./ui/separator";
 export function OpenCollectionsList() {
   const router = useRouter();
   const pathname = usePathname();
-  const { openEntities, removeOpenEntity, setActiveCollection, isPinned, togglePin } =
+  const { openEntities, removeOpenEntity, setActiveEntity, isPinned, togglePin } =
     useOpenEntitiesContext();
 
   const handleCloseButton = (entity: OpenEntitySummary) => {
@@ -46,7 +46,7 @@ export function OpenCollectionsList() {
       {openEntities.map((entity, index) => {
         const href = entityHref(entity);
         const isCurrentPage = pathname === href;
-        const isActiveCollection = entity.kind === "collection" && entity.isActive;
+        const isActiveEntity = entity.isActive === true;
         const pinned = isPinned(entity._id);
         return (
           <div key={entity._id}>
@@ -62,25 +62,24 @@ export function OpenCollectionsList() {
                 <span className="truncate">{entity.name}</span>
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                {entity.kind === "collection" &&
-                  (isActiveCollection ? (
-                    <div className="rounded-sm p-1">
-                      <Star className="size-3 fill-current" />
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setActiveCollection(entity);
-                      }}
-                      className="hover:bg-accent rounded-sm p-1 transition-colors"
-                      aria-label={`Make ${entity.name} active`}
-                    >
-                      <Star className="size-3" />
-                    </button>
-                  ))}
-                {!isActiveCollection && (
+                {isActiveEntity ? (
+                  <div className="rounded-sm p-1">
+                    <Star className="size-3 fill-current" />
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveEntity(entity);
+                    }}
+                    className="hover:bg-accent rounded-sm p-1 transition-colors"
+                    aria-label={`Make ${entity.name} active`}
+                  >
+                    <Star className="size-3" />
+                  </button>
+                )}
+                {!isActiveEntity && (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -163,11 +162,11 @@ interface OpenEntityButtonProps {
 
 function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps) {
   const pathname = usePathname();
-  const { setActiveCollection, isPinned, togglePin } = useOpenEntitiesContext();
+  const { setActiveEntity, isPinned, togglePin } = useOpenEntitiesContext();
   const href = entityHref(entity);
 
   const { isOver, dropRef } = useEntityButtonDropTarget(entity);
-  const isActiveCollection = entity.kind === "collection" && entity.isActive;
+  const isActiveEntity = entity.isActive === true;
   const pinned = isPinned(entity._id);
 
   return (
@@ -183,7 +182,7 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
             <Link href={href}>
               <span>{getEntityIcon(entity.kind)}</span>
               <span>{entity.name}</span>
-              {isActiveCollection && <Star className="size-3 fill-current" />}
+              {isActiveEntity && <Star className="size-3 fill-current" />}
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -224,13 +223,13 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        {entity.kind === "collection" && !isActiveCollection && (
-          <ContextMenuItem onClick={() => setActiveCollection(entity)}>Make active</ContextMenuItem>
-        )}
-        {!isActiveCollection && (
-          <ContextMenuItem onClick={() => togglePin(entity._id)}>
-            {pinned ? "Unpin from bar" : "Pin to bar"}
-          </ContextMenuItem>
+        {!isActiveEntity && (
+          <>
+            <ContextMenuItem onClick={() => setActiveEntity(entity)}>Make active</ContextMenuItem>
+            <ContextMenuItem onClick={() => togglePin(entity._id)}>
+              {pinned ? "Unpin from bar" : "Pin to bar"}
+            </ContextMenuItem>
+          </>
         )}
         <ContextMenuItem onClick={() => onClose(entity)}>Close</ContextMenuItem>
       </ContextMenuContent>

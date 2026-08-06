@@ -297,6 +297,19 @@ async function globalSetup() {
     updatedAt: new Date()
   });
 
+  // Empty deck owned by activeDeck.spec.ts — it is the only spec that makes a deck
+  // active, so it needs a deck no other spec reads from.
+  const activeDeckId = new Types.ObjectId();
+  await db.collection("decks").insertOne({
+    _id: activeDeckId,
+    name: "Active Deck Target",
+    description: "",
+    owner: userId,
+    sections: [{ name: "Main", columns: [{ cards: [] }] }],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
   await mongoose.disconnect();
 
   mkdirSync(dirname(FIXTURES), { recursive: true });
@@ -321,7 +334,9 @@ async function globalSetup() {
         ephSourceColId: ephSourceColId.toString(),
         ephEmptyColId: ephEmptyColId.toString(),
         ephemeralCardId: ephemeralCardId.toString(),
-        otherDeckId: otherDeckId.toString()
+        otherDeckId: otherDeckId.toString(),
+        // Active-deck spec fixture.
+        activeDeckId: activeDeckId.toString()
       },
       null,
       2
