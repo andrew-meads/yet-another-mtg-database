@@ -6,6 +6,7 @@ import { useRetrieveDeckDetails } from "@/hooks/react-query/useRetrieveDeckDetai
 import { useDeleteDeck } from "@/hooks/react-query/useDeleteEntity";
 import { useUpdateDeck } from "@/hooks/react-query/useUpdateDeck";
 import { getEntityIcon } from "@/lib/collectionUtils";
+import { countDeckCards, formatCardCount } from "@/lib/deckUtils";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,15 @@ export default function DeckPage({ params }: PageProps) {
     <div className="mx-auto flex h-full flex-col space-y-6">
       <div className="flex shrink-0 items-start justify-between">
         <div>
-          <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
-            {getEntityIcon("deck", "h-6 w-6")}
+          <h2 className="mb-2 flex items-baseline gap-2 text-2xl font-bold">
+            {getEntityIcon("deck", "h-6 w-6 self-center")}
             {deck.name}
+            <span
+              className="text-muted-foreground text-base font-normal tabular-nums"
+              data-testid="deck-card-count"
+            >
+              {formatCardCount(countDeckCards(deck))}
+            </span>
           </h2>
           <p className="text-muted-foreground">{deck.description || "No description provided"}</p>
         </div>

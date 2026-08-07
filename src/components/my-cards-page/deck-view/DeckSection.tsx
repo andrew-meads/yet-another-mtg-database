@@ -11,6 +11,7 @@ import AddBasicLandButton from "./AddBasicLandButton";
 import { useUpdateSection, useDeleteSection } from "@/hooks/react-query/useDeckSections";
 import { useAddColumn } from "@/hooks/react-query/useDeckColumns";
 import { useDeckNewColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
+import { countSectionCards, formatCardCount } from "@/lib/deckUtils";
 import { CARD_WIDTH, CARD_HEIGHT } from "./card-dimensions";
 
 interface DeckSectionProps {
@@ -45,7 +46,8 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setName(section.name), [section.name]);
 
-  const isEmpty = section.columns.every((c) => c.cards.length === 0);
+  const cardCount = countSectionCards(section);
+  const isEmpty = cardCount === 0;
 
   const commitName = () => {
     if (name.trim() && name !== section.name) {
@@ -67,6 +69,12 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
           }}
           className="h-8 w-auto max-w-80 min-w-40 font-semibold"
         />
+        <span
+          className="text-muted-foreground shrink-0 text-sm tabular-nums"
+          data-testid={`section-card-count-${section._id}`}
+        >
+          {formatCardCount(cardCount)}
+        </span>
         <Button
           variant="ghost"
           size="sm"

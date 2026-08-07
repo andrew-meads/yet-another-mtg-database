@@ -42,6 +42,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   add it to the active collection, or `d` to add it to the active deck — the deck copy
   is created in your active collection and placed in the deck's first column, exactly
   like dragging the search result onto the deck.
+- **Deck card counts** — the deck view shows a running total of cards next to the deck's
+  name, and next to each section's name.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from
