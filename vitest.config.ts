@@ -62,7 +62,8 @@ export default defineConfig({
           include: [
             "src/components/**/*.test.{ts,tsx}",
             "src/hooks/**/*.test.{ts,tsx}",
-            "src/context/**/*.test.{ts,tsx}"
+            "src/context/**/*.test.{ts,tsx}",
+            "src/app/**/*.test.{ts,tsx}"
           ],
           setupFiles: ["./vitest.setup.jsdom.ts"]
         }

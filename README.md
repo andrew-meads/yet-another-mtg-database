@@ -44,7 +44,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   like dragging the search result onto the deck. Press `shift+d` to add the card to the
   active deck as an ephemeral (deck-only) copy instead, with no collection needed.
 - **Deck card counts** — the deck view shows a running total of cards next to the deck's
-  name, and next to each section's name.
+  name, and next to each section's name. The My Cards landing page also lists each
+  collection and deck with its description and total card count.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from

@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { DeckSummary } from "@/types/Deck";
+import { DeckListSummary } from "@/types/Deck";
 import { useSession } from "next-auth/react";
 import { useAuthMode } from "@/context/AuthModeContext";
 
 export interface DeckSummariesResponse {
-  decks: DeckSummary[];
+  decks: DeckListSummary[];
 }
 
 async function fetchDeckSummaries(): Promise<DeckSummariesResponse> {

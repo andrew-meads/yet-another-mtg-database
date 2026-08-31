@@ -79,7 +79,7 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
           ? collections.find((c) => c._id === ref.id)
           : decks.find((d) => d._id === ref.id)
       )
-      .filter((e): e is OpenEntitySummary => e !== undefined);
+      .filter((e): e is NonNullable<typeof e> => e !== undefined);
   }, [openRefs, collections, decks]);
 
   const activeCollection = collections.find((c) => c.isActive) ?? null;

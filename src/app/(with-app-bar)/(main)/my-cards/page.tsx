@@ -19,9 +19,45 @@ import { useCreateDeck } from "@/hooks/react-query/useCreateDeck";
 import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveCollectionSummaries";
 import { useRetrieveDeckSummaries } from "@/hooks/react-query/useRetrieveDeckSummaries";
 import { getEntityIcon } from "@/lib/collectionUtils";
+import { formatCardCount } from "@/lib/deckUtils";
 import { HomeIcon } from "lucide-react";
 
 type CreateKind = "collection" | "deck";
+
+/** One collection/deck list entry: name + card count, with the description underneath. */
+function EntityRow({
+  href,
+  name,
+  description,
+  cardCount
+}: {
+  href: string;
+  name: string;
+  description: string;
+  cardCount: number;
+}) {
+  return (
+    <li>
+      <Button variant="ghost" className="h-auto w-full justify-start py-2" asChild>
+        <Link href={href}>
+          <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+            <span className="flex w-full items-baseline justify-between gap-2">
+              <span className="truncate">{name}</span>
+              <span className="text-muted-foreground shrink-0 text-xs font-normal tabular-nums">
+                {formatCardCount(cardCount)}
+              </span>
+            </span>
+            {description && (
+              <span className="text-muted-foreground w-full truncate text-xs font-normal">
+                {description}
+              </span>
+            )}
+          </span>
+        </Link>
+      </Button>
+    </li>
+  );
+}
 
 export default function Page() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -52,7 +88,7 @@ export default function Page() {
 
   return (
     <>
-      <div className="mx-auto space-y-6">
+      <div className="mx-auto h-full space-y-6 overflow-y-auto">
         <div>
           <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
             <HomeIcon className="size-6" />
@@ -95,11 +131,13 @@ export default function Page() {
             ) : (
               <ul className="space-y-1">
                 {collections.map((c) => (
-                  <li key={c._id}>
-                    <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link href={`/my-cards/collections/${c._id}`}>{c.name}</Link>
-                    </Button>
-                  </li>
+                  <EntityRow
+                    key={c._id}
+                    href={`/my-cards/collections/${c._id}`}
+                    name={c.name}
+                    description={c.description}
+                    cardCount={c.cardCount}
+                  />
                 ))}
               </ul>
             )}
@@ -114,11 +152,13 @@ export default function Page() {
             ) : (
               <ul className="space-y-1">
                 {decks.map((d) => (
-                  <li key={d._id}>
-                    <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link href={`/my-cards/decks/${d._id}`}>{d.name}</Link>
-                    </Button>
-                  </li>
+                  <EntityRow
+                    key={d._id}
+                    href={`/my-cards/decks/${d._id}`}
+                    name={d.name}
+                    description={d.description}
+                    cardCount={d.cardCount}
+                  />
                 ))}
               </ul>
             )}

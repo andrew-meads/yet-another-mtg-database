@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { CollectionSummary } from "@/types/Collection";
+import { CollectionListSummary } from "@/types/Collection";
 import { useSession } from "next-auth/react";
 import { useAuthMode } from "@/context/AuthModeContext";
 
 export interface CollectionSummariesResponse {
-  collections: CollectionSummary[];
+  collections: CollectionListSummary[];
 }
 
 async function fetchCollectionSummaries(): Promise<CollectionSummariesResponse> {

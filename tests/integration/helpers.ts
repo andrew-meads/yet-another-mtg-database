@@ -78,11 +78,11 @@ export async function seedCollection(
 export async function seedDeck(
   owner: string,
   name = "Test Deck",
-  fields: { isActive?: boolean } = {}
+  fields: { isActive?: boolean; description?: string } = {}
 ) {
   const deck = await DeckModel.create({
     name,
-    description: "",
+    description: fields.description ?? "",
     isActive: fields.isActive,
     owner: new Types.ObjectId(owner),
     sections: [{ name: "Main", columns: [{ cards: [] }] }]

@@ -51,6 +51,31 @@ describe("GET /api/collections/summaries", () => {
     expect(names).toContain("New");
     expect(names).not.toContain("Theirs");
   });
+
+  it("includes the description and a card count from the collectionId back-refs", async () => {
+    const cardId = (await seedCard()).id;
+    const countedId = await seedCollection(owner, {
+      name: "Counted",
+      description: "Binder of staples"
+    });
+    await seedCollection(owner, { name: "Empty" });
+
+    // Two copies in the collection (one of them deck-assigned still counts).
+    const deck = await seedDeck(owner);
+    await seedPhysicalCard(owner, cardId, countedId);
+    await seedPhysicalCard(owner, cardId, countedId, { deckId: deck._id.toString() });
+
+    const res = await listSummaries(jsonRequest("/api/collections/summaries", "GET"));
+    expect(res.status).toBe(200);
+    const { collections } = await res.json();
+
+    const counted = collections.find((c: any) => c.name === "Counted");
+    const empty = collections.find((c: any) => c.name === "Empty");
+    expect(counted.description).toBe("Binder of staples");
+    expect(counted.cardCount).toBe(2);
+    expect(empty.description).toBe("");
+    expect(empty.cardCount).toBe(0);
+  });
 });
 
 describe("GET /api/collections/[id]?details=true", () => {

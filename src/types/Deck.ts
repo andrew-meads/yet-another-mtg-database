@@ -13,6 +13,11 @@ export interface Deck extends DeckSummary {
   description: string;
 }
 
+/** What GET /api/decks returns per deck: the summary plus description and live card count. */
+export interface DeckListSummary extends Deck {
+  cardCount: number;
+}
+
 export interface DeckColumn {
   _id: string;
   cards: DetailedPhysicalCard[];

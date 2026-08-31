@@ -289,4 +289,27 @@ describe("GET /api/decks", () => {
     expect(inactive.isActive).toBeUndefined();
     expect(active.kind).toBe("deck");
   });
+
+  it("includes the description and a card count from the deckId back-refs", async () => {
+    const deck = await seedDeck(owner, "Counted Deck", { description: "Aggro brew" });
+    await seedDeck(owner, "Empty Deck");
+    const deckId = deck._id.toString();
+
+    // Two collection-backed copies + one ephemeral in the deck, one loose copy outside it.
+    await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    await seedEphemeralCard(owner, cardId, deckId);
+    await seedPhysicalCard(owner, cardId, collectionId);
+
+    const res = await listDecks(jsonRequest("/api/decks", "GET"));
+    expect(res.status).toBe(200);
+    const { decks } = await res.json();
+
+    const counted = decks.find((d: any) => d.name === "Counted Deck");
+    const emptyDeck = decks.find((d: any) => d.name === "Empty Deck");
+    expect(counted.description).toBe("Aggro brew");
+    expect(counted.cardCount).toBe(3);
+    expect(emptyDeck.description).toBe("");
+    expect(emptyDeck.cardCount).toBe(0);
+  });
 });

@@ -67,15 +67,15 @@ describe("ScanResultsPage (master-detail)", () => {
     renderPage();
     // Two de-skewed crops, one per scanned card, before any sheet is open.
     expect(screen.getAllByAltText("Scanned card")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /Likely: Alpha/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Likely: Gamma/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Likely:\s*Alpha/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Likely:\s*Gamma/ })).toBeInTheDocument();
   });
 
   it("opens the detail sheet and pages between cards", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /Likely: Alpha/ }));
+    await user.click(screen.getByRole("button", { name: /Likely:\s*Alpha/ }));
     expect(await screen.findByText("Card 1 of 2")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /next card/i }));
@@ -86,7 +86,7 @@ describe("ScanResultsPage (master-detail)", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /Likely: Alpha/ }));
+    await user.click(screen.getByRole("button", { name: /Likely:\s*Alpha/ }));
     await user.click(await screen.findByRole("button", { name: "Add" }));
 
     // The Alpha tile underneath now reflects the added copy.
