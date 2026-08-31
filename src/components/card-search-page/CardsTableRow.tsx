@@ -19,7 +19,7 @@ import { useNewCardDragSource } from "@/hooks/drag-drop/useNewCardDragSource";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
 import { getEntityIcon } from "@/lib/collectionUtils";
-import { Star, Plus } from "lucide-react";
+import { Star, Plus, Sparkles } from "lucide-react";
 import clsx from "clsx";
 import { SetSvg } from "@/components/SetSvg";
 
@@ -41,8 +41,11 @@ interface CardsTableRowProps {
   onDragStateChange?: (isDragging: boolean) => void;
   /** Callback when add to collection button is clicked */
   onAddToCollection?: (card: MtgCard, collectionId?: string) => void;
-  /** Callback to add the card to a deck. Omit the deck id to target the active deck. */
-  onAddToDeck?: (card: MtgCard, deckId?: string) => void;
+  /**
+   * Callback to add the card to a deck. Omit the deck id to target the active
+   * deck; pass `options.ephemeral` to create a deck-only (no collection) copy.
+   */
+  onAddToDeck?: (card: MtgCard, deckId?: string, options?: { ephemeral?: boolean }) => void;
   /** Whether this row is currently selected */
   isSelected?: boolean;
   /** Ref for scroll-into-view functionality (keyboard navigation) */
@@ -99,6 +102,10 @@ export default function CardsTableRow({
 
   const handleAddToActiveDeck = () => {
     onAddToDeck?.(card, undefined);
+  };
+
+  const handleAddToActiveDeckEphemeral = () => {
+    onAddToDeck?.(card, undefined, { ephemeral: true });
   };
 
   // Combine dragRef (for react-dnd) and rowRef (for scroll-into-view) into a single ref
@@ -264,6 +271,18 @@ export default function CardsTableRow({
               {getEntityIcon("deck", "h-4 w-4 mr-2")}
               Add to active deck
               <span className="text-muted-foreground ml-auto pl-4 text-xs">d</span>
+            </div>
+            {activeDeck && (
+              <span className="text-muted-foreground ml-6 text-xs">{activeDeck.name}</span>
+            )}
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleAddToActiveDeckEphemeral}>
+          <div className="flex flex-1 flex-col">
+            <div className="flex items-center">
+              <Sparkles className="mr-2 size-4" />
+              Add to active deck (ephemeral)
+              <span className="text-muted-foreground ml-auto pl-4 text-xs">shift+d</span>
             </div>
             {activeDeck && (
               <span className="text-muted-foreground ml-6 text-xs">{activeDeck.name}</span>

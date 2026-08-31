@@ -78,6 +78,29 @@ const CARDS: Array<Record<string, unknown>> = [
     image_status: "highres_scan",
     finishes: ["nonfoil"]
   },
+  {
+    // Only ever held by archiveFillDeck.spec.ts's dedicated deck, so archiving
+    // and filling can't perturb the other specs' collection rows.
+    id: "e2e-runeclaw",
+    name: "Runeclaw Bear",
+    lang: "en",
+    layout: "normal",
+    cmc: 2,
+    colors: ["G"],
+    color_identity: ["G"],
+    keywords: [],
+    type_line: "Creature — Bear",
+    oracle_text: "",
+    power: "2",
+    toughness: "2",
+    rarity: "common",
+    set: "m15",
+    set_name: "Magic 2015",
+    collector_number: "193",
+    border_color: "black",
+    image_status: "highres_scan",
+    finishes: ["nonfoil"]
+  },
   // The five Unhinged basic lands, so the deck-view "Add land" picker resolves
   // (getBasicLands queries set:"unh") and ephemeral-card drag specs have a card.
   ...["Plains", "Island", "Swamp", "Mountain", "Forest"].map((name, i) => ({
@@ -297,6 +320,30 @@ async function globalSetup() {
     updatedAt: new Date()
   });
 
+  // --- Dedicated fixtures for archiveFillDeck.spec.ts: a deck holding one
+  // collection-backed Runeclaw Bear from the Main Collection. The spec archives
+  // the deck (card goes loose) and fills it back, ending where it started.
+  const afDeckId = new Types.ObjectId();
+  const afRealCardId = new Types.ObjectId();
+  await db.collection("physicalcards").insertOne({
+    _id: afRealCardId,
+    owner: userId,
+    cardId: "e2e-runeclaw",
+    collectionId,
+    deckId: afDeckId,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  } as never);
+  await db.collection("decks").insertOne({
+    _id: afDeckId,
+    name: "Archive Fill Deck",
+    description: "",
+    owner: userId,
+    sections: [{ name: "Main", columns: [{ cards: [afRealCardId] }] }],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
   // Empty deck owned by activeDeck.spec.ts — it is the only spec that makes a deck
   // active, so it needs a deck no other spec reads from.
   const activeDeckId = new Types.ObjectId();
@@ -335,6 +382,9 @@ async function globalSetup() {
         ephEmptyColId: ephEmptyColId.toString(),
         ephemeralCardId: ephemeralCardId.toString(),
         otherDeckId: otherDeckId.toString(),
+        // Archive/fill spec fixtures.
+        afDeckId: afDeckId.toString(),
+        afRealCardId: afRealCardId.toString(),
         // Active-deck spec fixture.
         activeDeckId: activeDeckId.toString()
       },

@@ -1,16 +1,20 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useRetrieveDeckDetails } from "@/hooks/react-query/useRetrieveDeckDetails";
 import { useDeleteDeck } from "@/hooks/react-query/useDeleteEntity";
 import { useUpdateDeck } from "@/hooks/react-query/useUpdateDeck";
+import { useArchiveDeck } from "@/hooks/react-query/useArchiveDeck";
 import { getEntityIcon } from "@/lib/collectionUtils";
 import { countDeckCards, formatCardCount } from "@/lib/deckUtils";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
+import FillDeckDialog from "@/components/my-cards-page/deck-view/FillDeckDialog";
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Archive, PackagePlus, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface PageProps {
@@ -24,7 +28,9 @@ export default function DeckPage({ params }: PageProps) {
   const { data, isLoading, error } = useRetrieveDeckDetails(id);
   const deleteDeck = useDeleteDeck();
   const updateDeck = useUpdateDeck();
+  const archiveDeck = useArchiveDeck();
   const [editOpen, setEditOpen] = useState(false);
+  const [fillOpen, setFillOpen] = useState(false);
 
   useEffect(() => {
     if (data?.deck) addOpenEntity(data.deck);
@@ -53,6 +59,28 @@ export default function DeckPage({ params }: PageProps) {
     deleteDeck.mutate(deck._id, { onSuccess: () => router.push("/my-cards") });
   };
 
+  const handleArchive = async () => {
+    if (
+      !confirm(
+        `Archive deck "${deck.name}"? Its cards return to their collections and are replaced with placeholders.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const { archived } = await archiveDeck.mutateAsync(deck._id);
+      toast.success("Deck archived", {
+        description: `Returned ${archived} ${archived === 1 ? "card" : "cards"} to ${
+          archived === 1 ? "its collection" : "their collections"
+        }.`
+      });
+    } catch (err) {
+      toast.error("Failed to archive deck", {
+        description: err instanceof Error ? err.message : "An error occurred."
+      });
+    }
+  };
+
   return (
     <div className="mx-auto flex h-full flex-col space-y-6">
       <div className="flex shrink-0 items-start justify-between">
@@ -70,29 +98,69 @@ export default function DeckPage({ params }: PageProps) {
           <p className="text-muted-foreground">{deck.description || "No description provided"}</p>
         </div>
         <div className="flex items-center gap-2 lg:mr-3">
-          <Button
-            variant="outline"
-            size="icon"
-            className="cursor-pointer"
-            onClick={() => setEditOpen(true)}
-            aria-label="Edit deck"
-          >
-            <Pencil className="size-[1.2rem]" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="cursor-pointer"
-            onClick={handleDelete}
-            aria-label="Delete deck"
-          >
-            <Trash2 className="size-[1.2rem]" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="cursor-pointer"
+                onClick={() => setFillOpen(true)}
+                aria-label="Fill deck"
+              >
+                <PackagePlus className="size-[1.2rem]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Fill deck from your active collection</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="cursor-pointer"
+                onClick={handleArchive}
+                disabled={archiveDeck.isPending}
+                aria-label="Archive deck"
+              >
+                <Archive className="size-[1.2rem]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Archive deck — return cards to their collections</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="cursor-pointer"
+                onClick={() => setEditOpen(true)}
+                aria-label="Edit deck"
+              >
+                <Pencil className="size-[1.2rem]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit deck</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="cursor-pointer"
+                onClick={handleDelete}
+                aria-label="Delete deck"
+              >
+                <Trash2 className="size-[1.2rem]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete deck</TooltipContent>
+          </Tooltip>
         </div>
       </div>
       <div className="min-h-0 flex-1">
         <DeckView deck={deck} />
       </div>
+      <FillDeckDialog deck={deck} open={fillOpen} onOpenChange={setFillOpen} />
       <NewCollectionDialog
         open={editOpen}
         onOpenChange={setEditOpen}

@@ -65,3 +65,31 @@ test("making a deck active lets 'd' add the selected search card to it", async (
   // …as a collection-backed copy, not an ephemeral (deck-only) one.
   await expect(page.locator('[data-testid^="ephemeral-badge-"]')).toHaveCount(0);
 });
+
+// Runs after the test above (serial), which already made the deck active.
+test("shift+d adds the selected search card to the active deck as an ephemeral copy", async ({
+  page
+}) => {
+  const { mainCollectionId, activeDeckId } = fixtures;
+  await seedOpenEntities(page, [
+    { id: mainCollectionId, kind: "collection" },
+    { id: activeDeckId, kind: "deck", pinned: true }
+  ]);
+
+  await page.goto("/search");
+  const row = page.getByTestId("search-card-e2e-llanowar");
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  await row.click();
+
+  const added = page.waitForResponse(
+    (r) => r.request().method() === "POST" && r.url().includes("/api/physical-cards")
+  );
+  await page.keyboard.press("Shift+D");
+  await added;
+
+  // The card landed in the deck as an ephemeral (deck-only) copy; the Shivan
+  // added by the previous test stays badge-free.
+  await page.goto(`/my-cards/decks/${activeDeckId}`);
+  await expect(deckCardWith(page, "Llanowar Elves")).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator('[data-testid^="ephemeral-badge-"]')).toHaveCount(1);
+});

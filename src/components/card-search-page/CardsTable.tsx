@@ -199,6 +199,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
    * - Arrow Up: select previous card
    * - + or =: add selected card to active collection
    * - d: add selected card to active deck
+   * - shift+d: add selected card to active deck as an ephemeral (deck-only) copy
    * - Automatically scrolls selected row into view (centered)
    */
   useEffect(() => {
@@ -215,8 +216,8 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
         return;
       }
 
-      // Handle d to add to the active deck. Modifier combos (Cmd/Ctrl+D etc.) are
-      // left to the browser.
+      // Handle d to add to the active deck; shift+d adds an ephemeral (deck-only)
+      // copy. Modifier combos (Cmd/Ctrl+D etc.) are left to the browser.
       if (
         (e.key === "d" || e.key === "D") &&
         !e.ctrlKey &&
@@ -225,7 +226,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
         selectedCard
       ) {
         e.preventDefault();
-        addToDeck(selectedCard);
+        addToDeck(selectedCard, undefined, { ephemeral: e.shiftKey });
         return;
       }
 

@@ -100,4 +100,50 @@ describe("useAddCardToActiveDeck", () => {
       expect.objectContaining({ notes: "foil", tags: ["trade"] })
     );
   });
+
+  describe("ephemeral option", () => {
+    it("creates an ephemeral copy (no collectionId) in the active deck", () => {
+      addToDeck()(card, undefined, { ephemeral: true });
+      expect(m.create).toHaveBeenCalledWith({
+        cardId: "card-1",
+        deckId: "active-deck",
+        notes: undefined,
+        tags: undefined
+      });
+      expect(m.create.mock.calls[0][0]).not.toHaveProperty("collectionId");
+      expect(m.toastError).not.toHaveBeenCalled();
+    });
+
+    it("works without an active collection", () => {
+      m.state.activeCollection = null;
+      addToDeck()(card, undefined, { ephemeral: true });
+      expect(m.create).toHaveBeenCalledOnce();
+      expect(m.toastError).not.toHaveBeenCalled();
+    });
+
+    it("still requires a target deck", () => {
+      m.state.activeDeck = null;
+      addToDeck()(card, undefined, { ephemeral: true });
+      expect(m.toastError).toHaveBeenCalledWith(
+        "Set an active deck before adding cards to a deck."
+      );
+      expect(m.create).not.toHaveBeenCalled();
+    });
+
+    it("passes notes and tags through", () => {
+      m.state.notes = "proxy";
+      m.state.tags = ["wishlist"];
+      addToDeck()(card, undefined, { ephemeral: true });
+      expect(m.create).toHaveBeenCalledWith(
+        expect.objectContaining({ notes: "proxy", tags: ["wishlist"] })
+      );
+    });
+
+    it("{ ephemeral: false } behaves like the plain call", () => {
+      addToDeck()(card, undefined, { ephemeral: false });
+      expect(m.create).toHaveBeenCalledWith(
+        expect.objectContaining({ collectionId: "active-coll", deckId: "active-deck" })
+      );
+    });
+  });
 });

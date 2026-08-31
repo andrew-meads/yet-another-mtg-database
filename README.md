@@ -41,13 +41,20 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   quick-add actions. On the card-search page, select a card and press `+` (or `=`) to
   add it to the active collection, or `d` to add it to the active deck — the deck copy
   is created in your active collection and placed in the deck's first column, exactly
-  like dragging the search result onto the deck.
+  like dragging the search result onto the deck. Press `shift+d` to add the card to the
+  active deck as an ephemeral (deck-only) copy instead, with no collection needed.
 - **Deck card counts** — the deck view shows a running total of cards next to the deck's
   name, and next to each section's name.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from
   existence when taken out of it; they can only be reordered within their own deck.
+- **Archive & fill decks** — **Archive** dismantles a deck while keeping the decklist:
+  every real card returns to its collection and is replaced in place by an ephemeral
+  placeholder of the same printing. **Fill** rebuilds it: a dialog matches the deck's
+  placeholders against real copies in your active collection (same printing prioritized,
+  other printings of the same card allowed) and swaps the ones you pick back in,
+  preserving every card's exact position.
 - **Camera card scanning** — capture one or more physical cards (or upload an image)
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from
