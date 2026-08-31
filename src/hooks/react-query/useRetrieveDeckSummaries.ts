@@ -3,7 +3,6 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { DeckListSummary } from "@/types/Deck";
 import { useSession } from "next-auth/react";
-import { useAuthMode } from "@/context/AuthModeContext";
 
 export interface DeckSummariesResponse {
   decks: DeckListSummary[];
@@ -20,11 +19,10 @@ async function fetchDeckSummaries(): Promise<DeckSummariesResponse> {
 
 export function useRetrieveDeckSummaries(): UseQueryResult<DeckSummariesResponse, Error> {
   const { status } = useSession();
-  const { disableLogin } = useAuthMode();
   return useQuery({
     queryKey: ["deck-summaries"],
     queryFn: fetchDeckSummaries,
     staleTime: 30_000,
-    enabled: status === "authenticated" || disableLogin
+    enabled: status === "authenticated"
   });
 }

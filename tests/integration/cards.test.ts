@@ -26,6 +26,21 @@ describe("GET /api/cards", () => {
     expect(names(json).sort()).toEqual(["Goblin Guide", "Shivan Dragon"]);
   });
 
+  it("searches sets by code or full/partial name", async () => {
+    await seedCard({
+      id: "c4",
+      name: "Bonecrusher Giant",
+      set: "eld",
+      set_name: "Throne of Eldraine"
+    });
+
+    for (const q of ["set:eld", "set:eldraine", 'set:"throne of eldraine"', "e:ELDRAINE"]) {
+      const res = await searchCards(jsonRequest(`/api/cards?q=${encodeURIComponent(q)}`, "GET"));
+      const json = await res.json();
+      expect(names(json), q).toEqual(["Bonecrusher Giant"]);
+    }
+  });
+
   it("sorts by name ascending by default", async () => {
     const res = await searchCards(jsonRequest("/api/cards", "GET"));
     const json = await res.json();

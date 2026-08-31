@@ -34,20 +34,17 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
     entries: [
       {
         syntax: "word",
-        description:
-          "A term with no key matches the card name (and flavor name) as a substring.",
+        description: "A term with no key matches the card name (and flavor name) as a substring.",
         examples: ["dragon", "lightning"]
       },
       {
         syntax: '"…"',
-        description:
-          "Wrap multi-word values in single or double quotes to keep them together.",
+        description: "Wrap multi-word values in single or double quotes to keep them together.",
         examples: ['"black lotus"', 'o:"draw a card"']
       },
       {
         syntax: "a b",
-        description:
-          "Two terms next to each other mean AND — a card must match both.",
+        description: "Two terms next to each other mean AND — a card must match both.",
         examples: ["c:red t:creature", "t:instant mv<=2"]
       },
       {
@@ -155,8 +152,7 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
       {
         syntax: "r",
         aliases: ["rarity"],
-        description:
-          "Rarity, ordered common < uncommon < rare < mythic — so comparisons work.",
+        description: "Rarity, ordered common < uncommon < rare < mythic — so comparisons work.",
         examples: ["r:mythic", "r>=rare", "r<=uncommon"]
       }
     ]
@@ -168,8 +164,8 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
       {
         syntax: "e",
         aliases: ["s", "set", "edition"],
-        description: "Set code.",
-        examples: ["e:m21", "set:neo"]
+        description: "Set code, or a full/partial set name.",
+        examples: ["e:m21", "set:neo", 'set:"throne of eldraine"', "e:eldraine"]
       },
       {
         syntax: "lang",
@@ -179,8 +175,7 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
       },
       {
         syntax: "layout",
-        description:
-          "Card layout: normal, transform, modal_dfc, adventure, split, flip, meld, …",
+        description: "Card layout: normal, transform, modal_dfc, adventure, split, flip, meld, …",
         examples: ["layout:transform", "layout:split"]
       },
       {

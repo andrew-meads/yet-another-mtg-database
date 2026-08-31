@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions, getServerSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import type { DefaultSession, Session } from "next-auth";
 import connectDb from "@/db/mongoose";
 import { UserModel, CollectionModel } from "@/db/schema";
@@ -27,7 +28,19 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!
-    })
+    }),
+    // Dev-only login (see isDevLoginEnabled below). The spread is evaluated once
+    // at module load: the provider either exists for the process or it doesn't.
+    ...(isDevLoginEnabled()
+      ? [
+          CredentialsProvider({
+            id: "dev-login",
+            name: "Dev user",
+            credentials: {},
+            authorize: () => provisionDevUser()
+          })
+        ]
+      : [])
   ],
   pages: {
     signIn: "/login",
@@ -38,7 +51,10 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     // Check if user exists in database on sign-in
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      // Dev login: authorize() already provisioned the user; skip the whitelist.
+      if (account?.provider === "dev-login") return true;
+
       if (!user.email) {
         return false; // Reject if no email
       }
@@ -85,7 +101,7 @@ export { handler as GET, handler as POST };
 /**
  * Create a default, active "Main Collection" for the given owner if they have none
  * (active so that search → deck drops work out of the box). Shared by the Google
- * sign-in callback and the no-auth-mode provisioning below.
+ * sign-in callback and the dev-login provisioning below.
  */
 async function ensureMainCollection(owner: string) {
   const numCollections = await CollectionModel.countDocuments({ owner });
@@ -99,63 +115,34 @@ async function ensureMainCollection(owner: string) {
   }
 }
 
-// --- No-auth ("DISABLE_LOGIN") mode -----------------------------------------
+// --- Dev login ("AUTH_DEV_LOGIN") --------------------------------------------
 
-/** Fixed user the app acts as when login is disabled. */
-export const NO_AUTH_USER_ID = "000000000000000000000001";
+/** Fixed dev user id (kept from the old no-auth mode so local data survives). */
+export const DEV_USER_ID = "000000000000000000000001";
+export const DEV_USER_EMAIL = "dev@localhost";
 
-/** True when the app is configured to run without authentication. */
-export function isLoginDisabled(): boolean {
-  return process.env.DISABLE_LOGIN === "true";
-}
-
-/** Synthetic session used everywhere a real one would be read in no-auth mode. */
-export const noAuthSession: Session = {
-  user: {
-    _id: NO_AUTH_USER_ID,
-    name: "No-auth mode",
-    email: "noauth@localhost",
-    image: null
-  },
-  // Far-future expiry so nothing treats the session as stale.
-  expires: "9999-12-31T23:59:59.999Z"
-};
-
-// Memoize provisioning so it runs at most once per server process.
-let provisioned: Promise<void> | null = null;
-
-/**
- * Idempotently ensure the fixed no-auth user exists and owns an active
- * "Main Collection". Mirrors the auto-create behaviour of the sign-in callback.
- */
-function ensureNoAuthUser(): Promise<void> {
-  if (!provisioned) {
-    provisioned = (async () => {
-      await connectDb();
-      await UserModel.updateOne(
-        { _id: NO_AUTH_USER_ID },
-        { $setOnInsert: { emailAddress: "noauth@localhost" } },
-        { upsert: true }
-      );
-      await ensureMainCollection(NO_AUTH_USER_ID);
-    })().catch((error) => {
-      // Reset so a later request can retry after a transient failure.
-      provisioned = null;
-      throw error;
-    });
-  }
-  return provisioned;
+/** True when the dev-only Credentials provider is registered. Never in production. */
+export function isDevLoginEnabled(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.AUTH_DEV_LOGIN === "true";
 }
 
 /**
- * Return the current session. In no-auth mode this is a synthetic session for
- * the fixed {@link NO_AUTH_USER_ID} (provisioning that user on first use);
- * otherwise it delegates to NextAuth's {@link getServerSession}.
+ * Idempotently ensure the fixed dev user exists and owns an active
+ * "Main Collection" (mirroring the Google sign-in auto-create), then return
+ * the NextAuth user for the session.
  */
+export async function provisionDevUser() {
+  await connectDb();
+  await UserModel.updateOne(
+    { _id: DEV_USER_ID },
+    { $setOnInsert: { emailAddress: DEV_USER_EMAIL } },
+    { upsert: true }
+  );
+  await ensureMainCollection(DEV_USER_ID);
+  return { id: DEV_USER_ID, _id: DEV_USER_ID, name: "Dev User", email: DEV_USER_EMAIL };
+}
+
+/** Return the current session. The single seam every page/route reads through. */
 export async function getAuthSession(): Promise<Session | null> {
-  if (isLoginDisabled()) {
-    await ensureNoAuthUser();
-    return noAuthSession;
-  }
   return getServerSession(authOptions);
 }

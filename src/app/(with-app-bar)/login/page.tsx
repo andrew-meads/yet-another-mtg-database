@@ -1,25 +1,32 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { getProviders, signIn } from "next-auth/react";
+import type { ClientSafeProvider } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { TerminalSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuthMode } from "@/context/AuthModeContext";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-  const { disableLogin } = useAuthMode();
 
-  // In no-auth mode there is nothing to log into — send users straight to the app.
+  // The dev-login button is shown only when the server registered the dev-only
+  // Credentials provider (AUTH_DEV_LOGIN, never in production) — mirrored here
+  // via /api/auth/providers so no flag needs threading to the client.
+  const [providers, setProviders] = useState<Record<string, ClientSafeProvider> | null>(null);
   useEffect(() => {
-    if (disableLogin) router.replace("/search");
-  }, [disableLogin, router]);
+    getProviders().then(setProviders);
+  }, []);
+  const hasDevLogin = Boolean(providers?.["dev-login"]);
 
   const handleGoogleSignIn = async () => {
     await signIn("google", { callbackUrl: "/search" });
+  };
+
+  const handleDevSignIn = async () => {
+    await signIn("dev-login", { callbackUrl: "/search" });
   };
 
   return (
@@ -65,6 +72,17 @@ export default function LoginPage() {
             </svg>
             Sign in with Google
           </Button>
+          {hasDevLogin && (
+            <Button
+              onClick={handleDevSignIn}
+              className="flex w-full max-w-xs cursor-pointer items-center justify-center gap-3"
+              size="lg"
+              variant="secondary"
+            >
+              <TerminalSquare className="size-5" />
+              Continue as dev user
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

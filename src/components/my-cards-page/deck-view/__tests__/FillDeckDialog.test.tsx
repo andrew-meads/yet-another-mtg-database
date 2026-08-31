@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { MtgCard } from "@/types/MtgCard";
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import { DeckWithCards } from "@/types/Deck";
@@ -58,6 +60,7 @@ function makeCard(overrides: Partial<MtgCard> = {}): MtgCard {
     set: "lea",
     set_name: "Limited Edition Alpha",
     collector_number: "1",
+    image_uris: { small: "https://cards.example/bolt-small.jpg" },
     ...overrides
   } as MtgCard;
 }
@@ -94,8 +97,13 @@ function makeDeck(cards: DetailedPhysicalCard[]): DeckWithCards {
 }
 
 function renderDialog(deck: DeckWithCards) {
+  // CardArtView (the candidate thumbnails) uses react-dnd, so a DnD context is required.
   return render(
-    React.createElement(FillDeckDialog, { deck, open: true, onOpenChange: vi.fn() })
+    React.createElement(
+      DndProvider,
+      { backend: HTML5Backend },
+      React.createElement(FillDeckDialog, { deck, open: true, onOpenChange: vi.fn() })
+    )
   );
 }
 
@@ -121,6 +129,45 @@ describe("FillDeckDialog", () => {
     expect(screen.getByTestId("fill-candidate-r-same")).toBeInTheDocument();
     expect(screen.getByTestId("fill-candidate-r-other")).toBeInTheDocument();
     expect(screen.getByText("Same printing")).toBeInTheDocument();
+  });
+
+  it("renders a card thumbnail for each candidate", () => {
+    h.collectionCards = [
+      makeCollectionCard("r-same", bolt),
+      makeCollectionCard("r-other", boltReprint)
+    ];
+    renderDialog(makeDeck([makeEphemeral("e1", bolt)]));
+
+    expect(screen.getAllByRole("img", { name: "Lightning Bolt" })).toHaveLength(2);
+  });
+
+  it("clicking a candidate's thumbnail flips multi-faced cards without toggling the checkbox", async () => {
+    const user = userEvent.setup();
+    const mdfc = makeCard({
+      id: "printing-mdfc",
+      name: "Delver of Secrets // Insectile Aberration",
+      image_uris: undefined,
+      card_faces: [
+        { name: "Delver of Secrets", image_uris: { small: "https://cards.example/front.jpg" } },
+        { name: "Insectile Aberration", image_uris: { small: "https://cards.example/back.jpg" } }
+      ]
+    } as Partial<MtgCard>);
+    h.collectionCards = [makeCollectionCard("r-mdfc", mdfc)];
+    renderDialog(makeDeck([makeEphemeral("e1", mdfc)]));
+
+    // Both faces are rendered (stacked); the front starts visible.
+    const front = screen.getByRole("img", { name: "Delver of Secrets" });
+    const back = screen.getByRole("img", { name: "Insectile Aberration" });
+    const faceWrapper = (img: HTMLElement) => img.parentElement!.parentElement!;
+    expect(faceWrapper(front)).toHaveStyle({ opacity: "1" });
+    expect(faceWrapper(back)).toHaveStyle({ opacity: "0" });
+
+    await user.click(front);
+
+    expect(faceWrapper(front)).toHaveStyle({ opacity: "0" });
+    expect(faceWrapper(back)).toHaveStyle({ opacity: "1" });
+    // The wrapping label must not have forwarded the click to the checkbox.
+    expect(screen.getByTestId("fill-candidate-r-mdfc")).not.toBeChecked();
   });
 
   it("shows a candidate's tags", () => {

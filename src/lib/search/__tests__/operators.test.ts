@@ -98,8 +98,25 @@ describe("rarityOperator", () => {
 });
 
 describe("setOperator", () => {
-  it("lowercases the set code", () => {
-    expect(setOperator.buildQuery("M21", undefined)).toEqual({ set: "m21" });
+  it("matches the lowercased set code or a partial set name", () => {
+    expect(setOperator.buildQuery("M21", undefined)).toEqual({
+      $or: [{ set: "m21" }, { set_name: /M21/i }]
+    });
+  });
+
+  it("matches full/partial set names case-insensitively", () => {
+    const q = setOperator.buildQuery("Throne of Eldraine", undefined);
+    expect(q.$or[1].set_name.test("Throne of Eldraine")).toBe(true);
+    expect(q.$or[1].set_name.test("throne of eldraine")).toBe(true);
+    expect(
+      setOperator.buildQuery("eldraine", undefined).$or[1].set_name.test("Throne of Eldraine")
+    ).toBe(true);
+  });
+
+  it("escapes regex metacharacters in the value", () => {
+    const q = setOperator.buildQuery("fire & ice (2nd)", undefined);
+    expect(q.$or[1].set_name.test("Fire & Ice (2nd)")).toBe(true);
+    expect(q.$or[1].set_name.test("Fire and Ice 2nd")).toBe(false);
   });
 });
 

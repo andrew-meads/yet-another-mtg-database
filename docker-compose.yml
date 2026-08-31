@@ -7,8 +7,10 @@ services:
       - PORT=3000
       - MONGO_DB_URI=mongodb://yamtgd-database:27017/yet-another-mtg-database
       - SCANNER_BASE_URL=http://card-scanner:8000
+      # NODE_ENV=production also hard-disables the AUTH_DEV_LOGIN dev login,
+      # even if the flag leaks into the host's .env. Real Google OAuth vars
+      # (GOOGLE_CLIENT_ID/SECRET, AUTH_SECRET, NEXTAUTH_URL) come from .env.
       - NODE_ENV=production
-      - DISABLE_LOGIN=true
     ports:
       - "3000:3000"
     depends_on:

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import CardArtView from "@/components/CardArtView";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { useFillDeck } from "@/hooks/react-query/useFillDeck";
@@ -94,7 +95,7 @@ export default function FillDeckDialog({ deck, open, onOpenChange }: FillDeckDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]" data-testid="fill-deck-dialog">
+      <DialogContent className="sm:max-w-120" data-testid="fill-deck-dialog">
         <DialogHeader>
           <DialogTitle>Fill Deck</DialogTitle>
           <DialogDescription>
@@ -155,13 +156,35 @@ export default function FillDeckDialog({ deck, open, onOpenChange }: FillDeckDia
                             }
                             data-testid={`fill-candidate-${physicalCard._id}`}
                           />
+                          {/* preventDefault stops the wrapping label from toggling the
+                              checkbox, so clicking the art only flips multi-faced cards. */}
+                          <div
+                            className="w-16 shrink-0 cursor-default"
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            <CardArtView
+                              card={physicalCard.card}
+                              variant="small"
+                              flippable
+                              width="100%"
+                              height="auto"
+                            />
+                          </div>
                           <div className="min-w-0 flex-1 text-sm">
-                            <div>
-                              {physicalCard.card.set_name}{" "}
-                              <span className="text-muted-foreground text-xs">
-                                ({physicalCard.card.set.toUpperCase()}) #
-                                {physicalCard.card.collector_number}
-                              </span>
+                            <div className="flex items-baseline gap-2">
+                              <div className="min-w-0 flex-1">
+                                {physicalCard.card.set_name}{" "}
+                                <span className="text-muted-foreground text-xs">
+                                  ({physicalCard.card.set.toUpperCase()}) #
+                                  {physicalCard.card.collector_number}
+                                </span>
+                              </div>
+                              {samePrinting && (
+                                <span className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
+                                  <Sparkles className="size-3" />
+                                  Same printing
+                                </span>
+                              )}
                             </div>
                             {physicalCard.tags && physicalCard.tags.length > 0 && (
                               <div className="text-muted-foreground flex items-center gap-1 text-xs">
@@ -170,12 +193,6 @@ export default function FillDeckDialog({ deck, open, onOpenChange }: FillDeckDia
                               </div>
                             )}
                           </div>
-                          {samePrinting && (
-                            <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                              <Sparkles className="size-3" />
-                              Same printing
-                            </span>
-                          )}
                         </label>
                       );
                     })}

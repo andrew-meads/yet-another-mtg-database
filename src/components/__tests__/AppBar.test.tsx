@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 const h = vi.hoisted(() => ({
@@ -23,28 +23,29 @@ vi.mock("@/components/OpenCollectionButtons", () => ({
   OpenCollectionsList: () => null
 }));
 
-import { AuthModeProvider } from "@/context/AuthModeContext";
 import AppBar from "@/components/AppBar";
 
-function renderAppBar(disableLogin: boolean) {
-  return render(
-    <AuthModeProvider disableLogin={disableLogin}>
-      <AppBar />
-    </AuthModeProvider>
-  );
-}
+beforeEach(() => {
+  h.session = { data: null, status: "unauthenticated" };
+});
 
-describe("AppBar no-auth mode", () => {
-  it("shows the no-auth indicator and no sign-out/login when login is disabled", () => {
-    renderAppBar(true);
-    expect(screen.getByText("No-auth mode")).toBeInTheDocument();
+describe("AppBar auth states", () => {
+  it("shows the Login button and no nav when unauthenticated", () => {
+    render(<AppBar />);
+    expect(screen.getByText("Login")).toBeInTheDocument();
     expect(screen.queryByText("Sign out")).not.toBeInTheDocument();
-    expect(screen.queryByText("Login")).not.toBeInTheDocument();
+    expect(screen.queryByText("Card Search")).not.toBeInTheDocument();
   });
 
-  it("shows the Login button in normal mode when unauthenticated", () => {
-    renderAppBar(false);
-    expect(screen.queryByText("No-auth mode")).not.toBeInTheDocument();
-    expect(screen.getByText("Login")).toBeInTheDocument();
+  it("shows the avatar and nav, and no Login button, when authenticated", () => {
+    h.session = {
+      data: { user: { _id: "abc", name: "Dev User", email: "dev@localhost", image: null } },
+      status: "authenticated"
+    };
+    render(<AppBar />);
+    expect(screen.queryByText("Login")).not.toBeInTheDocument();
+    // Avatar falls back to the user's initial when there is no image.
+    expect(screen.getByText("D")).toBeInTheDocument();
+    expect(screen.getByText("Card Search")).toBeInTheDocument();
   });
 });

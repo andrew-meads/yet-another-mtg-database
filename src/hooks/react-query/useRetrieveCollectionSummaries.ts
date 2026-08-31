@@ -3,7 +3,6 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { CollectionListSummary } from "@/types/Collection";
 import { useSession } from "next-auth/react";
-import { useAuthMode } from "@/context/AuthModeContext";
 
 export interface CollectionSummariesResponse {
   collections: CollectionListSummary[];
@@ -29,12 +28,11 @@ export function useRetrieveCollectionSummaries(): UseQueryResult<
   Error
 > {
   const { status } = useSession();
-  const { disableLogin } = useAuthMode();
 
   return useQuery({
     queryKey: ["collection-summaries"],
     queryFn: fetchCollectionSummaries,
     staleTime: 30_000, // Consider data fresh for 30 seconds
-    enabled: status === "authenticated" || disableLogin // Run when authed or in no-auth mode
+    enabled: status === "authenticated"
   });
 }

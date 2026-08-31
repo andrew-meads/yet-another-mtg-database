@@ -55,7 +55,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   placeholder of the same printing. **Fill** rebuilds it: a dialog matches the deck's
   placeholders against real copies in your active collection (same printing prioritized,
   other printings of the same card allowed) and swaps the ones you pick back in,
-  preserving every card's exact position.
+  preserving every card's exact position. Each suggested copy shows a small card
+  image (click to flip multi-faced cards) so you can see exactly which printing it is.
 - **Camera card scanning** — capture one or more physical cards (or upload an image)
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from
@@ -131,7 +132,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | `ALL_CARDS_FILE` | Default path to the Scryfall bulk JSON used by `init-db` |
 | `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards, set icons, and card prices on demand |
 | `EXCHANGE_RATE_API_BASE_URL` | Base URL of the currency exchange-rate API used to convert USD card prices (default `https://api.frankfurter.dev/v1` — free, no API key) |
-| `DISABLE_LOGIN` | Set to `"true"` to run without authentication as a single shared local user (see [Authentication](#authentication)). Defaults to off; the Google OAuth vars below are not needed when enabled |
+| `AUTH_DEV_LOGIN` | Dev only: set to `"true"` to add a "Continue as dev user" button to the login page (see [Authentication](#authentication)). Ignored when `NODE_ENV=production`. Requires `AUTH_SECRET` and `NEXTAUTH_URL`, but not the Google OAuth vars |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `AUTH_SECRET` | Random secret used to sign NextAuth JWTs |
@@ -166,14 +167,19 @@ in. Add one with `npm run whitelist-user -- you@example.com`. On a user's first
 successful sign-in, a "Main Collection" is created for them automatically. API routes
 are gated by the Next.js middleware (`src/proxy.ts`).
 
-### No-auth mode (`DISABLE_LOGIN`)
+### Dev login (`AUTH_DEV_LOGIN`)
 
-For local/self-hosted single-user deployments where Google OAuth is unwanted, set
-`DISABLE_LOGIN=true`. The app then runs with **no login/logout** and behaves as if
-authenticated as a fixed user (`_id 000000000000000000000001`). That user and an active
-"Main Collection" are provisioned automatically on first use, the AppBar shows a small
-"No-auth mode" indicator instead of an avatar, and the API auth gate is bypassed. The
-Google OAuth env vars are not required in this mode.
+For local development without Google OAuth, run `npm run dev:devlogin` (or set
+`AUTH_DEV_LOGIN=true`). This registers a dev-only NextAuth Credentials provider and the
+login page shows a **"Continue as dev user"** button that signs in as a fixed local user
+(`_id 000000000000000000000001`). That user and an active "Main Collection" are
+provisioned automatically on sign-in. Unlike the old no-auth mode, this is a **real
+NextAuth session** — a normal JWT cookie, the middleware auth gate stays fully active,
+and sign-out works as usual — so `AUTH_SECRET` and `NEXTAUTH_URL`
+(`http://localhost:3000` in dev) are still required, but the Google OAuth vars are not.
+The provider is registered only when `NODE_ENV !== "production"`, so it can never appear
+in a production build; deployments (see `docker-compose.yml`) use real Google login and
+need real OAuth values in the host's `.env`.
 
 ## Card scanning
 

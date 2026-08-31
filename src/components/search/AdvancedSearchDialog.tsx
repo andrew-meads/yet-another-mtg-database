@@ -74,9 +74,7 @@ export default function AdvancedSearchDialog({
 
   const toggleColor = (key: "colors" | "colorIdentity", color: string) => {
     const current = filters[key] || [];
-    const next = current.includes(color)
-      ? current.filter((c) => c !== color)
-      : [...current, color];
+    const next = current.includes(color) ? current.filter((c) => c !== color) : [...current, color];
     updateFilter(key, next.length > 0 ? next : undefined);
   };
 
@@ -223,10 +221,10 @@ export default function AdvancedSearchDialog({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="set">Set Code</Label>
+                <Label htmlFor="set">Set</Label>
                 <Input
                   id="set"
-                  placeholder="e.g., M21, NEO"
+                  placeholder="e.g., M21, Kamigawa"
                   value={filters.set || ""}
                   onChange={(e) => updateFilter("set", e.target.value)}
                 />
