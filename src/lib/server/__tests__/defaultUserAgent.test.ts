@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import {
   DEFAULT_USER_AGENT,
   createFetchWithDefaultUserAgent,
-  installDefaultUserAgentFetch
+  installDefaultUserAgentFetch,
+  uninstallDefaultUserAgentFetch
 } from "@/lib/server/defaultUserAgent";
 
 /** Reads the User-Agent the wrapper passed to the underlying fetch. */
@@ -94,6 +95,22 @@ describe("createFetchWithDefaultUserAgent", () => {
   });
 });
 
+describe("createFetchWithDefaultUserAgent (proxy transparency)", () => {
+  it("exposes properties of the underlying fetch through the wrapper", async () => {
+    // Next.js stamps markers (e.g. an "already patched" flag) on its patched
+    // fetch and reads them back via globalThis.fetch — they must shine through.
+    const base = vi.fn().mockResolvedValue(new Response("ok")) as typeof fetch & {
+      __nextPatched?: boolean;
+    };
+    base.__nextPatched = true;
+    const wrapped = createFetchWithDefaultUserAgent(base) as typeof fetch & {
+      __nextPatched?: boolean;
+    };
+
+    expect(wrapped.__nextPatched).toBe(true);
+  });
+});
+
 describe("installDefaultUserAgentFetch", () => {
   it("patches global fetch once and is idempotent", async () => {
     const original = globalThis.fetch;
@@ -112,6 +129,47 @@ describe("installDefaultUserAgentFetch", () => {
       await globalThis.fetch("https://cards.scryfall.io/a.jpg");
       expect(uaOf(base.mock.calls[0][1])).toBe(DEFAULT_USER_AGENT);
     } finally {
+      uninstallDefaultUserAgentFetch();
+      globalThis.fetch = original;
+    }
+  });
+
+  it("re-wraps fetch when something re-assigns globalThis.fetch after install", async () => {
+    // Simulates Next.js dev mode replacing globalThis.fetch with its own
+    // instrumentation wrapper *after* instrumentation.ts has run.
+    const original = globalThis.fetch;
+    try {
+      const base = vi.fn().mockResolvedValue(new Response("ok"));
+      globalThis.fetch = base as typeof fetch;
+      installDefaultUserAgentFetch();
+
+      const nextPatched = vi.fn().mockResolvedValue(new Response("ok"));
+      globalThis.fetch = nextPatched as typeof fetch;
+
+      await globalThis.fetch("https://cards.scryfall.io/a.jpg");
+
+      // The replacement fetch is the one called — but with the UA injected.
+      expect(base).not.toHaveBeenCalled();
+      expect(uaOf(nextPatched.mock.calls[0][1])).toBe(DEFAULT_USER_AGENT);
+    } finally {
+      uninstallDefaultUserAgentFetch();
+      globalThis.fetch = original;
+    }
+  });
+
+  it("does not double-wrap when one of its own wrappers is assigned back", () => {
+    const original = globalThis.fetch;
+    try {
+      const base = vi.fn().mockResolvedValue(new Response("ok"));
+      globalThis.fetch = base as typeof fetch;
+      installDefaultUserAgentFetch();
+
+      const wrapper = globalThis.fetch;
+      globalThis.fetch = wrapper;
+
+      expect(globalThis.fetch).toBe(wrapper);
+    } finally {
+      uninstallDefaultUserAgentFetch();
       globalThis.fetch = original;
     }
   });

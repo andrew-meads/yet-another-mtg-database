@@ -9,6 +9,17 @@
  * wrap the server's global `fetch` (from `instrumentation.ts`) to attach a custom
  * `User-Agent` whenever the caller hasn't set one. Callers that set their own UA
  * (e.g. `scryfallFetch`) are left untouched.
+ *
+ * Why an accessor and not a plain assignment: Next itself re-assigns
+ * `globalThis.fetch` with its own instrumentation wrapper — in dev mode it does so
+ * *after* `instrumentation.ts` has run (and again on recompiles), which silently
+ * replaced a plainly-assigned wrapper and brought the 400s back (dev-only; a
+ * production server patches once at boot). So `installDefaultUserAgentFetch`
+ * defines `fetch` as a get/set property: every later assignment lands in the
+ * setter and is transparently re-wrapped, keeping the UA injection outermost no
+ * matter who patches when. The wrapper itself is a `Proxy` so properties Next
+ * stamps on its patched fetch (e.g. its "already patched" marker) remain visible
+ * through us and Next doesn't re-patch endlessly.
  */
 import { SCRYFALL_HEADERS } from "@/lib/scryfall";
 
@@ -16,6 +27,9 @@ import { SCRYFALL_HEADERS } from "@/lib/scryfall";
 export const DEFAULT_USER_AGENT = SCRYFALL_HEADERS["User-Agent"];
 
 type FetchFn = typeof fetch;
+
+/** Wrappers created by us, so the setter never double-wraps its own output. */
+const ourWrappers = new WeakSet<object>();
 
 /** True if a `User-Agent` header is already present on the given fetch arguments. */
 function hasUserAgent(input: RequestInfo | URL, init?: RequestInit): boolean {
@@ -32,36 +46,71 @@ function hasUserAgent(input: RequestInfo | URL, init?: RequestInit): boolean {
 /**
  * Wraps `baseFetch` so that requests without an explicit `User-Agent` get the
  * given one. Requests that already specify a `User-Agent` (in `init.headers` or
- * on a `Request` input) pass through unchanged.
+ * on a `Request` input) pass through unchanged. The wrapper is a transparent
+ * `Proxy`: reading/writing properties on it reaches `baseFetch` itself.
  */
 export function createFetchWithDefaultUserAgent(
   baseFetch: FetchFn,
   userAgent: string = DEFAULT_USER_AGENT
 ): FetchFn {
-  return ((input: RequestInfo | URL, init?: RequestInit) => {
-    if (hasUserAgent(input, init)) return baseFetch(input, init);
+  const wrapper = new Proxy(baseFetch, {
+    apply(target, thisArg, args: [RequestInfo | URL, RequestInit?]) {
+      const [input, init] = args;
+      if (hasUserAgent(input, init)) return Reflect.apply(target, thisArg, args);
 
-    const headers = new Headers(
-      init?.headers ??
-        (typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined)
-    );
-    headers.set("User-Agent", userAgent);
-    return baseFetch(input, { ...init, headers });
+      const headers = new Headers(
+        init?.headers ??
+          (typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined)
+      );
+      headers.set("User-Agent", userAgent);
+      return Reflect.apply(target, thisArg, [input, { ...init, headers }]);
+    }
   }) as FetchFn;
+  ourWrappers.add(wrapper);
+  return wrapper;
 }
 
 const INSTALLED_FLAG = "__defaultUserAgentFetchInstalled";
+type GlobalWithFlag = typeof globalThis & { [INSTALLED_FLAG]?: boolean };
 
 /**
- * Idempotently replaces `globalThis.fetch` with one that injects
- * {@link DEFAULT_USER_AGENT} when no `User-Agent` is set. Safe to call multiple
- * times (e.g. across hot-reloads) — only the first call patches.
+ * Idempotently redefines `globalThis.fetch` as an accessor that keeps a
+ * UA-injecting wrapper (see {@link createFetchWithDefaultUserAgent}) outermost:
+ * the current fetch is wrapped immediately, and any future assignment to
+ * `globalThis.fetch` (e.g. Next.js re-patching it in dev) is re-wrapped by the
+ * setter. Safe to call multiple times — only the first call installs.
  */
 export function installDefaultUserAgentFetch(): void {
-  const globalAny = globalThis as typeof globalThis & { [INSTALLED_FLAG]?: boolean };
+  const globalAny = globalThis as GlobalWithFlag;
   if (globalAny[INSTALLED_FLAG]) return;
-  const base = globalThis.fetch;
-  if (typeof base !== "function") return;
-  globalThis.fetch = createFetchWithDefaultUserAgent(base.bind(globalThis));
+  const initial = globalThis.fetch;
+  if (typeof initial !== "function") return;
+
+  let current: FetchFn = createFetchWithDefaultUserAgent(initial);
+  Object.defineProperty(globalThis, "fetch", {
+    configurable: true,
+    enumerable: true,
+    get: () => current,
+    set: (next: unknown) => {
+      current =
+        typeof next === "function" && !ourWrappers.has(next)
+          ? createFetchWithDefaultUserAgent(next as FetchFn)
+          : (next as FetchFn);
+    }
+  });
   globalAny[INSTALLED_FLAG] = true;
+}
+
+/**
+ * Removes the accessor installed by {@link installDefaultUserAgentFetch},
+ * leaving the current (still-wrapped) fetch as a plain writable property.
+ * Test-only — production never uninstalls.
+ */
+export function uninstallDefaultUserAgentFetch(): void {
+  const globalAny = globalThis as GlobalWithFlag;
+  if (!globalAny[INSTALLED_FLAG]) return;
+  const current = globalThis.fetch;
+  delete (globalThis as { fetch?: FetchFn }).fetch;
+  globalThis.fetch = current;
+  delete globalAny[INSTALLED_FLAG];
 }
