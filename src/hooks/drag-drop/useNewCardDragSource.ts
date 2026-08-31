@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { NEW_CARD, NewCardDragItem } from "./Types";
 
 /**
  * Makes a component a drag source for a brand-new card (from search results).
  */
 export function useNewCardDragSource(
-  card: MtgCard,
+  card: SlimMtgCard,
   canDrag: boolean = true,
   notes?: string,
   tags?: string[]

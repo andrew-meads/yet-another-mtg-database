@@ -1,7 +1,7 @@
 "use client";
 
 import { CollectionWithCards } from "@/types/Collection";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import CardPopup from "@/components/CardPopup";
@@ -42,7 +42,7 @@ export default function CollectionTable({
   initialQuery,
   onSearchChange
 }: CollectionTableProps) {
-  const [hovered, setHovered] = useState<{ card: MtgCard; pos: { x: number; y: number } } | null>(
+  const [hovered, setHovered] = useState<{ card: SlimMtgCard; pos: { x: number; y: number } } | null>(
     null
   );
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
@@ -130,7 +130,7 @@ export default function CollectionTable({
     };
   }, []);
 
-  const handleRowEnter = (card: MtgCard) => {
+  const handleRowEnter = (card: SlimMtgCard) => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
     if (!cardPreview.enabled) return;
     showTimerRef.current = setTimeout(() => {

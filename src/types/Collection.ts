@@ -1,4 +1,4 @@
-import { DetailedPhysicalCard } from "./PhysicalCard";
+import { DetailedPhysicalCard, DetailedPhysicalCardEntry } from "./PhysicalCard";
 
 export interface CollectionSummary {
   _id: string;
@@ -20,4 +20,9 @@ export interface CollectionListSummary extends Collection {
 export interface CollectionWithCards extends Collection {
   /** Flat list of this collection's physical cards (client groups + sorts them) */
   cards: DetailedPhysicalCard[];
+}
+
+/** Wire form of CollectionWithCards: entries reference cards by id; the response ships a CardDataMap alongside. */
+export interface CollectionWithCardEntries extends Collection {
+  cards: DetailedPhysicalCardEntry[];
 }

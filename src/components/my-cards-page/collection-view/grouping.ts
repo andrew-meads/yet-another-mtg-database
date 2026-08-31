@@ -1,10 +1,10 @@
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 
 /** One collection-table display row: copies grouped by card + notes + tags + deck. */
 export interface CollectionGroupRow {
   key: string;
-  card: MtgCard;
+  card: SlimMtgCard;
   notes?: string;
   tags?: string[];
   /** Single deck membership for this row (null = loose copies). */

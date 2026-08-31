@@ -2,18 +2,18 @@
 
 import { createContext, useContext } from "react";
 
-import type { MtgCard } from "@/types/MtgCard";
+import type { SlimMtgCard } from "@/types/MtgCard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface CardSelectionContextType {
-  selectedCard: MtgCard | null;
-  setSelectedCard: (card: MtgCard | null) => void;
+  selectedCard: SlimMtgCard | null;
+  setSelectedCard: (card: SlimMtgCard | null) => void;
 }
 
 const CardSelectionContext = createContext<CardSelectionContextType | undefined>(undefined);
 
 export function CardSelectionProvider({ children }: { children: React.ReactNode }) {
-  const [selectedCard, setSelectedCard] = useLocalStorage<MtgCard | null>("selected-card", null);
+  const [selectedCard, setSelectedCard] = useLocalStorage<SlimMtgCard | null>("selected-card", null);
 
   return (
     <CardSelectionContext.Provider value={{ selectedCard, setSelectedCard }}>

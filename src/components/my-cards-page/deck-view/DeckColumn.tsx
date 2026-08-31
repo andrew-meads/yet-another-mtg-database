@@ -2,7 +2,7 @@
 
 import { SimpleCardArtView } from "@/components/CardArtView";
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { DeckColumn as DeckColumnData } from "@/types/Deck";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -55,7 +55,7 @@ function DeckCardImage({
   /** The physical card ids to drag together: this card plus every card below it. */
   physicalCardIds: string[];
   /** Full card data for every card in the run (for the drag preview). */
-  cards: MtgCard[];
+  cards: SlimMtgCard[];
   isFirst: boolean;
   cardIndex: number;
   isBeingDragged: boolean;

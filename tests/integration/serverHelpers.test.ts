@@ -6,11 +6,11 @@ import { DeckModel, TagModel } from "@/db/schema";
 import { seedCard, seedCollection, seedDeck, seedPhysicalCard, seedUser } from "./helpers";
 
 describe("detailPhysicalCards", () => {
-  it("returns [] for empty input", async () => {
-    expect(await detailPhysicalCards([])).toEqual([]);
+  it("returns empty entries + cardData for empty input", async () => {
+    expect(await detailPhysicalCards([])).toEqual({ entries: [], cardData: {} });
   });
 
-  it("joins card data and resolves collection + deck names", async () => {
+  it("returns entries referencing a card-data map and resolves collection + deck names", async () => {
     const owner = await seedUser();
     const card = await seedCard({ name: "Goblin Guide" });
     const collectionId = await seedCollection(owner, { name: "Mainboard" });
@@ -22,7 +22,7 @@ describe("detailPhysicalCards", () => {
       tags: ["staple"]
     });
 
-    const [detailed] = await detailPhysicalCards([
+    const { entries, cardData } = await detailPhysicalCards([
       {
         _id: pcId,
         cardId: card.id,
@@ -33,8 +33,10 @@ describe("detailPhysicalCards", () => {
       }
     ]);
 
-    expect(detailed).toMatchObject({
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
       _id: pcId,
+      cardId: card.id,
       collectionId,
       deckId,
       notes: "foil",
@@ -42,16 +44,55 @@ describe("detailPhysicalCards", () => {
       collectionName: "Mainboard",
       deckName: "Burn"
     });
-    expect(detailed.card.name).toBe("Goblin Guide");
+    // The card data is NOT embedded per entry — it lives once in the map.
+    expect(entries[0]).not.toHaveProperty("card");
+    expect(cardData[card.id].name).toBe("Goblin Guide");
+  });
+
+  it("deduplicates card data across copies of the same card", async () => {
+    const owner = await seedUser();
+    const card = await seedCard({ name: "Shock" });
+    const collectionId = await seedCollection(owner);
+    const pcA = await seedPhysicalCard(owner, card.id, collectionId);
+    const pcB = await seedPhysicalCard(owner, card.id, collectionId);
+
+    const { entries, cardData } = await detailPhysicalCards([
+      { _id: pcA, cardId: card.id, collectionId },
+      { _id: pcB, cardId: card.id, collectionId }
+    ]);
+
+    expect(entries).toHaveLength(2);
+    expect(entries.map((e) => e.cardId)).toEqual([card.id, card.id]);
+    expect(Object.keys(cardData)).toEqual([card.id]);
+  });
+
+  it("serves slim card data (projected to the fields the client renders)", async () => {
+    const owner = await seedUser();
+    const card = await seedCard({ name: "Lightning Bolt" });
+    const collectionId = await seedCollection(owner);
+    const pcId = await seedPhysicalCard(owner, card.id, collectionId);
+
+    const { cardData } = await detailPhysicalCards([
+      { _id: pcId, cardId: card.id, collectionId }
+    ]);
+
+    const slim = cardData[card.id];
+    expect(slim.name).toBe("Lightning Bolt");
+    // Fields no client component reads are projected away.
+    expect(slim).not.toHaveProperty("lang");
+    expect(slim).not.toHaveProperty("border_color");
+    expect(slim).not.toHaveProperty("image_status");
+    expect(slim).not.toHaveProperty("_id");
   });
 
   it("drops physical cards whose Scryfall data is missing", async () => {
     const owner = await seedUser();
     const collectionId = await seedCollection(owner);
-    const result = await detailPhysicalCards([
+    const { entries, cardData } = await detailPhysicalCards([
       { _id: "x", cardId: "does-not-exist", collectionId }
     ]);
-    expect(result).toEqual([]);
+    expect(entries).toEqual([]);
+    expect(cardData).toEqual({});
   });
 });
 

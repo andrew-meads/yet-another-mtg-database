@@ -1,4 +1,4 @@
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import clsx from "clsx";
 import styles from "./CardTextView.module.css";
 import { Fragment } from "react/jsx-runtime";
@@ -24,7 +24,7 @@ interface IFace {
  *
  * @param card - The card object containing oracle_text and other card data
  */
-export function CardTextView({ card }: { card: MtgCard }) {
+export function CardTextView({ card }: { card: SlimMtgCard }) {
   const faces: IFace[] = [...((card.card_faces as IFace[]) || [])];
   if (faces.length === 0) faces.push(card as IFace);
   const oracleTexts =

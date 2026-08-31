@@ -1,6 +1,6 @@
 import connectDB from "@/db/mongoose";
 import { CardData, CollectionModel, PhysicalCardModel, DeckModel } from "@/db/schema";
-import { CollectionWithCards } from "@/types/Collection";
+import { CollectionWithCardEntries } from "@/types/Collection";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { parseSearchQuery } from "@/lib/search/queryBuilder";
 import { NextRequest } from "next/server";
@@ -11,8 +11,9 @@ import { getAuthSession } from "@/auth";
  * Retrieves a single collection by id.
  *
  * Query Parameters:
- * - details: If "true", includes the collection's physical cards joined with card
- *   data and deck badges (flat list; the client groups + sorts).
+ * - details: If "true", includes the collection's physical card entries (flat
+ *   list; the client groups + sorts) plus a deduplicated top-level `cardData`
+ *   map keyed by Scryfall id — the client re-joins entries to card data.
  * - q: Optional Scryfall-style search string. When present (with details=true),
  *   only cards in this collection matching the query are returned. Uses the same
  *   `parseSearchQuery` engine as GET /api/cards.
@@ -32,8 +33,10 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
     }
 
     const summary = {
-      ...collection,
       _id: collection._id.toString(),
+      name: collection.name,
+      description: collection.description ?? "",
+      isActive: collection.isActive ?? false,
       owner: collection.owner.toString(),
       kind: "collection" as const
     };
@@ -42,33 +45,33 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
       request.nextUrl.searchParams.get("details")?.toLowerCase() === "true";
     if (!includeCardDetails) return Response.json({ collection: summary });
 
-    const physicalCards = await PhysicalCardModel.find({ collectionId: id, owner: userId }).lean();
-
     // Optional Scryfall-style search, scoped to this collection. We resolve the
-    // query against CardData (intersected with the cards present here) and keep
-    // only the physical cards whose Scryfall id matches.
+    // query against CardData (intersected with the card ids present here) FIRST
+    // so we only ever load the matching physical cards.
     const queryString = request.nextUrl.searchParams.get("q");
-    let filteredPhysicalCards = physicalCards;
+    const physicalCardFilter: Record<string, unknown> = { collectionId: id, owner: userId };
     if (queryString && queryString.trim().length > 0) {
       const searchQuery = parseSearchQuery(queryString);
-      const cardIds = [...new Set(physicalCards.map((c) => c.cardId))];
+      const cardIds: string[] = await PhysicalCardModel.distinct("cardId", {
+        collectionId: id,
+        owner: userId
+      });
       const matches = await CardData.find(
         { $and: [searchQuery, { id: { $in: cardIds } }] },
         { id: 1 }
       ).lean();
-      const matchingIds = new Set(matches.map((m) => m.id));
-      filteredPhysicalCards = physicalCards.filter((c) => matchingIds.has(c.cardId));
+      physicalCardFilter.cardId = { $in: matches.map((m) => m.id) };
     }
 
-    const cards = await detailPhysicalCards(filteredPhysicalCards);
+    const physicalCards = await PhysicalCardModel.find(physicalCardFilter).lean();
+    const { entries, cardData } = await detailPhysicalCards(physicalCards);
 
-    const detailsCollection: CollectionWithCards = {
+    const detailsCollection: CollectionWithCardEntries = {
       ...summary,
-      description: collection.description ?? "",
-      cards
+      cards: entries
     };
 
-    return Response.json({ collection: detailsCollection });
+    return Response.json({ collection: detailsCollection, cardData });
   } catch (error) {
     console.error("Error fetching collection:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });

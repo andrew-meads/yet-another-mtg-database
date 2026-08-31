@@ -1,10 +1,18 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { CardLocation } from "@/types/CardLocation";
+import { CardLocation, CardLocationEntries } from "@/types/CardLocation";
+import { CardDataMap } from "@/types/PhysicalCard";
+import { joinCardEntries } from "@/lib/cardEntries";
 
 export interface CardLocationsResponse {
   locations: CardLocation[];
+}
+
+/** Wire shape: card data is shipped once in `cardData`, entries reference it by id. */
+interface CardLocationsWireResponse {
+  locations: CardLocationEntries[];
+  cardData: CardDataMap;
 }
 
 async function fetchCardLocations(cardName: string): Promise<CardLocationsResponse> {
@@ -18,7 +26,13 @@ async function fetchCardLocations(cardName: string): Promise<CardLocationsRespon
     throw new Error(errorData.error || `Request failed with status ${res.status}`);
   }
 
-  return res.json();
+  const { locations, cardData }: CardLocationsWireResponse = await res.json();
+  return {
+    locations: locations.map((location) => ({
+      ...location,
+      cards: joinCardEntries(location.cards, cardData)
+    }))
+  };
 }
 
 export function useCardLocations(

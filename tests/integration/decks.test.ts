@@ -39,11 +39,13 @@ describe("GET /api/decks/[id]?details=true (reconciliation)", () => {
       ctx({ id: deckId })
     );
     expect(res.status).toBe(200);
-    const { deck: detailed } = await res.json();
+    const { deck: detailed, cardData } = await res.json();
     const allCardIds = detailed.sections.flatMap((s: any) =>
       s.columns.flatMap((c: any) => c.cards.map((card: any) => card._id))
     );
     expect(allCardIds).toContain(pcId);
+    // Card data ships once in the top-level map, keyed by Scryfall id.
+    expect(cardData[cardId]).toBeDefined();
 
     // Reconciliation is persisted.
     const fresh = await DeckModel.findById(deckId).lean();

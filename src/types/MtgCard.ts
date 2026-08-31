@@ -72,3 +72,33 @@ export interface MtgCard {
   set_name: string;
   set: string;
 }
+
+/**
+ * The subset of MtgCard fields the client actually renders, served by the
+ * collection/deck/locations detail endpoints (see SLIM_CARD_PROJECTION in
+ * src/lib/server/cardDetails.ts — keep the two in sync). A full MtgCard is
+ * structurally assignable to SlimMtgCard, so full-card producers (search page,
+ * scan, basic lands) still flow into slim-typed consumers.
+ */
+export type SlimMtgCard = Pick<
+  MtgCard,
+  | "id"
+  | "name"
+  | "flavor_name"
+  | "layout"
+  | "oracle_id"
+  | "mana_cost"
+  | "cmc"
+  | "type_line"
+  | "oracle_text"
+  | "flavor_text"
+  | "power"
+  | "toughness"
+  | "loyalty"
+  | "set"
+  | "set_name"
+  | "collector_number"
+  | "rarity"
+  | "image_uris"
+  | "card_faces"
+>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MtgCard } from "@/types/MtgCard";
+import { MtgCard, SlimMtgCard } from "@/types/MtgCard";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useCardPreviewSettings } from "@/context/SettingsContext";
@@ -164,7 +164,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
    * Handle add to collection button click
    */
   const handleAddToCollection = useCallback(
-    (card: MtgCard, collectionId?: string) => {
+    (card: SlimMtgCard, collectionId?: string) => {
       // Determine target collection
       let targetCollection;
 

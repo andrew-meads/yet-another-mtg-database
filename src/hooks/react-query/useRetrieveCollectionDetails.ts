@@ -1,10 +1,18 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { CollectionWithCards } from "@/types/Collection";
+import { CollectionWithCardEntries, CollectionWithCards } from "@/types/Collection";
+import { CardDataMap } from "@/types/PhysicalCard";
+import { joinCardEntries } from "@/lib/cardEntries";
 
 export interface CollectionDetailsResponse {
   collection: CollectionWithCards;
+}
+
+/** Wire shape: card data is shipped once in `cardData`, entries reference it by id. */
+interface CollectionDetailsWireResponse {
+  collection: CollectionWithCardEntries;
+  cardData: CardDataMap;
 }
 
 async function fetchCollectionDetails(
@@ -25,7 +33,10 @@ async function fetchCollectionDetails(
     throw new Error(errorData.error || `Request failed with status ${res.status}`);
   }
 
-  return res.json();
+  const { collection, cardData }: CollectionDetailsWireResponse = await res.json();
+  return {
+    collection: { ...collection, cards: joinCardEntries(collection.cards, cardData) }
+  };
 }
 
 export function useRetrieveCollectionDetails(

@@ -8,7 +8,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { useMemo, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ interface Loc {
   type: "collection" | "deck";
   locationName: string;
   locationId: string;
-  card: MtgCard;
+  card: SlimMtgCard;
   notes: string;
   tags: string[];
   quantity: number;

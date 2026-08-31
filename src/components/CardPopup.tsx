@@ -2,11 +2,11 @@
 
 import CardArtView from "@/components/CardArtView";
 import type { CardPreviewSize } from "@/context/SettingsContext";
-import type { MtgCard } from "@/types/MtgCard";
+import type { SlimMtgCard } from "@/types/MtgCard";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export interface CardPopupProps {
-  card: MtgCard;
+  card: SlimMtgCard;
   position: { x: number; y: number };
   /** On-screen size of the preview; also selects the image resolution variant */
   size?: CardPreviewSize;

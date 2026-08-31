@@ -4,7 +4,7 @@ import { useDragLayer } from "react-dnd";
 import { Library, Layers, Sparkles } from "lucide-react";
 import { SimpleCardArtView } from "@/components/CardArtView";
 import { AnyDragItem, PHYSICAL_CARD } from "@/hooks/drag-drop/Types";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import {
   CARD_WIDTH,
   CARD_HEIGHT,
@@ -32,7 +32,7 @@ export default function DeckColumnDragLayer() {
   const isCollection = item.origin.type === "collection";
   const count = item.physicalCardIds.length;
 
-  const stackCards: MtgCard[] = isCollection
+  const stackCards: SlimMtgCard[] = isCollection
     ? Array.from({ length: Math.min(count, MAX_VISIBLE) }, () => item.card)
     : (item.cards ?? [item.card]).slice(0, MAX_VISIBLE);
 

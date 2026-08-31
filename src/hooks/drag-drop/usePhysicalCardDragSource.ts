@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { PHYSICAL_CARD, PhysicalCardDragItem, PhysicalCardDragOrigin } from "./Types";
 
 interface UsePhysicalCardDragSourceProps {
   physicalCardIds: string[];
-  card: MtgCard;
+  card: SlimMtgCard;
   /** Full card data for every card in the dragged run (deck-column drags only). */
-  cards?: MtgCard[];
+  cards?: SlimMtgCard[];
   sourceCollectionId: string | null;
   sourceDeckId?: string | null;
   /** Human-readable source names for the drag-layer membership badges. */

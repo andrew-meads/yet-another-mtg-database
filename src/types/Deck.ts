@@ -1,4 +1,4 @@
-import { DetailedPhysicalCard } from "./PhysicalCard";
+import { DetailedPhysicalCard, DetailedPhysicalCardEntry } from "./PhysicalCard";
 import { CollectionSummary } from "./Collection";
 
 export interface DeckSummary {
@@ -31,6 +31,22 @@ export interface DeckSection {
 
 export interface DeckWithCards extends Deck {
   sections: DeckSection[];
+}
+
+/** Wire forms of the above: entries reference cards by id; the response ships a CardDataMap alongside. */
+export interface DeckColumnEntries {
+  _id: string;
+  cards: DetailedPhysicalCardEntry[];
+}
+
+export interface DeckSectionEntries {
+  _id: string;
+  name: string;
+  columns: DeckColumnEntries[];
+}
+
+export interface DeckWithCardEntries extends Deck {
+  sections: DeckSectionEntries[];
 }
 
 /** A workspace-openable entity: either a collection or a deck. */

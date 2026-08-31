@@ -1,10 +1,18 @@
 "use client";
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { DeckWithCards } from "@/types/Deck";
+import { DeckWithCardEntries, DeckWithCards } from "@/types/Deck";
+import { CardDataMap } from "@/types/PhysicalCard";
+import { joinCardEntries } from "@/lib/cardEntries";
 
 export interface DeckDetailsResponse {
   deck: DeckWithCards;
+}
+
+/** Wire shape: card data is shipped once in `cardData`, entries reference it by id. */
+interface DeckDetailsWireResponse {
+  deck: DeckWithCardEntries;
+  cardData: CardDataMap;
 }
 
 async function fetchDeckDetails(deckId: string): Promise<DeckDetailsResponse> {
@@ -13,7 +21,20 @@ async function fetchDeckDetails(deckId: string): Promise<DeckDetailsResponse> {
     const errorData = await res.json().catch(() => ({ error: "Failed to fetch deck details" }));
     throw new Error(errorData.error || `Request failed with status ${res.status}`);
   }
-  return res.json();
+  const { deck, cardData }: DeckDetailsWireResponse = await res.json();
+
+  return {
+    deck: {
+      ...deck,
+      sections: deck.sections.map((section) => ({
+        ...section,
+        columns: section.columns.map((column) => ({
+          ...column,
+          cards: joinCardEntries(column.cards, cardData)
+        }))
+      }))
+    }
+  };
 }
 
 export function useRetrieveDeckDetails(

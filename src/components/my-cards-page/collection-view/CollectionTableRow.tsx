@@ -1,7 +1,7 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ interface CollectionTableRowProps {
   collectionId: string;
   collectionName?: string;
   row: CollectionGroupRow;
-  onClick?: (card: MtgCard) => void;
+  onClick?: (card: SlimMtgCard) => void;
   isSelected?: boolean;
   isExpanded?: boolean;
   onExpand?: () => void;

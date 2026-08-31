@@ -1,6 +1,6 @@
 import connectDB from "@/db/mongoose";
 import { CardData, PhysicalCardModel } from "@/db/schema";
-import { CardLocation } from "@/types/CardLocation";
+import { CardLocationEntries } from "@/types/CardLocation";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
@@ -8,7 +8,9 @@ import { getAuthSession } from "@/auth";
 /**
  * GET /api/cards/locations?name=CardName
  * Finds all of the user's collections that contain physical cards with the given
- * (exact, case-sensitive) name, grouped by collection.
+ * (exact, case-sensitive) name, grouped by collection. Cards are returned as
+ * entries plus a deduplicated top-level `cardData` map keyed by Scryfall id —
+ * the client re-joins entries to card data.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -16,12 +18,12 @@ export async function GET(request: NextRequest) {
 
     const cardName = request.nextUrl.searchParams.get("name");
     if (!cardName) {
-      return Response.json({ locations: [] });
+      return Response.json({ locations: [], cardData: {} });
     }
 
     const matchingCards = await CardData.find({ name: cardName }, { id: 1 }).lean();
     if (matchingCards.length === 0) {
-      return Response.json({ locations: [] });
+      return Response.json({ locations: [], cardData: {} });
     }
     const matchingCardIds = matchingCards.map((card) => card.id);
 
@@ -33,12 +35,12 @@ export async function GET(request: NextRequest) {
       owner: userId
     }).lean();
 
-    const detailed = await detailPhysicalCards(physicalCards);
+    const { entries, cardData } = await detailPhysicalCards(physicalCards);
 
     // Group by collection. Ephemeral (deck-only) cards have no collection, so
     // they don't appear in this collection-location view.
-    const byCollection = new Map<string, CardLocation>();
-    for (const card of detailed) {
+    const byCollection = new Map<string, CardLocationEntries>();
+    for (const card of entries) {
       const key = card.collectionId;
       if (!key) continue;
       if (!byCollection.has(key)) {
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
       byCollection.get(key)!.cards.push(card);
     }
 
-    return Response.json({ locations: [...byCollection.values()] });
+    return Response.json({ locations: [...byCollection.values()], cardData });
   } catch (error) {
     console.error("Error finding card locations:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });

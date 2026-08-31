@@ -79,9 +79,10 @@ describe("GET /api/collections/summaries", () => {
 });
 
 describe("GET /api/collections/[id]?details=true", () => {
-  it("returns the collection with its joined cards", async () => {
+  it("returns the collection's card entries plus a deduplicated cardData map", async () => {
     const card = await seedCard({ name: "Llanowar Elves" });
     const collectionId = await seedCollection(owner);
+    await seedPhysicalCard(owner, card.id, collectionId);
     await seedPhysicalCard(owner, card.id, collectionId);
 
     const res = await getCollection(
@@ -89,9 +90,13 @@ describe("GET /api/collections/[id]?details=true", () => {
       ctx({ id: collectionId })
     );
     expect(res.status).toBe(200);
-    const { collection } = await res.json();
-    expect(collection.cards).toHaveLength(1);
-    expect(collection.cards[0].card.name).toBe("Llanowar Elves");
+    const { collection, cardData } = await res.json();
+    expect(collection.cards).toHaveLength(2);
+    expect(collection.cards[0].cardId).toBe(card.id);
+    // Card data is not embedded per entry — it ships once in the map.
+    expect(collection.cards[0].card).toBeUndefined();
+    expect(Object.keys(cardData)).toEqual([card.id]);
+    expect(cardData[card.id].name).toBe("Llanowar Elves");
   });
 });
 
@@ -135,8 +140,10 @@ describe("GET /api/collections/[id]?details=true&q=... (Scryfall search scope)",
       ctx({ id: collectionId })
     );
     expect(res.status).toBe(200);
-    const { collection } = await res.json();
-    return (collection.cards as { card: { name: string } }[]).map((c) => c.card.name).sort();
+    const { collection, cardData } = await res.json();
+    return (collection.cards as { cardId: string }[])
+      .map((c) => (cardData as Record<string, { name: string }>)[c.cardId].name)
+      .sort();
   };
 
   it("returns all cards when q is omitted", async () => {

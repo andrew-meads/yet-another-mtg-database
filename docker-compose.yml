@@ -18,6 +18,9 @@ services:
       - proxy-net
     labels:
       caddy: mtg-database.ocean.anhydrous.dev
+      # Compress responses at the proxy — Next's built-in gzip does not fire for
+      # /api/* routes in practice (the middleware path drops accept-encoding).
+      caddy.encode: zstd gzip
       caddy.reverse_proxy: "{{upstreams 3000}}"
     restart: unless-stopped
 

@@ -1,4 +1,4 @@
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { OpenEntitySummary } from "@/types/Deck";
 
 export const NEW_CARD = "NEW_CARD";
@@ -7,7 +7,7 @@ export const PHYSICAL_CARD = "PHYSICAL_CARD";
 /** Dragged from search results — a brand new card to be added somewhere. */
 export interface NewCardDragItem {
   kind: "new";
-  card: MtgCard;
+  card: SlimMtgCard;
   notes?: string;
   tags?: string[];
 }
@@ -26,10 +26,10 @@ export interface PhysicalCardDragItem {
   /** One or more physical card ids being moved together. */
   physicalCardIds: string[];
   /** The grabbed card — used for single-card previews and collection-row drags. */
-  card: MtgCard;
+  card: SlimMtgCard;
   /** Full card data for every card in the dragged run, in order. Present when
    *  dragging from a deck column; absent for collection-row drags. */
-  cards?: MtgCard[];
+  cards?: SlimMtgCard[];
   /** Owning collection of the dragged copies, or null when ephemeral (deck-only). */
   sourceCollectionId: string | null;
   sourceDeckId?: string | null;

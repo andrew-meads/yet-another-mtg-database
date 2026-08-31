@@ -1,4 +1,4 @@
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import { DeckWithCards } from "@/types/Deck";
 
@@ -17,14 +17,14 @@ export interface FillGroup {
   /** Card identity: oracle_id, falling back to the lowercased name. */
   key: string;
   /** Representative card data (the first ephemeral's printing). */
-  card: MtgCard;
+  card: SlimMtgCard;
   /** The deck slots to fill, in deck order. */
   ephemerals: { id: string; scryfallId: string }[];
   /** Matching collection cards, same-printing candidates first. */
   candidates: FillCandidate[];
 }
 
-function cardKey(card: MtgCard): string {
+function cardKey(card: SlimMtgCard): string {
   return card.oracle_id ?? card.name.toLowerCase();
 }
 

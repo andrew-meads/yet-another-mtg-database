@@ -1,6 +1,6 @@
 import connectDB from "@/db/mongoose";
 import { DeckModel, PhysicalCardModel } from "@/db/schema";
-import { DeckWithCards } from "@/types/Deck";
+import { DeckWithCardEntries } from "@/types/Deck";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { findOrCreateColumn } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
@@ -11,7 +11,9 @@ import { getAuthSession } from "@/auth";
 /**
  * GET /api/decks/[id]
  * Retrieves a deck. With ?details=true, returns the nested section/column
- * arrangement with each card joined to its data + collection badge.
+ * arrangement of physical-card entries (with collection badges) plus a
+ * deduplicated top-level `cardData` map keyed by Scryfall id — the client
+ * re-joins entries to card data.
  *
  * Reconciles arrangement from the deckId back-ref: any physical card pointing at
  * this deck but missing from the arrays is appended to a default column.
@@ -64,10 +66,10 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[i
       _id: { $in: allIds },
       owner: userId
     }).lean();
-    const detailed = await detailPhysicalCards(physicalCards);
-    const detailedMap = new Map(detailed.map((d) => [d._id, d]));
+    const { entries, cardData } = await detailPhysicalCards(physicalCards);
+    const entryMap = new Map(entries.map((d) => [d._id, d]));
 
-    const deckWithCards: DeckWithCards = {
+    const deckWithCards: DeckWithCardEntries = {
       ...summary,
       sections: deck.sections.map((s: any) => ({
         _id: String(s._id),
@@ -75,13 +77,13 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[i
         columns: s.columns.map((col: any) => ({
           _id: String(col._id),
           cards: col.cards
-            .map((cid: any) => detailedMap.get(String(cid)))
+            .map((cid: any) => entryMap.get(String(cid)))
             .filter((c: any): c is NonNullable<typeof c> => Boolean(c))
         }))
       }))
     };
 
-    return Response.json({ deck: deckWithCards });
+    return Response.json({ deck: deckWithCards, cardData });
   } catch (error) {
     console.error("Error fetching deck:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });

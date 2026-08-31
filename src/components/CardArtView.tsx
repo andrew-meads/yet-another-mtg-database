@@ -1,6 +1,6 @@
 "use client";
 
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 import clsx from "clsx";
 import { useState } from "react";
 import Image from "next/image";
@@ -16,7 +16,7 @@ type ImageVariant = "png" | "border_crop" | "large" | "normal" | "small";
  */
 interface CardArtViewProps {
   /** The MTG card to display */
-  card: MtgCard;
+  card: SlimMtgCard;
   /** Which image size variant to display */
   variant: ImageVariant;
   /** Optional CSS classes to apply to the root element */
@@ -250,7 +250,7 @@ function CardImage({
  */
 interface SimpleCardArtViewProps {
   /** The MTG card to display */
-  card: MtgCard;
+  card: SlimMtgCard;
   /** Which image size variant to display */
   variant: ImageVariant;
   /** Width of the image container */

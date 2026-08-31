@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
-import { MtgCard } from "@/types/MtgCard";
+import { SlimMtgCard } from "@/types/MtgCard";
 
 /**
  * Returns a callback that adds a card to the user's active deck.
@@ -26,7 +26,7 @@ export function useAddCardToActiveDeck() {
   const { notes, tags } = useSearchAddMeta();
 
   return useCallback(
-    (card: MtgCard, deckId?: string, options?: { ephemeral?: boolean }) => {
+    (card: SlimMtgCard, deckId?: string, options?: { ephemeral?: boolean }) => {
       const targetDeckId = deckId ?? activeDeck?._id;
       if (!targetDeckId) {
         toast.error("Set an active deck before adding cards to a deck.");
