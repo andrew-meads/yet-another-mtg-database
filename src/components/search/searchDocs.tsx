@@ -70,20 +70,23 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
     entries: [
       {
         syntax: "name",
-        description: "Card name (also matches the flavor name).",
-        examples: ["name:bolt", 'name:"serra angel"']
+        description:
+          "Card name (also matches the flavor name). Wrap the value in /slashes/ for a regular-expression match.",
+        examples: ["name:bolt", 'name:"serra angel"', "name:/^lightning (bolt|strike)$/"]
       },
       {
         syntax: "t",
         aliases: ["type"],
-        description: "Type line — supertypes, card types, and subtypes.",
-        examples: ["t:creature", "t:legendary", "t:goblin"]
+        description:
+          "Type line — supertypes, card types, and subtypes. Wrap the value in /slashes/ for a regular-expression match.",
+        examples: ["t:creature", "t:legendary", "t:goblin", "t:/^legendary creature/"]
       },
       {
         syntax: "o",
         aliases: ["oracle"],
-        description: "Oracle (rules) text.",
-        examples: ["o:flying", 'o:"draw a card"']
+        description:
+          "Oracle (rules) text. Wrap the value in /slashes/ to match a regular expression instead of literal text (case-insensitive; escape a literal slash as \\/).",
+        examples: ["o:flying", 'o:"draw a card"', "o:/draw .{1,3} cards?/"]
       },
       {
         syntax: "kw",

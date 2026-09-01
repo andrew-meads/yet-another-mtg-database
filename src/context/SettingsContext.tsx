@@ -2,42 +2,25 @@
 
 import { createContext, useContext } from "react";
 
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useServerSetting } from "@/hooks/useServerSetting";
+import {
+  CARD_PREVIEW_MAX_DELAY,
+  CARD_PREVIEW_MIN_DELAY,
+  CardPreviewSettings,
+  DEFAULT_CARD_PREVIEW_SETTINGS
+} from "@/types/UserSettings";
+
+// Re-exported for existing importers; the shapes now live in @/types/UserSettings
+// because the server (schema, API routes) shares them.
+export { CARD_PREVIEW_MAX_DELAY, CARD_PREVIEW_MIN_DELAY, DEFAULT_CARD_PREVIEW_SETTINGS };
+export type { CardPreviewSettings };
+export type { CardPreviewSize } from "@/types/UserSettings";
 
 /**
- * Available size variants for the hover card preview.
+ * The pre-server-sync localStorage key. Migrated to the user's settings
+ * document (and removed) on first load by useServerSetting.
  */
-export type CardPreviewSize = "small" | "normal" | "large";
-
-/**
- * Min/max bounds for the card-preview delay slider (milliseconds).
- * The minimum matches the historic fixed delay.
- */
-export const CARD_PREVIEW_MIN_DELAY = 500;
-export const CARD_PREVIEW_MAX_DELAY = 2000;
-
-/**
- * User-configurable settings for the hover card preview (CardPopup).
- */
-export interface CardPreviewSettings {
-  /** Whether the hover preview is shown at all */
-  enabled: boolean;
-  /** On-screen size (and image resolution) of the preview */
-  size: CardPreviewSize;
-  /** Delay in ms before the preview appears (clamped to 500–2000) */
-  delayMs: number;
-}
-
-export const DEFAULT_CARD_PREVIEW_SETTINGS: CardPreviewSettings = {
-  enabled: true,
-  size: "normal",
-  delayMs: CARD_PREVIEW_MIN_DELAY
-};
-
-/**
- * localStorage key for the card-preview settings object.
- */
-const STORAGE_KEY = "settings/card-preview";
+const LEGACY_STORAGE_KEY = "settings/card-preview";
 
 interface SettingsContextType {
   cardPreview: CardPreviewSettings;
@@ -56,9 +39,10 @@ function clampDelay(delayMs: number): number {
 }
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [stored, setStored] = useLocalStorage<CardPreviewSettings>(
-    STORAGE_KEY,
-    DEFAULT_CARD_PREVIEW_SETTINGS
+  const [stored, setStored] = useServerSetting<CardPreviewSettings>(
+    "cardPreview",
+    DEFAULT_CARD_PREVIEW_SETTINGS,
+    { legacyStorageKey: LEGACY_STORAGE_KEY }
   );
 
   // Merge with defaults so a partial/older stored object is always complete.

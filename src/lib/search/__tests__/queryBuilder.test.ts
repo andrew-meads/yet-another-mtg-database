@@ -72,3 +72,23 @@ describe("findOperatorConfig", () => {
     expect(findOperatorConfig("zzz")).toBeNull();
   });
 });
+
+describe("parseSearchQuery — oracle regex", () => {
+  it("parses a regex oracle term with spaces end-to-end", () => {
+    const query = parseSearchQuery("t:creature -c:green o:/draw . cards?/");
+    // The regex term survives tokenization intact and lands as a raw RegExp.
+    const flattened = JSON.stringify(query, (_k, v) => (v instanceof RegExp ? v.source : v));
+    expect(flattened).toContain("draw . cards?");
+  });
+
+  it("regex and literal oracle terms coexist", () => {
+    const query = parseSearchQuery('o:/draw .{1,3} cards?/ o:"at the beginning"');
+    const sources: string[] = [];
+    JSON.stringify(query, (_k, v) => {
+      if (v instanceof RegExp) sources.push(v.source);
+      return v;
+    });
+    expect(sources).toContain("draw .{1,3} cards?");
+    expect(sources).toContain("at the beginning");
+  });
+});

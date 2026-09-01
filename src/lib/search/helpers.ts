@@ -125,6 +125,30 @@ export function escapeRegex(str: string): string {
 }
 
 /**
+ * Interpret a slash-delimited value (`/draw . cards?/`) as a regular expression.
+ * Returns null when the value is not slash-delimited, is unterminated (its
+ * closing slash is escaped), or is not a valid pattern — callers fall back to a
+ * literal match. Always case-insensitive, matching the literal-search behavior.
+ */
+export function parseRegexValue(value: string): RegExp | null {
+  if (value.length < 3 || !value.startsWith("/") || !value.endsWith("/")) {
+    return null;
+  }
+  const body = value.slice(1, -1);
+  // If the closing slash is escaped (odd number of trailing backslashes in the
+  // body), the regex was never terminated.
+  const trailingBackslashes = body.match(/\\*$/)?.[0].length ?? 0;
+  if (trailingBackslashes % 2 === 1) {
+    return null;
+  }
+  try {
+    return new RegExp(body, "i");
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Build a MongoDB $expr comparison for fields stored as strings but representing numbers.
  * Only numeric string values (e.g., "0".."20") are considered in comparisons.
  * For '!=', non-numeric values are included in results (treated as not equal).

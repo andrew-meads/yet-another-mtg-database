@@ -1,23 +1,29 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { SEARCH_DOC_SECTIONS } from "@/components/search/searchDocs";
+import { DocSection, SEARCH_DOC_SECTIONS } from "@/components/search/searchDocs";
 
 export interface SearchDocsContentProps {
   /** Called with an example query when the user clicks an example chip. */
   onInsertExample: (query: string) => void;
+  /** Sections to render; defaults to the operator reference. */
+  sections?: DocSection[];
 }
 
 /**
- * Presentational body of the search-syntax reference: renders
- * {@link SEARCH_DOC_SECTIONS} as sections of operators, each with a clickable
- * example chip that calls `onInsertExample`. Layout/placement (panel, header,
- * scrolling) is the caller's responsibility — see {@link SearchDocsPanel}.
+ * Presentational body of the search-help content: renders doc sections (the
+ * operator reference by default, or any other `DocSection[]` such as the regex
+ * primer), each entry with clickable example chips that call `onInsertExample`.
+ * Layout/placement (panel, header, tabs, scrolling) is the caller's
+ * responsibility — see {@link SearchDocsPanel}.
  */
-export default function SearchDocsContent({ onInsertExample }: SearchDocsContentProps) {
+export default function SearchDocsContent({
+  onInsertExample,
+  sections = SEARCH_DOC_SECTIONS
+}: SearchDocsContentProps) {
   return (
     <div className="flex flex-col gap-6">
-      {SEARCH_DOC_SECTIONS.map((section) => (
+      {sections.map((section) => (
         <section key={section.id} className="flex flex-col gap-3">
           <h3 className="text-foreground text-sm font-semibold tracking-wide uppercase">
             {section.title}

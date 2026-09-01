@@ -23,14 +23,19 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 
 - **Scryfall-style search** — a full query parser supporting `key:value` operators
   (color, type, oracle text, mana value, set, rarity, …), comparison operators
-  (`>= <= > < =`), negation, `or`, and parenthesized groups, plus configurable sorting.
+  (`>= <= > < =`), negation, `or`, parenthesized groups, and Scryfall-style
+  **regular-expression matching on oracle text, names, and type lines**
+  (`o:/draw . cards?/`, `t:/^legendary creature/`, case-insensitive, `\/` for a
+  literal slash), plus configurable sorting.
   The same search bar works on both the card-search page and inside a collection
   (collection results are filtered server-side by the same engine), with an
   **Advanced Search** dialog that builds the query string from form fields and a
   **Search help** panel (the `?` button) that docks beside the workspace —
   reflowing the page instead of overlaying it, so the reference stays visible
   while you type. It documents every operator with click-to-add examples that
-  append to your query.
+  append to your query, and includes a second tab with a practical
+  regular-expression primer (anchors, alternation, character classes, escaping —
+  all with runnable MTG examples).
 - **Collections, decks & wishlists** — group cards into named collections of type
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
 - **Drag-and-drop organization** — move and copy cards between collections with
@@ -67,7 +72,15 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 - **Hover card preview** — hovering a row in search results or a collection shows a card
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay
-  (500–2000 ms). Preferences save to the browser's local storage and apply immediately.
+  (500–2000 ms). Preferences apply immediately and sync to your account, so they (and
+  your open collections/decks) follow you across browsers and devices.
+- **AI natural-language search** — the sparkle button in the search bar turns a plain-
+  English request ("cheap green creatures that make mana") into an editable query
+  string using your own OpenAI-compatible endpoint, configured under **Settings → AI
+  Assistant** (base URL, model, and API key — works with OpenAI, OpenRouter, local
+  servers, etc.). AI features are optional: until an endpoint is configured they show
+  setup guidance instead. Your API key is stored server-side, never shown again, and
+  can be encrypted at rest (`SETTINGS_ENCRYPTION_KEY`).
 - **Google sign-in** — NextAuth Google OAuth with a deny-by-default email whitelist.
 
 ## Tech stack
@@ -138,6 +151,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | `AUTH_SECRET` | Random secret used to sign NextAuth JWTs |
 | `NEXTAUTH_URL` | Public base URL of the app (e.g. `http://localhost:3000` in dev) |
 | `SCANNER_BASE_URL` | Base URL of the external card-scanner backend (default `http://localhost:8000`) |
+| `SETTINGS_ENCRYPTION_KEY` | Optional: 64 hex chars (`openssl rand -hex 32`) used to AES-256-GCM-encrypt secrets stored in user settings (the per-user AI API key). Without it, stored secrets are plaintext in Mongo and a one-time warning is logged |
 
 ## npm scripts
 

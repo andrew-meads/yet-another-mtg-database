@@ -3,6 +3,7 @@ import {
   colorOperator,
   identityOperator,
   typeOperator,
+  nameOperator,
   oracleOperator,
   manavalueOperator,
   rarityOperator,
@@ -144,5 +145,50 @@ describe("excludeOperator", () => {
 
   it("returns null for any other value", () => {
     expect(excludeOperator.buildQuery("other", undefined)).toBeNull();
+  });
+});
+
+describe("oracleOperator — regex values", () => {
+  it("treats a slash-delimited value as a raw regex", () => {
+    const query = oracleOperator.buildQuery("/draw . cards?/");
+    expect(query.oracle_text).toBeInstanceOf(RegExp);
+    expect(query.oracle_text.source).toBe("draw . cards?");
+    expect(query.oracle_text.flags).toBe("i");
+  });
+
+  it("still escapes plain values literally", () => {
+    const query = oracleOperator.buildQuery("draw . cards?");
+    expect(query.oracle_text.source).toBe("draw \\. cards\\?");
+  });
+
+  it("falls back to a literal match for an invalid regex", () => {
+    const query = oracleOperator.buildQuery("/draw [/");
+    // The raw value (slashes included) is matched literally instead of erroring.
+    expect(query.oracle_text).toBeInstanceOf(RegExp);
+    expect(query.oracle_text.test("text with /draw [/ inside")).toBe(true);
+    expect(query.oracle_text.test("draw a card")).toBe(false);
+  });
+});
+
+describe("nameOperator / typeOperator — regex values", () => {
+  it("treats a slash-delimited name value as a raw regex on name and flavor_name", () => {
+    const query = nameOperator.buildQuery("/^goblin .* boss$/");
+    expect(query.$or[0].name).toBeInstanceOf(RegExp);
+    expect(query.$or[0].name.source).toBe("^goblin .* boss$");
+    expect(query.$or[0].name.flags).toBe("i");
+    expect(query.$or[1].flavor_name.source).toBe("^goblin .* boss$");
+  });
+
+  it("treats a slash-delimited type value as a raw regex", () => {
+    const query = typeOperator.buildQuery("/^legendary creature/");
+    expect(query.type_line).toBeInstanceOf(RegExp);
+    expect(query.type_line.source).toBe("^legendary creature");
+    expect(query.type_line.test("Legendary Creature — Elf")).toBe(true);
+    expect(query.type_line.test("Enchantment — Legendary Creature? no")).toBe(false);
+  });
+
+  it("keeps plain name/type values literal", () => {
+    expect(nameOperator.buildQuery("a.b").$or[0].name.source).toBe("a\\.b");
+    expect(typeOperator.buildQuery("a.b").type_line.source).toBe("a\\.b");
   });
 });

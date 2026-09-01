@@ -11,6 +11,6 @@
 export { parseSearchQuery, buildSearchQuery } from "./queryBuilder";
 export { tokenizeQuery, parseTerm } from "./parser";
 export { searchOperators, findOperatorConfig } from "./config";
-export { parseColors, parseComparison, parseEvenOdd } from "./helpers";
+export { parseColors, parseComparison, parseEvenOdd, parseRegexValue } from "./helpers";
 export type { SearchOperatorConfig } from "./types";
 export type { ParsedTerm } from "./parser";

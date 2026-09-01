@@ -57,3 +57,53 @@ describe("parseTerm", () => {
     expect(parseTerm("o:tap: add")).toEqual({ key: "o", value: "tap: add", negated: false });
   });
 });
+
+describe("tokenizeQuery — regex values", () => {
+  it("keeps a slash-delimited regex value (with spaces) as one token", () => {
+    expect(tokenizeQuery("t:creature o:/draw . cards?/")).toEqual([
+      "t:creature",
+      "o:/draw . cards?/"
+    ]);
+  });
+
+  it("preserves parentheses, quotes, and pipes inside a regex value", () => {
+    expect(tokenizeQuery('o:/(two|three) "cards"/ c:u')).toEqual([
+      'o:/(two|three) "cards"/',
+      "c:u"
+    ]);
+  });
+
+  it("supports escaped slashes inside a regex value", () => {
+    expect(tokenizeQuery("o:/either\\/or thing/")).toEqual(["o:/either\\/or thing/"]);
+  });
+
+  it("works with negation", () => {
+    expect(tokenizeQuery("-o:/draw . cards?/")).toEqual(["-o:/draw . cards?/"]);
+  });
+
+  it("does not treat a mid-value slash as a regex opener", () => {
+    expect(tokenizeQuery("o:+1/+1 t:creature")).toEqual(["o:+1/+1", "t:creature"]);
+  });
+
+  it("an unterminated regex runs to the end of the query", () => {
+    expect(tokenizeQuery("o:/draw . cards")).toEqual(["o:/draw . cards"]);
+  });
+});
+
+describe("parseTerm — regex values", () => {
+  it("splits key from a regex value", () => {
+    expect(parseTerm("o:/draw . cards?/")).toEqual({
+      key: "o",
+      value: "/draw . cards?/",
+      negated: false
+    });
+  });
+
+  it("handles negated regex terms", () => {
+    expect(parseTerm("-o:/draw . cards?/")).toEqual({
+      key: "o",
+      value: "/draw . cards?/",
+      negated: true
+    });
+  });
+});

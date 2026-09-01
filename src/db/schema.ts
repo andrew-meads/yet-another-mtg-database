@@ -65,6 +65,32 @@ interface ExchangeRateDoc {
   updatedAt?: Date;
 }
 
+// Per-user settings synced to the server (one document per user). Sections are
+// optional; an absent section means "never customized" and clients fall back to
+// their defaults. The AI API key is stored sealed (see src/lib/server/secretBox.ts)
+// alongside a display hint so reads never need to decrypt it.
+export interface UserSettingsDoc {
+  owner: Types.ObjectId;
+  ai?: {
+    baseUrl?: string;
+    model?: string;
+    apiKeySealed?: string;
+    apiKeyHint?: string;
+  };
+  cardPreview?: {
+    enabled: boolean;
+    size: string;
+    delayMs: number;
+  };
+  openEntities?: {
+    id: string;
+    kind: string;
+    pinned?: boolean;
+  }[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 const userSchema = new Schema<User>(
   {
     emailAddress: { type: String, required: true, unique: true }
@@ -256,6 +282,46 @@ export const ExchangeRateSchema = new Schema<ExchangeRateDoc>(
 );
 ExchangeRateSchema.index({ base: 1, target: 1 }, { unique: true });
 
+// Sub-schemas are declared with `default: undefined` so a section a user never
+// touched stays absent (rather than materializing as an empty object/array).
+const aiSettingsSchema = new Schema(
+  {
+    baseUrl: String,
+    model: String,
+    apiKeySealed: String,
+    apiKeyHint: String
+  },
+  { _id: false }
+);
+
+const cardPreviewSettingsSchema = new Schema(
+  {
+    enabled: Boolean,
+    size: String,
+    delayMs: Number
+  },
+  { _id: false }
+);
+
+const openEntityRefSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    kind: { type: String, required: true, enum: ["collection", "deck"] },
+    pinned: Boolean
+  },
+  { _id: false }
+);
+
+const userSettingsSchema = new Schema<UserSettingsDoc>(
+  {
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+    ai: { type: aiSettingsSchema, default: undefined },
+    cardPreview: { type: cardPreviewSettingsSchema, default: undefined },
+    openEntities: { type: [openEntityRefSchema], default: undefined }
+  },
+  { strict: true, timestamps: true }
+);
+
 export const UserModel = (mongoose.models.User ||
   mongoose.model<User>("User", userSchema)) as Model<User>;
 
@@ -282,3 +348,6 @@ export const CardPriceModel = (mongoose.models.CardPrice ||
 
 export const ExchangeRateModel = (mongoose.models.ExchangeRate ||
   mongoose.model<ExchangeRateDoc>("ExchangeRate", ExchangeRateSchema)) as Model<ExchangeRateDoc>;
+
+export const UserSettingsModel = (mongoose.models.UserSettings ||
+  mongoose.model<UserSettingsDoc>("UserSettings", userSettingsSchema)) as Model<UserSettingsDoc>;

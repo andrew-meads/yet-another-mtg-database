@@ -16,6 +16,7 @@ import {
   useCardPreviewSettings,
   type CardPreviewSize
 } from "@/context/SettingsContext";
+import AiSettingsSection from "@/components/settings/AiSettingsSection";
 
 const SIZE_OPTIONS: CardPreviewSize[] = ["small", "normal", "large"];
 const SIZE_LABELS: Record<CardPreviewSize, string> = {
@@ -33,7 +34,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground text-sm">
-          Preferences are saved to this browser and apply immediately.
+          Preferences are synced to your account and apply immediately.
         </p>
       </div>
 
@@ -104,6 +105,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AiSettingsSection />
     </div>
   );
 }

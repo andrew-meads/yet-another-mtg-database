@@ -6,16 +6,10 @@ import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveC
 import { useRetrieveDeckSummaries } from "@/hooks/react-query/useRetrieveDeckSummaries";
 import { CollectionSummary } from "@/types/Collection";
 import { DeckSummary, OpenEntitySummary } from "@/types/Deck";
+import { OpenEntityRef } from "@/types/UserSettings";
 import { createContext, useContext, useMemo, useRef } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useServerSetting } from "@/hooks/useServerSetting";
 import { collectionSearchStorageKey } from "@/lib/collectionUtils";
-
-interface OpenEntityRef {
-  id: string;
-  kind: "collection" | "deck";
-  /** Whether the user has pinned this entity to the main bar. Missing = unpinned. */
-  pinned?: boolean;
-}
 
 interface OpenEntitiesContextType {
   addOpenEntity: (entity: OpenEntitySummary) => void;
@@ -55,13 +49,30 @@ export function useOpenEntitiesContext(): OpenEntitiesContextType {
   return ctx;
 }
 
+/** Stable empty list so the pre-hydration fallback doesn't churn identities. */
+const NO_OPEN_REFS: OpenEntityRef[] = [];
+
+/**
+ * Merge the server's open list with entities opened locally while the settings
+ * request was still in flight (e.g. landing directly on a collection page).
+ * Server order first, then local additions.
+ */
+function reconcileOpenRefs(server: OpenEntityRef[], local: OpenEntityRef[]): OpenEntityRef[] {
+  const seen = new Set(server.map((ref) => ref.id));
+  return [...server, ...local.filter((ref) => !seen.has(ref.id))];
+}
+
 /**
  * Tracks which collections and decks are open in the workspace. Stores only
- * { id, kind } refs in localStorage and derives the full summaries from the
- * cached collection + deck summary queries.
+ * { id, kind, pinned? } refs — synced to the user's server-side settings (with
+ * a one-time migration from the old "open-entity-ids" localStorage key) — and
+ * derives the full summaries from the cached collection + deck summary queries.
  */
 export function OpenEntitiesProvider({ children }: { children: React.ReactNode }) {
-  const [openRefs, setOpenRefs] = useLocalStorage<OpenEntityRef[]>("open-entity-ids", []);
+  const [openRefs, setOpenRefs] = useServerSetting<OpenEntityRef[]>("openEntities", NO_OPEN_REFS, {
+    legacyStorageKey: "open-entity-ids",
+    reconcile: reconcileOpenRefs
+  });
   const { mutateAsync: mutateActiveCollection } = useUpdateActiveCollection();
   const { mutateAsync: mutateActiveDeck } = useUpdateActiveDeck();
 
