@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+
+// The AI search button pulls in session + query-client hooks and has its own
+// test file; stub it out so these tests stay focused on the bar itself.
+vi.mock("@/components/ai/NlSearchButton", () => ({ default: () => null }));
+
 import CardSearchBar from "@/components/search/CardSearchBar";
 import SearchDocsPanel from "@/components/search/SearchDocsPanel";
 import { SearchDocsProvider, useSearchDocs } from "@/context/SearchDocsContext";

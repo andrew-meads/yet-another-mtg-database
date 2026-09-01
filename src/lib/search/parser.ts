@@ -2,20 +2,38 @@
  * Tokenizes a search query string into individual search terms.
  * Handles quoted strings and splits on spaces.
  *
+ * A value opening with a slash right after its key (`o:/draw . cards?/`) is a
+ * regex value: everything up to the unescaped closing slash is kept verbatim in
+ * the token — slashes included — so operators can detect the regex form.
+ *
  * Examples:
  *   "c:red t:creature" => ["c:red", "t:creature"]
  *   'o:"draw a card"' => ["o:draw a card"]
  *   "c:red (t:goblin or t:elf)" => ["c:red", "(", "t:goblin", "or", "t:elf", ")"]
+ *   "o:/draw . cards?/" => ["o:/draw . cards?/"]
  */
 export function tokenizeQuery(query: string): string[] {
   const tokens: string[] = [];
   let current = "";
   let inQuotes = false;
   let quoteChar = "";
+  let inRegex = false;
 
   for (let i = 0; i < query.length; i++) {
     const char = query[i];
-    const _nextChar = query[i + 1];
+
+    // Inside a /regex/ value: copy verbatim (escapes included) until the
+    // unescaped closing slash, preserving spaces, quotes, and parentheses.
+    if (inRegex) {
+      if (char === "\\" && i + 1 < query.length) {
+        current += char + query[i + 1];
+        i++;
+        continue;
+      }
+      current += char;
+      if (char === "/") inRegex = false;
+      continue;
+    }
 
     // Handle quotes
     if ((char === '"' || char === "'") && !inQuotes) {
@@ -30,6 +48,14 @@ export function tokenizeQuery(query: string): string[] {
 
     // If we're in quotes, just add to current token
     if (inQuotes) {
+      current += char;
+      continue;
+    }
+
+    // A slash directly after "key:" opens a regex value. A slash anywhere else
+    // (e.g. o:+1/+1) is an ordinary character.
+    if (char === "/" && current.endsWith(":")) {
+      inRegex = true;
       current += char;
       continue;
     }

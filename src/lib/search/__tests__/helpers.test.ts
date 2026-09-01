@@ -4,6 +4,7 @@ import {
   parseComparison,
   parseEvenOdd,
   escapeRegex,
+  parseRegexValue,
   buildNumericStringComparison
 } from "@/lib/search/helpers";
 
@@ -90,5 +91,43 @@ describe("buildNumericStringComparison", () => {
   it("supports not-equal", () => {
     const q = buildNumericStringComparison("loyalty", "!=", 4);
     expect(q.$expr.$ne[1]).toBe(4);
+  });
+});
+
+describe("parseRegexValue", () => {
+  it("builds a case-insensitive regex from a slash-delimited value", () => {
+    const regex = parseRegexValue("/draw . cards?/");
+    expect(regex).toBeInstanceOf(RegExp);
+    expect(regex!.source).toBe("draw . cards?");
+    expect(regex!.flags).toBe("i");
+    expect(regex!.test("Draw a card")).toBe(true);
+    expect(regex!.test("draw 3 cards")).toBe(true);
+    expect(regex!.test("discard a card")).toBe(false);
+  });
+
+  it("honors regex escapes so \\. matches a literal dot", () => {
+    const regex = parseRegexValue("/draw \\. cards/");
+    expect(regex!.test("draw . cards")).toBe(true);
+    expect(regex!.test("draw x cards")).toBe(false);
+  });
+
+  it("supports escaped slashes in the body", () => {
+    const regex = parseRegexValue("/either\\/or/");
+    expect(regex!.test("Either/Or")).toBe(true);
+  });
+
+  it("returns null for non-slash-delimited values", () => {
+    expect(parseRegexValue("draw a card")).toBeNull();
+    expect(parseRegexValue("/unterminated")).toBeNull();
+    expect(parseRegexValue("/")).toBeNull();
+    expect(parseRegexValue("//")).toBeNull();
+  });
+
+  it("returns null when the closing slash is escaped (unterminated)", () => {
+    expect(parseRegexValue("/foo\\/")).toBeNull();
+  });
+
+  it("returns null for an invalid pattern", () => {
+    expect(parseRegexValue("/draw [/")).toBeNull();
   });
 });

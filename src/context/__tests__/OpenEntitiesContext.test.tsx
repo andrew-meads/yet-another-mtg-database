@@ -14,9 +14,29 @@ const h = vi.hoisted(() => {
     mutateActive: vi.fn(),
     mutateActiveDeck: vi.fn(),
     defaults,
-    state: defaults()
+    state: defaults(),
+    /** Pre-seeded open refs (stands in for the server-stored value). */
+    seedRefs: [] as any[],
+    /** Every value the context persisted through the (faked) server setting. */
+    writes: [] as any[]
   };
 });
+
+// The server-sync mechanics are covered by useServerSetting's own tests; fake it
+// with plain state here so these tests focus on the context logic.
+vi.mock("@/hooks/useServerSetting", () => ({
+  useServerSetting: (_section: string, initial: unknown) => {
+    const [value, setValue] = React.useState(h.seedRefs.length > 0 ? h.seedRefs : initial);
+    const set = (next: unknown | ((prev: unknown) => unknown)) => {
+      setValue((prev: unknown) => {
+        const resolved = next instanceof Function ? next(prev) : next;
+        h.writes.push(resolved);
+        return resolved;
+      });
+    };
+    return [value, set, { hydrated: true }];
+  }
+}));
 
 vi.mock("@/hooks/react-query/useUpdateActiveCollection", () => ({
   useUpdateActiveCollection: () => ({ mutateAsync: h.mutateActive })
@@ -40,6 +60,8 @@ beforeEach(() => {
   window.localStorage.clear();
   vi.clearAllMocks();
   h.state = h.defaults();
+  h.seedRefs = [];
+  h.writes = [];
 });
 
 describe("OpenEntitiesContext", () => {
@@ -58,9 +80,7 @@ describe("OpenEntitiesContext", () => {
     act(() => result.current.addOpenEntity({ _id: "d1", kind: "deck" } as any));
     expect(result.current.openEntities.map((e) => e._id)).toEqual(["d1"]);
     expect(result.current.openEntities[0].name).toBe("Burn");
-    expect(JSON.parse(window.localStorage.getItem("open-entity-ids")!)).toEqual([
-      { id: "d1", kind: "deck" }
-    ]);
+    expect(h.writes.at(-1)).toEqual([{ id: "d1", kind: "deck" }]);
   });
 
   it("does not open the same entity twice", () => {
@@ -71,10 +91,7 @@ describe("OpenEntitiesContext", () => {
   });
 
   it("ignores refs that no longer exist in the summaries", () => {
-    window.localStorage.setItem(
-      "open-entity-ids",
-      JSON.stringify([{ id: "ghost", kind: "collection" }])
-    );
+    h.seedRefs = [{ id: "ghost", kind: "collection" }];
     const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
     expect(result.current.openEntities).toHaveLength(0);
   });
@@ -115,9 +132,7 @@ describe("OpenEntitiesContext", () => {
     act(() => result.current.togglePin("d1"));
 
     expect(result.current.isPinned("d1")).toBe(true);
-    expect(JSON.parse(window.localStorage.getItem("open-entity-ids")!)).toEqual([
-      { id: "d1", kind: "deck", pinned: true }
-    ]);
+    expect(h.writes.at(-1)).toEqual([{ id: "d1", kind: "deck", pinned: true }]);
 
     act(() => result.current.togglePin("d1"));
     expect(result.current.isPinned("d1")).toBe(false);
@@ -209,10 +224,7 @@ describe("OpenEntitiesContext", () => {
   });
 
   it("honors a pre-seeded pinned ref on mount", () => {
-    window.localStorage.setItem(
-      "open-entity-ids",
-      JSON.stringify([{ id: "d1", kind: "deck", pinned: true }])
-    );
+    h.seedRefs = [{ id: "d1", kind: "deck", pinned: true }];
     const { result } = renderHook(() => useOpenEntitiesContext(), { wrapper });
     expect(result.current.isPinned("d1")).toBe(true);
     expect(result.current.pinnedEntities.map((e) => e._id)).toEqual(["d1"]);

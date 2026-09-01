@@ -113,6 +113,28 @@ describe("filtersToQueryString", () => {
   it("round-trips a single color contains filter to the expected mongo query", () => {
     const query = filtersToQueryString({ colors: ["R"], colorMode: "contains" });
     expect(query).toBe("c>=r");
-    expect(parseSearchQuery(query)).toEqual({ colors: { $all: ["R"] } });
+    expect(JSON.stringify(parseSearchQuery(query).$expr.$setIsSubset[0])).toBe('["R"]');
   });
 });
+
+describe("filtersToQueryString — produces / year / is / flavor text", () => {
+  it("maps produced mana to a produces: term", () => {
+    expect(filtersToQueryString({ producedMana: ["W", "U", "C"] })).toBe("produces:wuc");
+  });
+
+  it("maps year with an operator", () => {
+    expect(filtersToQueryString({ year: "2020", yearOperator: ">=" })).toBe("year>=2020");
+    expect(filtersToQueryString({ year: "2019-07-12" })).toBe("year:2019-07-12");
+  });
+
+  it("maps the is predicate", () => {
+    expect(filtersToQueryString({ isPredicate: "mdfc" })).toBe("is:mdfc");
+  });
+
+  it("maps flavor text (quoted when multi-word)", () => {
+    expect(filtersToQueryString({ flavorText: "the gitrog monster" })).toBe(
+      'ft:"the gitrog monster"'
+    );
+  });
+});
+

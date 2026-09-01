@@ -48,6 +48,26 @@ vi.mock("@/hooks/drag-drop/useEntityButtonDropTarget", () => ({
   useEntityButtonDropTarget: () => ({ isOver: false, dropRef: () => {} })
 }));
 
+// Fake the server-synced open-entities storage with plain state seeded from the
+// legacy localStorage key, so the tests below keep seeding via localStorage.
+// The real sync mechanics are covered by useServerSetting's own tests.
+vi.mock("@/hooks/useServerSetting", () => ({
+  useServerSetting: (
+    _section: string,
+    initial: unknown,
+    options?: { legacyStorageKey?: string }
+  ) => {
+    const [value, setValue] = React.useState(() => {
+      if (options?.legacyStorageKey) {
+        const raw = window.localStorage.getItem(options.legacyStorageKey);
+        if (raw !== null) return JSON.parse(raw);
+      }
+      return initial;
+    });
+    return [value, setValue, { hydrated: true }];
+  }
+}));
+
 import { OpenEntitiesProvider } from "@/context/OpenEntitiesContext";
 import OpenCollectionButtons from "@/components/OpenCollectionButtons";
 

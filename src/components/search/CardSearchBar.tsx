@@ -8,6 +8,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Package, Filter, Wand2, X, CircleHelp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AdvancedSearchDialog from "@/components/search/AdvancedSearchDialog";
+import NlSearchButton from "@/components/ai/NlSearchButton";
 import { useSearchDocs } from "@/context/SearchDocsContext";
 
 export interface CardSearchBarProps {
@@ -25,6 +26,8 @@ export interface CardSearchBarProps {
   showDefaultFilters?: boolean;
   useDefaultFilters?: boolean;
   onDefaultFiltersChange?: (value: boolean) => void;
+  /** Render the AI natural-language search button (default true). */
+  showAiSearch?: boolean;
   compact?: boolean;
   className?: string;
 }
@@ -45,6 +48,7 @@ export default function CardSearchBar({
   showDefaultFilters = false,
   useDefaultFilters = false,
   onDefaultFiltersChange,
+  showAiSearch = true,
   compact,
   className
 }: CardSearchBarProps) {
@@ -92,6 +96,8 @@ export default function CardSearchBar({
           <p>Search builder</p>
         </TooltipContent>
       </Tooltip>
+
+      {showAiSearch && <NlSearchButton onQuery={(query) => setQ(query)} />}
 
       <Tooltip>
         <TooltipTrigger asChild>

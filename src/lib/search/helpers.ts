@@ -125,6 +125,58 @@ export function escapeRegex(str: string): string {
 }
 
 /**
+ * Interpret a slash-delimited value (`/draw . cards?/`) as a regular expression.
+ * Returns null when the value is not slash-delimited, is unterminated (its
+ * closing slash is escaped), or is not a valid pattern — callers fall back to a
+ * literal match. Always case-insensitive, matching the literal-search behavior.
+ */
+export function parseRegexValue(value: string): RegExp | null {
+  if (value.length < 3 || !value.startsWith("/") || !value.endsWith("/")) {
+    return null;
+  }
+  const body = value.slice(1, -1);
+  // If the closing slash is escaped (odd number of trailing backslashes in the
+  // body), the regex was never terminated.
+  const trailingBackslashes = body.match(/\\*$/)?.[0].length ?? 0;
+  if (trailingBackslashes % 2 === 1) {
+    return null;
+  }
+  try {
+    return new RegExp(body, "i");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Match a condition against a card-level field OR the same field on any card
+ * face. Multi-faced cards (transform, modal_dfc, adventure, split, …) keep much
+ * of their text on `card_faces[]`, so single-field matches silently miss them.
+ */
+export function withCardFaces(field: string, condition: any): any {
+  return { $or: [{ [field]: condition }, { [`card_faces.${field}`]: condition }] };
+}
+
+/**
+ * Aggregation expression for a card's effective colors: the set union of the
+ * top-level `colors` array and every face's `colors`. Transform / modal-DFC
+ * cards have an empty top-level array (colors live on the faces), so operators
+ * must reason about this union rather than `colors` alone.
+ */
+export const EFFECTIVE_COLORS_EXPR = {
+  $setUnion: [
+    { $ifNull: ["$colors", []] },
+    {
+      $reduce: {
+        input: { $ifNull: ["$card_faces", []] },
+        initialValue: [],
+        in: { $setUnion: ["$$value", { $ifNull: ["$$this.colors", []] }] }
+      }
+    }
+  ]
+};
+
+/**
  * Build a MongoDB $expr comparison for fields stored as strings but representing numbers.
  * Only numeric string values (e.g., "0".."20") are considered in comparisons.
  * For '!=', non-numeric values are included in results (treated as not equal).

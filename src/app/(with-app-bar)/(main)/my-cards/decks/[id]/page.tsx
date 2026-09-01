@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
+import { useAiChat } from "@/context/AiChatContext";
 import { useRetrieveDeckDetails } from "@/hooks/react-query/useRetrieveDeckDetails";
 import { useDeleteDeck } from "@/hooks/react-query/useDeleteEntity";
 import { useUpdateDeck } from "@/hooks/react-query/useUpdateDeck";
@@ -14,7 +15,7 @@ import FillDeckDialog from "@/components/my-cards-page/deck-view/FillDeckDialog"
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Archive, PackagePlus, Pencil, Trash2 } from "lucide-react";
+import { Archive, PackagePlus, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface PageProps {
@@ -31,11 +32,17 @@ export default function DeckPage({ params }: PageProps) {
   const archiveDeck = useArchiveDeck();
   const [editOpen, setEditOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
+  const { toggle: toggleAiChat, setChatContext } = useAiChat();
 
   useEffect(() => {
     if (data?.deck) addOpenEntity(data.deck);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.deck?._id]);
+
+  // Keep the AI chat pointed at the deck currently in view.
+  useEffect(() => {
+    setChatContext({ deckId: id });
+  }, [id, setChatContext]);
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading deck...</p>;
@@ -98,6 +105,20 @@ export default function DeckPage({ params }: PageProps) {
           <p className="text-muted-foreground">{deck.description || "No description provided"}</p>
         </div>
         <div className="flex items-center gap-2 lg:mr-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="cursor-pointer"
+                onClick={toggleAiChat}
+                aria-label="AI deck advisor"
+              >
+                <Sparkles className="size-[1.2rem]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>AI deck advisor</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

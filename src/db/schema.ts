@@ -56,11 +56,57 @@ interface CardPriceDoc {
   updatedAt?: Date;
 }
 
+// Cached Scryfall rulings for a single card (keyed by Scryfall card id).
+// Mirrors the cardprices cache pattern; `updatedAt` drives staleness (~7 days —
+// rulings change only when new sets release).
+interface CardRulingDoc {
+  cardId: string;
+  rulings: { source: string; published_at: string; comment: string }[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Cached Academy Ruins rules-lookup responses, keyed by endpoint+query. Payload
+// is the (slimmed) JSON body; `updatedAt` drives staleness (24h).
+interface RulesCacheDoc {
+  key: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 // Cached currency exchange rate (base is always "USD").
 interface ExchangeRateDoc {
   base: string;
   target: string;
   rate: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Per-user settings synced to the server (one document per user). Sections are
+// optional; an absent section means "never customized" and clients fall back to
+// their defaults. The AI API key is stored sealed (see src/lib/server/secretBox.ts)
+// alongside a display hint so reads never need to decrypt it.
+export interface UserSettingsDoc {
+  owner: Types.ObjectId;
+  ai?: {
+    baseUrl?: string;
+    model?: string;
+    apiKeySealed?: string;
+    apiKeyHint?: string;
+  };
+  cardPreview?: {
+    enabled: boolean;
+    size: string;
+    delayMs: number;
+  };
+  openEntities?: {
+    id: string;
+    kind: string;
+    pinned?: boolean;
+  }[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -168,7 +214,9 @@ const cardSchema = new Schema<MtgCard>(
 const physicalCardSchema = new Schema<PhysicalCardDoc>(
   {
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    cardId: { type: String, required: true },
+    // Indexed: the owned-filter $lookup in cardSearch joins cards.id -> cardId
+    // per matched card; without this index that scan hangs broad searches.
+    cardId: { type: String, required: true, index: true },
     collectionId: {
       type: Schema.Types.ObjectId,
       ref: "Collection",
@@ -245,6 +293,31 @@ export const CardPriceSchema = new Schema<CardPriceDoc>(
   { timestamps: true }
 );
 
+// Rulings cache, one document per card (refreshed wholesale on staleness).
+export const CardRulingSchema = new Schema<CardRulingDoc>(
+  {
+    cardId: { type: String, required: true, unique: true },
+    rulings: [
+      {
+        _id: false,
+        source: { type: String, default: "" },
+        published_at: { type: String, default: "" },
+        comment: { type: String, required: true }
+      }
+    ]
+  },
+  { timestamps: true }
+);
+
+// Rules-lookup cache, one document per Academy Ruins endpoint+query key.
+export const RulesCacheSchema = new Schema<RulesCacheDoc>(
+  {
+    key: { type: String, required: true, unique: true },
+    payload: { type: Schema.Types.Mixed }
+  },
+  { timestamps: true }
+);
+
 // Exchange-rate cache, one document per (base, target) pair.
 export const ExchangeRateSchema = new Schema<ExchangeRateDoc>(
   {
@@ -255,6 +328,46 @@ export const ExchangeRateSchema = new Schema<ExchangeRateDoc>(
   { timestamps: true }
 );
 ExchangeRateSchema.index({ base: 1, target: 1 }, { unique: true });
+
+// Sub-schemas are declared with `default: undefined` so a section a user never
+// touched stays absent (rather than materializing as an empty object/array).
+const aiSettingsSchema = new Schema(
+  {
+    baseUrl: String,
+    model: String,
+    apiKeySealed: String,
+    apiKeyHint: String
+  },
+  { _id: false }
+);
+
+const cardPreviewSettingsSchema = new Schema(
+  {
+    enabled: Boolean,
+    size: String,
+    delayMs: Number
+  },
+  { _id: false }
+);
+
+const openEntityRefSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    kind: { type: String, required: true, enum: ["collection", "deck"] },
+    pinned: Boolean
+  },
+  { _id: false }
+);
+
+const userSettingsSchema = new Schema<UserSettingsDoc>(
+  {
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+    ai: { type: aiSettingsSchema, default: undefined },
+    cardPreview: { type: cardPreviewSettingsSchema, default: undefined },
+    openEntities: { type: [openEntityRefSchema], default: undefined }
+  },
+  { strict: true, timestamps: true }
+);
 
 export const UserModel = (mongoose.models.User ||
   mongoose.model<User>("User", userSchema)) as Model<User>;
@@ -280,5 +393,14 @@ export const SetSvgModel = (mongoose.models.SetSvg ||
 export const CardPriceModel = (mongoose.models.CardPrice ||
   mongoose.model<CardPriceDoc>("CardPrice", CardPriceSchema)) as Model<CardPriceDoc>;
 
+export const CardRulingModel = (mongoose.models.CardRuling ||
+  mongoose.model<CardRulingDoc>("CardRuling", CardRulingSchema)) as Model<CardRulingDoc>;
+
+export const RulesCacheModel = (mongoose.models.RulesCache ||
+  mongoose.model<RulesCacheDoc>("RulesCache", RulesCacheSchema)) as Model<RulesCacheDoc>;
+
 export const ExchangeRateModel = (mongoose.models.ExchangeRate ||
   mongoose.model<ExchangeRateDoc>("ExchangeRate", ExchangeRateSchema)) as Model<ExchangeRateDoc>;
+
+export const UserSettingsModel = (mongoose.models.UserSettings ||
+  mongoose.model<UserSettingsDoc>("UserSettings", userSettingsSchema)) as Model<UserSettingsDoc>;

@@ -70,20 +70,23 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
     entries: [
       {
         syntax: "name",
-        description: "Card name (also matches the flavor name).",
-        examples: ["name:bolt", 'name:"serra angel"']
+        description:
+          "Card name (also matches the flavor name). Wrap the value in /slashes/ for a regular-expression match.",
+        examples: ["name:bolt", 'name:"serra angel"', "name:/^lightning (bolt|strike)$/"]
       },
       {
         syntax: "t",
         aliases: ["type"],
-        description: "Type line — supertypes, card types, and subtypes.",
-        examples: ["t:creature", "t:legendary", "t:goblin"]
+        description:
+          "Type line — supertypes, card types, and subtypes. Wrap the value in /slashes/ for a regular-expression match.",
+        examples: ["t:creature", "t:legendary", "t:goblin", "t:/^legendary creature/"]
       },
       {
         syntax: "o",
         aliases: ["oracle"],
-        description: "Oracle (rules) text.",
-        examples: ["o:flying", 'o:"draw a card"']
+        description:
+          "Oracle (rules) text. Wrap the value in /slashes/ to match a regular expression instead of literal text (case-insensitive; escape a literal slash as \\/).",
+        examples: ["o:flying", 'o:"draw a card"', "o:/draw .{1,3} cards?/"]
       },
       {
         syntax: "kw",
@@ -96,6 +99,12 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
         aliases: ["flavor", "flavorname"],
         description: "Flavor name only (e.g. Godzilla-series alternate names).",
         examples: ["fn:godzilla"]
+      },
+      {
+        syntax: "ft",
+        aliases: ["flavortext"],
+        description: "Flavor text (the italic text). Supports /regex/ values too.",
+        examples: ["ft:squirrel", 'ft:"jaya"']
       }
     ]
   },
@@ -116,6 +125,12 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
         aliases: ["identity"],
         description: "Color identity — all colors in costs and rules text (Commander).",
         examples: ["id=esper", "id<=rg", "id:colorless"]
+      },
+      {
+        syntax: "produces",
+        description:
+          "Mana the card's abilities can produce. Use letters (w u b r g) or c for actual colorless mana ({C}).",
+        examples: ["produces:g", "t:land produces:wu", "t:artifact produces:c"]
       }
     ]
   },
@@ -177,6 +192,19 @@ export const SEARCH_DOC_SECTIONS: DocSection[] = [
         syntax: "layout",
         description: "Card layout: normal, transform, modal_dfc, adventure, split, flip, meld, …",
         examples: ["layout:transform", "layout:split"]
+      },
+      {
+        syntax: "year",
+        aliases: ["date"],
+        description:
+          "Release date. A bare year (year:2020) means any date in that year; full dates (date<=2019-07-12) compare exactly.",
+        examples: ["year>=2023", "year:2020", "date<=2019-07-12"]
+      },
+      {
+        syntax: "is",
+        description:
+          "Card-property tests: dfc, mdfc, transform, split, adventure, flip, meld, vanilla (creature with no rules text), permanent, spell.",
+        examples: ["is:mdfc", "is:transform", "is:vanilla", "is:spell"]
       },
       {
         syntax: "exclude",
