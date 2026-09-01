@@ -1,12 +1,13 @@
 import connectDB from "@/db/mongoose";
-import { CardData } from "@/db/schema";
 import { NextRequest } from "next/server";
-import { parseSearchQuery } from "@/lib/search/queryBuilder";
-import { getValidSortFields, getSortConfig, buildSortSpec } from "@/lib/sortConfig";
+import { getValidSortFields } from "@/lib/sortConfig";
+import { runCardSearch } from "@/lib/server/cardSearch";
 
 /**
  * GET /api/cards
  * Searches and retrieves Magic: The Gathering cards with pagination and sorting.
+ * The query core (parse + owned filter + sort + paginate) lives in
+ * src/lib/server/cardSearch.ts, shared with the AI search tools.
  *
  * Query Parameters:
  * - q: Search query string (optional)
@@ -50,95 +51,14 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
 
-    // Calculate skip and limit from page and page-len
-    const skip = (page - 1) * pageLen;
-    const limit = pageLen;
-
-    // Build the search query from the query string
-    const searchQuery = parseSearchQuery(queryString);
-
-    // Get sort configuration
-    const sortConfig = getSortConfig(order);
-    if (!sortConfig) {
-      return Response.json({ error: "Invalid sort configuration" }, { status: 500 });
-    }
-
-    const sortDirection: 1 | -1 = dir === "asc" ? 1 : -1;
-
-    let cards;
-    let total;
-
-    // Helper to build owned filter stages
-    const buildOwnedFilterStages = () => [
-      {
-        $lookup: {
-          from: "physicalcards",
-          localField: "id",
-          foreignField: "cardId",
-          as: "ownedIn"
-        }
-      },
-      {
-        $match: {
-          "ownedIn.0": { $exists: true }
-        }
-      },
-      {
-        $project: {
-          ownedIn: 0
-        }
-      }
-    ];
-
-    // Use aggregation pipeline for complex sorting or owned filter, otherwise use simple sort
-    if ((sortConfig.useAggregation && sortConfig.buildAggregationSort) || owned) {
-      // Build aggregation pipeline
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pipeline: any[] = [
-        // Match the search query
-        { $match: searchQuery }
-      ];
-
-      // Add owned filter using $lookup if enabled
-      if (owned) {
-        pipeline.push(...buildOwnedFilterStages());
-      }
-
-      // Add custom sorting stages if needed
-      if (sortConfig.useAggregation && sortConfig.buildAggregationSort) {
-        pipeline.push(...sortConfig.buildAggregationSort(sortDirection));
-      } else {
-        // Plain (possibly multi-key) sort in the pipeline; buildSortSpec appends
-        // the `_id` tiebreaker that keeps pagination stable.
-        pipeline.push({ $sort: buildSortSpec(sortConfig, sortDirection) });
-      }
-
-      // Add pagination
-      pipeline.push({ $skip: skip }, { $limit: limit });
-
-      cards = await CardData.aggregate(pipeline);
-
-      // Get total count with a separate aggregation
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const countPipeline: any[] = [{ $match: searchQuery }];
-
-      // Add owned filter to count pipeline
-      if (owned) {
-        countPipeline.push(...buildOwnedFilterStages().slice(0, 2)); // Only lookup and match, skip project
-      }
-
-      countPipeline.push({ $count: "total" });
-      const countResult = await CardData.aggregate(countPipeline);
-      total = countResult.length > 0 ? countResult[0].total : 0;
-    } else {
-      // Plain (possibly multi-key) sort; buildSortSpec appends the `_id`
-      // tiebreaker that keeps pagination stable.
-      const sortObject = buildSortSpec(sortConfig, sortDirection);
-      cards = await CardData.find(searchQuery).sort(sortObject).limit(limit).skip(skip).lean();
-      total = await CardData.countDocuments(searchQuery);
-    }
-
-    const totalPages = Math.ceil(total / pageLen);
+    const { cards, total, totalPages, hasMore } = await runCardSearch({
+      queryString,
+      page,
+      pageLen,
+      order,
+      dir,
+      owned
+    });
 
     return Response.json({
       cards,
@@ -148,7 +68,7 @@ export async function GET(request: NextRequest) {
         page,
         pageLen,
         totalPages,
-        hasMore: page < totalPages
+        hasMore
       },
       sort: {
         order,
