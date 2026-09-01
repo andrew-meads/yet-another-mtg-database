@@ -40,7 +40,13 @@ export const SEARCH_TRANSLATOR_EXAMPLES: { request: string; query: string }[] = 
     request: "spells that draw more than one card at once",
     query: "o:/draw (two|three|four|x) cards/ -t:land"
   },
-  { request: "creatures that deal damage when they enter", query: 't:creature o:/enters, .* deals? .* damage/' }
+  {
+    request: "creatures that deal damage when they enter",
+    query: "t:creature o:/enters, .* deals? .* damage/"
+  },
+  { request: "lands that produce blue mana", query: "t:land produces:u" },
+  { request: "artifacts that make colorless mana, printed since 2020", query: "t:artifact produces:c year>=2020" },
+  { request: "modal double-faced lands", query: "is:mdfc t:land" }
 ];
 
 export function buildSearchTranslatorSystemPrompt(): string {

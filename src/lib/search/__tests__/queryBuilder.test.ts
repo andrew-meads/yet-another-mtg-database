@@ -10,12 +10,15 @@ describe("buildSearchQuery", () => {
   });
 
   it("builds a single operator query", () => {
-    expect(buildSearchQuery("c:red")).toEqual({ colors: { $all: ["R"] } });
+    expect(JSON.stringify(buildSearchQuery("c:red").$expr.$setIsSubset[0])).toBe('["R"]');
   });
 
   it("ANDs multiple terms", () => {
     expect(buildSearchQuery("t:creature mv>=3")).toEqual({
-      $and: [{ type_line: /creature/i }, { cmc: { $gte: 3 } }]
+      $and: [
+        { $or: [{ type_line: /creature/i }, { "card_faces.type_line": /creature/i }] },
+        { cmc: { $gte: 3 } }
+      ]
     });
   });
 
@@ -27,22 +30,30 @@ describe("buildSearchQuery", () => {
 
   it("handles explicit OR", () => {
     expect(buildSearchQuery("t:goblin or t:elf")).toEqual({
-      $or: [{ type_line: /goblin/i }, { type_line: /elf/i }]
+      $or: [
+        { $or: [{ type_line: /goblin/i }, { "card_faces.type_line": /goblin/i }] },
+        { $or: [{ type_line: /elf/i }, { "card_faces.type_line": /elf/i }] }
+      ]
     });
   });
 
   it("handles parenthesised OR inside an AND", () => {
     expect(buildSearchQuery("c:red (t:goblin or t:elf)")).toEqual({
       $and: [
-        { colors: { $all: ["R"] } },
-        { $or: [{ type_line: /goblin/i }, { type_line: /elf/i }] }
+        expect.objectContaining({ $expr: expect.anything() }),
+        {
+          $or: [
+            { $or: [{ type_line: /goblin/i }, { "card_faces.type_line": /goblin/i }] },
+            { $or: [{ type_line: /elf/i }, { "card_faces.type_line": /elf/i }] }
+          ]
+        }
       ]
     });
   });
 
   it("wraps negation in $nor", () => {
     expect(buildSearchQuery("-t:creature")).toEqual({
-      $nor: [{ type_line: /creature/i }]
+      $nor: [{ $or: [{ type_line: /creature/i }, { "card_faces.type_line": /creature/i }] }]
     });
   });
 
@@ -58,7 +69,7 @@ describe("parseSearchQuery", () => {
   });
 
   it("delegates to buildSearchQuery for real input", () => {
-    expect(parseSearchQuery("c:red")).toEqual({ colors: { $all: ["R"] } });
+    expect(JSON.stringify(parseSearchQuery("c:red").$expr.$setIsSubset[0])).toBe('["R"]');
   });
 });
 

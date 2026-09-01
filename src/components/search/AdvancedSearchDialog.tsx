@@ -28,6 +28,7 @@ import {
   SearchFilters,
   filtersToQueryString
 } from "@/lib/search/filtersToQueryString";
+import { IS_PREDICATE_NAMES } from "@/lib/search/operators";
 
 export type { SearchFilters } from "@/lib/search/filtersToQueryString";
 
@@ -49,6 +50,8 @@ const COLORS: { code: string; symbol: string }[] = [
   { code: "R", symbol: "{R}" },
   { code: "G", symbol: "{G}" }
 ];
+
+const PRODUCED_MANA: { code: string; symbol: string }[] = [...COLORS, { code: "C", symbol: "{C}" }];
 
 const NUMERIC_OPERATORS: NumericOperator[] = ["=", ">", "<", ">=", "<="];
 
@@ -72,7 +75,7 @@ export default function AdvancedSearchDialog({
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const toggleColor = (key: "colors" | "colorIdentity", color: string) => {
+  const toggleColor = (key: "colors" | "colorIdentity" | "producedMana", color: string) => {
     const current = filters[key] || [];
     const next = current.includes(color) ? current.filter((c) => c !== color) : [...current, color];
     updateFilter(key, next.length > 0 ? next : undefined);
@@ -219,6 +222,15 @@ export default function AdvancedSearchDialog({
                 onChange={(e) => updateFilter("oracleText", e.target.value)}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="flavorText">Flavor Text</Label>
+              <Input
+                id="flavorText"
+                placeholder="e.g., squirrel"
+                value={filters.flavorText || ""}
+                onChange={(e) => updateFilter("flavorText", e.target.value)}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="set">Set</Label>
@@ -289,6 +301,30 @@ export default function AdvancedSearchDialog({
           <TabsContent value="colors" className="mt-4 space-y-6">
             {colorSection("Color", "colors", "colorMode", "color")}
             {colorSection("Color Identity", "colorIdentity", "colorIdentityMode", "identity")}
+            <div className="space-y-3">
+              <Label>Produces Mana</Label>
+              <div className="flex flex-wrap gap-3">
+                {PRODUCED_MANA.map(({ code, symbol }) => (
+                  <div key={code} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`produces-${code}`}
+                      checked={filters.producedMana?.includes(code) || false}
+                      onCheckedChange={() => toggleColor("producedMana", code)}
+                    />
+                    <Label
+                      htmlFor={`produces-${code}`}
+                      className="flex cursor-pointer items-center"
+                    >
+                      <ManaCost cost={symbol} />
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Cards whose abilities can produce all of the selected mana ({"{C}"} is actual
+                colorless mana).
+              </p>
+            </div>
           </TabsContent>
 
           {/* MORE */}
@@ -310,6 +346,52 @@ export default function AdvancedSearchDialog({
                 value={filters.layout || ""}
                 onChange={(e) => updateFilter("layout", e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="year">Release Year / Date</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={filters.yearOperator || "="}
+                  onValueChange={(v) => updateFilter("yearOperator", v as NumericOperator)}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NUMERIC_OPERATORS.map((op) => (
+                      <SelectItem key={op} value={op}>
+                        {op}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="year"
+                  placeholder="e.g., 2020 or 2019-07-12"
+                  value={filters.year || ""}
+                  onChange={(e) => updateFilter("year", e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="isPredicate">Card Property</Label>
+              <Select
+                value={filters.isPredicate || "any"}
+                onValueChange={(v) => updateFilter("isPredicate", v === "any" ? undefined : v)}
+              >
+                <SelectTrigger id="isPredicate">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  {IS_PREDICATE_NAMES.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      is:{name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox

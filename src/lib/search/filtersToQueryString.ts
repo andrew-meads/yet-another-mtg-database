@@ -28,6 +28,7 @@ export interface SearchFilters {
   flavorName?: string;
   typeLine?: string;
   oracleText?: string;
+  flavorText?: string;
   set?: string;
   lang?: string;
   layout?: string;
@@ -46,6 +47,10 @@ export interface SearchFilters {
   colorMode?: ColorFilterMode;
   colorIdentity?: string[]; // Selected color codes: W, U, B, R, G
   colorIdentityMode?: ColorFilterMode;
+  producedMana?: string[]; // Selected mana symbols: W, U, B, R, G, C
+  year?: string; // A year (2020) or full date (2019-07-12)
+  yearOperator?: NumericOperator;
+  isPredicate?: string; // An is: value, e.g. "mdfc", "vanilla"
   excludeExtras?: boolean;
 }
 
@@ -103,6 +108,7 @@ export function filtersToQueryString(filters: SearchFilters): string {
   if (text(filters.flavorName)) terms.push(colonTerm("fn", text(filters.flavorName)));
   if (text(filters.typeLine)) terms.push(colonTerm("t", text(filters.typeLine)));
   if (text(filters.oracleText)) terms.push(colonTerm("o", text(filters.oracleText)));
+  if (text(filters.flavorText)) terms.push(colonTerm("ft", text(filters.flavorText)));
   if (text(filters.set)) terms.push(colonTerm("e", text(filters.set)));
   if (text(filters.lang)) terms.push(colonTerm("lang", text(filters.lang)));
   if (text(filters.layout)) terms.push(colonTerm("layout", text(filters.layout)));
@@ -130,6 +136,14 @@ export function filtersToQueryString(filters: SearchFilters): string {
   if (filters.colorIdentity && filters.colorIdentity.length > 0) {
     terms.push(...colorTerms("id", filters.colorIdentity, filters.colorIdentityMode ?? "contains"));
   }
+
+  if (filters.producedMana && filters.producedMana.length > 0) {
+    terms.push(`produces:${filters.producedMana.map((c) => c.toLowerCase()).join("")}`);
+  }
+  if (text(filters.year)) {
+    terms.push(comparisonTerm("year", text(filters.year), filters.yearOperator));
+  }
+  if (text(filters.isPredicate)) terms.push(colonTerm("is", text(filters.isPredicate)));
 
   if (filters.excludeExtras) terms.push("exclude:extras");
 

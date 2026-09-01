@@ -22,11 +22,13 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 ## Features
 
 - **Scryfall-style search** — a full query parser supporting `key:value` operators
-  (color, type, oracle text, mana value, set, rarity, …), comparison operators
-  (`>= <= > < =`), negation, `or`, parenthesized groups, and Scryfall-style
-  **regular-expression matching on oracle text, names, and type lines**
+  (color, type, oracle text, flavor text, mana value, set, rarity, produced mana,
+  release year, `is:` card properties, …), comparison operators (`>= <= > < =`),
+  negation, `or`, parenthesized groups, and Scryfall-style **regular-expression
+  matching on oracle text, names, type lines, and flavor text**
   (`o:/draw . cards?/`, `t:/^legendary creature/`, case-insensitive, `\/` for a
-  literal slash), plus configurable sorting.
+  literal slash), plus configurable sorting. Multi-faced cards (transform, modal
+  DFC, adventure, split) are matched on **both faces** — text, names, and colors.
   The same search bar works on both the card-search page and inside a collection
   (collection results are filtered server-side by the same engine), with an
   **Advanced Search** dialog that builds the query string from form fields and a

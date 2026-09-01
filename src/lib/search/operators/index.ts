@@ -19,3 +19,7 @@ export { keywordOperator } from "./keyword";
 export { layoutOperator } from "./layout";
 export { excludeOperator } from "./exclude";
 export { langOperator } from "./lang";
+export { producesOperator } from "./produces";
+export { yearOperator } from "./year";
+export { isOperator, IS_PREDICATE_NAMES } from "./is";
+export { flavortextOperator } from "./flavortext";

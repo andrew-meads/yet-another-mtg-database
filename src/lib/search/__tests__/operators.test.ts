@@ -5,6 +5,10 @@ import {
   typeOperator,
   nameOperator,
   oracleOperator,
+  producesOperator,
+  yearOperator,
+  isOperator,
+  flavortextOperator,
   manavalueOperator,
   rarityOperator,
   setOperator,
@@ -13,26 +17,35 @@ import {
 } from "@/lib/search/operators";
 
 describe("colorOperator", () => {
-  it("defaults to 'has all of these colors'", () => {
-    expect(colorOperator.buildQuery("red", undefined)).toEqual({ colors: { $all: ["R"] } });
+  // Colors are compared as $expr set operations over the UNION of top-level
+  // colors and all face colors (transform/MDFC cards store colors on faces).
+  it("defaults to 'has all of these colors' over the face union", () => {
+    const q = colorOperator.buildQuery("red", undefined);
+    expect(q.$expr.$setIsSubset[0]).toEqual(["R"]);
+    // The other side is the effective-colors union expression.
+    expect(JSON.stringify(q.$expr.$setIsSubset[1])).toContain("card_faces");
   });
 
   it("'=' requires an exact color set", () => {
-    expect(colorOperator.buildQuery("ur", "=")).toEqual({
-      $and: [{ colors: { $all: ["U", "R"] } }, { colors: { $size: 2 } }]
-    });
+    const q = colorOperator.buildQuery("ur", "=");
+    expect(q.$expr.$setEquals[1]).toEqual(["U", "R"]);
+  });
+
+  it("'<=' is a subset comparison", () => {
+    const q = colorOperator.buildQuery("ur", "<=");
+    expect(q.$expr.$setIsSubset[1]).toEqual(["U", "R"]);
+    expect(JSON.stringify(q.$expr.$setIsSubset[0])).toContain("card_faces");
   });
 
   it("expands guild names", () => {
-    expect(colorOperator.buildQuery("azorius", undefined)).toEqual({
-      colors: { $all: ["W", "U"] }
-    });
+    const q = colorOperator.buildQuery("azorius", undefined);
+    expect(q.$expr.$setIsSubset[0]).toEqual(["W", "U"]);
   });
 
-  it("treats colorless as 'no colors'", () => {
-    expect(colorOperator.buildQuery("c", undefined)).toEqual({
-      $or: [{ colors: { $exists: false } }, { colors: { $size: 0 } }]
-    });
+  it("treats colorless as 'no colors on the card or any face'", () => {
+    const q = colorOperator.buildQuery("c", undefined);
+    expect(q.$expr.$eq[1]).toBe(0);
+    expect(JSON.stringify(q.$expr.$eq[0])).toContain("card_faces");
   });
 });
 
@@ -45,20 +58,21 @@ describe("identityOperator", () => {
 });
 
 describe("typeOperator / oracleOperator", () => {
-  it("type builds a case-insensitive regex on type_line", () => {
+  // Text operators match the top-level field OR the same field on any face.
+  it("type builds a case-insensitive regex on type_line and face type lines", () => {
     expect(typeOperator.buildQuery("creature", undefined)).toEqual({
-      type_line: /creature/i
+      $or: [{ type_line: /creature/i }, { "card_faces.type_line": /creature/i }]
     });
   });
 
-  it("oracle builds a case-insensitive regex on oracle_text", () => {
+  it("oracle builds a case-insensitive regex on oracle_text and face oracle text", () => {
     expect(oracleOperator.buildQuery("draw a card", undefined)).toEqual({
-      oracle_text: /draw a card/i
+      $or: [{ oracle_text: /draw a card/i }, { "card_faces.oracle_text": /draw a card/i }]
     });
   });
 
   it("escapes regex metacharacters in the value", () => {
-    expect(typeOperator.buildQuery("a.b", undefined)).toEqual({ type_line: /a\.b/i });
+    expect(typeOperator.buildQuery("a.b", undefined).$or[0]).toEqual({ type_line: /a\.b/i });
   });
 });
 
@@ -151,22 +165,23 @@ describe("excludeOperator", () => {
 describe("oracleOperator — regex values", () => {
   it("treats a slash-delimited value as a raw regex", () => {
     const query = oracleOperator.buildQuery("/draw . cards?/");
-    expect(query.oracle_text).toBeInstanceOf(RegExp);
-    expect(query.oracle_text.source).toBe("draw . cards?");
-    expect(query.oracle_text.flags).toBe("i");
+    expect(query.$or[0].oracle_text).toBeInstanceOf(RegExp);
+    expect(query.$or[0].oracle_text.source).toBe("draw . cards?");
+    expect(query.$or[0].oracle_text.flags).toBe("i");
+    expect(query.$or[1]["card_faces.oracle_text"].source).toBe("draw . cards?");
   });
 
   it("still escapes plain values literally", () => {
     const query = oracleOperator.buildQuery("draw . cards?");
-    expect(query.oracle_text.source).toBe("draw \\. cards\\?");
+    expect(query.$or[0].oracle_text.source).toBe("draw \\. cards\\?");
   });
 
   it("falls back to a literal match for an invalid regex", () => {
     const query = oracleOperator.buildQuery("/draw [/");
     // The raw value (slashes included) is matched literally instead of erroring.
-    expect(query.oracle_text).toBeInstanceOf(RegExp);
-    expect(query.oracle_text.test("text with /draw [/ inside")).toBe(true);
-    expect(query.oracle_text.test("draw a card")).toBe(false);
+    expect(query.$or[0].oracle_text).toBeInstanceOf(RegExp);
+    expect(query.$or[0].oracle_text.test("text with /draw [/ inside")).toBe(true);
+    expect(query.$or[0].oracle_text.test("draw a card")).toBe(false);
   });
 });
 
@@ -181,14 +196,99 @@ describe("nameOperator / typeOperator — regex values", () => {
 
   it("treats a slash-delimited type value as a raw regex", () => {
     const query = typeOperator.buildQuery("/^legendary creature/");
-    expect(query.type_line).toBeInstanceOf(RegExp);
-    expect(query.type_line.source).toBe("^legendary creature");
-    expect(query.type_line.test("Legendary Creature — Elf")).toBe(true);
-    expect(query.type_line.test("Enchantment — Legendary Creature? no")).toBe(false);
+    const regex = query.$or[0].type_line;
+    expect(regex).toBeInstanceOf(RegExp);
+    expect(regex.source).toBe("^legendary creature");
+    expect(regex.test("Legendary Creature — Elf")).toBe(true);
+    expect(regex.test("Enchantment — Legendary Creature? no")).toBe(false);
   });
 
   it("keeps plain name/type values literal", () => {
     expect(nameOperator.buildQuery("a.b").$or[0].name.source).toBe("a\\.b");
-    expect(typeOperator.buildQuery("a.b").type_line.source).toBe("a\\.b");
+    expect(typeOperator.buildQuery("a.b").$or[0].type_line.source).toBe("a\\.b");
+  });
+
+  it("name regex also matches face names", () => {
+    const query = nameOperator.buildQuery("/^insectile/");
+    expect(query.$or[2]["card_faces.name"].source).toBe("^insectile");
+  });
+});
+
+describe("producesOperator", () => {
+  it("matches produced_mana with 'has at least' semantics", () => {
+    expect(producesOperator.buildQuery("g", undefined)).toEqual({
+      produced_mana: { $all: ["G"] }
+    });
+    expect(producesOperator.buildQuery("wu", undefined)).toEqual({
+      produced_mana: { $all: ["W", "U"] }
+    });
+  });
+
+  it("maps c / colorless to the literal C symbol", () => {
+    expect(producesOperator.buildQuery("c", undefined)).toEqual({
+      produced_mana: { $all: ["C"] }
+    });
+    expect(producesOperator.buildQuery("colorless", undefined)).toEqual({
+      produced_mana: { $all: ["C"] }
+    });
+  });
+
+  it("returns null for unparseable values", () => {
+    expect(producesOperator.buildQuery("xyz9", undefined)).toBeNull();
+  });
+});
+
+describe("yearOperator", () => {
+  it("treats a bare year as the whole year", () => {
+    expect(yearOperator.buildQuery("2020", undefined)).toEqual({
+      released_at: { $gte: "2020", $lt: "2021" }
+    });
+    expect(yearOperator.buildQuery("2020", ">=")).toEqual({ released_at: { $gte: "2020" } });
+    expect(yearOperator.buildQuery("2020", "<=")).toEqual({ released_at: { $lt: "2021" } });
+    expect(yearOperator.buildQuery("2020", ">")).toEqual({ released_at: { $gte: "2021" } });
+    expect(yearOperator.buildQuery("2020", "<")).toEqual({ released_at: { $lt: "2020" } });
+  });
+
+  it("compares full dates directly", () => {
+    expect(yearOperator.buildQuery("2019-07-12", "<=")).toEqual({
+      released_at: { $lte: "2019-07-12" }
+    });
+    expect(yearOperator.buildQuery("2019-07-12", undefined)).toEqual({
+      released_at: "2019-07-12"
+    });
+  });
+
+  it("returns null for malformed values", () => {
+    expect(yearOperator.buildQuery("recent", undefined)).toBeNull();
+    expect(yearOperator.buildQuery("20", ">=")).toBeNull();
+  });
+});
+
+describe("isOperator", () => {
+  it("maps layout predicates", () => {
+    expect(isOperator.buildQuery("mdfc", undefined)).toEqual({ layout: "modal_dfc" });
+    expect(isOperator.buildQuery("transform", undefined)).toEqual({ layout: "transform" });
+    expect(isOperator.buildQuery("DFC", undefined).layout.$in).toContain("modal_dfc");
+  });
+
+  it("vanilla requires a normal-layout creature with no rules text", () => {
+    const q = isOperator.buildQuery("vanilla", undefined);
+    expect(q.layout).toBe("normal");
+    expect(q.type_line.test("Creature — Bear")).toBe(true);
+  });
+
+  it("returns null for unknown predicates", () => {
+    expect(isOperator.buildQuery("banana", undefined)).toBeNull();
+  });
+});
+
+describe("flavortextOperator", () => {
+  it("matches flavor text on the card or its faces, with regex support", () => {
+    const literal = flavortextOperator.buildQuery("squirrel", undefined);
+    expect(literal.$or[0].flavor_text.source).toBe("squirrel");
+    expect(literal.$or[1]["card_faces.flavor_text"].source).toBe("squirrel");
+
+    const regex = flavortextOperator.buildQuery("/jaya .* says/", undefined);
+    expect(regex.$or[0].flavor_text.source).toBe("jaya .* says");
   });
 });

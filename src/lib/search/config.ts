@@ -15,7 +15,11 @@ import {
   keywordOperator,
   layoutOperator,
   excludeOperator,
-  langOperator
+  langOperator,
+  producesOperator,
+  yearOperator,
+  isOperator,
+  flavortextOperator
 } from "./operators";
 
 /**
@@ -38,7 +42,11 @@ export const searchOperators: Record<string, SearchOperatorConfig> = {
   keyword: keywordOperator,
   layout: layoutOperator,
   exclude: excludeOperator,
-  lang: langOperator
+  lang: langOperator,
+  produces: producesOperator,
+  year: yearOperator,
+  is: isOperator,
+  flavortext: flavortextOperator
 };
 
 /**
