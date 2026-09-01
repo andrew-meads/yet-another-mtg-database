@@ -12,6 +12,7 @@ import DeckColumnDragLayer from "@/components/dnd/DeckColumnDragLayer";
 import { ScanContextProvider } from "@/context/ScanContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { SearchDocsProvider } from "@/context/SearchDocsContext";
+import { AiChatProvider } from "@/context/AiChatContext";
 
 export function Providers({
   children,
@@ -29,7 +30,9 @@ export function Providers({
               <CardSelectionProvider>
                 <SettingsProvider>
                   <SearchDocsProvider>
-                    <ScanContextProvider>{children}</ScanContextProvider>
+                    <AiChatProvider>
+                      <ScanContextProvider>{children}</ScanContextProvider>
+                    </AiChatProvider>
                   </SearchDocsProvider>
                 </SettingsProvider>
               </CardSelectionProvider>

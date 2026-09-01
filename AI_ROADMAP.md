@@ -3,10 +3,10 @@
 This document parks the remaining phases of the AI-agent plan so a future agent (or
 human) can continue it without the original planning conversation. **Read CLAUDE.md
 first** — it documents the codebase architecture and the already-shipped AI
-foundations this roadmap builds on. Phases 0 and 1 are **done and shipped**; work
-continues from Phase 2.
+foundations this roadmap builds on. Phases 0, 1, and 2 are **done and shipped**;
+work continues from Phase 3.
 
-## Where things stand (Phases 0–1, shipped)
+## Where things stand (Phases 0–2, shipped)
 
 **Phase 0 — server-synced user settings + AI provider plumbing**
 
@@ -36,6 +36,33 @@ continues from Phase 2.
   `src/lib/ai/agents/searchTranslator.ts` (strict-JSON output contract, parsed
   leniently by `parseTranslateSearchResult`) + `src/lib/ai/prompts/searchSyntax.ts`
   (cheat-sheet generated from `SEARCH_DOC_SECTIONS`).
+
+**Phase 2 — chat infrastructure + deck advisor (read-only)** — see CLAUDE.md's
+"AI deck advisor chat" section for the full architecture. In brief:
+
+- `POST /api/ai/chat` (`streamText` → `toUIMessageStreamResponse`, client-held
+  transcript), agent registry (`src/lib/ai/agents/`, persona `deck-advisor`),
+  read-only tool layer (`src/lib/ai/tools/`: readDeck, readCollection,
+  searchCards/searchMyCards on the extracted `runCardSearch` core, getCardDetails,
+  manaBaseStats over pure `src/lib/ai/manaBase.ts`, getRulings w/ `cardrulings`
+  7-day cache, lookupRule w/ `rulescaches` 24h cache), docked `AiChatPanel` +
+  `AiChatContext` UI mirroring the SearchDocsPanel pattern, sparkle entry on the
+  deck page. New dep: `@ai-sdk/react@^2` (pairs with `ai@5`).
+- **Streaming through `src/proxy.ts` middleware is verified working in dev**
+  (browser-tested with a local stub endpoint streaming word-by-word — chunks
+  arrive progressively). **Still untested: production Caddy** — its
+  `encode zstd gzip` label may buffer SSE; if so, exclude the route via an `@sse`
+  matcher in `docker-compose.yml`'s Caddy labels.
+- Academy Ruins gotcha: `GET /cr/glossary/{term}` 404s even for known terms (their
+  data pipeline currently collapses the glossary into one blob), so keyword lookups
+  fall back to the ordered `GET /cr/keywords` lists, which map by index to rules
+  702.(i+2) (abilities) / 701.(i+2) (actions). If the glossary endpoint comes back,
+  the primary path in `src/lib/server/rulesLookup.ts` starts working again on its
+  own.
+- Verification stub: `scratchpad`-style ~80-line node server that answers the
+  first request with a scripted tool call and follow-ups with slowly streamed text
+  proved the whole loop in the browser without a real key (same trick as Phases
+  0–1, now SSE-shaped).
 
 **Lessons already learned (apply to all later phases)**
 
@@ -72,77 +99,6 @@ continues from Phase 2.
 | Conversation state | Client-held (`useChat` resends the transcript); no persistence collection | Personal app; avoids schema/retention. Chat history persistence is backlog. |
 | Token cost | Deck/collection context enters via tools (`readDeck`), never client-stuffed prompts; LLM-facing card payloads slimmed (no `image_uris`), ~20-result caps with totals; `stopWhen: stepCountIs(8)` loop cap | |
 | Errors | 400 bad body, `409 ai_not_configured`, 502 provider/output failures with diagnostics | Established convention. |
-
-## Phase 2 — Chat infrastructure + deck advisor (read-only)
-
-New dep: `@ai-sdk/react` (^2 at planning time; check current).
-
-- **`POST /api/ai/chat`** — the app's **first streaming route**:
-  `streamText({ model, system, tools, stopWhen: stepCountIs(8) })` →
-  `result.toUIMessageStreamResponse()`. Body `{ messages: UIMessage[], agentId,
-  context: { deckId?, collectionId? } }`. Add `export const maxDuration = 120` and
-  `Cache-Control: no-cache, no-transform`. The system prompt names the viewed
-  deck/collection ids; the model fetches contents via tools.
-- **Streaming risks to verify explicitly**: `src/proxy.ts` middleware should pass
-  streams through (curl the dev server to confirm chunked delivery); in production
-  Caddy's `encode zstd gzip` label may buffer SSE — if so, exclude the route via an
-  `@sse` matcher in `docker-compose.yml`'s Caddy labels. This was never tested.
-- **Agent registry** (`src/lib/ai/agents/index.ts`): `agentId → persona`; first
-  persona `deck-advisor`. Deck-advisor prompting will need MTG deckbuilding
-  grounding (mana-base heuristics, archetype vocabulary) — same lesson as the
-  search translator: put domain knowledge and worked examples in the prompt.
-- **Tool layer** (`src/lib/ai/tools/`): each tool a factory
-  `makeXTool({ userId })` closing over the session user (every Mongo query includes
-  `owner`), wrapping server helpers directly — never HTTP self-calls. AI SDK
-  `tool({ description, inputSchema: zod, execute })`. Tools must never throw out of
-  `execute`: return `{ error: "unavailable" }`-style results; external fetches get
-  `AbortSignal.timeout(5–10s)`.
-  - `readDeck` / `readCollection` — via `detailPhysicalCards`
-    (`src/lib/server/cardDetails.ts`, returns entries + deduped card map with
-    collection/deck names). Serialize compactly (`src/lib/ai/prompts/deckSerialize.ts`,
-    e.g. "Lands / 4x Forest [neo]"); collections return counts + q-scoped slices
-    only (a 9k-card dump would blow the context).
-  - `searchCards` / `searchMyCards` — **first extract the shared query core of
-    `GET /api/cards` into `src/lib/server/cardSearch.ts`** (behavior-preserving
-    refactor guarded by `tests/integration/cards.test.ts`; isolated first commit).
-    `searchMyCards` reuses the owned-path `$lookup` on `physicalcards`, owner-scoped.
-  - `getCardDetails` — full oracle text + prices (`getCardPrices` in
-    `src/lib/server/cardPrices.ts`) for named cards.
-  - `manaBaseStats` — deterministic pure helper `src/lib/ai/manaBase.ts`: land
-    count, color sources (`produced_mana` field, oracle-text "Add {G}" fallback),
-    pip counts by color from `mana_cost` across nonlands, curve histogram,
-    sources-vs-pips table. **The LLM interprets numbers; it never counts cards**
-    (models miscount). Highest-value unit-test target of the phase.
-  - `getRulings` — Scryfall `GET /cards/{id}/rulings` via `scryfallFetch`
-    (`src/lib/scryfall.ts` handles UA + 10 req/s limit); cache in a new
-    `cardrulings` collection mirroring the `cardprices` pattern (~7-day staleness);
-    helper `src/lib/server/cardRulings.ts`.
-  - `lookupRule` — Academy Ruins API (`https://api.academyruins.com`, docs at
-    /docs): keyword abilities, rule-by-number, glossary. Covers Comprehensive-Rules
-    knowledge with zero ingestion. 24h Mongo cache keyed by endpoint+query; plain
-    `fetch` with an explicit User-Agent.
-  - `src/lib/ai/slim.ts` — LLM-facing card projection
-    `{ id, name, mana_cost, type_line, oracle_text, colors, cmc, rarity, set, prices? }`,
-    no images.
-- **UI**: copy the `SearchDocsPanel` docked-panel pattern exactly (see CLAUDE.md
-  "UI shell" notes): `src/context/AiChatContext.tsx` (open state + current agent
-  context, registered in `Providers.tsx`) + `src/components/ai/AiChatPanel.tsx`
-  rendered as a `shrink-0` flex sibling in `src/components/MainWorkspace.tsx`
-  (desktop `w-96 max-w-[90vw]` right dock, mobile `max-h-[50%]` top stack). Opening
-  one docked panel closes the other (simplest v1). Panel internals: `useChat`
-  pointed at `/api/ai/chat`, message list, tool-activity chips rendered from
-  `tool-*` UI-message parts ("🔧 searched cards: `t:goblin` (14 results)"),
-  streaming indicator, stop button, "New chat". Entry: sparkle button on the deck
-  page header (deck pages live inside `(main)`/`MainWorkspace`), `AiNotConfigured`
-  when unconfigured.
-- **Tests**: unit — `manaBase` against fixture decks, `deckSerialize`, `slim`;
-  integration — each tool `execute` against seeded memory-Mongo **including
-  cross-user isolation**, chat route with an MSW-scripted tool-call → final-answer
-  exchange, rulings-cache staleness; jsdom — panel open/stream via mocked
-  transport, tool chips, unconfigured state. Lint + README/CLAUDE.md updates.
-
-**Cut line**: deck advisor answers mana-base / recommendation / rules questions
-with visible tool calls; cannot modify anything.
 
 ## Phase 3 — Proposals, "alternatives I own", combos
 

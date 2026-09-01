@@ -56,6 +56,26 @@ interface CardPriceDoc {
   updatedAt?: Date;
 }
 
+// Cached Scryfall rulings for a single card (keyed by Scryfall card id).
+// Mirrors the cardprices cache pattern; `updatedAt` drives staleness (~7 days —
+// rulings change only when new sets release).
+interface CardRulingDoc {
+  cardId: string;
+  rulings: { source: string; published_at: string; comment: string }[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Cached Academy Ruins rules-lookup responses, keyed by endpoint+query. Payload
+// is the (slimmed) JSON body; `updatedAt` drives staleness (24h).
+interface RulesCacheDoc {
+  key: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 // Cached currency exchange rate (base is always "USD").
 interface ExchangeRateDoc {
   base: string;
@@ -271,6 +291,31 @@ export const CardPriceSchema = new Schema<CardPriceDoc>(
   { timestamps: true }
 );
 
+// Rulings cache, one document per card (refreshed wholesale on staleness).
+export const CardRulingSchema = new Schema<CardRulingDoc>(
+  {
+    cardId: { type: String, required: true, unique: true },
+    rulings: [
+      {
+        _id: false,
+        source: { type: String, default: "" },
+        published_at: { type: String, default: "" },
+        comment: { type: String, required: true }
+      }
+    ]
+  },
+  { timestamps: true }
+);
+
+// Rules-lookup cache, one document per Academy Ruins endpoint+query key.
+export const RulesCacheSchema = new Schema<RulesCacheDoc>(
+  {
+    key: { type: String, required: true, unique: true },
+    payload: { type: Schema.Types.Mixed }
+  },
+  { timestamps: true }
+);
+
 // Exchange-rate cache, one document per (base, target) pair.
 export const ExchangeRateSchema = new Schema<ExchangeRateDoc>(
   {
@@ -345,6 +390,12 @@ export const SetSvgModel = (mongoose.models.SetSvg ||
 
 export const CardPriceModel = (mongoose.models.CardPrice ||
   mongoose.model<CardPriceDoc>("CardPrice", CardPriceSchema)) as Model<CardPriceDoc>;
+
+export const CardRulingModel = (mongoose.models.CardRuling ||
+  mongoose.model<CardRulingDoc>("CardRuling", CardRulingSchema)) as Model<CardRulingDoc>;
+
+export const RulesCacheModel = (mongoose.models.RulesCache ||
+  mongoose.model<RulesCacheDoc>("RulesCache", RulesCacheSchema)) as Model<RulesCacheDoc>;
 
 export const ExchangeRateModel = (mongoose.models.ExchangeRate ||
   mongoose.model<ExchangeRateDoc>("ExchangeRate", ExchangeRateSchema)) as Model<ExchangeRateDoc>;

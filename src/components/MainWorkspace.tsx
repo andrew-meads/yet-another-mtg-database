@@ -6,7 +6,9 @@ import CardArtView from "@/components/CardArtView";
 import { CardTextView } from "@/components/CardTextView";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useSearchDocs } from "@/context/SearchDocsContext";
+import { useAiChat } from "@/context/AiChatContext";
 import SearchDocsPanel from "@/components/search/SearchDocsPanel";
+import AiChatPanel from "@/components/ai/AiChatPanel";
 import CardLocationsView from "./CardLocationsView";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -57,9 +59,11 @@ export default function MainWorkspace({ children }: React.PropsWithChildren) {
  */
 function MobileMainWorkspace({ children }: React.PropsWithChildren) {
   const { open: docsOpen } = useSearchDocs();
+  const { open: chatOpen } = useAiChat();
   return (
     <div className="flex h-full flex-col gap-2">
       {docsOpen && <SearchDocsPanel className="max-h-[50%] shrink-0" />}
+      {chatOpen && <AiChatPanel className="max-h-[50%] shrink-0" />}
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
     </div>
   );
@@ -91,6 +95,7 @@ function MobileMainWorkspace({ children }: React.PropsWithChildren) {
 function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
   const { selectedCard } = useCardSelection();
   const { open: docsOpen } = useSearchDocs();
+  const { open: chatOpen } = useAiChat();
   const [layout, setLayout] = useLocalStorage<number[]>(STORAGE_KEY, [20, 80]);
 
   return (
@@ -159,6 +164,9 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
 
       {/* Docked search-syntax docs panel — reflows the workspace, never overlays it */}
       {docsOpen && <SearchDocsPanel className="w-96 max-w-[90vw] shrink-0" />}
+
+      {/* Docked AI chat panel (only one docked panel opens at a time) */}
+      {chatOpen && <AiChatPanel className="w-96 max-w-[90vw] shrink-0" />}
     </div>
   );
 }

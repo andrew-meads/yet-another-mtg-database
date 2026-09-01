@@ -83,6 +83,14 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   servers, etc.). AI features are optional: until an endpoint is configured they show
   setup guidance instead. Your API key is stored server-side, never shown again, and
   can be encrypted at rest (`SETTINGS_ENCRYPTION_KEY`).
+- **AI deck advisor** — the sparkle button on a deck page opens a docked chat panel
+  where an AI agent answers deckbuilding questions about *your* cards: mana-base
+  health (exact land/source/pip/curve numbers computed in code, not guessed by the
+  model), what to cut or add, alternatives you already own, card prices, official
+  card rulings, and Comprehensive Rules lookups. Every tool call it makes is shown
+  as an activity chip, its answers stream in live, and it is strictly read-only — it
+  can never modify a deck or collection. Uses the same OpenAI-compatible endpoint as
+  AI search.
 - **Google sign-in** — NextAuth Google OAuth with a deny-by-default email whitelist.
 
 ## Tech stack
@@ -147,6 +155,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | `ALL_CARDS_FILE` | Default path to the Scryfall bulk JSON used by `init-db` |
 | `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards, set icons, and card prices on demand |
 | `EXCHANGE_RATE_API_BASE_URL` | Base URL of the currency exchange-rate API used to convert USD card prices (default `https://api.frankfurter.dev/v1` — free, no API key) |
+| `ACADEMY_RUINS_API_BASE_URL` | Base URL of the Academy Ruins API used by the AI deck advisor's Comprehensive-Rules lookups (default `https://api.academyruins.com` — free, no API key) |
 | `AUTH_DEV_LOGIN` | Dev only: set to `"true"` to add a "Continue as dev user" button to the login page (see [Authentication](#authentication)). Ignored when `NODE_ENV=production`. Requires `AUTH_SECRET` and `NEXTAUTH_URL`, but not the Google OAuth vars |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
