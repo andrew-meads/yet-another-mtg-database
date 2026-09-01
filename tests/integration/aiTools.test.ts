@@ -341,6 +341,21 @@ describe("lookupRule tool", () => {
   });
 });
 
+describe("tool debug logging", () => {
+  it("logs one call line and one timing/result line per execution", async () => {
+    const deck = await seedDeck(userId, "Logged Deck");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await run(buildAiTools({ userId }).readDeck, { deckId: String(deck._id) });
+      const lines = logSpy.mock.calls.map((c) => String(c[0]));
+      expect(lines.some((l) => l.startsWith("[ai] tool readDeck called:"))).toBe(true);
+      expect(lines.some((l) => /\[ai\] tool readDeck finished in \d+ms → ok/.test(l))).toBe(true);
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+});
+
 describe("buildAiToolSubset", () => {
   it("returns only the requested tools", () => {
     const subset = buildAiToolSubset({ userId }, ["readDeck", "lookupRule"]);

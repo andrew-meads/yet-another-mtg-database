@@ -141,6 +141,71 @@ describe("AiChatPanel", () => {
     expect(screen.getByRole("cell", { name: "12" })).toBeInTheDocument();
   });
 
+  it("expands a tool chip to show the raw input and result", async () => {
+    h.messages = [
+      {
+        id: "m1",
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-searchMyCards",
+            state: "output-available",
+            input: { q: "t:creature c:g" },
+            output: { total: 3, cards: [{ name: "Llanowar Elves" }] }
+          }
+        ]
+      }
+    ];
+    renderPanel();
+
+    const chip = await screen.findByTestId("tool-chip");
+    expect(screen.queryByTestId("tool-chip-details")).not.toBeInTheDocument();
+
+    fireEvent.click(chip);
+    const details = screen.getByTestId("tool-chip-details");
+    expect(details).toHaveTextContent('"q": "t:creature c:g"');
+    expect(details).toHaveTextContent('"name": "Llanowar Elves"');
+
+    fireEvent.click(chip);
+    expect(screen.queryByTestId("tool-chip-details")).not.toBeInTheDocument();
+  });
+
+  it("renders reasoning parts collapsed, expandable to the reasoning text", async () => {
+    h.messages = [
+      {
+        id: "m1",
+        role: "assistant",
+        parts: [
+          { type: "reasoning", state: "done", text: "The deck is mono-green, so filter by c:g." },
+          { type: "text", text: "Here are my picks." }
+        ]
+      }
+    ];
+    renderPanel();
+
+    const block = await screen.findByTestId("reasoning-block");
+    expect(block).toHaveTextContent("Reasoning");
+    expect(screen.queryByTestId("reasoning-text")).not.toBeInTheDocument();
+
+    fireEvent.click(block);
+    expect(screen.getByTestId("reasoning-text")).toHaveTextContent(
+      "The deck is mono-green, so filter by c:g."
+    );
+  });
+
+  it("shows a spinner label while reasoning is still streaming", async () => {
+    h.messages = [
+      {
+        id: "m1",
+        role: "assistant",
+        parts: [{ type: "reasoning", state: "streaming", text: "Thinking about the curve" }]
+      }
+    ];
+    renderPanel();
+
+    expect(await screen.findByTestId("reasoning-block")).toHaveTextContent("Reasoning…");
+  });
+
   it("keeps user messages as plain text (no markdown parsing)", async () => {
     h.messages = [
       { id: "m1", role: "user", parts: [{ type: "text", text: "is **this** parsed?" }] }

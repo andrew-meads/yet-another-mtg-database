@@ -79,16 +79,33 @@ export async function findCardByName(name: string): Promise<MtgCard | null> {
 /**
  * Wrap a tool execute body so it can never throw: any error becomes an in-band
  * `{ error }` result (and is logged server-side for diagnostics).
+ *
+ * Every call logs one `[ai] tool …` line (name, duration, input, result size
+ * or in-band error) so a hung or slow tool is visible in the server console.
+ * Set `AI_CHAT_DEBUG=true` to also dump each full result JSON.
  */
 export function safeExecute<TInput, TResult>(
   toolName: string,
   body: (input: TInput) => Promise<TResult>
 ): (input: TInput) => Promise<TResult | ToolError> {
   return async (input: TInput) => {
+    const startedAt = Date.now();
+    console.log(`[ai] tool ${toolName} called: ${JSON.stringify(input)}`);
     try {
-      return await body(input);
+      const result = await body(input);
+      const ms = Date.now() - startedAt;
+      const inBandError = (result as { error?: unknown } | null)?.error;
+      const summary =
+        typeof inBandError === "string"
+          ? `error: ${inBandError}`
+          : `ok, ${JSON.stringify(result)?.length ?? 0} bytes`;
+      console.log(`[ai] tool ${toolName} finished in ${ms}ms → ${summary}`);
+      if (process.env.AI_CHAT_DEBUG === "true") {
+        console.log(`[ai] tool ${toolName} result:`, JSON.stringify(result, null, 2));
+      }
+      return result;
     } catch (error) {
-      console.error(`AI tool ${toolName} failed:`, error);
+      console.error(`[ai] tool ${toolName} threw after ${Date.now() - startedAt}ms:`, error);
       const message = error instanceof Error ? error.message : "unavailable";
       return { error: `${toolName} is unavailable: ${message}` };
     }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { CircleAlert, Loader2, Send, Square, Wrench, X } from "lucide-react";
+import { Brain, ChevronDown, ChevronRight, CircleAlert, Loader2, Send, Square, Wrench, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -189,6 +189,14 @@ function ChatMessage({ message }: { message: UIMessage }) {
           if (!text) return null;
           return <ChatMarkdown key={index} text={text} />;
         }
+        if (part.type === "reasoning") {
+          return (
+            <ReasoningBlock
+              key={index}
+              part={part as unknown as { text?: string; state?: string }}
+            />
+          );
+        }
         if (part.type.startsWith("tool-")) {
           return <ToolChip key={index} part={part as unknown as ToolPartLike} />;
         }
@@ -198,26 +206,110 @@ function ChatMessage({ message }: { message: UIMessage }) {
   );
 }
 
-/** Activity chip for one tool call ("🔧 searched cards: t:goblin (14 matches)"). */
+/** Pretty-print any tool input/output value for the debug expansion. */
+function pretty(value: unknown): string {
+  if (value === undefined) return "(none yet)";
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
+ * Activity chip for one tool call ("🔧 searched cards: t:goblin (14 matches)").
+ * Click to expand the raw input and result the model actually exchanged —
+ * the debug view for "what did that tool really return?".
+ */
 function ToolChip({ part }: { part: ToolPartLike }) {
+  const [expanded, setExpanded] = useState(false);
   const failed = isToolPartError(part);
   const running = part.state === "input-streaming" || part.state === "input-available";
   return (
-    <div
-      className={cn(
-        "text-muted-foreground bg-muted/50 flex w-fit max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
-        failed && "border-destructive/50 text-destructive"
+    <div className="max-w-full">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className={cn(
+          "text-muted-foreground bg-muted/50 hover:bg-muted flex w-fit max-w-full cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
+          failed && "border-destructive/50 text-destructive"
+        )}
+        data-testid="tool-chip"
+        aria-expanded={expanded}
+      >
+        {failed ? (
+          <CircleAlert className="size-3 shrink-0" />
+        ) : running ? (
+          <Loader2 className="size-3 shrink-0 animate-spin" />
+        ) : (
+          <Wrench className="size-3 shrink-0" />
+        )}
+        <span className="truncate">{describeToolPart(part)}</span>
+        {expanded ? (
+          <ChevronDown className="size-3 shrink-0" />
+        ) : (
+          <ChevronRight className="size-3 shrink-0" />
+        )}
+      </button>
+      {expanded && (
+        <div
+          className="bg-muted/30 mt-1 space-y-1 rounded-md border p-2 text-xs"
+          data-testid="tool-chip-details"
+        >
+          <div className="text-muted-foreground font-semibold">Input</div>
+          <pre className="max-h-48 overflow-auto font-mono whitespace-pre-wrap break-all">
+            {pretty(part.input)}
+          </pre>
+          <div className="text-muted-foreground font-semibold">
+            {part.state === "output-error" ? "Error" : "Result"}
+          </div>
+          <pre className="max-h-48 overflow-auto font-mono whitespace-pre-wrap break-all">
+            {part.state === "output-error" ? (part.errorText ?? "(unknown error)") : pretty(part.output)}
+          </pre>
+        </div>
       )}
-      data-testid="tool-chip"
-    >
-      {failed ? (
-        <CircleAlert className="size-3 shrink-0" />
-      ) : running ? (
-        <Loader2 className="size-3 shrink-0 animate-spin" />
-      ) : (
-        <Wrench className="size-3 shrink-0" />
+    </div>
+  );
+}
+
+/**
+ * The model's chain-of-thought, when the provider streams it
+ * (`reasoning_content` on OpenAI-compatible endpoints). Collapsed by default;
+ * the header spins while reasoning is still streaming — so a "thinking forever"
+ * turn shows you what the model is actually chewing on.
+ */
+function ReasoningBlock({ part }: { part: { text?: string; state?: string } }) {
+  const [expanded, setExpanded] = useState(false);
+  const streaming = part.state === "streaming";
+  return (
+    <div className="max-w-full">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className="text-muted-foreground hover:bg-muted flex w-fit max-w-full cursor-pointer items-center gap-1.5 rounded-md border border-dashed px-2 py-1 text-xs"
+        data-testid="reasoning-block"
+        aria-expanded={expanded}
+      >
+        {streaming ? (
+          <Loader2 className="size-3 shrink-0 animate-spin" />
+        ) : (
+          <Brain className="size-3 shrink-0" />
+        )}
+        <span>{streaming ? "Reasoning…" : "Reasoning"}</span>
+        {expanded ? (
+          <ChevronDown className="size-3 shrink-0" />
+        ) : (
+          <ChevronRight className="size-3 shrink-0" />
+        )}
+      </button>
+      {expanded && (
+        <div
+          className="text-muted-foreground bg-muted/30 mt-1 max-h-64 overflow-auto rounded-md border border-dashed p-2 text-xs whitespace-pre-wrap italic"
+          data-testid="reasoning-text"
+        >
+          {part.text || "(no reasoning text yet)"}
+        </div>
       )}
-      <span className="truncate">{describeToolPart(part)}</span>
     </div>
   );
 }

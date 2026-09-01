@@ -62,6 +62,10 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: `Invalid messages: ${detail}` }, { status: 400 });
     }
 
+    console.log(
+      `[ai] chat turn: agent=${persona.id} messages=${parsed.data.messages.length} context=${JSON.stringify(parsed.data.context ?? {})}`
+    );
+
     const result = streamText({
       model,
       system: persona.buildSystemPrompt(parsed.data.context ?? {}),
@@ -72,6 +76,14 @@ export async function POST(request: NextRequest) {
       maxOutputTokens: persona.maxOutputTokens,
       // One retry keeps the interactive flow snappy on flaky endpoints.
       maxRetries: 1,
+      // One line per model step so a stalled turn is diagnosable from the
+      // server console: what the model did, why the step ended, token usage.
+      onStepFinish: ({ finishReason, usage, toolCalls, text, reasoningText }) => {
+        const calls = toolCalls.map((c) => c.toolName).join(",") || "none";
+        console.log(
+          `[ai] chat step: finish=${finishReason} toolCalls=${calls} text=${text.length} chars reasoning=${reasoningText?.length ?? 0} chars tokens=${usage.totalTokens ?? "?"}`
+        );
+      },
       onError: ({ error }) => {
         console.error("ai/chat stream error:", error);
       }
