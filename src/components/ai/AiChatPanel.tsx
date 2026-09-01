@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import AiNotConfigured from "@/components/ai/AiNotConfigured";
+import ChatMarkdown from "@/components/ai/ChatMarkdown";
 import { describeToolPart, isToolPartError, ToolPartLike } from "@/components/ai/toolPartLabel";
 import { useAiChat } from "@/context/AiChatContext";
 import { useAiStatus } from "@/hooks/react-query/useAiStatus";
@@ -186,11 +187,7 @@ function ChatMessage({ message }: { message: UIMessage }) {
         if (part.type === "text") {
           const text = (part as { text: string }).text;
           if (!text) return null;
-          return (
-            <div key={index} className="text-sm whitespace-pre-wrap">
-              {text}
-            </div>
-          );
+          return <ChatMarkdown key={index} text={text} />;
         }
         if (part.type.startsWith("tool-")) {
           return <ToolChip key={index} part={part as unknown as ToolPartLike} />;

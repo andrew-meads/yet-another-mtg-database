@@ -110,6 +110,46 @@ describe("AiChatPanel", () => {
     expect(screen.getByTestId("tool-chip")).toHaveTextContent('analyzed mana base of "Gruul"');
   });
 
+  it("renders assistant messages as markdown (bold, lists, tables, code)", async () => {
+    h.messages = [
+      {
+        id: "m1",
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: [
+              "Cut **Grizzly Bears** for these:",
+              "- run `t:elf mv<=2`",
+              "",
+              "| Color | Sources |",
+              "| --- | --- |",
+              "| G | 12 |"
+            ].join("\n")
+          }
+        ]
+      }
+    ];
+    renderPanel();
+
+    const bold = await screen.findByText("Grizzly Bears");
+    expect(bold.tagName).toBe("STRONG");
+    expect(screen.getByRole("listitem")).toHaveTextContent("run t:elf mv<=2");
+    expect(screen.getByText("t:elf mv<=2").tagName).toBe("CODE");
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Sources" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "12" })).toBeInTheDocument();
+  });
+
+  it("keeps user messages as plain text (no markdown parsing)", async () => {
+    h.messages = [
+      { id: "m1", role: "user", parts: [{ type: "text", text: "is **this** parsed?" }] }
+    ];
+    renderPanel();
+
+    expect(await screen.findByText("is **this** parsed?")).toBeInTheDocument();
+  });
+
   it("sends a message with the agent id and context, then clears the input", async () => {
     renderPanel();
 
