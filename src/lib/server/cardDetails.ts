@@ -37,6 +37,7 @@ export const SLIM_CARD_PROJECTION = {
   loyalty: 1,
   set: 1,
   set_name: 1,
+  released_at: 1,
   collector_number: 1,
   rarity: 1,
   "image_uris.small": 1,

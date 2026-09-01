@@ -51,10 +51,29 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
   const locations: Loc[] = useMemo(() => {
     if (!cardLocations?.locations) return [];
 
-    const collectionMap = new Map<string, Loc>();
-    const deckMap = new Map<string, Loc>();
+    // Set release-date order (oldest first, matching the app-wide set sort),
+    // then set code, deck name, and notes/tags for determinism.
+    const compareLocs = (a: Loc, b: Loc) => {
+      const dateCmp = (a.card.released_at ?? "").localeCompare(b.card.released_at ?? "");
+      if (dateCmp !== 0) return dateCmp;
+      const setCmp = a.card.set.localeCompare(b.card.set);
+      if (setCmp !== 0) return setCmp;
+      const nameCmp = a.locationName.localeCompare(b.locationName);
+      if (nameCmp !== 0) return nameCmp;
+      const notesCmp = a.notes.localeCompare(b.notes);
+      if (notesCmp !== 0) return notesCmp;
+      return a.tags.join(",").localeCompare(b.tags.join(","));
+    };
 
+    // Each deck row is a child of exactly one collection row — the one sharing
+    // its (collection, printing, notes, tags) — and is rendered (indented)
+    // directly beneath it.
+    const result: Loc[] = [];
     for (const loc of cardLocations.locations) {
+      const collectionMap = new Map<string, Loc>();
+      // Parent collection-row key -> that row's deck children.
+      const deckChildren = new Map<string, Map<string, Loc>>();
+
       for (const entry of loc.cards) {
         const notes = entry.notes ?? "";
         const tags = [...(entry.tags ?? [])].sort();
@@ -80,12 +99,17 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
         }
 
         if (entry.deckId) {
-          const deckKey = `deck-${entry.deckId}-${entry.card.id}-${notes}-${tagsKey}`;
-          const existingDeck = deckMap.get(deckKey);
+          const deckKey = `deck-${loc.collectionId}-${entry.deckId}-${entry.card.id}-${notes}-${tagsKey}`;
+          let children = deckChildren.get(collKey);
+          if (!children) {
+            children = new Map();
+            deckChildren.set(collKey, children);
+          }
+          const existingDeck = children.get(deckKey);
           if (existingDeck) {
             existingDeck.quantity++;
           } else {
-            deckMap.set(deckKey, {
+            children.set(deckKey, {
               key: deckKey,
               type: "deck",
               locationName: entry.deckName ?? "",
@@ -99,9 +123,14 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
           }
         }
       }
-    }
 
-    return [...collectionMap.values(), ...deckMap.values()];
+      for (const collRow of [...collectionMap.values()].sort(compareLocs)) {
+        result.push(collRow);
+        const children = deckChildren.get(collRow.key);
+        if (children) result.push(...[...children.values()].sort(compareLocs));
+      }
+    }
+    return result;
   }, [cardLocations]);
 
   const totalQuantity = locations
@@ -151,7 +180,10 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
                     onDoubleClick={() => handleDoubleClick(loc)}
                   >
                     <TableCell>
-                      <span className="flex items-center gap-1.5">
+                      {/* Deck rows sit under their owning collection; indent them to show the nesting. */}
+                      <span
+                        className={cn("flex items-center gap-1.5", loc.type === "deck" && "pl-5")}
+                      >
                         {loc.type === "collection" ? (
                           <Library className="text-muted-foreground size-3.5 shrink-0" />
                         ) : (

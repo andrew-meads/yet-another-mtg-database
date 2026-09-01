@@ -10,6 +10,7 @@
     "lint": "eslint",
     "init-db": "tsx src/scripts/init-db.ts",
     "whitelist-user": "tsx src/scripts/whitelist-user.ts",
+    "backfill-release-dates": "tsx src/scripts/backfill-release-dates.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run --project unit",

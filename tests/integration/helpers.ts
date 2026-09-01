@@ -45,6 +45,7 @@ export function makeCard(overrides: Partial<MtgCard> = {}): MtgCard {
     rarity: "common",
     set_name: "Test Set",
     set: "tst",
+    released_at: "2020-01-01",
     ...overrides
   } as MtgCard;
 }

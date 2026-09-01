@@ -149,6 +149,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | `npm run lint` | Run ESLint (`eslint-config-next`) |
 | `npm run init-db` | Import Scryfall bulk card data into MongoDB |
 | `npm run whitelist-user` | Whitelist a user by email so they can sign in |
+| `npm run backfill-release-dates` | One-off upgrade: stamp `released_at` on existing cards from Scryfall's set list (new imports include it natively) |
 
 ### Seeding the database
 

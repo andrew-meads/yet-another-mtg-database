@@ -66,6 +66,97 @@ describe("GET /api/cards", () => {
     expect(json.pagination.total).toBe(1);
   });
 
+  describe("release-date ordering", () => {
+    // Set codes deliberately anti-alphabetical vs. their dates: code order would
+    // put "aaa" first, date order puts "zzz" (1994) first.
+    beforeEach(async () => {
+      await seedCard({
+        id: "s-new",
+        name: "New Spell",
+        type_line: "Sorcery",
+        set: "aaa",
+        released_at: "2021-06-18"
+      });
+      await seedCard({
+        id: "s-old",
+        name: "Old Spell",
+        type_line: "Sorcery",
+        set: "zzz",
+        released_at: "1994-04-01"
+      });
+      await seedCard({
+        id: "s-mid",
+        name: "Mid Spell",
+        type_line: "Sorcery",
+        set: "mmm",
+        released_at: "2005-10-07"
+      });
+    });
+
+    function ids(json: { cards: { id: string }[] }) {
+      return json.cards.map((c) => c.id);
+    }
+
+    it("sorts by set in release-date order (asc = oldest first)", async () => {
+      const res = await searchCards(jsonRequest("/api/cards?q=t:sorcery&order=set", "GET"));
+      expect(ids(await res.json())).toEqual(["s-old", "s-mid", "s-new"]);
+    });
+
+    it("sorts by set in reverse release-date order descending", async () => {
+      const res = await searchCards(
+        jsonRequest("/api/cards?q=t:sorcery&order=set&dir=desc", "GET")
+      );
+      expect(ids(await res.json())).toEqual(["s-new", "s-mid", "s-old"]);
+    });
+
+    it("keeps release-date order on the owned (aggregation) path", async () => {
+      const owner = await seedUser();
+      const collectionId = await seedCollection(owner);
+      for (const cardId of ["s-new", "s-old", "s-mid"]) {
+        await seedPhysicalCard(owner, cardId, collectionId);
+      }
+      const res = await searchCards(
+        jsonRequest("/api/cards?q=t:sorcery&order=set&owned=true", "GET")
+      );
+      expect(ids(await res.json())).toEqual(["s-old", "s-mid", "s-new"]);
+    });
+
+    it("sorts cards missing released_at first on set sort ascending", async () => {
+      await seedCard({
+        id: "s-undated",
+        name: "Undated Spell",
+        type_line: "Sorcery",
+        set: "qqq",
+        released_at: undefined
+      });
+      const res = await searchCards(jsonRequest("/api/cards?q=t:sorcery&order=set", "GET"));
+      expect(ids(await res.json())).toEqual(["s-undated", "s-old", "s-mid", "s-new"]);
+    });
+
+    it("orders duplicate names oldest-set-first under a name sort, in both directions", async () => {
+      await seedCard({
+        id: "dup-new",
+        name: "Aaa Duplicate",
+        set: "aaa",
+        released_at: "2021-06-18"
+      });
+      await seedCard({
+        id: "dup-old",
+        name: "Aaa Duplicate",
+        set: "zzz",
+        released_at: "1994-04-01"
+      });
+
+      const asc = await searchCards(jsonRequest("/api/cards?q=duplicate&order=name", "GET"));
+      expect(ids(await asc.json())).toEqual(["dup-old", "dup-new"]);
+
+      const desc = await searchCards(
+        jsonRequest("/api/cards?q=duplicate&order=name&dir=desc", "GET")
+      );
+      expect(ids(await desc.json())).toEqual(["dup-old", "dup-new"]);
+    });
+  });
+
   it("paginates", async () => {
     const res = await searchCards(jsonRequest("/api/cards?page=1&page-len=2", "GET"));
     const json = await res.json();

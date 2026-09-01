@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getValidSortFields, getSortConfig } from "@/lib/sortConfig";
+import { getValidSortFields, getSortConfig, buildSortSpec } from "@/lib/sortConfig";
 
 describe("getValidSortFields", () => {
   it("lists every supported sort field", () => {
@@ -18,7 +18,8 @@ describe("getValidSortFields", () => {
 
 describe("getSortConfig", () => {
   it("returns a simple config for plain fields", () => {
-    expect(getSortConfig("name")).toEqual({ field: "name" });
+    expect(getSortConfig("name")?.field).toBe("name");
+    expect(getSortConfig("name")?.useAggregation).toBeUndefined();
     expect(getSortConfig("cmc")?.useAggregation).toBeUndefined();
   });
 
@@ -30,6 +31,41 @@ describe("getSortConfig", () => {
 
   it("returns null for unknown fields", () => {
     expect(getSortConfig("nonsense")).toBeNull();
+  });
+});
+
+describe("buildSortSpec", () => {
+  it("falls back to the single field and appends the _id tiebreaker", () => {
+    expect(buildSortSpec(getSortConfig("cmc")!, 1)).toEqual({ cmc: 1, _id: 1 });
+    expect(buildSortSpec(getSortConfig("cmc")!, -1)).toEqual({ cmc: -1, _id: 1 });
+  });
+
+  it("orders the set sort by release date, then set code, then name", () => {
+    expect(buildSortSpec(getSortConfig("set")!, 1)).toEqual({
+      released_at: 1,
+      set: 1,
+      name: 1,
+      _id: 1
+    });
+    expect(buildSortSpec(getSortConfig("set")!, -1)).toEqual({
+      released_at: -1,
+      set: -1,
+      name: 1,
+      _id: 1
+    });
+  });
+
+  it("keeps release date ascending as the name sort's secondary in both directions", () => {
+    expect(buildSortSpec(getSortConfig("name")!, 1)).toEqual({
+      name: 1,
+      released_at: 1,
+      _id: 1
+    });
+    expect(buildSortSpec(getSortConfig("name")!, -1)).toEqual({
+      name: -1,
+      released_at: 1,
+      _id: 1
+    });
   });
 });
 

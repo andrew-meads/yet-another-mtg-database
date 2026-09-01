@@ -76,6 +76,10 @@ export function buildFillGroups(
   for (const group of result) {
     group.candidates.sort((a, b) => {
       if (a.samePrinting !== b.samePrinting) return a.samePrinting ? -1 : 1;
+      const dateCmp = (a.physicalCard.card.released_at ?? "").localeCompare(
+        b.physicalCard.card.released_at ?? ""
+      );
+      if (dateCmp !== 0) return dateCmp;
       const setCmp = a.physicalCard.card.set.localeCompare(b.physicalCard.card.set);
       if (setCmp !== 0) return setCmp;
       return a.physicalCard.card.collector_number.localeCompare(

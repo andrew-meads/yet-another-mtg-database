@@ -11,6 +11,20 @@ export interface SortConfig {
   useAggregation?: boolean;
   // Function to build aggregation pipeline stages for custom sorting
   buildAggregationSort?: (direction: 1 | -1) => any[];
+  // Optional multi-key sort spec for plain (non-aggregation) sorts, WITHOUT the
+  // `_id` tiebreak — use buildSortSpec() to get the full spec.
+  buildSort?: (direction: 1 | -1) => Record<string, 1 | -1>;
+}
+
+/**
+ * Full sort spec for a non-aggregation config: the config's `buildSort` keys
+ * (falling back to `{ [field]: direction }`), plus a trailing `_id: 1`
+ * tiebreaker so the ordering is total and stable across paginated queries
+ * (otherwise tied sort-key values can be dropped or duplicated across pages).
+ */
+export function buildSortSpec(config: SortConfig, direction: 1 | -1): Record<string, 1 | -1> {
+  const keys = config.buildSort ? config.buildSort(direction) : { [config.field]: direction };
+  return { ...keys, _id: 1 };
 }
 
 /**
@@ -18,7 +32,11 @@ export interface SortConfig {
  */
 export const sortConfigs: Record<string, SortConfig> = {
   name: {
-    field: "name"
+    field: "name",
+    // Secondary: release date, ALWAYS ascending (oldest printing first) — the
+    // set order within a group of same-named cards is a fixed "printing order",
+    // not something that should flip with the name direction.
+    buildSort: (direction) => ({ name: direction, released_at: 1 })
   },
 
   cmc: {
@@ -93,7 +111,14 @@ export const sortConfigs: Record<string, SortConfig> = {
   },
 
   set: {
-    field: "set"
+    field: "set",
+    // Sets order by release date (asc = oldest first). "YYYY-MM-DD" strings
+    // sort lexicographically = chronologically; the set code disambiguates
+    // same-day sets and cards within a set list alphabetically. Docs missing
+    // `released_at` (imported before the field existed, not yet backfilled)
+    // sort before all dated cards ascending — i.e. an un-backfilled DB
+    // degrades to the old set-code order.
+    buildSort: (direction) => ({ released_at: direction, set: direction, name: 1 })
   },
 
   color: {

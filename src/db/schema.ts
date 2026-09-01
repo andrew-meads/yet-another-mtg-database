@@ -153,7 +153,10 @@ const cardSchema = new Schema<MtgCard>(
     },
     rarity: { type: String, required: true },
     set_name: { type: String, required: true },
-    set: { type: String, required: true }
+    set: { type: String, required: true },
+    // "YYYY-MM-DD"; optional so docs imported before this field existed remain
+    // valid (backfill with `npm run backfill-release-dates`).
+    released_at: String
   },
   { strict: true, collection: "cards" }
 );

@@ -38,14 +38,16 @@ const mockCard = {
   id: "card-1",
   name: "Lightning Bolt",
   set: "m21",
-  set_name: "Core Set 2021"
+  set_name: "Core Set 2021",
+  released_at: "2020-06-25"
 } as unknown as MtgCard;
 
 const mockCard2 = {
   id: "card-2",
   name: "Lightning Bolt",
   set: "lea",
-  set_name: "Limited Edition Alpha"
+  set_name: "Limited Edition Alpha",
+  released_at: "1993-08-05"
 } as unknown as MtgCard;
 
 // Radix primitives need pointer-capture APIs jsdom doesn't ship.
@@ -311,6 +313,168 @@ describe("CardLocationsView", () => {
     const setCodes = icons.map((el) => el.getAttribute("data-set"));
     expect(setCodes).toContain("m21");
     expect(setCodes).toContain("lea");
+  });
+
+  describe("row ordering & nesting", () => {
+    /** First-cell text of every body row, in DOM order. */
+    function rowLabels() {
+      return screen
+        .getAllByRole("row")
+        .slice(1) // drop the header row
+        .map((row) => row.querySelector("td")!.textContent);
+    }
+
+    it("orders printings within a collection by set release date, oldest first", () => {
+      h.locationsData = {
+        locations: [
+          {
+            collectionId: "coll-1",
+            collectionName: "Main Collection",
+            cards: [
+              // m21 (2020) listed before lea (1993) in the data
+              { _id: "pc-1", card: mockCard, collectionId: "coll-1", collectionName: "Main" },
+              { _id: "pc-2", card: mockCard2, collectionId: "coll-1", collectionName: "Main" }
+            ]
+          }
+        ]
+      };
+      renderView();
+      const setCodes = screen.getAllByTestId("set-svg").map((el) => el.getAttribute("data-set"));
+      expect(setCodes).toEqual(["lea", "m21"]);
+    });
+
+    it("shows deck rows directly under their collection, before other collections", () => {
+      h.locationsData = {
+        locations: [
+          {
+            collectionId: "coll-1",
+            collectionName: "First Collection",
+            cards: [
+              { _id: "pc-1", card: mockCard, collectionId: "coll-1", collectionName: "First" },
+              {
+                _id: "pc-2",
+                card: mockCard,
+                collectionId: "coll-1",
+                collectionName: "First",
+                deckId: "deck-1",
+                deckName: "My Deck"
+              }
+            ]
+          },
+          {
+            collectionId: "coll-2",
+            collectionName: "Second Collection",
+            cards: [
+              { _id: "pc-3", card: mockCard, collectionId: "coll-2", collectionName: "Second" }
+            ]
+          }
+        ]
+      };
+      renderView();
+      expect(rowLabels()).toEqual(["First Collection", "My Deck", "Second Collection"]);
+    });
+
+    it("shows one deck row per owning collection when a deck spans collections", () => {
+      h.locationsData = {
+        locations: [
+          {
+            collectionId: "coll-1",
+            collectionName: "First Collection",
+            cards: [
+              {
+                _id: "pc-1",
+                card: mockCard,
+                collectionId: "coll-1",
+                collectionName: "First",
+                deckId: "deck-1",
+                deckName: "My Deck"
+              }
+            ]
+          },
+          {
+            collectionId: "coll-2",
+            collectionName: "Second Collection",
+            cards: [
+              {
+                _id: "pc-2",
+                card: mockCard,
+                collectionId: "coll-2",
+                collectionName: "Second",
+                deckId: "deck-1",
+                deckName: "My Deck"
+              }
+            ]
+          }
+        ]
+      };
+      renderView();
+      expect(rowLabels()).toEqual(["First Collection", "My Deck", "Second Collection", "My Deck"]);
+    });
+
+    it("nests each deck row under the printing row its copies belong to", () => {
+      // Two printings in one collection, every copy in a deck (split across two
+      // decks): each deck row must follow its own printing's row, not sit in a
+      // block at the end.
+      h.locationsData = {
+        locations: [
+          {
+            collectionId: "coll-1",
+            collectionName: "Main Collection",
+            cards: [
+              {
+                _id: "pc-1",
+                card: mockCard, // m21, 2020
+                collectionId: "coll-1",
+                collectionName: "Main",
+                deckId: "deck-1",
+                deckName: "Deck One"
+              },
+              {
+                _id: "pc-2",
+                card: mockCard2, // lea, 1993
+                collectionId: "coll-1",
+                collectionName: "Main",
+                deckId: "deck-2",
+                deckName: "Deck Two"
+              }
+            ]
+          }
+        ]
+      };
+      renderView();
+      expect(rowLabels()).toEqual([
+        "Main Collection", // lea printing (oldest first)
+        "Deck Two",
+        "Main Collection", // m21 printing
+        "Deck One"
+      ]);
+      const setCodes = screen.getAllByTestId("set-svg").map((el) => el.getAttribute("data-set"));
+      expect(setCodes).toEqual(["lea", "lea", "m21", "m21"]);
+    });
+
+    it("indents deck rows under their collection", () => {
+      h.locationsData = {
+        locations: [
+          {
+            collectionId: "coll-1",
+            collectionName: "Main Collection",
+            cards: [
+              {
+                _id: "pc-1",
+                card: mockCard,
+                collectionId: "coll-1",
+                collectionName: "Main",
+                deckId: "deck-1",
+                deckName: "My Deck"
+              }
+            ]
+          }
+        ]
+      };
+      renderView();
+      expect(screen.getByText("My Deck").className).toMatch(/pl-5/);
+      expect(screen.getByText("Main Collection").className).not.toMatch(/pl-5/);
+    });
   });
 
   it("double-clicking a collection row navigates to the collection", async () => {

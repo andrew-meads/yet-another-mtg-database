@@ -44,11 +44,17 @@ export function groupCollectionCards(cards: DetailedPhysicalCard[]): CollectionG
   return [...map.values()];
 }
 
-/** Default order: by card name, then loose copies before deck-assigned copies. */
+/**
+ * Default order: by card name, then set release date (oldest printing first;
+ * missing dates first, matching the server-side sort), then loose copies
+ * before deck-assigned copies.
+ */
 export function sortGroupRows(rows: CollectionGroupRow[]): CollectionGroupRow[] {
   return rows.slice().sort((a, b) => {
     const nameCmp = a.card.name.localeCompare(b.card.name);
     if (nameCmp !== 0) return nameCmp;
+    const dateCmp = (a.card.released_at ?? "").localeCompare(b.card.released_at ?? "");
+    if (dateCmp !== 0) return dateCmp;
     if (!a.deckId && b.deckId) return -1;
     if (a.deckId && !b.deckId) return 1;
     return (a.deckName ?? "").localeCompare(b.deckName ?? "");

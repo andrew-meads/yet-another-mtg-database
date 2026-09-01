@@ -71,6 +71,8 @@ export interface MtgCard {
   rarity: string;
   set_name: string;
   set: string;
+  /** Release date ("YYYY-MM-DD"). Optional: docs imported before the field was added lack it until backfilled. */
+  released_at?: string;
 }
 
 /**
@@ -97,6 +99,7 @@ export type SlimMtgCard = Pick<
   | "loyalty"
   | "set"
   | "set_name"
+  | "released_at"
   | "collector_number"
   | "rarity"
   | "image_uris"

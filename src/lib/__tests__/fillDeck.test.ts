@@ -85,6 +85,23 @@ describe("buildFillGroups", () => {
     expect(groups[0].candidates.map((c) => c.samePrinting)).toEqual([true, false]);
   });
 
+  it("orders different-printing candidates by release date (oldest first), missing dates first", () => {
+    const oldPrinting = makeCard({ id: "p-old", set: "zzz", released_at: "1995-01-01" });
+    const newPrinting = makeCard({ id: "p-new", set: "aaa", released_at: "2020-01-01" });
+    const undatedPrinting = makeCard({ id: "p-undated", set: "mmm", released_at: undefined });
+    const deck = makeDeck([makeEphemeral("e1", makeCard({ id: "p-deck" }))]);
+    const groups = buildFillGroups(deck, [
+      makePhysical("r-new", newPrinting),
+      makePhysical("r-old", oldPrinting),
+      makePhysical("r-undated", undatedPrinting)
+    ]);
+    expect(groups[0].candidates.map((c) => c.physicalCard._id)).toEqual([
+      "r-undated",
+      "r-old",
+      "r-new"
+    ]);
+  });
+
   it("excludes non-matching, ephemeral, in-this-deck, and deck-assigned collection cards", () => {
     const deck = makeDeck([makeEphemeral("e1", bolt)]);
     const groups = buildFillGroups(deck, [
