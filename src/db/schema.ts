@@ -214,7 +214,9 @@ const cardSchema = new Schema<MtgCard>(
 const physicalCardSchema = new Schema<PhysicalCardDoc>(
   {
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    cardId: { type: String, required: true },
+    // Indexed: the owned-filter $lookup in cardSearch joins cards.id -> cardId
+    // per matched card; without this index that scan hangs broad searches.
+    cardId: { type: String, required: true, index: true },
     collectionId: {
       type: Schema.Types.ObjectId,
       ref: "Collection",

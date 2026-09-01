@@ -19,6 +19,12 @@ const inputSchema = z.object({
     .describe("1-based results page (20 results per page); defaults to 1")
 });
 
+/**
+ * Hard cap per query so a pathological search aborts (surfaced in-band via
+ * safeExecute) instead of hanging the chat turn indefinitely.
+ */
+const SEARCH_MAX_TIME_MS = 15_000;
+
 async function searchWithOptions(q: string, page: number, ownerId?: string) {
   const { cards, total, totalPages, hasMore } = await runCardSearch({
     queryString: q,
@@ -27,7 +33,8 @@ async function searchWithOptions(q: string, page: number, ownerId?: string) {
     order: "name",
     dir: "asc",
     owned: ownerId !== undefined,
-    ownerId
+    ownerId,
+    maxTimeMS: SEARCH_MAX_TIME_MS
   });
 
   return {

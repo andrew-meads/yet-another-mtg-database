@@ -24,6 +24,12 @@ export interface CardSearchOptions {
    * AI `searchMyCards` tool passes the session user.
    */
   ownerId?: string;
+  /**
+   * Server-side execution cap per query. The AI tools set this so a
+   * pathological search aborts (MaxTimeMSExpired) instead of hanging the chat
+   * turn; the route passes nothing (unchanged behavior).
+   */
+  maxTimeMS?: number;
 }
 
 export interface CardSearchResult {
@@ -37,36 +43,31 @@ export interface CardSearchResult {
  * Build the aggregation stages implementing the `owned` filter: keep only cards
  * with at least one PhysicalCard back-reference (optionally scoped to one
  * owner), then drop the joined array again.
+ *
+ * The join always uses the localField/foreignField form — it exploits the
+ * `physicalcards.cardId` index. (A `$lookup` sub-pipeline with `$expr` does
+ * NOT use that index and takes ~15x longer on broad queries; the original
+ * un-indexed version of this join hung multi-minute on real data.) The owner
+ * scoping happens after the join via `$elemMatch` — copies per card are few,
+ * so filtering the joined array is cheap.
  */
 function buildOwnedFilterStages(ownerId?: string): any[] {
-  const lookup = ownerId
-    ? {
-        $lookup: {
-          from: "physicalcards",
-          let: { cid: "$id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ["$cardId", "$$cid"] },
-                owner: new Types.ObjectId(ownerId)
-              }
-            },
-            { $limit: 1 },
-            { $project: { _id: 1 } }
-          ],
-          as: "ownedIn"
-        }
+  return [
+    {
+      $lookup: {
+        from: "physicalcards",
+        localField: "id",
+        foreignField: "cardId",
+        as: "ownedIn"
       }
-    : {
-        $lookup: {
-          from: "physicalcards",
-          localField: "id",
-          foreignField: "cardId",
-          as: "ownedIn"
-        }
-      };
-
-  return [lookup, { $match: { "ownedIn.0": { $exists: true } } }, { $project: { ownedIn: 0 } }];
+    },
+    {
+      $match: ownerId
+        ? { ownedIn: { $elemMatch: { owner: new Types.ObjectId(ownerId) } } }
+        : { "ownedIn.0": { $exists: true } }
+    },
+    { $project: { ownedIn: 0 } }
+  ];
 }
 
 /**
@@ -78,7 +79,8 @@ function buildOwnedFilterStages(ownerId?: string): any[] {
  * field, `dir` asc|desc) — callers own request validation.
  */
 export async function runCardSearch(options: CardSearchOptions): Promise<CardSearchResult> {
-  const { queryString, page, pageLen, order, dir, owned = false, ownerId } = options;
+  const { queryString, page, pageLen, order, dir, owned = false, ownerId, maxTimeMS } = options;
+  const timeLimit = maxTimeMS ? { maxTimeMS } : {};
 
   const skip = (page - 1) * pageLen;
   const limit = pageLen;
@@ -110,24 +112,24 @@ export async function runCardSearch(options: CardSearchOptions): Promise<CardSea
 
     pipeline.push({ $skip: skip }, { $limit: limit });
 
-    cards = await CardData.aggregate(pipeline);
+    cards = await CardData.aggregate(pipeline, timeLimit);
 
     // Count with a separate aggregation (lookup + match only; no projection).
     const countPipeline: any[] = [{ $match: searchQuery }];
     if (owned) countPipeline.push(...buildOwnedFilterStages(ownerId).slice(0, 2));
     countPipeline.push({ $count: "total" });
-    const countResult = await CardData.aggregate(countPipeline);
+    const countResult = await CardData.aggregate(countPipeline, timeLimit);
     total = countResult.length > 0 ? countResult[0].total : 0;
   } else {
     // Plain (possibly multi-key) sort; buildSortSpec appends the `_id`
     // tiebreaker that keeps pagination stable.
     const sortObject = buildSortSpec(sortConfig, sortDirection);
-    cards = (await CardData.find(searchQuery)
+    cards = (await CardData.find(searchQuery, null, timeLimit)
       .sort(sortObject)
       .limit(limit)
       .skip(skip)
       .lean()) as unknown as MtgCard[];
-    total = await CardData.countDocuments(searchQuery);
+    total = await CardData.countDocuments(searchQuery, timeLimit);
   }
 
   const totalPages = Math.ceil(total / pageLen);

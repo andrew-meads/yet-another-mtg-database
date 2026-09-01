@@ -63,6 +63,18 @@ work continues from Phase 3.
   first request with a scripted tool call and follow-ups with slowly streamed text
   proved the whole loop in the browser without a real key (same trick as Phases
   0–1, now SSE-shaped).
+- **Post-ship incident (fixed)**: broad `searchMyCards` queries hung multi-minute
+  — `physicalcards.cardId` had no index, and the owner-scoped `$lookup` used a
+  `$expr` sub-pipeline, which ignores indexes anyway. Fixes: `cardId` is now
+  indexed, the join uses `localField`/`foreignField` + post-join `$elemMatch`
+  owner scoping (~15x faster than `$expr` even indexed), the AI search tools cap
+  queries at `maxTimeMS: 15s` (a timeout surfaces as an in-band tool error), and
+  the chat route passes `request.signal` to `streamText` so the panel's Stop
+  button actually cancels the server-side loop. Any new tool doing a heavy query
+  should follow the same pattern: bounded execution + in-band failure.
+- Debug tooling exists — use it before guessing: `[ai]` server-console lines per
+  turn/step/tool-call, click-expandable tool chips (raw input/result JSON),
+  rendered reasoning parts, `AI_CHAT_DEBUG=true` for full result dumps.
 
 **Lessons already learned (apply to all later phases)**
 

@@ -144,6 +144,22 @@ describe("searchCards / searchMyCards tools", () => {
     });
     expect(othersView.total).toBe(0);
   });
+
+  it("passes a time cap to the query and surfaces a timeout as an in-band error", async () => {
+    const { CardData } = await import("@/db/schema");
+    const timeoutError = Object.assign(new Error("operation exceeded time limit"), {
+      codeName: "MaxTimeMSExpired"
+    });
+    const aggSpy = vi.spyOn(CardData, "aggregate").mockRejectedValue(timeoutError as never);
+    try {
+      const result = await run(buildAiTools({ userId }).searchMyCards, { q: "t:creature" });
+      expect(result.error).toMatch(/searchMyCards is unavailable: operation exceeded time limit/);
+      // The tool requested a bounded query, not an open-ended one.
+      expect((aggSpy.mock.calls[0] as unknown[])[1]).toMatchObject({ maxTimeMS: 15000 });
+    } finally {
+      aggSpy.mockRestore();
+    }
+  });
 });
 
 describe("getCardDetails tool", () => {

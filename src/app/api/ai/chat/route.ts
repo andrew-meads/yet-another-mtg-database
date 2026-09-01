@@ -72,6 +72,9 @@ export async function POST(request: NextRequest) {
       messages: modelMessages,
       tools: buildAiToolSubset({ userId }, persona.toolNames),
       stopWhen: stepCountIs(persona.stepLimit),
+      // The panel's Stop button (and a closed tab) aborts the request; without
+      // this the server-side tool loop keeps running to completion.
+      abortSignal: request.signal,
       // Generous ceiling: reasoning models spend output tokens on thinking.
       maxOutputTokens: persona.maxOutputTokens,
       // One retry keeps the interactive flow snappy on flaky endpoints.
