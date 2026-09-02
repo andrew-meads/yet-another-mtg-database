@@ -87,10 +87,14 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   where an AI agent answers deckbuilding questions about *your* cards: mana-base
   health (exact land/source/pip/curve numbers computed in code, not guessed by the
   model), what to cut or add, alternatives you already own, card prices, official
-  card rulings, and Comprehensive Rules lookups. Every tool call it makes is shown
-  as an activity chip, its answers stream in live, and it is strictly read-only — it
-  can never modify a deck or collection. Uses the same OpenAI-compatible endpoint as
-  AI search.
+  card rulings, Comprehensive Rules lookups, and combo detection (Commander
+  Spellbook — combos your deck contains and near-misses with the missing cards).
+  When you ask for deck changes it drafts a **proposal**: a validated checklist
+  rendered in the chat with per-change checkboxes and an Apply button — the AI
+  itself can never write anything; nothing changes until you apply, and applies go
+  through the app's normal add/remove/move machinery. Every tool call is shown as
+  an activity chip (click to inspect the raw input/result), answers stream in live
+  as Markdown. Uses the same OpenAI-compatible endpoint as AI search.
 - **Google sign-in** — NextAuth Google OAuth with a deny-by-default email whitelist.
 
 ## Tech stack
@@ -156,6 +160,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards, set icons, and card prices on demand |
 | `EXCHANGE_RATE_API_BASE_URL` | Base URL of the currency exchange-rate API used to convert USD card prices (default `https://api.frankfurter.dev/v1` — free, no API key) |
 | `ACADEMY_RUINS_API_BASE_URL` | Base URL of the Academy Ruins API used by the AI deck advisor's Comprehensive-Rules lookups (default `https://api.academyruins.com` — free, no API key) |
+| `COMMANDER_SPELLBOOK_API_BASE_URL` | Base URL of the Commander Spellbook API used by the AI deck advisor's combo lookups (default `https://backend.commanderspellbook.com` — free, no API key) |
 | `AI_CHAT_DEBUG` | Set to `"true"` to dump every AI tool's full result JSON to the server console; a one-line summary with timing is always logged |
 | `AUTH_DEV_LOGIN` | Dev only: set to `"true"` to add a "Continue as dev user" button to the login page (see [Authentication](#authentication)). Ignored when `NODE_ENV=production`. Requires `AUTH_SECRET` and `NEXTAUTH_URL`, but not the Google OAuth vars |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |

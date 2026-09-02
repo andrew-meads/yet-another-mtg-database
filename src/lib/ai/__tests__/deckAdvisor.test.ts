@@ -22,4 +22,14 @@ describe("deckAdvisorPersona system prompt", () => {
     const prompt = deckAdvisorPersona.buildSystemPrompt({});
     expect(prompt).toContain("Format answers in Markdown");
   });
+
+  it("routes deck edits through propose-and-confirm and includes the Phase 3 tools", () => {
+    const prompt = deckAdvisorPersona.buildSystemPrompt({});
+    expect(prompt).toContain("proposeDeckChanges");
+    expect(prompt).toContain("NEVER claim a change has been made");
+    expect(prompt).toContain("findCombos");
+    expect(prompt).toContain('"alternatives I own"');
+    expect(deckAdvisorPersona.toolNames).toContain("proposeDeckChanges");
+    expect(deckAdvisorPersona.toolNames).toContain("findCombos");
+  });
 });

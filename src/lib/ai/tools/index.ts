@@ -6,13 +6,17 @@ import { makeGetCardDetailsTool } from "./getCardDetails";
 import { makeManaBaseStatsTool } from "./manaBaseStats";
 import { makeGetRulingsTool } from "./getRulings";
 import { makeLookupRuleTool } from "./lookupRule";
+import { makeFindCombosTool } from "./findCombos";
+import { makeProposeDeckChangesTool } from "./proposeDeckChanges";
 
 export type { ToolContext } from "./shared";
 
 /**
- * Build the full read-only tool set for a session user. Every tool closes over
- * the user id (every Mongo query is owner-scoped) and returns errors in-band —
- * none of them can modify anything. Personas pick a subset by key.
+ * Build the full tool set for a session user. Every tool closes over the user
+ * id (every Mongo query is owner-scoped) and returns errors in-band — and none
+ * of them can modify anything: even proposeDeckChanges only validates and
+ * echoes a proposal (the user applies it client-side). Personas pick a subset
+ * by key.
  */
 export function buildAiTools(ctx: ToolContext) {
   return {
@@ -23,7 +27,9 @@ export function buildAiTools(ctx: ToolContext) {
     getCardDetails: makeGetCardDetailsTool(ctx),
     manaBaseStats: makeManaBaseStatsTool(ctx),
     getRulings: makeGetRulingsTool(ctx),
-    lookupRule: makeLookupRuleTool(ctx)
+    lookupRule: makeLookupRuleTool(ctx),
+    findCombos: makeFindCombosTool(ctx),
+    proposeDeckChanges: makeProposeDeckChangesTool(ctx)
   };
 }
 

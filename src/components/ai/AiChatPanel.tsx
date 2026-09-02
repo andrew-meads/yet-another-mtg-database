@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import AiNotConfigured from "@/components/ai/AiNotConfigured";
 import ChatMarkdown from "@/components/ai/ChatMarkdown";
+import ProposalCard, { DeckChangeProposal } from "@/components/ai/ProposalCard";
 import { describeToolPart, isToolPartError, ToolPartLike } from "@/components/ai/toolPartLabel";
 import { useAiChat } from "@/context/AiChatContext";
 import { useAiStatus } from "@/hooks/react-query/useAiStatus";
@@ -198,7 +199,15 @@ function ChatMessage({ message }: { message: UIMessage }) {
           );
         }
         if (part.type.startsWith("tool-")) {
-          return <ToolChip key={index} part={part as unknown as ToolPartLike} />;
+          const toolPart = part as unknown as ToolPartLike;
+          // A validated proposal renders as an interactive apply card; while
+          // running (or when rejected in-band) it stays a normal chip.
+          const proposal =
+            part.type === "tool-proposeDeckChanges" && toolPart.state === "output-available"
+              ? (toolPart.output as { proposal?: DeckChangeProposal } | undefined)?.proposal
+              : undefined;
+          if (proposal) return <ProposalCard key={index} proposal={proposal} />;
+          return <ToolChip key={index} part={toolPart} />;
         }
         return null;
       })}
