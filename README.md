@@ -40,6 +40,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   all with runnable MTG examples).
 - **Collections, decks & wishlists** — group cards into named collections of type
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
+  The collection table has a toggle next to its search bar that hides cards already
+  assigned to a deck, so you can see what's actually free to build with.
 - **Drag-and-drop organization** — move and copy cards between collections with
   react-dnd.
 - **Active collection & active deck** — mark one collection and one deck as "active"
@@ -50,6 +52,12 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   is created in your active collection and placed in the deck's first column, exactly
   like dragging the search result onto the deck. Press `shift+d` to add the card to the
   active deck as an ephemeral (deck-only) copy instead, with no collection needed.
+  Collection rows have the same shortcuts, reinterpreted for copies you already own
+  (one copy per press, never creating new ones): `+`/`=` moves a copy to the active
+  collection and `d` places a loose copy into the active deck; disallowed cases (row
+  already in a deck, no active entity) show an error toast. Right-clicking a collection
+  row opens a context menu with those actions, submenus targeting any open
+  collection/deck, "Remove copy from deck", "Add another copy", and "Delete a copy".
 - **Deck card counts** — the deck view shows a running total of cards next to the deck's
   name, and next to each section's name. The My Cards landing page also lists each
   collection and deck with its description and total card count.

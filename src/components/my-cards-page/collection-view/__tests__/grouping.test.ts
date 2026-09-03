@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  excludeDeckRows,
   groupCollectionCards,
   sortGroupRows,
   CollectionGroupRow
@@ -50,6 +51,21 @@ describe("groupCollectionCards", () => {
     const plain = rows.find((r) => !r.notes)!;
     expect(plain.quantity).toBe(2);
     expect(plain.physicalCardIds.sort()).toEqual(["p1", "p2"]);
+  });
+});
+
+describe("excludeDeckRows", () => {
+  it("keeps only rows with no deck assignment", () => {
+    const rows = excludeDeckRows([
+      makeRow({ key: "loose", deckId: null }),
+      makeRow({ key: "in-deck", deckId: "d1", deckName: "Burn" }),
+      makeRow({ key: "loose-2", deckId: null })
+    ]);
+    expect(rows.map((r) => r.key)).toEqual(["loose", "loose-2"]);
+  });
+
+  it("returns an empty list when every row is deck-assigned", () => {
+    expect(excludeDeckRows([makeRow({ key: "a", deckId: "d1" })])).toEqual([]);
   });
 });
 

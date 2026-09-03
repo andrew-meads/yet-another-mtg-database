@@ -44,6 +44,11 @@ export function groupCollectionCards(cards: DetailedPhysicalCard[]): CollectionG
   return [...map.values()];
 }
 
+/** Rows whose copies are not assigned to any deck (the "hide cards in decks" filter). */
+export function excludeDeckRows(rows: CollectionGroupRow[]): CollectionGroupRow[] {
+  return rows.filter((r) => r.deckId === null);
+}
+
 /**
  * Default order: by card name, then set release date (oldest printing first;
  * missing dates first, matching the server-side sort), then loose copies

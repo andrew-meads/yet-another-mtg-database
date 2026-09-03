@@ -10,7 +10,15 @@ import type { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 const m = vi.hoisted(() => ({
   getItem: undefined as undefined | (() => PhysicalCardDragItem),
   create: vi.fn(),
-  remove: vi.fn()
+  remove: vi.fn(),
+  moveOneToCollection: vi.fn(),
+  addOneToDeck: vi.fn(),
+  removeOneFromDeck: vi.fn(),
+  state: {
+    activeCollection: null as null | { _id: string; name: string },
+    activeDeck: null as null | { _id: string; name: string },
+    openEntities: [] as { _id: string; name: string; kind: "collection" | "deck" }[]
+  }
 }));
 
 vi.mock("@/hooks/drag-drop/usePhysicalCardDragSource", () => ({
@@ -24,6 +32,20 @@ vi.mock("@/hooks/react-query/useCreatePhysicalCard", () => ({
 }));
 vi.mock("@/hooks/react-query/useRemoveCardGroup", () => ({
   useRemoveCardGroup: () => ({ mutate: m.remove })
+}));
+vi.mock("@/context/OpenEntitiesContext", () => ({
+  useOpenEntitiesContext: () => ({
+    activeCollection: m.state.activeCollection,
+    activeDeck: m.state.activeDeck,
+    openEntities: m.state.openEntities
+  })
+}));
+vi.mock("@/hooks/useCollectionRowActions", () => ({
+  useCollectionRowActions: () => ({
+    moveOneToCollection: m.moveOneToCollection,
+    addOneToDeck: m.addOneToDeck,
+    removeOneFromDeck: m.removeOneFromDeck
+  })
 }));
 
 import CollectionTableRow from "@/components/my-cards-page/collection-view/CollectionTableRow";
@@ -63,6 +85,13 @@ function renderRow(row: CollectionGroupRow, onClick = vi.fn()) {
 beforeEach(() => {
   vi.clearAllMocks();
   m.getItem = undefined;
+  m.state.activeCollection = { _id: "active-coll", name: "Active Collection" };
+  m.state.activeDeck = { _id: "active-deck", name: "Active Deck" };
+  m.state.openEntities = [
+    { _id: "c1", name: "Main", kind: "collection" },
+    { _id: "other-coll", name: "Trade Binder", kind: "collection" },
+    { _id: "deck-1", name: "Burn", kind: "deck" }
+  ];
 });
 
 describe("CollectionTableRow drag-count control", () => {
@@ -100,5 +129,79 @@ describe("CollectionTableRow drag-count control", () => {
     act(() => {
       window.dispatchEvent(new KeyboardEvent("keyup", { key: "Alt" }));
     });
+  });
+});
+
+describe("CollectionTableRow context menu", () => {
+  function openMenu(row: CollectionGroupRow) {
+    renderRow(row);
+    fireEvent.contextMenu(screen.getByTestId(`collection-row-${row.key}`));
+  }
+
+  function menuItemFor(text: RegExp) {
+    const item = screen.getByText(text).closest('[role="menuitem"]');
+    expect(item).not.toBeNull();
+    return item!;
+  }
+
+  it("fires moveOneToCollection for the active-collection item", () => {
+    const row = makeRow();
+    openMenu(row);
+    fireEvent.click(menuItemFor(/Move copy to active collection/));
+    expect(m.moveOneToCollection).toHaveBeenCalledExactlyOnceWith(row);
+  });
+
+  it("disables the active-collection item when this collection is active", () => {
+    m.state.activeCollection = { _id: "c1", name: "Main" };
+    openMenu(makeRow());
+    expect(menuItemFor(/Move copy to active collection/)).toHaveAttribute("data-disabled");
+    expect(screen.getByText(/\(this collection\)/)).toBeInTheDocument();
+  });
+
+  it("fires addOneToDeck for the active-deck item on a loose row", () => {
+    const row = makeRow();
+    openMenu(row);
+    fireEvent.click(menuItemFor(/Add copy to active deck/));
+    expect(m.addOneToDeck).toHaveBeenCalledExactlyOnceWith(row);
+  });
+
+  it("disables deck actions on a deck-assigned row, with a hint", () => {
+    openMenu(makeRow({ deckId: "deck-1", deckName: "Burn" }));
+    expect(menuItemFor(/Add copy to active deck/)).toHaveAttribute("data-disabled");
+    expect(screen.getByText(/In Burn — remove it from that deck first/)).toBeInTheDocument();
+    expect(menuItemFor(/Add copy to deck/)).toHaveAttribute("data-disabled");
+  });
+
+  it("lists open collections in the move submenu (current one disabled)", () => {
+    openMenu(makeRow());
+    expect(menuItemFor(/Move copy to collection/)).not.toHaveAttribute("data-disabled");
+  });
+
+  it("shows Remove copy from deck only on deck-assigned rows and fires removeOneFromDeck", () => {
+    const row = makeRow({ deckId: "deck-1", deckName: "Burn" });
+    openMenu(row);
+    fireEvent.click(menuItemFor(/Remove copy from deck/));
+    expect(m.removeOneFromDeck).toHaveBeenCalledExactlyOnceWith(row);
+  });
+
+  it("hides Remove copy from deck on loose rows", () => {
+    openMenu(makeRow());
+    expect(screen.queryByText(/Remove copy from deck/)).not.toBeInTheDocument();
+  });
+
+  it("Add another copy creates exactly one copy in this collection", () => {
+    openMenu(makeRow());
+    fireEvent.click(menuItemFor(/Add another copy/));
+    expect(m.create).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ cardId: "card-1", collectionId: "c1", quantity: 1 })
+    );
+  });
+
+  it("Delete a copy removes exactly one copy", () => {
+    openMenu(makeRow());
+    fireEvent.click(menuItemFor(/Delete a copy/));
+    expect(m.remove).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ cardId: "card-1", collectionId: "c1", quantity: 1 })
+    );
   });
 });

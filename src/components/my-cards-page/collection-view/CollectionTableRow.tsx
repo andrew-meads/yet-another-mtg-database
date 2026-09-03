@@ -1,6 +1,16 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger
+} from "@/components/ui/context-menu";
 import { SlimMtgCard } from "@/types/MtgCard";
 import { ManaCost } from "@/components/CardTextView";
 import { Input } from "@/components/ui/input";
@@ -14,7 +24,9 @@ import {
   Layers,
   Minus,
   Plus,
-  GripVertical
+  GripVertical,
+  Star,
+  FolderInput
 } from "lucide-react";
 import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
 import { useAltKeyRef } from "@/hooks/drag-drop/useAltKeyRef";
@@ -23,6 +35,9 @@ import { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useRemoveCardGroup } from "@/hooks/react-query/useRemoveCardGroup";
 import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
+import { useCollectionRowActions } from "@/hooks/useCollectionRowActions";
+import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
+import { getEntityIcon } from "@/lib/collectionUtils";
 import { useEffect, useRef, useState } from "react";
 import EntryNotesAndTags from "../EntryNotesAndTags";
 import { SetSvg } from "@/components/SetSvg";
@@ -149,6 +164,12 @@ export default function CollectionTableRow({
 
   const deckOp = useDeckCardOp();
 
+  const { activeCollection, activeDeck, openEntities } = useOpenEntitiesContext();
+  const openCollections = openEntities.filter((e) => e.kind === "collection");
+  const openDecks = openEntities.filter((e) => e.kind === "deck");
+  const { moveOneToCollection, addOneToDeck, removeOneFromDeck } =
+    useCollectionRowActions(collectionId);
+
   const removeFromDeck = () => {
     Promise.all(
       row.physicalCardIds.map((id) =>
@@ -188,239 +209,347 @@ export default function CollectionTableRow({
 
   return (
     <div className={cn("border-b", isDragging && "opacity-40")}>
-      <div
-        ref={dragRef as unknown as React.Ref<HTMLDivElement>}
-        data-testid={`collection-row-${row.key}`}
-        className={cn(
-          "group hover:bg-muted/50 relative grid cursor-pointer items-center gap-2 px-2 py-1.5 text-sm",
-          isSelected && "bg-accent"
-        )}
-        style={{ gridTemplateColumns: COLLECTION_GRID }}
-        onClick={() => onClick?.(card)}
-        onMouseEnter={onHoverEnter}
-        onMouseLeave={onHoverLeave}
-        onMouseMove={onHoverMove}
-      >
-        {/* Expand */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-6"
-          onClick={(e) => {
-            e.stopPropagation();
-            onExpand?.();
-          }}
-        >
-          <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} />
-        </Button>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div
+            ref={dragRef as unknown as React.Ref<HTMLDivElement>}
+            data-testid={`collection-row-${row.key}`}
+            className={cn(
+              "group hover:bg-muted/50 relative grid cursor-pointer items-center gap-2 px-2 py-1.5 text-sm",
+              isSelected && "bg-accent"
+            )}
+            style={{ gridTemplateColumns: COLLECTION_GRID }}
+            onClick={() => onClick?.(card)}
+            onMouseEnter={onHoverEnter}
+            onMouseLeave={onHoverLeave}
+            onMouseMove={onHoverMove}
+          >
+            {/* Expand */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onExpand?.();
+              }}
+            >
+              <ChevronRight
+                className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")}
+              />
+            </Button>
 
-        {/* Name — outer wrapper is the positioning context for the drag-count control so the
+            {/* Name — outer wrapper is the positioning context for the drag-count control so the
             control sits at the right edge of this column (just before mana cost). The inner
             div carries overflow:hidden for text truncation; the control lives in the outer
             wrapper so it is not clipped by that overflow. */}
-        <div className="relative flex items-center self-stretch">
-          <div className="flex w-full items-center gap-2 truncate font-medium">
-            <span className="truncate">{nameText}</span>
-            {row.notes && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <StickyNote className="text-muted-foreground size-3 shrink-0" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs text-xs">{row.notes}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {row.tags && row.tags.length > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Tag className="text-muted-foreground size-3 shrink-0" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-          <div
-            ref={dragControlRef}
-            className="bg-background/95 pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center gap-0.5 rounded-md border px-1 opacity-0 shadow-sm transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span
-                  className="text-muted-foreground flex h-6 w-5 cursor-grab items-center justify-center"
-                  aria-label="Drag handle"
-                >
-                  <GripVertical className="size-4" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                Drag {dragCount} {dragCount === 1 ? "copy" : "copies"} — hold Alt to drag one
-              </TooltipContent>
-            </Tooltip>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6"
-              disabled={dragCount <= 1}
-              onClick={() => setDragCount((n) => Math.max(1, n - 1))}
-              aria-label="Decrease drag amount"
-            >
-              <Minus className="size-3" />
-            </Button>
-            <span className="w-5 text-center text-xs font-semibold tabular-nums">{dragCount}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6"
-              disabled={dragCount >= row.quantity}
-              onClick={() => setDragCount((n) => Math.min(row.quantity, n + 1))}
-              aria-label="Increase drag amount"
-            >
-              <Plus className="size-3" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Mana */}
-        <div className="flex items-center justify-center gap-1">
-          {manaCosts.map((cost, idx) => (
-            <div key={idx} className="flex items-center gap-1">
-              {idx > 0 && <span className="text-muted-foreground">{"//"}</span>}
-              <ManaCost cost={cost} />
-            </div>
-          ))}
-        </div>
-
-        {/* Type */}
-        <div className="text-muted-foreground truncate">
-          {card.type_line.length > 40 ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>{card.type_line.substring(0, 40)}...</span>
-              </TooltipTrigger>
-              <TooltipContent>{card.type_line}</TooltipContent>
-            </Tooltip>
-          ) : (
-            card.type_line
-          )}
-        </div>
-
-        {/* Set / rarity */}
-        <div className="flex justify-center">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-flex items-center justify-center">
-                <SetSvg setCode={card.set} rarityCode={card.rarity} width={28} height={28} />
+            <div className="relative flex items-center self-stretch">
+              <div className="flex w-full items-center gap-2 truncate font-medium">
+                <span className="truncate">{nameText}</span>
+                {row.notes && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <StickyNote className="text-muted-foreground size-3 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs text-xs">{row.notes}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {row.tags && row.tags.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Tag className="text-muted-foreground size-3 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs text-xs">{row.tags.join(", ")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {card.set_name}{" "}
-              <em className="text-muted-foreground text-xs">({card.set.toUpperCase()})</em>{" "}
-              {card.rarity}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* CMC */}
-        <div className="text-center">{card.cmc}</div>
-
-        {/* P/T */}
-        <div className="text-center">{powerToughness}</div>
-
-        {/* Deck badge */}
-        <div className="flex justify-center">
-          {row.deckId ? (
-            <span className="bg-secondary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs">
-              <Layers className="size-3" />
-              <span className="max-w-24 truncate">{row.deckName ?? "Deck"}</span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </div>
-
-        {/* Quantity */}
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          {isLoose ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={() => removeCopies(1)}
-                aria-label="Remove one"
+              <div
+                ref={dragControlRef}
+                className="bg-background/95 pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center gap-0.5 rounded-md border px-1 opacity-0 shadow-sm transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
+                onClick={(e) => e.stopPropagation()}
               >
-                <Minus className="size-3.5" />
-              </Button>
-              <Input
-                type="number"
-                min="0"
-                value={localQty}
-                onChange={(e) => setLocalQty(e.target.value)}
-                onBlur={commitQuantity}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitQuantity();
-                }}
-                className="w-16 text-center font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={() => addCopies(1)}
-                aria-label="Add one"
-              >
-                <Plus className="size-3.5" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <span className="size-7 shrink-0" />
-              <Input
-                readOnly
-                type="text"
-                value={row.quantity}
-                className="w-16 text-center font-semibold"
-              />
-              <span className="size-7 shrink-0" />
-            </>
-          )}
-          {isLoose ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="text-muted-foreground flex h-6 w-5 cursor-grab items-center justify-center"
+                      aria-label="Drag handle"
+                    >
+                      <GripVertical className="size-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Drag {dragCount} {dragCount === 1 ? "copy" : "copies"} — hold Alt to drag one
+                  </TooltipContent>
+                </Tooltip>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-7"
-                  onClick={() => removeCopies(row.quantity)}
-                  aria-label="Delete all copies"
+                  className="size-6"
+                  disabled={dragCount <= 1}
+                  onClick={() => setDragCount((n) => Math.max(1, n - 1))}
+                  aria-label="Decrease drag amount"
                 >
-                  <Trash2 className="size-4" />
+                  <Minus className="size-3" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>Delete these copies</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
+                <span className="w-5 text-center text-xs font-semibold tabular-nums">
+                  {dragCount}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-7"
-                  onClick={removeFromDeck}
-                  aria-label="Remove from deck"
+                  className="size-6"
+                  disabled={dragCount >= row.quantity}
+                  onClick={() => setDragCount((n) => Math.min(row.quantity, n + 1))}
+                  aria-label="Increase drag amount"
                 >
-                  <LogOut className="size-4" />
+                  <Plus className="size-3" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>Remove from deck</TooltipContent>
-            </Tooltip>
+              </div>
+            </div>
+
+            {/* Mana */}
+            <div className="flex items-center justify-center gap-1">
+              {manaCosts.map((cost, idx) => (
+                <div key={idx} className="flex items-center gap-1">
+                  {idx > 0 && <span className="text-muted-foreground">{"//"}</span>}
+                  <ManaCost cost={cost} />
+                </div>
+              ))}
+            </div>
+
+            {/* Type */}
+            <div className="text-muted-foreground truncate">
+              {card.type_line.length > 40 ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>{card.type_line.substring(0, 40)}...</span>
+                  </TooltipTrigger>
+                  <TooltipContent>{card.type_line}</TooltipContent>
+                </Tooltip>
+              ) : (
+                card.type_line
+              )}
+            </div>
+
+            {/* Set / rarity */}
+            <div className="flex justify-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-flex items-center justify-center">
+                    <SetSvg setCode={card.set} rarityCode={card.rarity} width={28} height={28} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {card.set_name}{" "}
+                  <em className="text-muted-foreground text-xs">({card.set.toUpperCase()})</em>{" "}
+                  {card.rarity}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
+            {/* CMC */}
+            <div className="text-center">{card.cmc}</div>
+
+            {/* P/T */}
+            <div className="text-center">{powerToughness}</div>
+
+            {/* Deck badge */}
+            <div className="flex justify-center">
+              {row.deckId ? (
+                <span className="bg-secondary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs">
+                  <Layers className="size-3" />
+                  <span className="max-w-24 truncate">{row.deckName ?? "Deck"}</span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </div>
+
+            {/* Quantity */}
+            <div
+              className="flex items-center justify-end gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isLoose ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => removeCopies(1)}
+                    aria-label="Remove one"
+                  >
+                    <Minus className="size-3.5" />
+                  </Button>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={localQty}
+                    onChange={(e) => setLocalQty(e.target.value)}
+                    onBlur={commitQuantity}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitQuantity();
+                    }}
+                    className="w-16 [appearance:textfield] text-center font-semibold [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => addCopies(1)}
+                    aria-label="Add one"
+                  >
+                    <Plus className="size-3.5" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="size-7 shrink-0" />
+                  <Input
+                    readOnly
+                    type="text"
+                    value={row.quantity}
+                    className="w-16 text-center font-semibold"
+                  />
+                  <span className="size-7 shrink-0" />
+                </>
+              )}
+              {isLoose ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={() => removeCopies(row.quantity)}
+                      aria-label="Delete all copies"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete these copies</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={removeFromDeck}
+                      aria-label="Remove from deck"
+                    >
+                      <LogOut className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove from deck</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            disabled={activeCollection?._id === collectionId}
+            onClick={() => moveOneToCollection(row)}
+          >
+            <div className="flex flex-1 flex-col">
+              <div className="flex items-center">
+                <Star className="mr-2 size-4" />
+                Move copy to active collection
+                <span className="text-muted-foreground ml-auto pl-4 text-xs">+ or =</span>
+              </div>
+              {activeCollection && (
+                <span className="text-muted-foreground ml-6 text-xs">
+                  {activeCollection._id === collectionId
+                    ? `${activeCollection.name} (this collection)`
+                    : activeCollection.name}
+                </span>
+              )}
+            </div>
+          </ContextMenuItem>
+          <ContextMenuItem disabled={!isLoose} onClick={() => addOneToDeck(row)}>
+            <div className="flex flex-1 flex-col">
+              <div className="flex items-center">
+                {getEntityIcon("deck", "h-4 w-4 mr-2")}
+                Add copy to active deck
+                <span className="text-muted-foreground ml-auto pl-4 text-xs">d</span>
+              </div>
+              {!isLoose ? (
+                <span className="text-muted-foreground ml-6 text-xs">
+                  In {row.deckName ?? "a deck"} — remove it from that deck first
+                </span>
+              ) : (
+                activeDeck && (
+                  <span className="text-muted-foreground ml-6 text-xs">{activeDeck.name}</span>
+                )
+              )}
+            </div>
+          </ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>
+              <FolderInput className="mr-2 size-4" />
+              Move copy to collection
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              {openCollections.map((c) => (
+                <ContextMenuItem
+                  key={c._id}
+                  disabled={c._id === collectionId}
+                  onClick={() => moveOneToCollection(row, c._id)}
+                >
+                  {getEntityIcon("collection", "h-4 w-4 mr-2")}
+                  {c.name}
+                  {c._id === collectionId && (
+                    <span className="text-muted-foreground ml-auto pl-4 text-xs">current</span>
+                  )}
+                </ContextMenuItem>
+              ))}
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+          {openDecks.length > 0 && (
+            <ContextMenuSub>
+              <ContextMenuSubTrigger disabled={!isLoose}>
+                <Plus className="mr-2 size-4" />
+                Add copy to deck
+                {!isLoose && (
+                  <span className="text-muted-foreground ml-auto pl-4 text-xs">
+                    in {row.deckName ?? "a deck"}
+                  </span>
+                )}
+              </ContextMenuSubTrigger>
+              <ContextMenuSubContent>
+                {openDecks.map((deck) => (
+                  <ContextMenuItem key={deck._id} onClick={() => addOneToDeck(row, deck._id)}>
+                    {getEntityIcon("deck", "h-4 w-4 mr-2")}
+                    {deck.name}
+                  </ContextMenuItem>
+                ))}
+              </ContextMenuSubContent>
+            </ContextMenuSub>
           )}
-        </div>
-      </div>
+          <ContextMenuSeparator />
+          {!isLoose && (
+            <ContextMenuItem onClick={() => removeOneFromDeck(row)}>
+              <LogOut className="mr-2 size-4" />
+              Remove copy from deck
+            </ContextMenuItem>
+          )}
+          <ContextMenuItem onClick={() => addCopies(1)}>
+            <Plus className="mr-2 size-4" />
+            Add another copy
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem variant="destructive" onClick={() => removeCopies(1)}>
+            <Trash2 className="mr-2 size-4" />
+            Delete a copy
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       {isExpanded && (
         <div className="bg-muted/30 p-4">

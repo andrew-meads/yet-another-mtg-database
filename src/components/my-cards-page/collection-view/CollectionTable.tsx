@@ -10,11 +10,16 @@ import { useCardSelection } from "@/context/CardSelectionContext";
 import { useCardPreviewSettings } from "@/context/SettingsContext";
 import CollectionTableRow from "@/components/my-cards-page/collection-view/CollectionTableRow";
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
+import { useCollectionRowActions } from "@/hooks/useCollectionRowActions";
 import {
   COLLECTION_GRID,
+  excludeDeckRows,
   groupCollectionCards,
   sortGroupRows
 } from "@/components/my-cards-page/collection-view/grouping";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface CollectionTableProps {
@@ -36,6 +41,11 @@ export interface CollectionTableProps {
  *
  * Search uses the shared Scryfall-style engine: the query is run server-side via
  * `GET /api/collections/[id]?q=...`, so the cards passed in are already filtered.
+ * A toggle next to the search bar additionally hides rows whose copies are
+ * assigned to a deck (client-side, on top of the server-filtered cards).
+ *
+ * Rows have a right-click context menu and keyboard shortcuts (+ / = and d)
+ * acting on one existing copy at a time — see `useCollectionRowActions`.
  */
 export default function CollectionTable({
   collection,
@@ -49,13 +59,18 @@ export default function CollectionTable({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [activeQuery, setActiveQuery] = useState(initialQuery ?? "");
+  const [hideDeckCards, setHideDeckCards] = useState(false);
 
   const { setSelectedCard } = useCardSelection();
   const { cardPreview } = useCardPreviewSettings();
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     return sortGroupRows(groupCollectionCards(collection.cards ?? []));
   }, [collection.cards]);
+
+  const rows = useMemo(() => {
+    return hideDeckCards ? excludeDeckRows(allRows) : allRows;
+  }, [allRows, hideDeckCards]);
 
   const handleQueryChange = (query: string) => {
     setActiveQuery(query);
@@ -64,6 +79,7 @@ export default function CollectionTable({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const { dropRef, isOver } = useCollectionDropTarget(collection._id);
+  const { moveOneToCollection, addOneToDeck } = useCollectionRowActions(collection._id);
 
   // The React Compiler intentionally skips memoizing the value returned by TanStack
   // Virtual's useVirtualizer (it returns non-memoizable functions).
@@ -81,13 +97,39 @@ export default function CollectionTable({
   const virtualizerRef = useRef(virtualizer);
   virtualizerRef.current = virtualizer;
 
-  // Keyboard navigation — arrow up/down to move through rows.
+  // Keyboard shortcuts — arrow up/down move through rows; + / = moves one copy of
+  // the selected row to the active collection; d places one copy into the active
+  // deck (loose rows only — disallowed cases toast, mirroring the search page).
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!scrollRef.current?.contains(document.activeElement)) return;
       // Don't hijack keys when an input inside a row has focus.
       const tag = (document.activeElement as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      const selectedRow = selectedKey ? rows.find((r) => r.key === selectedKey) : undefined;
+
+      if ((e.key === "+" || e.key === "=") && selectedRow) {
+        e.preventDefault();
+        moveOneToCollection(selectedRow);
+        return;
+      }
+
+      // Modifier combos (Cmd/Ctrl+D etc.) are left to the browser; shift+d is
+      // unused here (its search-page meaning, ephemeral copies, doesn't apply).
+      if (
+        (e.key === "d" || e.key === "D") &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.shiftKey &&
+        selectedRow
+      ) {
+        e.preventDefault();
+        addOneToDeck(selectedRow);
+        return;
+      }
+
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
       e.preventDefault();
 
@@ -111,7 +153,7 @@ export default function CollectionTable({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedKey, rows, setSelectedCard]);
+  }, [selectedKey, rows, setSelectedCard, moveOneToCollection, addOneToDeck]);
 
   // Hover popup management
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -153,7 +195,7 @@ export default function CollectionTable({
     if (typeof dropRef === "function") dropRef(node);
   };
 
-  const isEmpty = rows.length === 0 && activeQuery.trim().length === 0;
+  const isEmpty = allRows.length === 0 && activeQuery.trim().length === 0;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-md border">
@@ -167,6 +209,23 @@ export default function CollectionTable({
           onQueryChange={handleQueryChange}
           className="flex-1"
         />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant={hideDeckCards ? "default" : "outline"}
+              size="icon-sm"
+              onClick={() => setHideDeckCards((v) => !v)}
+              aria-label="Hide cards in decks"
+              aria-pressed={hideDeckCards}
+            >
+              <Layers />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Hide cards that are in decks</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Header */}
@@ -194,7 +253,11 @@ export default function CollectionTable({
         {isEmpty ? (
           <div className="text-muted-foreground p-8 text-center">No cards in this collection</div>
         ) : rows.length === 0 ? (
-          <div className="text-muted-foreground p-8 text-center">No cards match your search</div>
+          <div className="text-muted-foreground p-8 text-center">
+            {hideDeckCards && allRows.length > 0
+              ? "All matching cards are in decks"
+              : "No cards match your search"}
+          </div>
         ) : (
           <div style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
