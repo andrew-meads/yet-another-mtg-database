@@ -89,13 +89,15 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   model), what to cut or add, alternatives you already own, card prices, official
   card rulings, Comprehensive Rules lookups, and combo detection (Commander
   Spellbook — combos your deck contains and near-misses with the missing cards).
-  When you ask for deck changes it drafts a **proposal**: a validated checklist
-  rendered in the chat — for each added card you choose whether to place real
-  copies you already own in your active collection (no new copies are created),
-  create deck-only placeholder copies (always a native-language printing), or skip
-  it; removes and moves are simple checkboxes. The AI itself can never write
-  anything; nothing changes until you hit Apply, and applies go through the app's
-  normal add/remove/move machinery. Every tool call is shown as
+  When you ask for deck changes it drafts a **proposal** rendered in the chat, and
+  the conversation pauses until you decide each card individually: for added cards,
+  place real copies you already own in your active collection (no new copies are
+  created), create deck-only placeholder copies (always a native-language
+  printing), or skip; removes and moves get apply/skip buttons; **Done** auto-skips
+  anything left undecided. Once everything is decided, the advisor is automatically
+  told exactly what was applied so its follow-up advice matches reality. The AI
+  itself can never write anything — applies go through the app's normal
+  add/remove/move machinery. Every tool call is shown as
   an activity chip (click to inspect the raw input/result), answers stream in live
   as Markdown. Uses the same OpenAI-compatible endpoint as AI search.
 - **Google sign-in** — NextAuth Google OAuth with a deny-by-default email whitelist.

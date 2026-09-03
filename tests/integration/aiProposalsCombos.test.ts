@@ -98,6 +98,35 @@ describe("proposeDeckChanges tool", () => {
     expect((untouched!.sections as any)[1].columns[0].cards).toHaveLength(0);
   });
 
+  it("matches punctuation-heavy names loosely for removes and adds", async () => {
+    const { deck, collectionId } = await seedProposalDeck();
+    const hans = await seedCard({ id: "prop-hans", name: '"Ach! Hans, Run!"' });
+    await seedPhysicalCard(userId, hans.id, collectionId, { deckId: String(deck._id) });
+    await seedPhysicalCard(userId, hans.id, collectionId, { deckId: String(deck._id) });
+
+    const tools = buildAiTools({ userId });
+    const result = await run(tools.proposeDeckChanges, {
+      deckId: String(deck._id),
+      changes: [
+        // The model dropped the punctuation — the deck's 2 copies still match.
+        { action: "remove", cardName: "Ach Hans Run", count: 2 },
+        // Adds resolve through the same relaxed lookup.
+        { action: "add", cardName: "ach hans run" }
+      ],
+      rationale: "Hans has run enough."
+    });
+
+    expect(result.proposal.changes[0]).toMatchObject({
+      action: "remove",
+      cardName: '"Ach! Hans, Run!"',
+      count: 2
+    });
+    expect(result.proposal.changes[1]).toMatchObject({
+      cardName: '"Ach! Hans, Run!"',
+      cardId: "prop-hans"
+    });
+  });
+
   it("resolves added cards to the newest native-language printing", async () => {
     const { deck } = await seedProposalDeck();
     // A newer Japanese printing must NOT win over the native (English) one.

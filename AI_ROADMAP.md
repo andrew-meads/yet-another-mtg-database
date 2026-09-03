@@ -121,14 +121,22 @@ advisor chat" section for the full architecture. In brief:
   native-language printing — `NATIVE_CARD_LANG`/`findNativePrintingByName` in
   `tools/shared.ts`) — writes nothing; invalid proposals return
   `{ error, invalid: [{index, reason}] }` for the model to retry.
-  `ProposalCard.tsx` renders it with a per-added-card three-way choice made by
-  the USER (not the model): place real unassigned copies from the active
-  collection (`op:"place"`, creates nothing), create ephemeral placeholders,
-  or skip; removes/moves are checkboxes. Wired to `useCreatePhysicalCard` /
-  `useDeckCardOp` (normal write path: ownership checks, ephemeral semantics,
-  `invalidateCardMembership`). Verified live: placing 2 real copies moved
-  existing documents (total physical-card count unchanged, zero ephemerals)
-  and the removed copy returned to its collection.
+  `ProposalCard.tsx` renders it as a per-card decision the USER makes (not the
+  model), with immediate-action buttons: adds — place real unassigned copies
+  from the active collection (`op:"place"`, creates nothing) / ephemeral
+  placeholders / skip; removes and moves — apply / skip; "Done" auto-skips the
+  undecided rest. The conversation pauses on an unresolved proposal (panel
+  input disabled); when every card is decided the panel auto-sends a
+  `[Proposal outcome …]` user message so the model learns what was actually
+  applied (the persona is prompted to end its turn after proposing and treat
+  that message as ground truth). Card names match punctuation-insensitively
+  (`src/lib/cardNames.ts` — `"Ach! Hans, Run!"` vs "Ach Hans Run" was a real
+  reported failure). Wired to `useCreatePhysicalCard` / `useDeckCardOp`
+  (normal write path: ownership checks, ephemeral semantics,
+  `invalidateCardMembership`). Verified live end-to-end: placing 2 real copies
+  moved existing documents (total physical-card count unchanged, zero
+  ephemerals), the removed copy returned to its collection, and the outcome
+  message round-tripped to the model.
 - `findCombos` tool: Commander Spellbook `/find-my-combos` via
   `src/lib/server/comboSearch.ts` (pure `slimComboResponse`: id/url/cards/
   produces + capped description; `missing` computed for almost-included; caps

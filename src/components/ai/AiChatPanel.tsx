@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Brain, ChevronDown, ChevronRight, CircleAlert, Loader2, Send, Square, Wrench, X } from "lucide-react";
@@ -21,6 +21,22 @@ export interface AiChatPanelProps {
 
 const AGENT_ID = "deck-advisor";
 
+/** Keys ("messageId:partIndex") of the validated proposals inside a message. */
+function proposalKeysIn(message: UIMessage): string[] {
+  const keys: string[] = [];
+  message.parts.forEach((part, index) => {
+    if (part.type !== "tool-proposeDeckChanges") return;
+    const toolPart = part as unknown as ToolPartLike;
+    if (
+      toolPart.state === "output-available" &&
+      (toolPart.output as { proposal?: unknown } | undefined)?.proposal
+    ) {
+      keys.push(`${message.id}:${index}`);
+    }
+  });
+  return keys;
+}
+
 /**
  * Docked, non-modal AI chat panel (the deck advisor). Mirrors
  * {@link SearchDocsPanel}: an in-flow flex sibling in {@link MainWorkspace}, so
@@ -40,6 +56,28 @@ export default function AiChatPanel({ className }: AiChatPanelProps) {
 
   const busy = chatStatus === "submitted" || chatStatus === "streaming";
   const configured = status?.configured === true;
+
+  // Proposal flow: each validated proposal must be resolved (every card decided
+  // or Done pressed) before the conversation continues. Resolving auto-sends an
+  // outcome message so the model knows what was actually applied.
+  const [proposalOutcomes, setProposalOutcomes] = useState<Record<string, string>>({});
+  const handleProposalResolve = useCallback(
+    (key: string, summary: string) => {
+      setProposalOutcomes((prev) => {
+        if (prev[key] !== undefined) return prev;
+        return { ...prev, [key]: summary };
+      });
+      clearError();
+      sendMessage({ text: summary }, { body: { agentId: AGENT_ID, context: chatContext } });
+    },
+    [sendMessage, chatContext, clearError]
+  );
+
+  const lastMessage = messages[messages.length - 1];
+  const awaitingProposal =
+    !busy &&
+    lastMessage?.role === "assistant" &&
+    proposalKeysIn(lastMessage).some((key) => proposalOutcomes[key] === undefined);
 
   // Keep the newest message in view while streaming.
   useEffect(() => {
@@ -73,6 +111,7 @@ export default function AiChatPanel({ className }: AiChatPanelProps) {
             onClick={() => {
               stop();
               setMessages([]);
+              setProposalOutcomes({});
               clearError();
             }}
             disabled={messages.length === 0}
@@ -105,7 +144,12 @@ export default function AiChatPanel({ className }: AiChatPanelProps) {
               </p>
             )}
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              <ChatMessage
+                key={message.id}
+                message={message}
+                proposalOutcomes={proposalOutcomes}
+                onProposalResolve={handleProposalResolve}
+              />
             ))}
             {busy && (
               <div className="text-muted-foreground flex items-center gap-2 px-2 text-sm">
@@ -134,10 +178,15 @@ export default function AiChatPanel({ className }: AiChatPanelProps) {
                     handleSend();
                   }
                 }}
-                placeholder="Ask the deck advisor…"
+                placeholder={
+                  awaitingProposal
+                    ? "Decide on the proposal above (or press Done)…"
+                    : "Ask the deck advisor…"
+                }
                 rows={2}
                 className="min-h-0 resize-none"
                 aria-label="Chat message"
+                disabled={awaitingProposal}
               />
               {busy ? (
                 <Button
@@ -154,7 +203,7 @@ export default function AiChatPanel({ className }: AiChatPanelProps) {
                   type="button"
                   size="icon"
                   onClick={handleSend}
-                  disabled={input.trim() === ""}
+                  disabled={input.trim() === "" || awaitingProposal}
                   aria-label="Send message"
                 >
                   <Send />
@@ -168,7 +217,15 @@ export default function AiChatPanel({ className }: AiChatPanelProps) {
   );
 }
 
-function ChatMessage({ message }: { message: UIMessage }) {
+function ChatMessage({
+  message,
+  proposalOutcomes,
+  onProposalResolve
+}: {
+  message: UIMessage;
+  proposalOutcomes: Record<string, string>;
+  onProposalResolve: (key: string, summary: string) => void;
+}) {
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
@@ -206,7 +263,17 @@ function ChatMessage({ message }: { message: UIMessage }) {
             part.type === "tool-proposeDeckChanges" && toolPart.state === "output-available"
               ? (toolPart.output as { proposal?: DeckChangeProposal } | undefined)?.proposal
               : undefined;
-          if (proposal) return <ProposalCard key={index} proposal={proposal} />;
+          if (proposal) {
+            const proposalKey = `${message.id}:${index}`;
+            return (
+              <ProposalCard
+                key={index}
+                proposal={proposal}
+                resolvedSummary={proposalOutcomes[proposalKey]}
+                onResolve={(summary) => onProposalResolve(proposalKey, summary)}
+              />
+            );
+          }
           return <ToolChip key={index} part={toolPart} />;
         }
         return null;

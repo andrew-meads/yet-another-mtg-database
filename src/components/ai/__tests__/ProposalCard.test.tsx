@@ -47,10 +47,7 @@ const deckDetailsResponse = {
   }
 };
 
-/**
- * Wire-shaped active collection: 2 unassigned Shocks + 1 Shock already in
- * another deck, plus the deck-assigned Bolts (no unassigned Bolt copies).
- */
+/** Wire-shaped active collection: 2 unassigned Shocks, 1 Shock in another deck. */
 const collectionDetailsResponse = {
   collection: {
     _id: "coll-1",
@@ -62,33 +59,25 @@ const collectionDetailsResponse = {
     cards: [
       { _id: "p-shock-1", cardId: "c-shock", collectionId: "coll-1", deckId: null },
       { _id: "p-shock-2", cardId: "c-shock", collectionId: "coll-1", deckId: null },
-      { _id: "p-shock-3", cardId: "c-shock", collectionId: "coll-1", deckId: "other-deck" },
-      { _id: "p-bolt-1", cardId: "c-bolt", collectionId: "coll-1", deckId: DECK_ID },
-      { _id: "p-bolt-2", cardId: "c-bolt", collectionId: "coll-1", deckId: DECK_ID }
+      { _id: "p-shock-3", cardId: "c-shock", collectionId: "coll-1", deckId: "other-deck" }
     ]
   },
-  cardData: {
-    "c-shock": { id: "c-shock", name: "Shock" },
-    "c-bolt": { id: "c-bolt", name: "Lightning Bolt" }
-  }
+  cardData: { "c-shock": { id: "c-shock", name: "Shock" } }
 };
 
 let fetchMock: ReturnType<typeof vi.spyOn>;
 /** Bodies of POSTs, in order. */
 let posts: { url: string; body: Record<string, unknown> }[];
-let collectionFetches: number;
 
 beforeEach(() => {
   h.activeCollection = { _id: "coll-1", name: "Main Collection" };
   posts = [];
-  collectionFetches = 0;
   fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     if (url.includes(`/api/decks/${DECK_ID}?details=true`)) {
       return Response.json(deckDetailsResponse);
     }
     if (url.includes("/api/collections/coll-1")) {
-      collectionFetches += 1;
       return Response.json(collectionDetailsResponse);
     }
     if (init?.method === "POST") {
@@ -114,209 +103,162 @@ const addShock = (count: number): DeckChangeProposal["changes"][number] => ({
   sectionId: "sec-main"
 });
 
-function renderCard(proposal: DeckChangeProposal) {
+const removeBolt = (count: number): DeckChangeProposal["changes"][number] => ({
+  action: "remove",
+  cardName: "Lightning Bolt",
+  cardId: "c-bolt",
+  count
+});
+
+function renderCard(proposal: DeckChangeProposal, resolvedSummary?: string) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
   });
-  const invalidate = vi.spyOn(client, "invalidateQueries");
+  const onResolve = vi.fn();
   render(
     <QueryClientProvider client={client}>
-      <ProposalCard proposal={proposal} />
+      <ProposalCard proposal={proposal} onResolve={onResolve} resolvedSummary={resolvedSummary} />
     </QueryClientProvider>
   );
-  return { invalidate };
+  return { onResolve };
 }
 
-async function clickApplyWhenReady() {
-  // Apply is disabled until the deck (and active collection) details load.
-  const button = screen.getByRole("button", { name: /Apply/ });
+/** Row buttons are disabled until the deck + collection details load. */
+async function findEnabledButton(name: string | RegExp) {
+  const button = await screen.findByRole("button", { name });
   await waitFor(() => expect(button).toBeEnabled());
-  fireEvent.click(button);
+  return button;
 }
 
 describe("ProposalCard", () => {
-  it("renders the rationale, rows, and a per-add mode picker with availability", async () => {
-    renderCard(
-      makeProposal([
-        addShock(2),
-        { action: "remove", cardName: "Lightning Bolt", cardId: "c-bolt", count: 1 }
-      ])
-    );
+  it("places real copies immediately when 'My copies' is clicked and reports the outcome", async () => {
+    const { onResolve } = renderCard(makeProposal([addShock(2)]));
 
-    expect(screen.getByText("Test rationale.")).toBeInTheDocument();
-    const rows = screen.getAllByTestId("proposal-change");
-    expect(rows).toHaveLength(2);
-    expect(rows[0]).toHaveTextContent("Add 2x Shock to Main");
-    expect(rows[1]).toHaveTextContent("Remove 1x Lightning Bolt");
-
-    // 2 unassigned Shocks in the active collection (the third is deck-assigned).
-    expect(await screen.findByRole("button", { name: "My copies (2)" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Placeholder" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Skip" })).toBeInTheDocument();
-  });
-
-  it("defaults to placing real copies and applies them via op:place — creating nothing", async () => {
-    const { invalidate } = renderCard(makeProposal([addShock(2)]));
-
-    const myCopies = await screen.findByRole("button", { name: "My copies (2)" });
-    await waitFor(() => expect(myCopies).toHaveAttribute("aria-pressed", "true"));
-    await clickApplyWhenReady();
+    fireEvent.click(await findEnabledButton("My copies (2)"));
 
     await waitFor(() => expect(posts).toHaveLength(2));
-    // Both POSTs are deck placements of the EXISTING unassigned copies.
     expect(posts.every((p) => p.url === `/api/decks/${DECK_ID}/cards`)).toBe(true);
     expect(posts.map((p) => p.body)).toEqual([
       { op: "place", physicalCardId: "p-shock-1", sectionId: "sec-main" },
       { op: "place", physicalCardId: "p-shock-2", sectionId: "sec-main" }
     ]);
-    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["deck-details"] }));
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["collection-details"] });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["card-locations"] });
+    // Single-change proposal: deciding it resolves the card with a summary.
+    await waitFor(() => expect(onResolve).toHaveBeenCalledTimes(1));
+    expect(onResolve.mock.calls[0][0]).toBe(
+      '[Proposal outcome for "Prop Deck"] added 2x Shock (real copies from Main Collection)'
+    );
   });
 
-  it("creates ephemeral placeholder copies when that mode is chosen", async () => {
-    renderCard(makeProposal([addShock(2)]));
+  it("creates ephemeral copies when 'Placeholder' is clicked", async () => {
+    const { onResolve } = renderCard(makeProposal([addShock(2)]));
 
-    const placeholder = await screen.findByRole("button", { name: "Placeholder" });
-    await waitFor(() => expect(placeholder).toBeEnabled());
-    fireEvent.click(placeholder);
-    await clickApplyWhenReady();
+    fireEvent.click(await findEnabledButton("Placeholder"));
 
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0].url).toBe("/api/physical-cards");
-    // No collectionId — an ephemeral, deck-only copy of the resolved printing.
     expect(posts[0].body).toEqual({
       cardId: "c-shock",
       deckId: DECK_ID,
       sectionId: "sec-main",
       quantity: 2
     });
+    await waitFor(() =>
+      expect(onResolve).toHaveBeenCalledWith(
+        '[Proposal outcome for "Prop Deck"] added 2x Shock (placeholders)'
+      )
+    );
   });
 
-  it("skips an added card entirely when Skip is chosen", async () => {
-    renderCard(makeProposal([addShock(1)]));
+  it("skips a card without touching the network", async () => {
+    const { onResolve } = renderCard(makeProposal([addShock(1)]));
 
-    const skip = await screen.findByRole("button", { name: "Skip" });
-    await waitFor(() => expect(skip).toBeEnabled());
-    fireEvent.click(skip);
-    await clickApplyWhenReady();
+    fireEvent.click(await findEnabledButton("Skip"));
 
-    await waitFor(() => expect(screen.getByText(/Done —/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(onResolve).toHaveBeenCalledWith(
+        '[Proposal outcome for "Prop Deck"] skipped: add 1x shock to main'
+      )
+    );
     expect(posts).toHaveLength(0);
-    expect(screen.getByRole("button", { name: /Apply/ })).toBeDisabled();
   });
 
-  it("disables the real-copies option (and defaults to placeholders) when none are unassigned", async () => {
-    // Both Bolt copies in the collection are already deck-assigned.
+  it("disables 'My copies' when no unassigned copies exist", async () => {
+    // Bolt has no unassigned copies in the collection fixture.
     renderCard(
       makeProposal([
         { action: "add", cardName: "Lightning Bolt", cardId: "c-bolt", count: 1, sectionName: "Main", sectionId: "sec-main" }
       ])
     );
 
-    const myCopies = await screen.findByRole("button", { name: "My copies (0)" });
-    await waitFor(() => expect(myCopies).toBeDisabled());
-    expect(screen.getByRole("button", { name: "Placeholder" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
+    await findEnabledButton("Placeholder");
+    expect(screen.getByRole("button", { name: "My copies (0)" })).toBeDisabled();
   });
 
-  it("defaults to placeholders when fewer copies are available than proposed, but places what exists if chosen", async () => {
-    renderCard(makeProposal([addShock(3)]));
+  it("applies removes per row via the deck's physical copies", async () => {
+    const { onResolve } = renderCard(makeProposal([removeBolt(2)]));
 
-    const myCopies = await screen.findByRole("button", { name: "My copies (2)" });
-    // Only 2 of 3 available -> placeholder is the default…
-    expect(screen.getByRole("button", { name: "Placeholder" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
-    // …but the user can still choose the real copies.
-    fireEvent.click(myCopies);
-    await clickApplyWhenReady();
-
-    await waitFor(() => expect(posts).toHaveLength(2));
-    expect(posts.every((p) => p.body.op === "place")).toBe(true);
-  });
-
-  it("works without an active collection: real-copies disabled, placeholders apply", async () => {
-    h.activeCollection = null;
-    renderCard(makeProposal([addShock(1)]));
-
-    const myCopies = await screen.findByRole("button", { name: "My copies (0)" });
-    expect(myCopies).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Placeholder" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
-    await clickApplyWhenReady();
-
-    await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0].body).toEqual({ cardId: "c-shock", deckId: DECK_ID, sectionId: "sec-main", quantity: 1 });
-    expect(collectionFetches).toBe(0);
-  });
-
-  it("never hands the same physical copy to two changes", async () => {
-    renderCard(makeProposal([addShock(1), addShock(1)]));
-
-    const pickers = await screen.findAllByRole("button", { name: "My copies (2)" });
-    await waitFor(() => expect(pickers[0]).toHaveAttribute("aria-pressed", "true"));
-    await clickApplyWhenReady();
-
-    await waitFor(() => expect(posts).toHaveLength(2));
-    expect(posts.map((p) => p.body.physicalCardId).sort()).toEqual(["p-shock-1", "p-shock-2"]);
-  });
-
-  it("applies removes by resolving physical copies from the deck details", async () => {
-    renderCard(
-      makeProposal([{ action: "remove", cardName: "Lightning Bolt", cardId: "c-bolt", count: 2 }])
-    );
-    await clickApplyWhenReady();
+    fireEvent.click(await findEnabledButton("Apply"));
 
     await waitFor(() => expect(posts).toHaveLength(2));
     expect(posts.map((p) => p.body.physicalCardId).sort()).toEqual(["p-bolt-1", "p-bolt-2"]);
     expect(posts.every((p) => p.body.op === "remove")).toBe(true);
+    await waitFor(() =>
+      expect(onResolve).toHaveBeenCalledWith(
+        '[Proposal outcome for "Prop Deck"] removed 2x Lightning Bolt'
+      )
+    );
   });
 
-  it("applies moves to the target section, skipping copies already there", async () => {
-    renderCard(
-      makeProposal([
-        { action: "move", cardName: "Forest", cardId: "c-forest", count: 1, sectionName: "Sideboard", sectionId: "sec-side" }
-      ])
-    );
-    await clickApplyWhenReady();
+  it("only resolves after EVERY row is decided, combining outcomes in order", async () => {
+    const { onResolve } = renderCard(makeProposal([addShock(1), removeBolt(1)]));
 
+    fireEvent.click(await findEnabledButton("Placeholder"));
     await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0].body).toMatchObject({
-      op: "move",
-      physicalCardId: "p-forest-1",
-      sectionId: "sec-side"
-    });
+    // One row decided, one still pending: not resolved yet.
+    expect(onResolve).not.toHaveBeenCalled();
+
+    fireEvent.click(await findEnabledButton("Apply"));
+    await waitFor(() => expect(onResolve).toHaveBeenCalledTimes(1));
+    expect(onResolve.mock.calls[0][0]).toBe(
+      '[Proposal outcome for "Prop Deck"] added 1x Shock (placeholders); removed 1x Lightning Bolt'
+    );
   });
 
-  it("marks unchecked remove/move rows as skipped", async () => {
-    renderCard(
-      makeProposal([
-        { action: "remove", cardName: "Lightning Bolt", cardId: "c-bolt", count: 1 },
-        { action: "remove", cardName: "Forest", cardId: "c-forest", count: 1 }
-      ])
-    );
-    const checkbox = await screen.findByLabelText("Remove 1x Lightning Bolt");
-    fireEvent.click(checkbox);
-    await clickApplyWhenReady();
+  it("Done auto-skips everything still undecided and resolves", async () => {
+    const { onResolve } = renderCard(makeProposal([addShock(1), removeBolt(1)]));
 
+    fireEvent.click(await findEnabledButton("Placeholder"));
     await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0].body.physicalCardId).toBe("p-forest-1");
-    expect(screen.getByText(/Done —/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onResolve).toHaveBeenCalledTimes(1));
+    expect(onResolve.mock.calls[0][0]).toBe(
+      '[Proposal outcome for "Prop Deck"] added 1x Shock (placeholders); skipped: remove 1x lightning bolt'
+    );
+    // No further posts happened for the skipped remove.
+    expect(posts).toHaveLength(1);
   });
 
-  it("disables Apply after all selected changes are applied", async () => {
-    renderCard(
-      makeProposal([{ action: "remove", cardName: "Forest", cardId: "c-forest", count: 1 }])
-    );
-    await clickApplyWhenReady();
+  it("shows the waiting hint until resolved, then the resolved note", async () => {
+    renderCard(makeProposal([addShock(1)]));
+    expect(screen.getByText(/the advisor waits for the outcome/)).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByRole("button", { name: /Apply/ })).toBeDisabled());
-    expect(screen.getByText(/Done —/)).toBeInTheDocument();
+    fireEvent.click(await findEnabledButton("Skip"));
+    await waitFor(() =>
+      expect(screen.getByText(/the advisor is told what was actually applied/)).toBeInTheDocument()
+    );
+    expect(screen.queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+  });
+
+  it("renders a compact locked card when mounted with an existing resolution", async () => {
+    const { onResolve } = renderCard(
+      makeProposal([addShock(1)]),
+      '[Proposal outcome for "Prop Deck"] skipped: add 1x shock to main'
+    );
+
+    expect(screen.getByText(/Resolved — see the outcome message below/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /My copies/ })).not.toBeInTheDocument();
+    expect(onResolve).not.toHaveBeenCalled();
   });
 });

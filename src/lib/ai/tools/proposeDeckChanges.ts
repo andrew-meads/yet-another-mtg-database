@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { DeckModel, PhysicalCardModel, CardData } from "@/db/schema";
 import { ToolContext, findNativePrintingByName, isValidObjectId, safeExecute } from "./shared";
+import { normalizeCardName } from "@/lib/cardNames";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -48,13 +49,13 @@ export type ProposedChange = z.infer<typeof changeSchema> & {
   sectionId?: string;
 };
 
-/** Count copies of each card name (lowercased) currently in the deck. */
+/** Count copies of each card name (normalized key) currently in the deck. */
 function countByName(cardNames: Map<string, string>, physical: { cardId: string }[]) {
   const counts = new Map<string, number>();
   for (const pc of physical) {
     const name = cardNames.get(pc.cardId);
     if (!name) continue;
-    const key = name.toLowerCase();
+    const key = normalizeCardName(name);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return counts;
@@ -91,7 +92,8 @@ export function makeProposeDeckChangesTool({ userId }: ToolContext) {
 
         for (const [index, change] of changes.entries()) {
           const count = change.count ?? 1;
-          const nameKey = change.cardName.trim().toLowerCase();
+          // Punctuation-insensitive key: `"Ach! Hans, Run!"` matches "Ach Hans Run".
+          const nameKey = normalizeCardName(change.cardName);
 
           // Resolve the section (when named).
           let section: { _id: string; name: string } | undefined;
@@ -144,11 +146,12 @@ export function makeProposeDeckChangesTool({ userId }: ToolContext) {
             });
             continue;
           }
-          // Canonical casing from the deck's own card data.
+          // Canonical name (with its real punctuation) from the deck's own card data.
           const canonical =
-            [...nameById.values()].find((n) => n.toLowerCase() === nameKey) ?? change.cardName;
+            [...nameById.values()].find((n) => normalizeCardName(n) === nameKey) ??
+            change.cardName;
           const cardId =
-            [...nameById.entries()].find(([, n]) => n.toLowerCase() === nameKey)?.[0] ?? "";
+            [...nameById.entries()].find(([, n]) => normalizeCardName(n) === nameKey)?.[0] ?? "";
           normalized.push({
             action: change.action,
             cardName: canonical,
