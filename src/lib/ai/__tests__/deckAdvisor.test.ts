@@ -22,4 +22,17 @@ describe("deckAdvisorPersona system prompt", () => {
     const prompt = deckAdvisorPersona.buildSystemPrompt({});
     expect(prompt).toContain("Format answers in Markdown");
   });
+
+  it("routes deck edits through propose-and-confirm and includes the Phase 3 tools", () => {
+    const prompt = deckAdvisorPersona.buildSystemPrompt({});
+    expect(prompt).toContain("proposeDeckChanges");
+    expect(prompt).toContain("NEVER claim a change has been made");
+    // The pause-and-outcome contract: end the turn, await the outcome message.
+    expect(prompt).toContain("END YOUR TURN");
+    expect(prompt).toContain('"[Proposal outcome');
+    expect(prompt).toContain("findCombos");
+    expect(prompt).toContain('"alternatives I own"');
+    expect(deckAdvisorPersona.toolNames).toContain("proposeDeckChanges");
+    expect(deckAdvisorPersona.toolNames).toContain("findCombos");
+  });
 });

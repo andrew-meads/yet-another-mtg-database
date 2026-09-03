@@ -37,9 +37,50 @@ vi.mock("@ai-sdk/react", () => ({
   })
 }));
 
+/**
+ * ProposalCard is stubbed: its own behavior (per-row applies, Done, summary
+ * building) is covered in ProposalCard.test.tsx — here we only exercise the
+ * panel's proposal plumbing (input gating + outcome auto-send).
+ */
+vi.mock("@/components/ai/ProposalCard", () => ({
+  default: ({
+    onResolve,
+    resolvedSummary
+  }: {
+    onResolve: (summary: string) => void;
+    resolvedSummary?: string;
+  }) =>
+    resolvedSummary ? (
+      <div data-testid="proposal-stub">resolved</div>
+    ) : (
+      <button
+        data-testid="proposal-stub"
+        onClick={() => onResolve('[Proposal outcome for "D"] removed 1x X')}
+      >
+        resolve-stub
+      </button>
+    )
+}));
+
 import AiChatPanel from "@/components/ai/AiChatPanel";
 import { SearchDocsProvider } from "@/context/SearchDocsContext";
 import { AiChatProvider } from "@/context/AiChatContext";
+
+/** An assistant message carrying one validated proposal part. */
+function proposalMessage(id = "m-prop") {
+  return {
+    id,
+    role: "assistant",
+    parts: [
+      {
+        type: "tool-proposeDeckChanges",
+        state: "output-available",
+        input: {},
+        output: { proposal: { deckId: "d1", deckName: "D", rationale: "r", changes: [] } }
+      }
+    ]
+  };
+}
 
 function renderPanel() {
   const client = new QueryClient({
@@ -255,6 +296,45 @@ describe("AiChatPanel", () => {
     renderPanel();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("upstream exploded");
+  });
+
+  it("blocks the input while the latest message has an unresolved proposal", async () => {
+    h.messages = [proposalMessage()];
+    renderPanel();
+
+    const textarea = await screen.findByLabelText("Chat message");
+    expect(textarea).toBeDisabled();
+    expect(textarea).toHaveAttribute(
+      "placeholder",
+      expect.stringContaining("Decide on the proposal")
+    );
+  });
+
+  it("sends the outcome to the model and unblocks the input once resolved", async () => {
+    h.messages = [proposalMessage()];
+    renderPanel();
+
+    fireEvent.click(await screen.findByTestId("proposal-stub"));
+
+    expect(h.sendMessage).toHaveBeenCalledWith(
+      { text: '[Proposal outcome for "D"] removed 1x X' },
+      { body: { agentId: "deck-advisor", context: {} } }
+    );
+    const textarea = screen.getByLabelText("Chat message");
+    expect(textarea).toBeEnabled();
+    // The card re-renders in its resolved state.
+    expect(screen.getByTestId("proposal-stub")).toHaveTextContent("resolved");
+  });
+
+  it("does not block the input for proposals resolved in earlier turns", async () => {
+    h.messages = [
+      proposalMessage("m-old"),
+      { id: "m-2", role: "user", parts: [{ type: "text", text: "[Proposal outcome…]" }] },
+      { id: "m-3", role: "assistant", parts: [{ type: "text", text: "Great, applied." }] }
+    ];
+    renderPanel();
+
+    expect(await screen.findByLabelText("Chat message")).toBeEnabled();
   });
 
   it("clears the transcript on New chat", async () => {

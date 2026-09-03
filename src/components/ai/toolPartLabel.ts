@@ -86,6 +86,19 @@ export function describeToolPart(part: ToolPartLike): string {
       const query = str(input.query);
       return `looked up ${input.kind === "rule" ? "rule" : "keyword"}${query ? ` ${query}` : ""}`;
     }
+    case "findCombos": {
+      const deckName = str(output.deckName);
+      const found = num(output.totalIncluded);
+      return done && deckName
+        ? `searched combos in "${deckName}" (${found ?? 0} found)`
+        : "searching combos…";
+    }
+    case "proposeDeckChanges": {
+      const changes = Array.isArray(input.changes) ? input.changes.length : undefined;
+      return done
+        ? `proposed ${changes ?? "deck"} change${changes === 1 ? "" : "s"}`
+        : "drafting a proposal…";
+    }
     default:
       return done ? `used ${name}` : `using ${name}…`;
   }

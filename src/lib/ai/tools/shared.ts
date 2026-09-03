@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { CardData } from "@/db/schema";
 import { MtgCard } from "@/types/MtgCard";
 import { escapeRegex } from "@/lib/search/helpers";
+import { relaxedNameRegex } from "@/lib/cardNames";
 
 /**
  * Shared plumbing for the AI tool layer. Every tool is a factory closing over
@@ -61,19 +62,54 @@ export function isValidObjectId(id: string): boolean {
 }
 
 /**
- * Resolve a card by (exact, case-insensitive) name — matching the card name,
- * flavor name, or any face name. Newest printing wins so text reflects current
- * oracle wording. Returns null when unknown.
+ * The system's native card language: printings created by the app (e.g.
+ * ephemeral copies from an applied proposal) should use a printing in this
+ * language when one exists.
  */
-export async function findCardByName(name: string): Promise<MtgCard | null> {
-  const rx = new RegExp(`^${escapeRegex(name.trim())}$`, "i");
+export const NATIVE_CARD_LANG = "en";
+
+/**
+ * Resolve a card by name (exact first, then punctuation-insensitive) to a
+ * printing in the system's native language — newest native printing first,
+ * falling back to the newest printing in any language for cards never printed
+ * natively.
+ */
+export async function findNativePrintingByName(name: string): Promise<MtgCard | null> {
+  const langFilter = { lang: NATIVE_CARD_LANG };
+  const exact = await findByNameRegex(new RegExp(`^${escapeRegex(name.trim())}$`, "i"), langFilter);
+  if (exact) return exact;
+  const relaxed = relaxedNameRegex(name);
+  const relaxedNative = relaxed ? await findByNameRegex(relaxed, langFilter) : null;
+  if (relaxedNative) return relaxedNative;
+  return findCardByName(name);
+}
+
+async function findByNameRegex(
+  rx: RegExp,
+  extraFilter?: Record<string, unknown>
+): Promise<MtgCard | null> {
+  const nameFilter = { $or: [{ name: rx }, { flavor_name: rx }, { "card_faces.name": rx }] };
   const card = await CardData.findOne(
-    { $or: [{ name: rx }, { flavor_name: rx }, { "card_faces.name": rx }] },
+    extraFilter ? { $and: [nameFilter, extraFilter] } : nameFilter,
     LLM_CARD_PROJECTION
   )
     .sort({ released_at: -1 })
     .lean();
   return (card as MtgCard | null) ?? null;
+}
+
+/**
+ * Resolve a card by (case-insensitive) name — matching the card name, flavor
+ * name, or any face name. An exact match wins; otherwise a relaxed,
+ * punctuation-insensitive match is tried ("Ach Hans Run" finds
+ * `"Ach! Hans, Run!"`). Newest printing wins so text reflects current oracle
+ * wording. Returns null when unknown.
+ */
+export async function findCardByName(name: string): Promise<MtgCard | null> {
+  const exact = await findByNameRegex(new RegExp(`^${escapeRegex(name.trim())}$`, "i"));
+  if (exact) return exact;
+  const relaxed = relaxedNameRegex(name);
+  return relaxed ? findByNameRegex(relaxed) : null;
 }
 
 /**

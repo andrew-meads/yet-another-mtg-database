@@ -81,6 +81,31 @@ describe("describeToolPart", () => {
     ).toBe("fetched rulings for Humility");
   });
 
+  it("describes combo searches and proposals", () => {
+    expect(
+      describeToolPart({
+        type: "tool-findCombos",
+        state: "output-available",
+        input: { deckId: "d1" },
+        output: { deckName: "Gruul", totalIncluded: 2 }
+      })
+    ).toBe('searched combos in "Gruul" (2 found)');
+    expect(describeToolPart({ type: "tool-findCombos", state: "input-available" })).toBe(
+      "searching combos…"
+    );
+    expect(
+      describeToolPart({
+        type: "tool-proposeDeckChanges",
+        state: "output-available",
+        input: { changes: [{}, {}, {}] },
+        output: { proposal: {} }
+      })
+    ).toBe("proposed 3 changes");
+    expect(
+      describeToolPart({ type: "tool-proposeDeckChanges", state: "input-streaming" })
+    ).toBe("drafting a proposal…");
+  });
+
   it("describes failures with the in-band reason", () => {
     expect(
       describeToolPart({

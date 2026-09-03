@@ -3,10 +3,10 @@
 This document parks the remaining phases of the AI-agent plan so a future agent (or
 human) can continue it without the original planning conversation. **Read CLAUDE.md
 first** — it documents the codebase architecture and the already-shipped AI
-foundations this roadmap builds on. Phases 0, 1, and 2 are **done and shipped**;
-work continues from Phase 3.
+foundations this roadmap builds on. Phases 0–3 are **done and shipped**; what
+remains is the Phase 4 backlog.
 
-## Where things stand (Phases 0–2, shipped)
+## Where things stand (Phases 0–3, shipped)
 
 **Phase 0 — server-synced user settings + AI provider plumbing**
 
@@ -112,30 +112,37 @@ work continues from Phase 3.
 | Token cost | Deck/collection context enters via tools (`readDeck`), never client-stuffed prompts; LLM-facing card payloads slimmed (no `image_uris`), ~20-result caps with totals; `stopWhen: stepCountIs(8)` loop cap | |
 | Errors | 400 bad body, `409 ai_not_configured`, 502 provider/output failures with diagnostics | Established convention. |
 
-## Phase 3 — Proposals, "alternatives I own", combos
+**Phase 3 — proposals, "alternatives I own", combos** — see CLAUDE.md's "AI deck
+advisor chat" section for the full architecture. In brief:
 
-- **`proposeDeckChanges` tool**: input IS the proposal
-  `{ deckId, changes: [{ action: "add"|"remove"|"move", cardId, cardName,
-  sectionName?, ephemeral? }], rationale }`; `execute` validates ids/ownership
-  (reject foreign deckIds, unknown cards) and echoes it back as the tool result —
-  **it writes nothing**. Client renders that tool part as
-  `src/components/ai/ProposalCard.tsx`: per-change checkboxes + Apply, wired to the
-  existing `useCreatePhysicalCard` / `useDeckCardOp` hooks (existing invalidations
-  keep the UI live). Respect the ephemeral-card semantics documented in CLAUDE.md.
-- **"Alternatives I own"**: no new endpoint — a recipe in the deck-advisor system
-  prompt: (1) `getCardDetails(likedCard)` for function/colors/type, (2) one or more
-  `searchMyCards` calls with functional q-syntax queries (`o:"return" c<=u`,
-  `t:instant mv<=4`, …), (3) rank and explain trade-offs.
-- **`findCombos`**: Commander Spellbook REST API (open-source backend:
-  github.com/SpaceCowMedia/commander-spellbook-backend) — POST the decklist card
-  names from `readDeck` to its find-my-combos endpoint; slim the verbose response
-  hard (combo id, card names, result description).
-- **Tests**: unit — proposal validation/normalization, combo slimming; integration
-  — propose tool rejects foreign deckIds/unknown cards; jsdom — **ProposalCard
-  Apply fires the correct mutations + invalidations** (the critical UI test).
-  Optional Playwright smoke against a stubbed model endpoint.
-
-**Cut line**: full advertised feature set; all writes user-confirmed.
+- `proposeDeckChanges` tool: its input IS the proposal; execute validates
+  ownership/card names/copy counts/sections and echoes a normalized proposal
+  (canonical names, resolved sectionId, adds resolved to the newest
+  native-language printing — `NATIVE_CARD_LANG`/`findNativePrintingByName` in
+  `tools/shared.ts`) — writes nothing; invalid proposals return
+  `{ error, invalid: [{index, reason}] }` for the model to retry.
+  `ProposalCard.tsx` renders it as a per-card decision the USER makes (not the
+  model), with immediate-action buttons: adds — place real unassigned copies
+  from the active collection (`op:"place"`, creates nothing) / ephemeral
+  placeholders / skip; removes and moves — apply / skip; "Done" auto-skips the
+  undecided rest. The conversation pauses on an unresolved proposal (panel
+  input disabled); when every card is decided the panel auto-sends a
+  `[Proposal outcome …]` user message so the model learns what was actually
+  applied (the persona is prompted to end its turn after proposing and treat
+  that message as ground truth). Card names match punctuation-insensitively
+  (`src/lib/cardNames.ts` — `"Ach! Hans, Run!"` vs "Ach Hans Run" was a real
+  reported failure). Wired to `useCreatePhysicalCard` / `useDeckCardOp`
+  (normal write path: ownership checks, ephemeral semantics,
+  `invalidateCardMembership`). Verified live end-to-end: placing 2 real copies
+  moved existing documents (total physical-card count unchanged, zero
+  ephemerals), the removed copy returned to its collection, and the outcome
+  message round-tripped to the model.
+- `findCombos` tool: Commander Spellbook `/find-my-combos` via
+  `src/lib/server/comboSearch.ts` (pure `slimComboResponse`: id/url/cards/
+  produces + capped description; `missing` computed for almost-included; caps
+  20/10; no cache). Env: `COMMANDER_SPELLBOOK_API_BASE_URL`.
+- "Alternatives I own" is a prompt recipe (getCardDetails → functional
+  `searchMyCards` queries → rank), not an endpoint.
 
 ## Phase 4 — Backlog (unscheduled)
 
