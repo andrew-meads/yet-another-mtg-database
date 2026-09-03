@@ -61,6 +61,31 @@ export function isValidObjectId(id: string): boolean {
 }
 
 /**
+ * The system's native card language: printings created by the app (e.g.
+ * ephemeral copies from an applied proposal) should use a printing in this
+ * language when one exists.
+ */
+export const NATIVE_CARD_LANG = "en";
+
+/**
+ * Resolve a card by exact (case-insensitive) name to a printing in the
+ * system's native language — newest native printing first, falling back to
+ * the newest printing in any language for cards never printed natively.
+ */
+export async function findNativePrintingByName(name: string): Promise<MtgCard | null> {
+  const rx = new RegExp(`^${escapeRegex(name.trim())}$`, "i");
+  const nameFilter = { $or: [{ name: rx }, { flavor_name: rx }, { "card_faces.name": rx }] };
+  const native = await CardData.findOne(
+    { $and: [nameFilter, { lang: NATIVE_CARD_LANG }] },
+    LLM_CARD_PROJECTION
+  )
+    .sort({ released_at: -1 })
+    .lean();
+  if (native) return native as unknown as MtgCard;
+  return findCardByName(name);
+}
+
+/**
  * Resolve a card by (exact, case-insensitive) name — matching the card name,
  * flavor name, or any face name. Newest printing wins so text reflects current
  * oracle wording. Returns null when unknown.

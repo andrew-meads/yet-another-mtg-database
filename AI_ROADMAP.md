@@ -117,13 +117,18 @@ advisor chat" section for the full architecture. In brief:
 
 - `proposeDeckChanges` tool: its input IS the proposal; execute validates
   ownership/card names/copy counts/sections and echoes a normalized proposal
-  (canonical names, resolved cardId/sectionId) — writes nothing; invalid
-  proposals return `{ error, invalid: [{index, reason}] }` for the model to
-  retry. `ProposalCard.tsx` renders it as checkboxes + Apply, wired to
-  `useCreatePhysicalCard` / `useDeckCardOp` (normal write path: ownership
-  checks, ephemeral semantics, `invalidateCardMembership`). Verified live:
-  applying an add(ephemeral)+remove proposal created placeholder copies,
-  returned the removed copy to its collection, and refreshed the deck view.
+  (canonical names, resolved sectionId, adds resolved to the newest
+  native-language printing — `NATIVE_CARD_LANG`/`findNativePrintingByName` in
+  `tools/shared.ts`) — writes nothing; invalid proposals return
+  `{ error, invalid: [{index, reason}] }` for the model to retry.
+  `ProposalCard.tsx` renders it with a per-added-card three-way choice made by
+  the USER (not the model): place real unassigned copies from the active
+  collection (`op:"place"`, creates nothing), create ephemeral placeholders,
+  or skip; removes/moves are checkboxes. Wired to `useCreatePhysicalCard` /
+  `useDeckCardOp` (normal write path: ownership checks, ephemeral semantics,
+  `invalidateCardMembership`). Verified live: placing 2 real copies moved
+  existing documents (total physical-card count unchanged, zero ephemerals)
+  and the removed copy returned to its collection.
 - `findCombos` tool: Commander Spellbook `/find-my-combos` via
   `src/lib/server/comboSearch.ts` (pure `slimComboResponse`: id/url/cards/
   produces + capped description; `missing` computed for almost-included; caps

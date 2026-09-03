@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { DeckModel, PhysicalCardModel, CardData } from "@/db/schema";
-import { ToolContext, findCardByName, isValidObjectId, safeExecute } from "./shared";
+import { ToolContext, findNativePrintingByName, isValidObjectId, safeExecute } from "./shared";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -9,16 +9,18 @@ import { ToolContext, findCardByName, isValidObjectId, safeExecute } from "./sha
  * The propose-and-confirm write path: this tool's INPUT is the proposal. It
  * validates ids/ownership/feasibility and echoes a normalized proposal back as
  * its result — it writes NOTHING. The chat panel renders the echoed proposal
- * as a card with per-change checkboxes; the Apply button calls the existing
- * mutation hooks, so ownership checks, ephemeral semantics, and cache
- * invalidation all reuse the app's normal write path.
+ * as a card where the user decides, per added card, whether to place real
+ * copies from their active collection, create ephemeral placeholders (of the
+ * system's native-language printing, resolved here), or skip it; Apply calls
+ * the existing mutation hooks, so ownership checks, ephemeral semantics, and
+ * cache invalidation all reuse the app's normal write path.
  */
 
 const changeSchema = z.object({
   action: z
     .enum(["add", "remove", "move"])
     .describe(
-      '"add" a new copy to the deck, "remove" a copy from the deck (a collection-backed copy returns to its collection; an ephemeral placeholder is deleted), or "move" a copy between deck sections'
+      '"add" a copy to the deck (the user chooses whether it comes from their collection, is created as a placeholder, or is skipped), "remove" a copy from the deck (a collection-backed copy returns to its collection; an ephemeral placeholder is deleted), or "move" a copy between deck sections'
     ),
   cardName: z.string().min(1).describe("Exact card name"),
   count: z.number().int().min(1).max(8).optional().describe("How many copies (default 1)"),
@@ -27,12 +29,6 @@ const changeSchema = z.object({
     .optional()
     .describe(
       "Deck section: the target section for add/move (move REQUIRES it; add defaults to the first section), or the section to remove from (optional filter)"
-    ),
-  ephemeral: z
-    .boolean()
-    .optional()
-    .describe(
-      "add only: create the copy as an ephemeral (deck-only placeholder) card instead of adding it from/to the user's active collection"
     )
 });
 
@@ -114,7 +110,9 @@ export function makeProposeDeckChangesTool({ userId }: ToolContext) {
           }
 
           if (change.action === "add") {
-            const card = await findCardByName(change.cardName);
+            // Resolve to the newest native-language printing: if the user opts
+            // for placeholder copies, this is the printing they get.
+            const card = await findNativePrintingByName(change.cardName);
             if (!card) {
               invalid.push({ index, reason: `Unknown card "${change.cardName}"` });
               continue;
@@ -125,8 +123,7 @@ export function makeProposeDeckChangesTool({ userId }: ToolContext) {
               cardId: card.id,
               count,
               sectionName: section?.name,
-              sectionId: section?._id,
-              ephemeral: change.ephemeral || undefined
+              sectionId: section?._id
             });
             continue;
           }

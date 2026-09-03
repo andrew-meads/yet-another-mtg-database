@@ -65,7 +65,7 @@ describe("proposeDeckChanges tool", () => {
     const result = await run(tools.proposeDeckChanges, {
       deckId: String(deck._id),
       changes: [
-        { action: "add", cardName: "shock", count: 2, sectionName: "main", ephemeral: true },
+        { action: "add", cardName: "shock", count: 2, sectionName: "main" },
         { action: "remove", cardName: "lightning bolt" },
         { action: "move", cardName: "Forest", sectionName: "Sideboard" }
       ],
@@ -84,8 +84,7 @@ describe("proposeDeckChanges tool", () => {
       cardName: "Shock",
       cardId: "prop-shock",
       count: 2,
-      sectionName: "Main",
-      ephemeral: true
+      sectionName: "Main"
     });
     expect(add.sectionId).toBe(String((deck.sections as any)[0]._id));
     expect(remove).toMatchObject({ action: "remove", cardName: "Lightning Bolt", count: 1 });
@@ -97,6 +96,28 @@ describe("proposeDeckChanges tool", () => {
     const untouched = await DeckModel.findById(deck._id).lean();
     expect((untouched!.sections as any)[0].columns[0].cards).toHaveLength(3);
     expect((untouched!.sections as any)[1].columns[0].cards).toHaveLength(0);
+  });
+
+  it("resolves added cards to the newest native-language printing", async () => {
+    const { deck } = await seedProposalDeck();
+    // A newer Japanese printing must NOT win over the native (English) one.
+    await seedCard({ id: "growth-en", name: "Giant Growth", lang: "en", released_at: "2020-01-01" });
+    await seedCard({ id: "growth-ja", name: "Giant Growth", lang: "ja", released_at: "2025-01-01" });
+    // A card with no native printing still resolves (fallback to any language).
+    await seedCard({ id: "nihongo-ja", name: "Nihongo Only", lang: "ja" });
+
+    const tools = buildAiTools({ userId });
+    const result = await run(tools.proposeDeckChanges, {
+      deckId: String(deck._id),
+      changes: [
+        { action: "add", cardName: "Giant Growth" },
+        { action: "add", cardName: "Nihongo Only" }
+      ],
+      rationale: "language check"
+    });
+
+    expect(result.proposal.changes[0].cardId).toBe("growth-en");
+    expect(result.proposal.changes[1].cardId).toBe("nihongo-ja");
   });
 
   it("rejects a foreign deck", async () => {
