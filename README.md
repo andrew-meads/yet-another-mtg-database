@@ -72,6 +72,16 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   other printings of the same card allowed) and swaps the ones you pick back in,
   preserving every card's exact position. Each suggested copy shows a small card
   image (click to flip multi-faced cards) so you can see exactly which printing it is.
+- **Export decks** — the download button on a deck page opens an export dialog that saves the
+  decklist as **TXT**, **CSV**, **XLSX**, or **PDF**. Cards are aggregated per section
+  (`3x Godless Shrine`) in the order they appear in the deck — every column top to bottom,
+  then the next column, then the next section. Options: **separate by printing** (one line per
+  set/collector number instead of folding copies by name), **include ownership** (how many
+  copies are real cards you own versus deck-only placeholders), and, for PDF only, **include
+  card images** (two cards per row, each a small Scryfall image beside its count, name, printing,
+  and ownership details, with a placeholder box for any image that can't be fetched). CSV and XLSX share the same columns
+  (Section / Count / Name, plus printing and ownership columns when chosen); the XLSX adds a
+  `Summary` sheet.
 - **Camera card scanning** — capture one or more physical cards (or upload an image)
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from

@@ -1,4 +1,5 @@
 import { CardDataMap, DetailedPhysicalCard, DetailedPhysicalCardEntry } from "@/types/PhysicalCard";
+import { DeckWithCardEntries, DeckWithCards } from "@/types/Deck";
 
 /**
  * Re-joins wire entries with the response's deduplicated card-data map back into
@@ -16,4 +17,21 @@ export function joinCardEntries(
     const { cardId: _cardId, ...rest } = entry;
     return [{ ...rest, card }];
   });
+}
+
+/**
+ * Joins a wire-form deck (entries by cardId) with its card-data map into the
+ * DeckWithCards shape: every column's entries become DetailedPhysicalCards.
+ */
+export function joinDeckEntries(deck: DeckWithCardEntries, cardData: CardDataMap): DeckWithCards {
+  return {
+    ...deck,
+    sections: deck.sections.map((section) => ({
+      ...section,
+      columns: section.columns.map((column) => ({
+        ...column,
+        cards: joinCardEntries(column.cards, cardData)
+      }))
+    }))
+  };
 }

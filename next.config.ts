@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000 // ~1 year
   },
 
+  // Deck-export renderers are CommonJS node libraries; leave them to Node's
+  // resolver instead of bundling them into the route handler.
+  serverExternalPackages: ["exceljs", "pdf-lib"],
+
   experimental: {
     turbopackFileSystemCacheForDev: false
   }

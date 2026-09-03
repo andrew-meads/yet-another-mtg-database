@@ -12,10 +12,11 @@ import { getEntityIcon } from "@/lib/collectionUtils";
 import { countDeckCards, formatCardCount } from "@/lib/deckUtils";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
 import FillDeckDialog from "@/components/my-cards-page/deck-view/FillDeckDialog";
+import ExportDeckDialog from "@/components/my-cards-page/deck-view/ExportDeckDialog";
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Archive, PackagePlus, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Archive, Download, PackagePlus, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface PageProps {
@@ -32,6 +33,7 @@ export default function DeckPage({ params }: PageProps) {
   const archiveDeck = useArchiveDeck();
   const [editOpen, setEditOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const { toggle: toggleAiChat, setChatContext } = useAiChat();
 
   useEffect(() => {
@@ -139,6 +141,20 @@ export default function DeckPage({ params }: PageProps) {
                 variant="outline"
                 size="icon"
                 className="cursor-pointer"
+                onClick={() => setExportOpen(true)}
+                aria-label="Export deck"
+              >
+                <Download className="size-[1.2rem]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Export deck as TXT, XLSX, or PDF</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="cursor-pointer"
                 onClick={handleArchive}
                 disabled={archiveDeck.isPending}
                 aria-label="Archive deck"
@@ -182,6 +198,7 @@ export default function DeckPage({ params }: PageProps) {
         <DeckView deck={deck} />
       </div>
       <FillDeckDialog deck={deck} open={fillOpen} onOpenChange={setFillOpen} />
+      <ExportDeckDialog deck={deck} open={exportOpen} onOpenChange={setExportOpen} />
       <NewCollectionDialog
         open={editOpen}
         onOpenChange={setEditOpen}

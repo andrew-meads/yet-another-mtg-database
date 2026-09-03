@@ -1,22 +1,16 @@
 import connectDB from "@/db/mongoose";
 import { DeckModel, PhysicalCardModel } from "@/db/schema";
-import { DeckWithCardEntries } from "@/types/Deck";
-import { detailPhysicalCards } from "@/lib/server/cardDetails";
-import { findOrCreateColumn } from "@/lib/server/deckArrange";
+import { loadDeckWithCards } from "@/lib/server/deckLoad";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * GET /api/decks/[id]
  * Retrieves a deck. With ?details=true, returns the nested section/column
  * arrangement of physical-card entries (with collection badges) plus a
  * deduplicated top-level `cardData` map keyed by Scryfall id — the client
- * re-joins entries to card data.
- *
- * Reconciles arrangement from the deckId back-ref: any physical card pointing at
- * this deck but missing from the arrays is appended to a default column.
+ * re-joins entries to card data. See loadDeckWithCards for the reconciliation
+ * of the arrangement against the deckId back-refs.
  */
 export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[id]">) {
   try {
@@ -26,64 +20,30 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[i
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
-    const deck = await DeckModel.findOne({ _id: id, owner: userId });
-    if (!deck) {
+    const includeDetails = request.nextUrl.searchParams.get("details")?.toLowerCase() === "true";
+
+    if (!includeDetails) {
+      const deck = await DeckModel.findOne({ _id: id, owner: userId }).lean();
+      if (!deck) {
+        return Response.json({ error: "Deck not found" }, { status: 404 });
+      }
+      return Response.json({
+        deck: {
+          _id: String(deck._id),
+          name: deck.name,
+          description: deck.description ?? "",
+          isActive: deck.isActive ?? false,
+          owner: String(deck.owner),
+          kind: "deck" as const
+        }
+      });
+    }
+
+    const loaded = await loadDeckWithCards(id, userId);
+    if (!loaded) {
       return Response.json({ error: "Deck not found" }, { status: 404 });
     }
-
-    const summary = {
-      _id: String(deck._id),
-      name: deck.name,
-      description: deck.description ?? "",
-      isActive: deck.isActive ?? false,
-      owner: String(deck.owner),
-      kind: "deck" as const
-    };
-
-    const includeDetails = request.nextUrl.searchParams.get("details")?.toLowerCase() === "true";
-    if (!includeDetails) return Response.json({ deck: summary });
-
-    // Reconcile: append any owned-by-this-deck cards missing from the arrangement.
-    const arranged = new Set<string>();
-    deck.sections.forEach((s: any) =>
-      s.columns.forEach((col: any) => col.cards.forEach((cid: any) => arranged.add(String(cid))))
-    );
-    const owned = await PhysicalCardModel.find({ deckId: id, owner: userId }, { _id: 1 }).lean();
-    const orphanIds = owned.map((o) => o._id).filter((oid) => !arranged.has(String(oid)));
-    if (orphanIds.length > 0) {
-      const column = findOrCreateColumn(deck);
-      column.cards.push(...orphanIds);
-      deck.markModified("sections");
-      await deck.save();
-    }
-
-    // Gather all arranged ids and detail them.
-    const allIds: string[] = [];
-    deck.sections.forEach((s: any) =>
-      s.columns.forEach((col: any) => col.cards.forEach((cid: any) => allIds.push(String(cid))))
-    );
-    const physicalCards = await PhysicalCardModel.find({
-      _id: { $in: allIds },
-      owner: userId
-    }).lean();
-    const { entries, cardData } = await detailPhysicalCards(physicalCards);
-    const entryMap = new Map(entries.map((d) => [d._id, d]));
-
-    const deckWithCards: DeckWithCardEntries = {
-      ...summary,
-      sections: deck.sections.map((s: any) => ({
-        _id: String(s._id),
-        name: s.name,
-        columns: s.columns.map((col: any) => ({
-          _id: String(col._id),
-          cards: col.cards
-            .map((cid: any) => entryMap.get(String(cid)))
-            .filter((c: any): c is NonNullable<typeof c> => Boolean(c))
-        }))
-      }))
-    };
-
-    return Response.json({ deck: deckWithCards, cardData });
+    return Response.json({ deck: loaded.deck, cardData: loaded.cardData });
   } catch (error) {
     console.error("Error fetching deck:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });

@@ -3,7 +3,7 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { DeckWithCardEntries, DeckWithCards } from "@/types/Deck";
 import { CardDataMap } from "@/types/PhysicalCard";
-import { joinCardEntries } from "@/lib/cardEntries";
+import { joinDeckEntries } from "@/lib/cardEntries";
 
 export interface DeckDetailsResponse {
   deck: DeckWithCards;
@@ -23,18 +23,7 @@ async function fetchDeckDetails(deckId: string): Promise<DeckDetailsResponse> {
   }
   const { deck, cardData }: DeckDetailsWireResponse = await res.json();
 
-  return {
-    deck: {
-      ...deck,
-      sections: deck.sections.map((section) => ({
-        ...section,
-        columns: section.columns.map((column) => ({
-          ...column,
-          cards: joinCardEntries(column.cards, cardData)
-        }))
-      }))
-    }
-  };
+  return { deck: joinDeckEntries(deck, cardData) };
 }
 
 export function useRetrieveDeckDetails(
