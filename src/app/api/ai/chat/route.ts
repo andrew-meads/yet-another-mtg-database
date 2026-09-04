@@ -1,5 +1,12 @@
 import { NextRequest } from "next/server";
-import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStreamResponse,
+  isStepCount,
+  streamText,
+  toUIMessageStream,
+  UIMessage
+} from "ai";
 import { z } from "zod";
 import connectDB from "@/db/mongoose";
 import { getAuthSession } from "@/auth";
@@ -56,7 +63,9 @@ export async function POST(request: NextRequest) {
 
     let modelMessages;
     try {
-      modelMessages = convertToModelMessages(parsed.data.messages as unknown as UIMessage[]);
+      modelMessages = await convertToModelMessages(
+        parsed.data.messages as unknown as UIMessage[]
+      );
     } catch (error) {
       const detail = error instanceof Error ? error.message : "malformed messages";
       return Response.json({ error: `Invalid messages: ${detail}` }, { status: 400 });
@@ -68,10 +77,10 @@ export async function POST(request: NextRequest) {
 
     const result = streamText({
       model,
-      system: persona.buildSystemPrompt(parsed.data.context ?? {}),
+      instructions: persona.buildSystemPrompt(parsed.data.context ?? {}),
       messages: modelMessages,
       tools: buildAiToolSubset({ userId }, persona.toolNames),
-      stopWhen: stepCountIs(persona.stepLimit),
+      stopWhen: isStepCount(persona.stepLimit),
       // The panel's Stop button (and a closed tab) aborts the request; without
       // this the server-side tool loop keeps running to completion.
       abortSignal: request.signal,
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
       maxRetries: 1,
       // One line per model step so a stalled turn is diagnosable from the
       // server console: what the model did, why the step ended, token usage.
-      onStepFinish: ({ finishReason, usage, toolCalls, text, reasoningText }) => {
+      onStepEnd: ({ finishReason, usage, toolCalls, text, reasoningText }) => {
         const calls = toolCalls.map((c) => c.toolName).join(",") || "none";
         console.log(
           `[ai] chat step: finish=${finishReason} toolCalls=${calls} text=${text.length} chars reasoning=${reasoningText?.length ?? 0} chars tokens=${usage.totalTokens ?? "?"}`
@@ -92,14 +101,17 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return result.toUIMessageStreamResponse({
+    return createUIMessageStreamResponse({
       headers: { "Cache-Control": "no-cache, no-transform" },
-      // Surface real provider error text to the client (house convention:
-      // diagnostics beat opaque "something went wrong" messages).
-      onError: (error) => {
-        const message = error instanceof Error ? error.message : "AI request failed";
-        return message.slice(0, 500);
-      }
+      stream: toUIMessageStream({
+        stream: result.stream,
+        // Surface real provider error text to the client (house convention:
+        // diagnostics beat opaque "something went wrong" messages).
+        onError: (error) => {
+          const message = error instanceof Error ? error.message : "AI request failed";
+          return message.slice(0, 500);
+        }
+      })
     });
   } catch (error) {
     if (error instanceof AiNotConfiguredError) return aiNotConfiguredResponse();

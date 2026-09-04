@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     try {
       const result = await generateText({
         model,
-        system: buildSearchTranslatorSystemPrompt(),
+        instructions: buildSearchTranslatorSystemPrompt(),
         prompt: parsed.data.prompt,
         // Generous ceiling: reasoning models spend output tokens on thinking
         // before any visible text, and a starved budget yields an empty reply.

@@ -3,7 +3,8 @@ import { test, expect } from "@playwright/test";
 test("my-cards landing lists the seeded collection", async ({ page }) => {
   await page.goto("/my-cards");
   await expect(page.getByRole("heading", { name: "My Cards" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Main Collection" })).toBeVisible({
+  // Scoped to the page body: the app bar may also show a "Main Collection" pin.
+  await expect(page.getByRole("main").getByRole("link", { name: "Main Collection" })).toBeVisible({
     timeout: 15_000
   });
 });

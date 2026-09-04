@@ -40,14 +40,14 @@ remains is the Phase 4 backlog.
 **Phase 2 — chat infrastructure + deck advisor (read-only)** — see CLAUDE.md's
 "AI deck advisor chat" section for the full architecture. In brief:
 
-- `POST /api/ai/chat` (`streamText` → `toUIMessageStreamResponse`, client-held
+- `POST /api/ai/chat` (`streamText` → `toUIMessageStream` + `createUIMessageStreamResponse`, client-held
   transcript), agent registry (`src/lib/ai/agents/`, persona `deck-advisor`),
   read-only tool layer (`src/lib/ai/tools/`: readDeck, readCollection,
   searchCards/searchMyCards on the extracted `runCardSearch` core, getCardDetails,
   manaBaseStats over pure `src/lib/ai/manaBase.ts`, getRulings w/ `cardrulings`
   7-day cache, lookupRule w/ `rulescaches` 24h cache), docked `AiChatPanel` +
   `AiChatContext` UI mirroring the SearchDocsPanel pattern, sparkle entry on the
-  deck page. New dep: `@ai-sdk/react@^2` (pairs with `ai@5`).
+  deck page. New dep: `@ai-sdk/react` (now `^4`, pairing with `ai@7`; originally `^2` with `ai@5`).
 - **Streaming through `src/proxy.ts` middleware is verified working in dev**
   (browser-tested with a local stub endpoint streaming word-by-word — chunks
   arrive progressively). **Still untested: production Caddy** — its
@@ -109,7 +109,7 @@ remains is the Phase 4 backlog.
 | MCP server | Not now; tool layer stays transport-agnostic (plain async fns + zod) so an MCP adapter can be added later (e.g. Claude Desktop over the collection, gated by a personal token) | Tools must be scoped to `session.user._id`; in-process factories get that from `getAuthSession()` for free. |
 | Write actions | **Propose-and-confirm**: the agent gets NO mutating tools. A `proposeDeckChanges` tool validates + echoes a structured proposal; the client renders it as a card with checkboxes and an Apply button that calls the existing mutation hooks (`useCreatePhysicalCard`, `useDeckCardOp`) so ownership checks, ephemeral semantics, and `invalidateCardMembership` come for free | Zero blast radius from a misbehaving model; no server→client invalidation channel needed. |
 | Conversation state | Client-held (`useChat` resends the transcript); no persistence collection | Personal app; avoids schema/retention. Chat history persistence is backlog. |
-| Token cost | Deck/collection context enters via tools (`readDeck`), never client-stuffed prompts; LLM-facing card payloads slimmed (no `image_uris`), ~20-result caps with totals; `stopWhen: stepCountIs(8)` loop cap | |
+| Token cost | Deck/collection context enters via tools (`readDeck`), never client-stuffed prompts; LLM-facing card payloads slimmed (no `image_uris`), ~20-result caps with totals; `stopWhen: isStepCount(8)` loop cap | |
 | Errors | 400 bad body, `409 ai_not_configured`, 502 provider/output failures with diagnostics | Established convention. |
 
 **Phase 3 — proposals, "alternatives I own", combos** — see CLAUDE.md's "AI deck

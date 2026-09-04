@@ -3,11 +3,10 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import { CardData } from "@/db/schema";
 import fs from "fs";
-import { parser } from "stream-json";
-import StreamArray, { streamArray } from "stream-json/streamers/StreamArray";
 import { Command } from "commander";
-import { Readable } from "stream";
+import { Duplex, Readable } from "stream";
 import { SCRYFALL_HEADERS } from "@/lib/scryfall";
+import { createCardArrayStream } from "@/lib/server/scryfallBulkStream";
 
 const program = new Command();
 program
@@ -63,16 +62,16 @@ async function run() {
  * Supports three input methods: command-line specified file, URL download, or environment variable file path.
  * The pipeline parses JSON and streams individual array elements for memory-efficient processing.
  *
- * @returns A StreamArray pipeline that emits individual card objects
+ * @returns An object stream that emits individual `{ key, value }` card items
  * @throws Error if both --file and --data-url options are specified, or if no input source is available
  */
-async function getReadPipeline(): Promise<StreamArray> {
+async function getReadPipeline(): Promise<Duplex> {
   if (options.file && options.dataUrl)
     throw new Error("Cannot specify both --file and --data-url options");
 
   if (options.file) {
     console.log(`Importing cards from file: ${options.file}`);
-    return fs.createReadStream(options.file).pipe(parser()).pipe(streamArray());
+    return createCardArrayStream(fs.createReadStream(options.file));
   }
 
   if (options.dataUrl) {
@@ -82,9 +81,7 @@ async function getReadPipeline(): Promise<StreamArray> {
       throw new Error(`Failed to download data from URL: ${res.status} ${res.statusText}`);
     }
     // Convert Web Stream to Node.js stream
-    return Readable.fromWeb(res.body as any)
-      .pipe(parser())
-      .pipe(streamArray());
+    return createCardArrayStream(Readable.fromWeb(res.body as any));
   }
 
   if (!process.env.ALL_CARDS_FILE) {
@@ -92,7 +89,7 @@ async function getReadPipeline(): Promise<StreamArray> {
   }
 
   console.log(`Importing cards from default ALL_CARDS_FILE: ${process.env.ALL_CARDS_FILE}`);
-  return fs.createReadStream(process.env.ALL_CARDS_FILE!).pipe(parser()).pipe(streamArray());
+  return createCardArrayStream(fs.createReadStream(process.env.ALL_CARDS_FILE!));
 }
 
 /**
@@ -101,10 +98,10 @@ async function getReadPipeline(): Promise<StreamArray> {
  * oversized cards, and cards with invalid type_line values.
  * Implements backpressure handling by pausing/resuming the stream during batch inserts.
  *
- * @param pipeline - The StreamArray pipeline that provides card data
+ * @param pipeline - The card item stream from getReadPipeline
  * @returns Promise that resolves when all cards have been processed
  */
-async function importCards(pipeline: StreamArray) {
+async function importCards(pipeline: Duplex) {
   return new Promise<void>((resolve, reject) => {
     const BATCH_SIZE = 1000;
     let batch: any[] = [];

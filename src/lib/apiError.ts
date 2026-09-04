@@ -23,6 +23,6 @@ export function isNotFoundError(error: unknown): boolean {
  * failures, but give up immediately on a 404 — a missing entity won't appear by
  * retrying, and the page wants to show not-found right away.
  */
-export function retryUnlessNotFound(failureCount: number, error: unknown): boolean {
+export function retryUnlessNotFound(failureCount: number, error: Error): boolean {
   return !isNotFoundError(error) && failureCount < 3;
 }

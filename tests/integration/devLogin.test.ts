@@ -31,7 +31,7 @@ describe("dev-login provisioning", () => {
     await provisionDevUser();
     await provisionDevUser();
 
-    expect(await UserModel.countDocuments({ _id: new Types.ObjectId(DEV_USER_ID) })).toBe(1);
+    expect(await UserModel.countDocuments({ _id: DEV_USER_ID })).toBe(1);
     expect(
       await CollectionModel.countDocuments({ owner: new Types.ObjectId(DEV_USER_ID) })
     ).toBe(1);

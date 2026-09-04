@@ -1,4 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
+import { seedOpenEntities } from "./openEntities";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -41,16 +42,6 @@ async function html5DragAndDrop(page: Page, sourceTestId: string, targetTestId: 
     },
     { sourceTestId, targetTestId }
   );
-}
-
-/** Seed which entities are "open" (and pinned) before the app boots. */
-async function seedOpenEntities(
-  page: Page,
-  refs: Array<{ id: string; kind: "collection" | "deck"; pinned?: boolean }>
-) {
-  await page.addInitScript((value) => {
-    window.localStorage.setItem("open-entity-ids", JSON.stringify(value));
-  }, refs);
 }
 
 const deckCardWith = (page: Page, name: string) =>
