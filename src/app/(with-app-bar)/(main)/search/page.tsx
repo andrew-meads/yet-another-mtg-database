@@ -22,7 +22,7 @@ function DesktopSearchPageContent() {
       <SearchResults.PaginationControls />
 
       <div className="min-h-0 flex-1">
-        <CardsTable cards={cards} isLoading={isLoading} error={error} />
+        <CardsTable cards={cards} isLoading={isLoading} error={error} query={searchParams.q} />
       </div>
 
       <SearchResults.PaginationControls />
@@ -54,6 +54,7 @@ function MobileSearchPageContent() {
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
+          query={searchParams.q}
         />
       </div>
     </div>

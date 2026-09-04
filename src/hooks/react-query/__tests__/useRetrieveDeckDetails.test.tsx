@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApiError, isNotFoundError } from "@/lib/apiError";
 import { useRetrieveDeckDetails } from "@/hooks/react-query/useRetrieveDeckDetails";
 
 function wrapper(client: QueryClient) {
@@ -46,7 +47,13 @@ const wireResponse = {
                 deckId: "deck-1",
                 collectionName: "Main"
               },
-              { _id: "pc-2", cardId: "card-a", collectionId: null, deckId: "deck-1", isEphemeral: true }
+              {
+                _id: "pc-2",
+                cardId: "card-a",
+                collectionId: null,
+                deckId: "deck-1",
+                isEphemeral: true
+              }
             ]
           }
         ]
@@ -101,5 +108,26 @@ describe("useRetrieveDeckDetails", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error!.message).toBe("Deck not found");
+  });
+});
+
+describe("useRetrieveDeckDetails 404 handling", () => {
+  it("surfaces a 404 as an ApiError without retrying", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { "content-type": "application/json" }
+      })
+    );
+    const client = new QueryClient();
+    const { result } = renderHook(() => useRetrieveDeckDetails("missing"), {
+      wrapper: wrapper(client)
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeInstanceOf(ApiError);
+    expect((result.current.error as ApiError).status).toBe(404);
+    expect(isNotFoundError(result.current.error)).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

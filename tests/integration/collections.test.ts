@@ -136,7 +136,10 @@ describe("GET /api/collections/[id]?details=true&q=... (Scryfall search scope)",
 
   const search = async (q: string) => {
     const res = await getCollection(
-      jsonRequest(`/api/collections/${collectionId}?details=true&q=${encodeURIComponent(q)}`, "GET"),
+      jsonRequest(
+        `/api/collections/${collectionId}?details=true&q=${encodeURIComponent(q)}`,
+        "GET"
+      ),
       ctx({ id: collectionId })
     );
     expect(res.status).toBe(200);
@@ -180,6 +183,26 @@ describe("GET /api/collections/[id]?details=true&q=... (Scryfall search scope)",
     const dragon = await seedCard({ name: "Shivan Dragon", type_line: "Creature — Dragon" });
     await seedPhysicalCard(owner, dragon.id, other);
     expect(await search("t:creature")).toEqual(["Goblin Guide", "Serra Angel"]);
+  });
+});
+
+describe("GET /api/collections/[id] (missing ids)", () => {
+  it("404s for a malformed id instead of surfacing a cast error", async () => {
+    const res = await getCollection(
+      jsonRequest("/api/collections/doesnt-exist?details=true", "GET"),
+      ctx({ id: "doesnt-exist" })
+    );
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Collection not found" });
+  });
+
+  it("404s for a well-formed id that matches nothing", async () => {
+    const id = "000000000000000000000000";
+    const res = await getCollection(
+      jsonRequest(`/api/collections/${id}?details=true`, "GET"),
+      ctx({ id })
+    );
+    expect(res.status).toBe(404);
   });
 });
 

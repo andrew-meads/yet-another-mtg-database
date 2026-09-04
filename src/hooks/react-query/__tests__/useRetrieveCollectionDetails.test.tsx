@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApiError, isNotFoundError } from "@/lib/apiError";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 
 function wrapper(client: QueryClient) {
@@ -93,5 +94,26 @@ describe("useRetrieveCollectionDetails", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error!.message).toBe("Collection not found");
+  });
+});
+
+describe("useRetrieveCollectionDetails 404 handling", () => {
+  it("surfaces a 404 as an ApiError without retrying", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { "content-type": "application/json" }
+      })
+    );
+    const client = new QueryClient();
+    const { result } = renderHook(() => useRetrieveCollectionDetails("missing"), {
+      wrapper: wrapper(client)
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeInstanceOf(ApiError);
+    expect((result.current.error as ApiError).status).toBe(404);
+    expect(isNotFoundError(result.current.error)).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

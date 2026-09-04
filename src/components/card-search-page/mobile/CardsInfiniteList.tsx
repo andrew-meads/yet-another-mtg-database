@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MtgCard } from "@/types/MtgCard";
 import CardListItem from "./CardListItem";
+import NoughtyEasterEgg from "@/components/NoughtyEasterEgg";
+import { isNoughtyQuery } from "@/lib/easterEggs";
 
 interface CardsInfiniteListProps {
   cardPages: MtgCard[][];
@@ -13,6 +15,8 @@ interface CardsInfiniteListProps {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
+  /** Raw search text behind `cardPages`; an empty result for the mascot's name shows the easter egg. */
+  query?: string;
 }
 
 const SCROLL_POSITION_KEY = "cards-infinite-list-scroll";
@@ -23,7 +27,8 @@ export default function CardsInfiniteList({
   error: _error,
   hasNextPage,
   isFetchingNextPage,
-  fetchNextPage
+  fetchNextPage,
+  query
 }: CardsInfiniteListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasRestoredScroll = useRef(false);
@@ -113,11 +118,15 @@ export default function CardsInfiniteList({
   return (
     <div className="overflow-hidden rounded-md border">
       <div ref={scrollContainerRef} className="max-h-[calc(100vh-20rem)] overflow-y-auto">
-        {uniqueCards.length === 0 && !isLoading && (
-          <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
-            No cards found
-          </div>
-        )}
+        {uniqueCards.length === 0 &&
+          !isLoading &&
+          (isNoughtyQuery(query) ? (
+            <NoughtyEasterEgg />
+          ) : (
+            <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
+              No cards found
+            </div>
+          ))}
 
         {/* Virtual container with total height */}
         <div

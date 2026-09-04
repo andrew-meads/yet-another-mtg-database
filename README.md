@@ -249,6 +249,9 @@ Scryfall printings. Run the scanner via the dev/prod compose files (it ships as
 ```
 src/
 ├── app/          # Next.js App Router: pages, route groups, and /api routes
+│                 # (favicon.ico / icon.png / apple-icon.png = site icons, cropped from the mascot
+│                 #  public/noughty.png — which also hides somewhere in the app as an easter egg;
+│                 #  not-found.tsx is the 404 page, starring public/noughty-404.png)
 ├── components/   # React components (UI, search page, my-cards page, scan, dnd)
 ├── context/      # React context providers + TanStack Query provider
 ├── db/           # Mongoose connection (mongoose.ts) and schemas (schema.ts)

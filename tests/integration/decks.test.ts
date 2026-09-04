@@ -62,6 +62,17 @@ describe("GET /api/decks/[id]?details=true (reconciliation)", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("404s for a malformed id instead of surfacing a cast error", async () => {
+    for (const details of ["?details=true", ""]) {
+      const res = await getDeck(
+        jsonRequest(`/api/decks/doesnt-exist${details}`, "GET"),
+        ctx({ id: "doesnt-exist" })
+      );
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: "Deck not found" });
+    }
+  });
 });
 
 describe("POST /api/decks/[id]/cards", () => {

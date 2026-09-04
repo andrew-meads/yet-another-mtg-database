@@ -4,6 +4,7 @@ import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { CollectionWithCardEntries, CollectionWithCards } from "@/types/Collection";
 import { CardDataMap } from "@/types/PhysicalCard";
 import { joinCardEntries } from "@/lib/cardEntries";
+import { ApiError, retryUnlessNotFound } from "@/lib/apiError";
 
 export interface CollectionDetailsResponse {
   collection: CollectionWithCards;
@@ -30,7 +31,7 @@ async function fetchCollectionDetails(
     const errorData = await res
       .json()
       .catch(() => ({ error: "Failed to fetch collection details" }));
-    throw new Error(errorData.error || `Request failed with status ${res.status}`);
+    throw new ApiError(errorData.error || `Request failed with status ${res.status}`, res.status);
   }
 
   const { collection, cardData }: CollectionDetailsWireResponse = await res.json();
@@ -47,6 +48,7 @@ export function useRetrieveCollectionDetails(
     queryKey: ["collection-details", collectionId, q ?? ""],
     queryFn: () => fetchCollectionDetails(collectionId!, q),
     enabled: !!collectionId, // Only run query if collectionId is provided
+    retry: retryUnlessNotFound,
     staleTime: 30_000, // Consider data fresh for 30 seconds
     placeholderData: (prev) => prev // Keep showing previous results while refetching on query change
   });

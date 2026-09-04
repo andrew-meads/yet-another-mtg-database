@@ -88,8 +88,14 @@ function makeCollection(cards: DetailedPhysicalCard[]): CollectionWithCards {
   };
 }
 
-function renderTable(cards: DetailedPhysicalCard[]) {
-  render(<CollectionTable collection={makeCollection(cards)} onSearchChange={() => {}} />);
+function renderTable(cards: DetailedPhysicalCard[], initialQuery?: string) {
+  render(
+    <CollectionTable
+      collection={makeCollection(cards)}
+      initialQuery={initialQuery}
+      onSearchChange={() => {}}
+    />
+  );
 }
 
 const bolt = makeCard();
@@ -134,6 +140,32 @@ describe("CollectionTable hide-cards-in-decks toggle", () => {
     renderTable([makePhysical("p1", bolt, { deckId: "d1", deckName: "Burn" })]);
     fireEvent.click(screen.getByLabelText("Hide cards in decks"));
     expect(screen.getByText("All matching cards are in decks")).toBeInTheDocument();
+  });
+});
+
+describe("CollectionTable empty states", () => {
+  it("says the collection is empty when there are no cards and no query", () => {
+    renderTable([]);
+    expect(screen.getByText("No cards in this collection")).toBeInTheDocument();
+  });
+
+  it("says nothing matched for an ordinary query with no results", () => {
+    renderTable([], "t:dreadnought");
+    expect(screen.getByText("No cards match your search")).toBeInTheDocument();
+    expect(screen.queryByTestId("noughty-easter-egg")).not.toBeInTheDocument();
+  });
+
+  it("reveals the mascot when the query is the mascot's name", () => {
+    renderTable([], "noughty the dreadnought");
+    expect(screen.getByTestId("noughty-easter-egg")).toBeInTheDocument();
+    expect(screen.queryByText("No cards match your search")).not.toBeInTheDocument();
+  });
+
+  it("keeps showing real rows even when the query is the mascot's name", () => {
+    // The server decides what matches; the egg only replaces an *empty* result.
+    renderTable([makePhysical("p1", bolt)], "noughty the dreadnought");
+    expect(screen.getByTestId("collection-row")).toBeInTheDocument();
+    expect(screen.queryByTestId("noughty-easter-egg")).not.toBeInTheDocument();
   });
 });
 

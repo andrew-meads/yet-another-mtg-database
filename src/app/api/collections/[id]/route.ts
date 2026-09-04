@@ -4,6 +4,7 @@ import { CollectionWithCardEntries } from "@/types/Collection";
 import { detailPhysicalCards } from "@/lib/server/cardDetails";
 import { parseSearchQuery } from "@/lib/search/queryBuilder";
 import { NextRequest } from "next/server";
+import { Types } from "mongoose";
 import { getAuthSession } from "@/auth";
 
 /**
@@ -26,7 +27,10 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/collecti
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
-    const collection = await CollectionModel.findOne({ _id: id, owner: userId }).lean();
+    // A malformed id can't be anyone's collection — 404 rather than a CastError 500.
+    const collection = Types.ObjectId.isValid(id)
+      ? await CollectionModel.findOne({ _id: id, owner: userId }).lean()
+      : null;
 
     if (!collection) {
       return Response.json({ error: "Collection not found" }, { status: 404 });

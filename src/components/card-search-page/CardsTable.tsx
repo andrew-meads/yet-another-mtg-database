@@ -11,6 +11,8 @@ import { useAddCardToActiveDeck } from "@/hooks/useAddCardToActiveDeck";
 import { useSearchAddMeta } from "@/context/SearchAddMetaContext";
 import CardPopup from "@/components/CardPopup";
 import CardsTableRow from "@/components/card-search-page/CardsTableRow";
+import NoughtyEasterEgg from "@/components/NoughtyEasterEgg";
+import { isNoughtyQuery } from "@/lib/easterEggs";
 
 /**
  * Props for the CardsTable component
@@ -26,6 +28,11 @@ export interface CardsTableProps {
   maxHeight?: string;
   /** Optional callback when a card is clicked. If not provided, uses CardSelectionContext */
   onCardClicked?: (card: MtgCard) => void;
+  /**
+   * The raw search text behind `cards` (without default filters). Only used to
+   * decide whether an empty result should reveal the mascot easter egg.
+   */
+  query?: string;
 }
 
 /**
@@ -45,7 +52,8 @@ export default function CardsTable({
   isLoading,
   error,
   maxHeight,
-  onCardClicked
+  onCardClicked,
+  query
 }: CardsTableProps) {
   // === EARLY RETURNS FOR SPECIAL STATES ===
   if (error) {
@@ -66,6 +74,7 @@ export default function CardsTable({
   }
 
   if (!cards || cards.length === 0) {
+    if (isNoughtyQuery(query)) return <NoughtyEasterEgg />;
     return (
       <div className="bg-muted/50 text-muted-foreground rounded-md border p-8 text-center">
         No cards found

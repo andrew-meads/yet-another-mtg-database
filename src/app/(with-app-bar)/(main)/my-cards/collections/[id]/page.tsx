@@ -11,7 +11,8 @@ import CollectionTable from "@/components/my-cards-page/collection-view/Collecti
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
+import { isNotFoundError } from "@/lib/apiError";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -37,6 +38,9 @@ function CollectionPageContent({ id }: { id: string }) {
     if (data?.collection) addOpenEntity(data.collection);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.collection?._id]);
+
+  // An unknown (or someone else's) collection id renders the app's 404 page.
+  if (isNotFoundError(error)) notFound();
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading collection...</p>;

@@ -2,6 +2,7 @@ import connectDB from "@/db/mongoose";
 import { DeckModel, PhysicalCardModel } from "@/db/schema";
 import { loadDeckWithCards } from "@/lib/server/deckLoad";
 import { NextRequest } from "next/server";
+import { Types } from "mongoose";
 import { getAuthSession } from "@/auth";
 
 /**
@@ -21,6 +22,11 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/decks/[i
 
     const { id } = await ctx.params;
     const includeDetails = request.nextUrl.searchParams.get("details")?.toLowerCase() === "true";
+
+    // A malformed id can't be anyone's deck — 404 rather than a CastError 500.
+    if (!Types.ObjectId.isValid(id)) {
+      return Response.json({ error: "Deck not found" }, { status: 404 });
+    }
 
     if (!includeDetails) {
       const deck = await DeckModel.findOne({ _id: id, owner: userId }).lean();

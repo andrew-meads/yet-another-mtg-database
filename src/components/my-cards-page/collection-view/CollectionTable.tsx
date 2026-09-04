@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
+import NoughtyEasterEgg from "@/components/NoughtyEasterEgg";
+import { isNoughtyQuery } from "@/lib/easterEggs";
 
 export interface CollectionTableProps {
   collection: CollectionWithCards;
@@ -252,6 +254,10 @@ export default function CollectionTable({
       >
         {isEmpty ? (
           <div className="text-muted-foreground p-8 text-center">No cards in this collection</div>
+        ) : rows.length === 0 && isNoughtyQuery(activeQuery) ? (
+          <div className="p-4">
+            <NoughtyEasterEgg />
+          </div>
         ) : rows.length === 0 ? (
           <div className="text-muted-foreground p-8 text-center">
             {hideDeckCards && allRows.length > 0

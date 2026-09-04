@@ -17,7 +17,8 @@ import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDia
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Archive, Download, PackagePlus, Pencil, Sparkles, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
+import { isNotFoundError } from "@/lib/apiError";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -45,6 +46,9 @@ export default function DeckPage({ params }: PageProps) {
   useEffect(() => {
     setChatContext({ deckId: id });
   }, [id, setChatContext]);
+
+  // An unknown (or someone else's) deck id renders the app's 404 page.
+  if (isNotFoundError(error)) notFound();
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading deck...</p>;
