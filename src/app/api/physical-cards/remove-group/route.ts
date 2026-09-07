@@ -3,12 +3,17 @@ import { PhysicalCardModel, DeckModel } from "@/db/schema";
 import { Types } from "mongoose";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
+import { CardCondition, CardFinish, attributesMatch } from "@/lib/cardAttributes";
 
 interface RemoveGroupBody {
   collectionId: string;
   cardId: string;
   notes?: string;
   tags?: string[];
+  /** Effective finish of the group; omitted = non-foil (matches copies with no stored finish). */
+  finish?: CardFinish;
+  /** Effective condition of the group; omitted = NM (matches copies with no stored condition). */
+  condition?: CardCondition;
   /** null means the loose (no-deck) group; a value targets that deck's group. */
   deckId?: string | null;
   quantity: number;
@@ -28,8 +33,10 @@ function notesTagsMatch(
 /**
  * POST /api/physical-cards/remove-group
  * Deletes `quantity` physical cards matching a collection-table group exactly
- * (same collection, cardId, notes, tags, and deck membership), pulling any of
- * them out of their deck arrangement.
+ * (same collection, cardId, notes, tags, finish, condition, and deck
+ * membership — finish/condition compared by their effective values, so an
+ * unset field matches the default), pulling any of them out of their deck
+ * arrangement.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +45,7 @@ export async function POST(request: NextRequest) {
     const session = await getAuthSession();
     const userId = session!.user._id;
 
-    const { collectionId, cardId, notes, tags, deckId, quantity } =
+    const { collectionId, cardId, notes, tags, finish, condition, deckId, quantity } =
       (await request.json()) as RemoveGroupBody;
 
     if (!collectionId || !cardId || !quantity || quantity < 1) {
@@ -55,7 +62,9 @@ export async function POST(request: NextRequest) {
       deckId: deckId ?? null
     }).lean();
 
-    const matching = candidates.filter((c) => notesTagsMatch(c, notes, tags));
+    const matching = candidates.filter(
+      (c) => notesTagsMatch(c, notes, tags) && attributesMatch(c, { finish, condition })
+    );
     const toDelete = matching.slice(0, quantity).map((c) => c._id);
 
     if (toDelete.length === 0) {

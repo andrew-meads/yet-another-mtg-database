@@ -1,3 +1,5 @@
+import { CardPrices } from "./CardPrice";
+
 // Define TypeScript interface for the Card document
 export interface MtgCard {
   id: string;
@@ -73,6 +75,17 @@ export interface MtgCard {
   set: string;
   /** Release date ("YYYY-MM-DD"). Optional: docs imported before the field was added lack it until backfilled. */
   released_at?: string;
+  /**
+   * Scryfall's price object, stored as delivered by the bulk data and refreshed
+   * in place by `getCardPrices`. Optional: docs imported before prices were
+   * kept lack it (and are treated as stale) until first requested.
+   */
+  prices?: CardPrices;
+  /**
+   * App-stamped: when `prices` was last written (import or Scryfall refresh).
+   * A `Date` from Mongo, an ISO string once serialized. Absent = never priced.
+   */
+  prices_updated_at?: Date | string;
 }
 
 /**

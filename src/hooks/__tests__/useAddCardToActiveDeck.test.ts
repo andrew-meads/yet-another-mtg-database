@@ -9,7 +9,8 @@ const m = vi.hoisted(() => ({
     activeCollection: null as null | { _id: string },
     activeDeck: null as null | { _id: string },
     notes: "",
-    tags: [] as string[]
+    tags: [] as string[],
+    finish: undefined as undefined | "foil" | "etched"
   }
 }));
 
@@ -24,7 +25,15 @@ vi.mock("@/hooks/react-query/useCreatePhysicalCard", () => ({
   useCreatePhysicalCard: () => ({ mutate: m.create })
 }));
 vi.mock("@/context/SearchAddMetaContext", () => ({
-  useSearchAddMeta: () => ({ notes: m.state.notes, tags: m.state.tags })
+  useSearchAddMeta: () => ({
+    notes: m.state.notes,
+    tags: m.state.tags,
+    createFields: {
+      notes: m.state.notes || undefined,
+      tags: m.state.tags.length ? m.state.tags : undefined,
+      ...(m.state.finish && { finish: m.state.finish })
+    }
+  })
 }));
 
 import { useAddCardToActiveDeck } from "@/hooks/useAddCardToActiveDeck";
@@ -41,6 +50,7 @@ beforeEach(() => {
   m.state.activeDeck = { _id: "active-deck" };
   m.state.notes = "";
   m.state.tags = [];
+  m.state.finish = undefined;
 });
 
 describe("useAddCardToActiveDeck", () => {
@@ -90,6 +100,12 @@ describe("useAddCardToActiveDeck", () => {
       "Set an active collection before adding cards to a deck."
     );
     expect(m.create).not.toHaveBeenCalled();
+  });
+
+  it("passes the search page's finish through", () => {
+    m.state.finish = "foil";
+    addToDeck()(card);
+    expect(m.create).toHaveBeenCalledWith(expect.objectContaining({ finish: "foil" }));
   });
 
   it("passes the search page's notes and tags through", () => {

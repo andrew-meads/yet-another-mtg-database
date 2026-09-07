@@ -174,6 +174,19 @@ describe("useDropDispatch", () => {
     });
   });
 
+  it("search → collection passes finish and condition from the drag item", async () => {
+    await dispatcher()(
+      { kind: "new", card: { id: "card-1" }, finish: "foil", condition: "LP" } as never,
+      { kind: "collection", collectionId: "c1" } as never
+    );
+    expect(m.create).toHaveBeenCalledWith({
+      cardId: "card-1",
+      collectionId: "c1",
+      finish: "foil",
+      condition: "LP"
+    });
+  });
+
   it("search → deck passes notes and tags from the drag item", async () => {
     await dispatcher()(newCardWithMeta("signed", ["foil"]), {
       kind: "deck-column",

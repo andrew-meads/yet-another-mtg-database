@@ -1,6 +1,7 @@
 import { CardData, CollectionModel, DeckModel, TagModel } from "@/db/schema";
 import { CardDataMap, DetailedPhysicalCardEntry } from "@/types/PhysicalCard";
 import { SlimMtgCard } from "@/types/MtgCard";
+import { CardCondition, CardFinish } from "@/lib/cardAttributes";
 
 /** Minimal shape of a lean PhysicalCard document used for detailing. */
 export interface LeanPhysicalCard {
@@ -11,6 +12,8 @@ export interface LeanPhysicalCard {
   deckId?: unknown;
   notes?: string;
   tags?: string[];
+  finish?: CardFinish;
+  condition?: CardCondition;
 }
 
 /**
@@ -104,6 +107,10 @@ export async function detailPhysicalCards(
         deckId: pc.deckId ? String(pc.deckId) : null,
         notes: pc.notes,
         tags: pc.tags,
+        // Passed through as stored (possibly undefined = default); JSON drops
+        // undefined keys so ordinary copies stay slim on the wire.
+        finish: pc.finish,
+        condition: pc.condition,
         isEphemeral,
         collectionName: isEphemeral ? undefined : collMap.get(String(pc.collectionId)),
         deckName: pc.deckId ? deckMap.get(String(pc.deckId)) : undefined

@@ -4,17 +4,24 @@ import { upsertTags } from "@/lib/server/cardDetails";
 import { pullCardFromAllDecks } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
+import { CardCondition, CardFinish, isCardCondition, isCardFinish } from "@/lib/cardAttributes";
 
 interface PatchPhysicalCardBody {
   notes?: string;
   tags?: string[];
+  /** Foil treatment (nonfoil | foil | etched). */
+  finish?: CardFinish;
+  /** Wear grade (NM | LP | MP | HP | DMG). */
+  condition?: CardCondition;
   /** Move the card to a different collection (keeps its deck assignment). */
   collectionId?: string;
 }
 
 /**
  * PATCH /api/physical-cards/[id]
- * Updates a physical card's notes/tags and/or moves it to a different collection.
+ * Updates a physical card's notes/tags/finish/condition and/or moves it to a
+ * different collection. Finish/condition are validated against the enums in
+ * src/lib/cardAttributes.ts (400 on an unknown value).
  */
 export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/physical-cards/[id]">) {
   try {
@@ -24,7 +31,21 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/physic
     const userId = session!.user._id;
 
     const { id } = await ctx.params;
-    const { notes, tags, collectionId } = (await request.json()) as PatchPhysicalCardBody;
+    const { notes, tags, finish, condition, collectionId } =
+      (await request.json()) as PatchPhysicalCardBody;
+
+    if (finish !== undefined && !isCardFinish(finish)) {
+      return Response.json(
+        { error: "finish must be one of nonfoil, foil, etched" },
+        { status: 400 }
+      );
+    }
+    if (condition !== undefined && !isCardCondition(condition)) {
+      return Response.json(
+        { error: "condition must be one of NM, LP, MP, HP, DMG" },
+        { status: 400 }
+      );
+    }
 
     const card = await PhysicalCardModel.findOne({ _id: id, owner: userId });
     if (!card) {
@@ -32,6 +53,8 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/physic
     }
 
     if (notes !== undefined) card.notes = notes;
+    if (finish !== undefined) card.finish = finish;
+    if (condition !== undefined) card.condition = condition;
     if (tags !== undefined) {
       await upsertTags(tags);
       card.tags = tags;

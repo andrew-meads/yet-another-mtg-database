@@ -75,14 +75,10 @@ export default function CardsTableRow({
   rowRef
 }: CardsTableRowProps) {
   // === DRAG AND DROP ===
-  // Make the row draggable using react-dnd, carrying any notes/tags from the search UI
-  const { notes, tags } = useSearchAddMeta();
-  const { isDragging, dragRef } = useNewCardDragSource(
-    card,
-    true,
-    notes || undefined,
-    tags.length ? tags : undefined
-  );
+  // Make the row draggable using react-dnd, carrying any notes/tags/finish/condition
+  // from the search UI's add-meta bar
+  const { createFields } = useSearchAddMeta();
+  const { isDragging, dragRef } = useNewCardDragSource(card, true, createFields);
 
   // === CONTEXT ===
   // Get open collections from context (decks can't receive a raw "add to collection")

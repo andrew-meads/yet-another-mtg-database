@@ -8,7 +8,7 @@ import {
   seedCollection,
   seedDeck,
   seedPhysicalCard,
-  seedCardPrice
+  seedCardPrices
 } from "./helpers";
 import "./setup";
 
@@ -95,8 +95,16 @@ describe("readDeck tool", () => {
 describe("readCollection tool", () => {
   it("returns counts and a q-scoped slice", async () => {
     const collectionId = await seedCollection(userId, { name: "Main" });
-    const goblin = await seedCard({ id: "gob-1", name: "Goblin Guide", type_line: "Creature — Goblin" });
-    const forest = await seedCard({ id: "for-1", name: "Forest", type_line: "Basic Land — Forest" });
+    const goblin = await seedCard({
+      id: "gob-1",
+      name: "Goblin Guide",
+      type_line: "Creature — Goblin"
+    });
+    const forest = await seedCard({
+      id: "for-1",
+      name: "Forest",
+      type_line: "Basic Land — Forest"
+    });
     await seedPhysicalCard(userId, goblin.id, collectionId);
     await seedPhysicalCard(userId, goblin.id, collectionId);
     await seedPhysicalCard(userId, forest.id, collectionId);
@@ -123,7 +131,11 @@ describe("readCollection tool", () => {
 
 describe("searchCards / searchMyCards tools", () => {
   it("searchCards spans the whole database; searchMyCards is owner-scoped", async () => {
-    const owned = await seedCard({ id: "own-1", name: "Owned Goblin", type_line: "Creature — Goblin" });
+    const owned = await seedCard({
+      id: "own-1",
+      name: "Owned Goblin",
+      type_line: "Creature — Goblin"
+    });
     await seedCard({ id: "unowned-1", name: "Unowned Goblin", type_line: "Creature — Goblin" });
     const collectionId = await seedCollection(userId);
     await seedPhysicalCard(userId, owned.id, collectionId);
@@ -164,8 +176,12 @@ describe("searchCards / searchMyCards tools", () => {
 
 describe("getCardDetails tool", () => {
   it("returns oracle text plus cached prices and reports unknown names", async () => {
-    const card = await seedCard({ id: "bolt-1", name: "Lightning Bolt", oracle_text: "Deal 3 damage." });
-    await seedCardPrice(card.id, { usd: "2.50" }, new Date(Date.now() - HOUR));
+    const card = await seedCard({
+      id: "bolt-1",
+      name: "Lightning Bolt",
+      oracle_text: "Deal 3 damage."
+    });
+    await seedCardPrices(card.id, { usd: "2.50" }, new Date(Date.now() - HOUR));
 
     const tools = buildAiTools({ userId });
     const result = await run(tools.getCardDetails, { names: ["lightning bolt", "No Such Card"] });
@@ -215,14 +231,22 @@ describe("manaBaseStats tool", () => {
   it("scopes to a named section and rejects unknown sections", async () => {
     const collectionId = await seedCollection(userId);
     const deck = await seedDeck(userId);
-    const forest = await seedCard({ id: "sec-forest", name: "Forest", type_line: "Basic Land — Forest", cmc: 0 });
+    const forest = await seedCard({
+      id: "sec-forest",
+      name: "Forest",
+      type_line: "Basic Land — Forest",
+      cmc: 0
+    });
     const ids = [
       await seedPhysicalCard(userId, forest.id, collectionId, { deckId: String(deck._id) })
     ];
     await arrangeInDeck(deck, ids);
 
     const tools = buildAiTools({ userId });
-    const scoped = await run(tools.manaBaseStats, { deckId: String(deck._id), sectionName: "main" });
+    const scoped = await run(tools.manaBaseStats, {
+      deckId: String(deck._id),
+      sectionName: "main"
+    });
     expect(scoped.scope).toBe("main");
     expect(scoped.stats.landCount).toBe(1);
 

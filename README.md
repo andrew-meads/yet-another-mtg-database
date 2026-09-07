@@ -42,6 +42,14 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   `collection`, `deck`, or `wishlist`, each card carrying a quantity, notes, and tags.
   The collection table has a toggle next to its search bar that hides cards already
   assigned to a deck, so you can see what's actually free to build with.
+- **Finish & condition per copy** — every physical copy can record its finish
+  (non-foil, foil, or etched foil) and condition (NM, LP, MP, HP, or DMG on the
+  TCGplayer scale). Pick them in the search page's "applied on add" bar so new copies
+  carry them, or change them later from a collection row's expanded editor (applies
+  to every copy in that row). Copies with different finishes or conditions get their
+  own rows, and non-default values show as small badges in the collection table, on
+  deck-view cards, and in the card-locations panel. Unset values mean non-foil /
+  Near Mint, so existing collections need no migration.
 - **Drag-and-drop organization** — move and copy cards between collections with
   react-dnd.
 - **Active collection & active deck** — mark one collection and one deck as "active"
@@ -86,9 +94,10 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from
   the database; mana symbols rendered via `mana-font`.
-- **Card pricing** — up-to-date USD prices for a card or a list of cards, pulled from
-  Scryfall and cached for 24h, plus conversion into a chosen currency using a live
-  exchange rate (Frankfurter).
+- **Card pricing** — up-to-date USD prices for a card or a list of cards, kept on the
+  card records (seeded by the bulk import) and refreshed from Scryfall once they are
+  older than 24h, plus conversion into a chosen currency using a live exchange rate
+  (Frankfurter).
 - **Hover card preview** — hovering a row in search results or a collection shows a card
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay
@@ -157,7 +166,7 @@ cp .env.example .env
 docker compose -f docker-compose-dev.yml up -d
 
 # 4. Seed the database from a Scryfall bulk file
-npm run init-db -- -f bulk-data/oracle-cards-XXXX.json
+npm run init-db -- -f bulk-data/oracle-cards-XXXX.jsonl.gz
 
 # 5. Whitelist your Google account so you're allowed to sign in
 npm run whitelist-user -- you@example.com
@@ -179,7 +188,7 @@ Copy `.env.example` to `.env` and fill in the values:
 | Variable | Description |
 | --- | --- |
 | `MONGO_DB_URI` | MongoDB connection string (default `mongodb://127.0.0.1:27017/yet-another-mtg-database`) |
-| `ALL_CARDS_FILE` | Default path to the Scryfall bulk JSON used by `init-db` |
+| `ALL_CARDS_FILE` | Default path to the Scryfall bulk file (`*.jsonl.gz`, or a legacy `*.json`) used by `init-db` |
 | `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards, set icons, and card prices on demand |
 | `EXCHANGE_RATE_API_BASE_URL` | Base URL of the currency exchange-rate API used to convert USD card prices (default `https://api.frankfurter.dev/v1` — free, no API key) |
 | `ACADEMY_RUINS_API_BASE_URL` | Base URL of the Academy Ruins API used by the AI deck advisor's Comprehensive-Rules lookups (default `https://api.academyruins.com` — free, no API key) |
@@ -207,13 +216,22 @@ Copy `.env.example` to `.env` and fill in the values:
 
 ### Seeding the database
 
-`init-db` streams a large Scryfall bulk JSON file into the `cards` collection:
+`init-db` streams a Scryfall bulk-data file into the `cards` collection. Scryfall now
+ships these as gzipped JSON Lines (`*.jsonl.gz`); the importer sniffs the file, so
+gzipped or plain, JSON Lines or the legacy JSON array all work. Each card keeps its
+Scryfall `prices` object on the card document; on a re-import without `--clear`,
+cards that already exist get their prices overwritten from the new file, so a fresh
+import doubles as a price refresh:
 
 ```bash
-npm run init-db -- -f bulk-data/oracle-cards-XXXX.json   # import from a local file
-npm run init-db -- --data-url <url>                       # download + import
-npm run init-db -- -f <file> --clear                      # wipe cards first
+npm run init-db -- -f bulk-data/oracle-cards-XXXX.jsonl.gz   # import from a local file
+npm run init-db -- --data-url <url>                           # download + import
+npm run init-db -- --bulk-type oracle_cards                   # fetch today's file for a bulk type
+npm run init-db -- -f <file> --clear                          # wipe cards first
 ```
+
+`--bulk-type` asks Scryfall's bulk-data API for the current download URL of a type
+(`oracle_cards`, `default_cards`, `all_cards`, …), since the file names change daily.
 
 ## Authentication
 

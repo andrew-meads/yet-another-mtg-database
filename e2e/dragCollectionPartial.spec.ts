@@ -9,7 +9,7 @@ const fixtures = JSON.parse(readFileSync(join(__dirname, ".auth", "fixtures.json
 };
 
 /** The grouped-row key for the loose (no deck/notes/tags) Grizzly Bears copies. */
-const GRIZZLY_ROW = "collection-row-e2e-grizzly|||";
+const GRIZZLY_ROW = "collection-row-e2e-grizzly||||nonfoil|NM";
 
 /**
  * Simulate an HTML5 drag-and-drop between two elements (selected by data-testid).

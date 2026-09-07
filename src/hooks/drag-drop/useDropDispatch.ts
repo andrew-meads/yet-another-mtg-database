@@ -49,7 +49,9 @@ export function useDropDispatch() {
             cardId: item.card.id,
             collectionId: concrete.collectionId,
             ...(item.notes && { notes: item.notes }),
-            ...(item.tags?.length && { tags: item.tags })
+            ...(item.tags?.length && { tags: item.tags }),
+            ...(item.finish && { finish: item.finish }),
+            ...(item.condition && { condition: item.condition })
           });
           return;
         }
@@ -65,7 +67,9 @@ export function useDropDispatch() {
           columnId: concrete.columnId,
           index: concrete.index,
           ...(item.notes && { notes: item.notes }),
-          ...(item.tags?.length && { tags: item.tags })
+          ...(item.tags?.length && { tags: item.tags }),
+          ...(item.finish && { finish: item.finish }),
+          ...(item.condition && { condition: item.condition })
         });
         return;
       }

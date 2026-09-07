@@ -704,3 +704,43 @@ describe("CardLocationsView", () => {
     });
   });
 });
+
+describe("CardLocationsView finish / condition", () => {
+  it("keeps foil copies on their own row with a badge, after the plain copies", () => {
+    h.locationsData = {
+      locations: [
+        {
+          collectionId: "coll-1",
+          collectionName: "Main Collection",
+          cards: [
+            {
+              _id: "pc-1",
+              card: mockCard,
+              collectionId: "coll-1",
+              collectionName: "Main",
+              finish: "foil",
+              condition: "LP"
+            },
+            { _id: "pc-2", card: mockCard, collectionId: "coll-1", collectionName: "Main" },
+            {
+              _id: "pc-3",
+              card: mockCard,
+              collectionId: "coll-1",
+              collectionName: "Main",
+              finish: "nonfoil",
+              condition: "NM"
+            }
+          ]
+        }
+      ]
+    };
+    renderView();
+    expect(screen.getByRole("columnheader", { name: "Finish" })).toBeInTheDocument();
+    const rows = screen.getAllByRole("row").slice(1); // drop the header row
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent("2");
+    expect(rows[0]).not.toHaveTextContent("Foil");
+    expect(rows[1]).toHaveTextContent("Foil");
+    expect(rows[1]).toHaveTextContent("LP");
+  });
+});

@@ -19,9 +19,16 @@ function renderInput() {
 describe("SearchAddMetaInput", () => {
   it("renders notes and tags inputs", () => {
     renderInput();
-    expect(screen.getByPlaceholderText("e.g. foil, signed...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("e.g. signed, altered...")).toBeInTheDocument();
     expect(screen.getByText("Notes (applied on add)")).toBeInTheDocument();
     expect(screen.getByText("Tags (applied on add)")).toBeInTheDocument();
+  });
+
+  it("renders finish and condition pickers showing the defaults", () => {
+    renderInput();
+    expect(screen.getByText("Finish & condition (applied on add)")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Finish" })).toHaveTextContent("Non-foil");
+    expect(screen.getByRole("combobox", { name: "Condition" })).toHaveTextContent("NM");
   });
 
   it("updates notes in the context when the user types", () => {
@@ -39,7 +46,7 @@ describe("SearchAddMetaInput", () => {
       </SearchAddMetaProvider>
     );
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. foil, signed..."), {
+    fireEvent.change(screen.getByPlaceholderText("e.g. signed, altered..."), {
       target: { value: "signed" }
     });
 

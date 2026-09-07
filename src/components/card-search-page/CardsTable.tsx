@@ -128,8 +128,8 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
   // active collection first — same semantics as dragging a search result onto a deck.
   const addToDeck = useAddCardToActiveDeck();
 
-  // Notes and tags to apply when adding cards from the search page
-  const { notes, tags } = useSearchAddMeta();
+  // Notes/tags/finish/condition to apply when adding cards from the search page
+  const { createFields } = useSearchAddMeta();
 
   // User-configurable hover preview settings (enabled / size / delay)
   const { cardPreview } = useCardPreviewSettings();
@@ -188,15 +188,10 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
       // Return early if no valid collection found
       if (!targetCollection) return;
 
-      // Add card to collection, carrying any notes/tags set in the search UI
-      createPhysicalCard({
-        cardId: card.id,
-        collectionId: targetCollection._id,
-        notes: notes || undefined,
-        tags: tags.length ? tags : undefined
-      });
+      // Add card to collection, carrying any notes/tags/finish/condition set in the search UI
+      createPhysicalCard({ cardId: card.id, collectionId: targetCollection._id, ...createFields });
     },
-    [activeCollection, openCollections, createPhysicalCard, notes, tags]
+    [activeCollection, openCollections, createPhysicalCard, createFields]
   );
 
   // === KEYBOARD NAVIGATION ===

@@ -35,7 +35,7 @@ test("archiving swaps real cards for placeholders; filling swaps them back", asy
 
   // …and the real copy is back loose in the Main Collection.
   await page.goto(`/my-cards/collections/${mainCollectionId}`);
-  await expect(page.getByTestId("collection-row-e2e-runeclaw|||")).toBeVisible({
+  await expect(page.getByTestId("collection-row-e2e-runeclaw||||nonfoil|NM")).toBeVisible({
     timeout: 15_000
   });
 

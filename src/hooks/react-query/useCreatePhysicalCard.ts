@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateCardMembership } from "./invalidate";
+import { CardCondition, CardFinish } from "@/lib/cardAttributes";
 
 export interface CreatePhysicalCardRequest {
   cardId: string;
@@ -9,6 +10,10 @@ export interface CreatePhysicalCardRequest {
   collectionId?: string;
   notes?: string;
   tags?: string[];
+  /** Foil treatment; omit for non-foil. */
+  finish?: CardFinish;
+  /** Wear grade; omit for Near Mint. */
+  condition?: CardCondition;
   /** If set, also assign the new card(s) to this deck slot. */
   deckId?: string;
   sectionId?: string;

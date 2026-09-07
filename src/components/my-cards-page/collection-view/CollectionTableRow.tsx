@@ -39,7 +39,9 @@ import { useCollectionRowActions } from "@/hooks/useCollectionRowActions";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { getEntityIcon } from "@/lib/collectionUtils";
 import { useEffect, useRef, useState } from "react";
-import EntryNotesAndTags from "../EntryNotesAndTags";
+import EntryDetailsEditor from "../EntryDetailsEditor";
+import CardAttributeBadges from "@/components/CardAttributeBadges";
+import { sparseAttributes } from "@/lib/cardAttributes";
 import { SetSvg } from "@/components/SetSvg";
 import { cn } from "@/lib/utils";
 import { CollectionGroupRow, COLLECTION_GRID } from "./grouping";
@@ -146,6 +148,8 @@ export default function CollectionTableRow({
       collectionId,
       notes: row.notes,
       tags: row.tags,
+      // Only non-default finish/condition are sent, so plain copies store nothing extra.
+      ...sparseAttributes(row.finish, row.condition),
       quantity: n
     });
   };
@@ -157,6 +161,8 @@ export default function CollectionTableRow({
       cardId: card.id,
       notes: row.notes,
       tags: row.tags,
+      finish: row.finish,
+      condition: row.condition,
       deckId: row.deckId,
       quantity: n
     });
@@ -246,6 +252,7 @@ export default function CollectionTableRow({
             <div className="relative flex items-center self-stretch">
               <div className="flex w-full items-center gap-2 truncate font-medium">
                 <span className="truncate">{nameText}</span>
+                <CardAttributeBadges finish={row.finish} condition={row.condition} />
                 {row.notes && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -553,9 +560,11 @@ export default function CollectionTableRow({
 
       {isExpanded && (
         <div className="bg-muted/30 p-4">
-          <EntryNotesAndTags
+          <EntryDetailsEditor
             notes={row.notes}
             tags={row.tags}
+            finish={row.finish}
+            condition={row.condition}
             physicalCardIds={row.physicalCardIds}
           />
         </div>

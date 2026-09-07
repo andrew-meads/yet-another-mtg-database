@@ -15,6 +15,16 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Library, Layers } from "lucide-react";
 import { SetSvg } from "@/components/SetSvg";
+import CardAttributeBadges from "@/components/CardAttributeBadges";
+import {
+  CardCondition,
+  CardFinish,
+  attributesKey,
+  conditionRank,
+  effectiveCondition,
+  effectiveFinish,
+  finishRank
+} from "@/lib/cardAttributes";
 
 interface Loc {
   key: string;
@@ -24,6 +34,8 @@ interface Loc {
   card: SlimMtgCard;
   notes: string;
   tags: string[];
+  finish: CardFinish;
+  condition: CardCondition;
   quantity: number;
   freeQuantity: number;
 }
@@ -52,7 +64,7 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
     if (!cardLocations?.locations) return [];
 
     // Set release-date order (oldest first, matching the app-wide set sort),
-    // then set code, deck name, and notes/tags for determinism.
+    // then set code, deck name, finish/condition, and notes/tags for determinism.
     const compareLocs = (a: Loc, b: Loc) => {
       const dateCmp = (a.card.released_at ?? "").localeCompare(b.card.released_at ?? "");
       if (dateCmp !== 0) return dateCmp;
@@ -60,13 +72,17 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
       if (setCmp !== 0) return setCmp;
       const nameCmp = a.locationName.localeCompare(b.locationName);
       if (nameCmp !== 0) return nameCmp;
+      const finishCmp = finishRank(a.finish) - finishRank(b.finish);
+      if (finishCmp !== 0) return finishCmp;
+      const conditionCmp = conditionRank(a.condition) - conditionRank(b.condition);
+      if (conditionCmp !== 0) return conditionCmp;
       const notesCmp = a.notes.localeCompare(b.notes);
       if (notesCmp !== 0) return notesCmp;
       return a.tags.join(",").localeCompare(b.tags.join(","));
     };
 
     // Each deck row is a child of exactly one collection row — the one sharing
-    // its (collection, printing, notes, tags) — and is rendered (indented)
+    // its (collection, printing, finish, condition, notes, tags) — and is rendered (indented)
     // directly beneath it.
     const result: Loc[] = [];
     for (const loc of cardLocations.locations) {
@@ -78,8 +94,11 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
         const notes = entry.notes ?? "";
         const tags = [...(entry.tags ?? [])].sort();
         const tagsKey = tags.join(",");
+        const finish = effectiveFinish(entry.finish);
+        const condition = effectiveCondition(entry.condition);
+        const attrs = attributesKey(finish, condition);
 
-        const collKey = `coll-${loc.collectionId}-${entry.card.id}-${notes}-${tagsKey}`;
+        const collKey = `coll-${loc.collectionId}-${entry.card.id}-${attrs}-${notes}-${tagsKey}`;
         const existing = collectionMap.get(collKey);
         if (existing) {
           existing.quantity++;
@@ -93,13 +112,15 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
             card: entry.card,
             notes,
             tags,
+            finish,
+            condition,
             quantity: 1,
             freeQuantity: entry.deckId ? 0 : 1
           });
         }
 
         if (entry.deckId) {
-          const deckKey = `deck-${loc.collectionId}-${entry.deckId}-${entry.card.id}-${notes}-${tagsKey}`;
+          const deckKey = `deck-${loc.collectionId}-${entry.deckId}-${entry.card.id}-${attrs}-${notes}-${tagsKey}`;
           let children = deckChildren.get(collKey);
           if (!children) {
             children = new Map();
@@ -117,6 +138,8 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
               card: entry.card,
               notes,
               tags,
+              finish,
+              condition,
               quantity: 1,
               freeQuantity: 0
             });
@@ -157,6 +180,7 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
               <TableRow>
                 <TableHead>Location</TableHead>
                 <TableHead className="text-center">Set</TableHead>
+                <TableHead className="text-center">Finish</TableHead>
                 <TableHead className="text-center">Notes</TableHead>
                 <TableHead className="text-center">Tags</TableHead>
                 <TableHead className="text-center">Qty</TableHead>
@@ -212,6 +236,10 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
                           {loc.card.rarity}
                         </TooltipContent>
                       </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <CardAttributeBadges finish={loc.finish} condition={loc.condition} />
+                      {loc.finish === "nonfoil" && loc.condition === "NM" && "—"}
                     </TableCell>
                     <TableCell className="text-center">{loc.notes || "—"}</TableCell>
                     <TableCell className="text-center">

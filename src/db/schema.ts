@@ -3,7 +3,7 @@ import { MtgCard } from "@/types/MtgCard";
 import { Tag } from "@/types/Tag";
 import { User } from "@/types/User";
 import { SetSvg } from "@/types/SetSvg";
-import { CardPrices } from "@/types/CardPrice";
+import { CARD_CONDITIONS, CARD_FINISHES, CardCondition, CardFinish } from "@/lib/cardAttributes";
 
 // ---------------------------------------------------------------------------
 // Mongoose document shapes (ObjectId-typed; the plain TS interfaces in
@@ -18,6 +18,10 @@ interface PhysicalCardDoc {
   deckId?: Types.ObjectId | null;
   notes?: string;
   tags?: string[];
+  /** Absent = non-foil (see src/lib/cardAttributes.ts). */
+  finish?: CardFinish;
+  /** Absent = Near Mint (see src/lib/cardAttributes.ts). */
+  condition?: CardCondition;
 }
 
 interface CollectionDoc {
@@ -46,19 +50,9 @@ interface DeckDoc {
   sections: DeckSectionDoc[];
 }
 
-// Cached Scryfall price data for a single card (keyed by Scryfall id). Stored in
-// its own collection rather than on CardData because bulk-import prices go stale
-// and CardData is strict:true; `updatedAt` (from timestamps) drives staleness.
-interface CardPriceDoc {
-  cardId: string;
-  prices: CardPrices;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
 // Cached Scryfall rulings for a single card (keyed by Scryfall card id).
-// Mirrors the cardprices cache pattern; `updatedAt` drives staleness (~7 days —
-// rulings change only when new sets release).
+// `updatedAt` drives staleness (~7 days — rulings change only when new sets
+// release).
 interface CardRulingDoc {
   cardId: string;
   rulings: { source: string; published_at: string; comment: string }[];
@@ -202,7 +196,19 @@ const cardSchema = new Schema<MtgCard>(
     set: { type: String, required: true },
     // "YYYY-MM-DD"; optional so docs imported before this field existed remain
     // valid (backfill with `npm run backfill-release-dates`).
-    released_at: String
+    released_at: String,
+    // Scryfall's price object, kept as delivered by the bulk data (no defaults,
+    // so docs imported before prices were kept simply lack it) and refreshed in
+    // place by getCardPrices; prices_updated_at drives the 24h staleness check.
+    prices: {
+      usd: String,
+      usd_foil: String,
+      usd_etched: String,
+      eur: String,
+      eur_foil: String,
+      tix: String
+    },
+    prices_updated_at: Date
   },
   { strict: true, collection: "cards" }
 );
@@ -226,7 +232,12 @@ const physicalCardSchema = new Schema<PhysicalCardDoc>(
     },
     deckId: { type: Schema.Types.ObjectId, ref: "Deck", default: null, index: true },
     notes: String,
-    tags: [String]
+    tags: [String],
+    // Finish/condition are deliberately default-less: an absent value IS the
+    // default (nonfoil / NM), so documents written before these fields existed
+    // need no backfill. The enum only validates values that are present.
+    finish: { type: String, enum: CARD_FINISHES, required: false },
+    condition: { type: String, enum: CARD_CONDITIONS, required: false }
   },
   { strict: true, timestamps: true }
 );
@@ -275,23 +286,6 @@ export const SetSvgSchema = new Schema<SetSvg>({
   setCode: { type: String, required: true, unique: true },
   svgContent: { type: String, required: true }
 });
-
-// Prices cache. Each finish defaults to null so a missing finish is represented
-// explicitly. `timestamps` supplies updatedAt (refreshed on every upsert).
-export const CardPriceSchema = new Schema<CardPriceDoc>(
-  {
-    cardId: { type: String, required: true, unique: true },
-    prices: {
-      usd: { type: String, default: null },
-      usd_foil: { type: String, default: null },
-      usd_etched: { type: String, default: null },
-      eur: { type: String, default: null },
-      eur_foil: { type: String, default: null },
-      tix: { type: String, default: null }
-    }
-  },
-  { timestamps: true }
-);
 
 // Rulings cache, one document per card (refreshed wholesale on staleness).
 export const CardRulingSchema = new Schema<CardRulingDoc>(
@@ -389,9 +383,6 @@ export const DeckModel = (mongoose.models.Deck ||
 
 export const SetSvgModel = (mongoose.models.SetSvg ||
   mongoose.model<SetSvg>("SetSvg", SetSvgSchema)) as Model<SetSvg>;
-
-export const CardPriceModel = (mongoose.models.CardPrice ||
-  mongoose.model<CardPriceDoc>("CardPrice", CardPriceSchema)) as Model<CardPriceDoc>;
 
 export const CardRulingModel = (mongoose.models.CardRuling ||
   mongoose.model<CardRulingDoc>("CardRuling", CardRulingSchema)) as Model<CardRulingDoc>;

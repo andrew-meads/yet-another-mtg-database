@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { Types } from "mongoose";
 import {
   CardData,
-  CardPriceModel,
   CollectionModel,
   DeckModel,
   ExchangeRateModel,
@@ -12,6 +11,7 @@ import {
 import { MtgCard } from "@/types/MtgCard";
 import { CardPrices } from "@/types/CardPrice";
 import { EMPTY_PRICES } from "@/lib/server/cardPrices";
+import { CardCondition, CardFinish } from "@/lib/cardAttributes";
 
 /** Point getServerSession at a given user id (or null for "signed out"). */
 export function setTestUser(userId: string | null) {
@@ -95,7 +95,13 @@ export async function seedPhysicalCard(
   owner: string,
   cardId: string,
   collectionId: string,
-  fields: { deckId?: string | null; notes?: string; tags?: string[] } = {}
+  fields: {
+    deckId?: string | null;
+    notes?: string;
+    tags?: string[];
+    finish?: CardFinish;
+    condition?: CardCondition;
+  } = {}
 ) {
   const pc = await PhysicalCardModel.create({
     owner: new Types.ObjectId(owner),
@@ -103,7 +109,9 @@ export async function seedPhysicalCard(
     collectionId: new Types.ObjectId(collectionId),
     deckId: fields.deckId ? new Types.ObjectId(fields.deckId) : null,
     notes: fields.notes,
-    tags: fields.tags
+    tags: fields.tags,
+    finish: fields.finish,
+    condition: fields.condition
   });
   return pc._id.toString();
 }
@@ -120,23 +128,18 @@ export async function seedEphemeralCard(owner: string, cardId: string, deckId: s
 }
 
 /**
- * Seed a cached price record. Pass `updatedAt` to control staleness (the timestamp
- * is written with timestamps disabled so it isn't overwritten with "now").
+ * Stamp prices onto an existing seeded card (by Scryfall id). Pass `updatedAt`
+ * to control staleness; defaults to now.
  */
-export async function seedCardPrice(
+export async function seedCardPrices(
   cardId: string,
   prices: Partial<CardPrices> = {},
-  updatedAt?: Date
+  updatedAt: Date = new Date()
 ) {
-  const doc = await CardPriceModel.create({ cardId, prices: { ...EMPTY_PRICES, ...prices } });
-  if (updatedAt) {
-    await CardPriceModel.updateOne(
-      { _id: doc._id },
-      { $set: { updatedAt } },
-      { timestamps: false }
-    );
-  }
-  return doc;
+  await CardData.updateOne(
+    { id: cardId },
+    { $set: { prices: { ...EMPTY_PRICES, ...prices }, prices_updated_at: updatedAt } }
+  );
 }
 
 /** Seed a cached USD -> target exchange rate (optionally back-dated via `updatedAt`). */

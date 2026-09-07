@@ -201,3 +201,22 @@ describe("DeckColumn ephemeral cards", () => {
     expect(queryByTestId("ephemeral-badge-p0")).toBeNull();
   });
 });
+
+describe("DeckColumn attribute badges", () => {
+  it("overlays finish/condition badges only for non-default copies", () => {
+    const { queryAllByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: {
+          _id: "col-1",
+          cards: [makeCard("plain"), { ...makeCard("shiny"), finish: "foil", condition: "HP" }]
+        }
+      })
+    );
+    const badges = queryAllByTestId("card-attribute-badges");
+    expect(badges).toHaveLength(1);
+    expect(badges[0]).toHaveTextContent("Foil");
+    expect(badges[0]).toHaveTextContent("HP");
+  });
+});

@@ -106,13 +106,13 @@ test("collection → deck: a loose collection card dropped on a pinned deck is p
   ]);
 
   await page.goto(`/my-cards/collections/${mainCollectionId}`);
-  const row = page.getByTestId("collection-row-e2e-llanowar|||");
+  const row = page.getByTestId("collection-row-e2e-llanowar||||nonfoil|NM");
   await expect(row).toBeVisible({ timeout: 15_000 });
 
   await expect(page.getByTestId(`open-entity-${ckDeckId}`)).toBeVisible();
   await dragAndAwaitResponse(
     page,
-    "collection-row-e2e-llanowar|||",
+    "collection-row-e2e-llanowar||||nonfoil|NM",
     `drop-zone-${ckDeckId}`,
     "POST",
     `/api/decks/${ckDeckId}/cards`

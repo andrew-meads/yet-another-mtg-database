@@ -1,15 +1,17 @@
 import { SlimMtgCard } from "@/types/MtgCard";
 import { OpenEntitySummary } from "@/types/Deck";
+import { NewCopyMeta } from "@/types/PhysicalCard";
 
 export const NEW_CARD = "NEW_CARD";
 export const PHYSICAL_CARD = "PHYSICAL_CARD";
 
-/** Dragged from search results — a brand new card to be added somewhere. */
-export interface NewCardDragItem {
+/**
+ * Dragged from search results — a brand new card to be added somewhere, carrying
+ * the notes/tags/finish/condition the search page's add-meta bar has set.
+ */
+export interface NewCardDragItem extends NewCopyMeta {
   kind: "new";
   card: SlimMtgCard;
-  notes?: string;
-  tags?: string[];
 }
 
 /** Where a physical-card drag originated (drives the drag layer + index recompute). */

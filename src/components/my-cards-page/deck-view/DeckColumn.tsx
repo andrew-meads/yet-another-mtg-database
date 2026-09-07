@@ -17,6 +17,7 @@ import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
 import { useDeletePhysicalCard } from "@/hooks/react-query/useDeletePhysicalCard";
 import { useDeleteColumn } from "@/hooks/react-query/useDeckColumns";
 import { StickyNote, Tag, Library, Trash2, Layers, Sparkles } from "lucide-react";
+import CardAttributeBadges from "@/components/CardAttributeBadges";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ContextMenu,
@@ -156,6 +157,15 @@ function DeckCardImage({
               </Tooltip>
             </div>
           )}
+
+          {/* Finish / condition (only shown when not non-foil / NM) */}
+          <div className="absolute right-1 bottom-1">
+            <CardAttributeBadges
+              finish={card.finish}
+              condition={card.condition}
+              variant="overlay"
+            />
+          </div>
 
           {/* Notes/tags */}
           {(card.notes || (card.tags && card.tags.length > 0)) && (

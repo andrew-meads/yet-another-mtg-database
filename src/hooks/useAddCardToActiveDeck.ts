@@ -23,7 +23,7 @@ import { SlimMtgCard } from "@/types/MtgCard";
 export function useAddCardToActiveDeck() {
   const { activeCollection, activeDeck } = useOpenEntitiesContext();
   const { mutate: createPhysicalCard } = useCreatePhysicalCard();
-  const { notes, tags } = useSearchAddMeta();
+  const { createFields } = useSearchAddMeta();
 
   return useCallback(
     (card: SlimMtgCard, deckId?: string, options?: { ephemeral?: boolean }) => {
@@ -34,12 +34,7 @@ export function useAddCardToActiveDeck() {
       }
 
       if (options?.ephemeral) {
-        createPhysicalCard({
-          cardId: card.id,
-          deckId: targetDeckId,
-          notes: notes || undefined,
-          tags: tags.length ? tags : undefined
-        });
+        createPhysicalCard({ cardId: card.id, deckId: targetDeckId, ...createFields });
         return;
       }
 
@@ -52,10 +47,9 @@ export function useAddCardToActiveDeck() {
         cardId: card.id,
         collectionId: activeCollection._id,
         deckId: targetDeckId,
-        notes: notes || undefined,
-        tags: tags.length ? tags : undefined
+        ...createFields
       });
     },
-    [activeCollection, activeDeck, createPhysicalCard, notes, tags]
+    [activeCollection, activeDeck, createPhysicalCard, createFields]
   );
 }

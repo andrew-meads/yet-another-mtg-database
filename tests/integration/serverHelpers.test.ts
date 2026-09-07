@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Types } from "mongoose";
 import { detailPhysicalCards, upsertTags } from "@/lib/server/cardDetails";
+import { PhysicalCardModel } from "@/db/schema";
 import { findOrCreateColumn, pullCardFromAllDecks } from "@/lib/server/deckArrange";
 import { DeckModel, TagModel } from "@/db/schema";
 import { seedCard, seedCollection, seedDeck, seedPhysicalCard, seedUser } from "./helpers";
@@ -49,6 +50,25 @@ describe("detailPhysicalCards", () => {
     expect(cardData[card.id].name).toBe("Goblin Guide");
   });
 
+  it("passes finish/condition through as stored and leaves them absent for plain copies", async () => {
+    const owner = await seedUser();
+    const card = await seedCard();
+    const collectionId = await seedCollection(owner);
+    const foilId = await seedPhysicalCard(owner, card.id, collectionId, {
+      finish: "foil",
+      condition: "LP"
+    });
+    const plainId = await seedPhysicalCard(owner, card.id, collectionId);
+    const stored = await PhysicalCardModel.find({ _id: { $in: [foilId, plainId] } }).lean();
+
+    const { entries } = await detailPhysicalCards(stored);
+    const foil = entries.find((e) => e._id === foilId)!;
+    const plain = entries.find((e) => e._id === plainId)!;
+    expect(foil).toMatchObject({ finish: "foil", condition: "LP" });
+    expect(plain.finish).toBeUndefined();
+    expect(plain.condition).toBeUndefined();
+  });
+
   it("deduplicates card data across copies of the same card", async () => {
     const owner = await seedUser();
     const card = await seedCard({ name: "Shock" });
@@ -72,9 +92,7 @@ describe("detailPhysicalCards", () => {
     const collectionId = await seedCollection(owner);
     const pcId = await seedPhysicalCard(owner, card.id, collectionId);
 
-    const { cardData } = await detailPhysicalCards([
-      { _id: pcId, cardId: card.id, collectionId }
-    ]);
+    const { cardData } = await detailPhysicalCards([{ _id: pcId, cardId: card.id, collectionId }]);
 
     const slim = cardData[card.id];
     expect(slim.name).toBe("Lightning Bolt");

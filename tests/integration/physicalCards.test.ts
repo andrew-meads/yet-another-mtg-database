@@ -59,6 +59,44 @@ describe("POST /api/physical-cards", () => {
     expect(await TagModel.countDocuments()).toBe(2);
   });
 
+  it("stores finish and condition on every created copy", async () => {
+    const res = await createPhysicalCards(
+      jsonRequest("/api/physical-cards", "POST", {
+        cardId,
+        collectionId,
+        quantity: 2,
+        finish: "foil",
+        condition: "LP"
+      })
+    );
+    expect(res.status).toBe(201);
+    const created = await PhysicalCardModel.find({ collectionId }).lean();
+    expect(created).toHaveLength(2);
+    expect(created.every((c) => c.finish === "foil" && c.condition === "LP")).toBe(true);
+  });
+
+  it("leaves finish and condition absent when not given (default = non-foil / NM)", async () => {
+    const res = await createPhysicalCards(
+      jsonRequest("/api/physical-cards", "POST", { cardId, collectionId })
+    );
+    expect(res.status).toBe(201);
+    const created = await PhysicalCardModel.findOne({ collectionId }).lean();
+    expect(created).not.toHaveProperty("finish");
+    expect(created).not.toHaveProperty("condition");
+  });
+
+  it("400s on an unknown finish or condition without creating anything", async () => {
+    const bad = await createPhysicalCards(
+      jsonRequest("/api/physical-cards", "POST", { cardId, collectionId, finish: "glossy" })
+    );
+    expect(bad.status).toBe(400);
+    const badCond = await createPhysicalCards(
+      jsonRequest("/api/physical-cards", "POST", { cardId, collectionId, condition: "nm" })
+    );
+    expect(badCond.status).toBe(400);
+    expect(await PhysicalCardModel.countDocuments()).toBe(0);
+  });
+
   it("places created copies into a deck column and sets the back-ref", async () => {
     const deck = await seedDeck(owner);
     const sectionId = deck.sections[0]._id!.toString();
@@ -105,9 +143,7 @@ describe("POST /api/physical-cards", () => {
   });
 
   it("400s when creating an ephemeral card without a deck", async () => {
-    const res = await createPhysicalCards(
-      jsonRequest("/api/physical-cards", "POST", { cardId })
-    );
+    const res = await createPhysicalCards(jsonRequest("/api/physical-cards", "POST", { cardId }));
     expect(res.status).toBe(400);
     expect(await PhysicalCardModel.countDocuments()).toBe(0);
   });
@@ -125,6 +161,39 @@ describe("PATCH /api/physical-cards/[id]", () => {
     expect(pc!.notes).toBe("mint");
     expect(pc!.tags).toEqual(["edh"]);
     expect(await TagModel.countDocuments({ label: "edh" })).toBe(1);
+  });
+
+  it("updates finish and condition independently", async () => {
+    const id = await seedPhysicalCard(owner, cardId, collectionId);
+    let res = await patchPhysicalCard(
+      jsonRequest(`/api/physical-cards/${id}`, "PATCH", { finish: "etched" }),
+      ctx({ id })
+    );
+    expect(res.status).toBe(200);
+    let pc = await PhysicalCardModel.findById(id).lean();
+    expect(pc!.finish).toBe("etched");
+    expect(pc).not.toHaveProperty("condition");
+
+    res = await patchPhysicalCard(
+      jsonRequest(`/api/physical-cards/${id}`, "PATCH", { condition: "DMG" }),
+      ctx({ id })
+    );
+    expect(res.status).toBe(200);
+    pc = await PhysicalCardModel.findById(id).lean();
+    expect(pc!.finish).toBe("etched");
+    expect(pc!.condition).toBe("DMG");
+  });
+
+  it("400s on an invalid finish or condition and changes nothing", async () => {
+    const id = await seedPhysicalCard(owner, cardId, collectionId, { finish: "foil" });
+    const res = await patchPhysicalCard(
+      jsonRequest(`/api/physical-cards/${id}`, "PATCH", { finish: "shiny", notes: "x" }),
+      ctx({ id })
+    );
+    expect(res.status).toBe(400);
+    const pc = await PhysicalCardModel.findById(id).lean();
+    expect(pc!.finish).toBe("foil");
+    expect(pc!.notes).toBeUndefined();
   });
 
   it("moves to another collection while keeping the deck assignment", async () => {
@@ -201,6 +270,40 @@ describe("POST /api/physical-cards/remove-group", () => {
     expect(await res.json()).toEqual({ deleted: 2 });
     expect(await PhysicalCardModel.countDocuments({ collectionId, tags: ["a"] })).toBe(1);
     expect(await PhysicalCardModel.countDocuments({ collectionId, tags: ["b"] })).toBe(1);
+  });
+
+  it("matches finish/condition by effective value (unset equals non-foil / NM)", async () => {
+    // Two plain copies: one with nothing stored, one with explicit defaults.
+    await seedPhysicalCard(owner, cardId, collectionId);
+    await seedPhysicalCard(owner, cardId, collectionId, { finish: "nonfoil", condition: "NM" });
+    // A foil copy that must survive a "plain group" delete.
+    const foilId = await seedPhysicalCard(owner, cardId, collectionId, { finish: "foil" });
+
+    const res = await removeGroup(
+      jsonRequest("/api/physical-cards/remove-group", "POST", {
+        collectionId,
+        cardId,
+        deckId: null,
+        quantity: 5
+      })
+    );
+    expect(await res.json()).toEqual({ deleted: 2 });
+    const remaining = await PhysicalCardModel.find({ collectionId }).lean();
+    expect(remaining.map((c) => String(c._id))).toEqual([foilId]);
+
+    // Targeting the foil group deletes only the foil copy.
+    const res2 = await removeGroup(
+      jsonRequest("/api/physical-cards/remove-group", "POST", {
+        collectionId,
+        cardId,
+        finish: "foil",
+        condition: "NM",
+        deckId: null,
+        quantity: 1
+      })
+    );
+    expect(await res2.json()).toEqual({ deleted: 1 });
+    expect(await PhysicalCardModel.countDocuments({ collectionId })).toBe(0);
   });
 
   it("validates the body", async () => {

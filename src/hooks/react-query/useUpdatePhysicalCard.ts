@@ -2,11 +2,16 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateCardMembership } from "./invalidate";
+import { CardCondition, CardFinish } from "@/lib/cardAttributes";
 
 export interface UpdatePhysicalCardRequest {
   physicalCardId: string;
   notes?: string;
   tags?: string[];
+  /** Foil treatment; omit for non-foil. */
+  finish?: CardFinish;
+  /** Wear grade; omit for Near Mint. */
+  condition?: CardCondition;
   /** Move the card to a different collection (keeps its deck assignment). */
   collectionId?: string;
 }

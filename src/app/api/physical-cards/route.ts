@@ -4,6 +4,7 @@ import { upsertTags } from "@/lib/server/cardDetails";
 import { findOrCreateColumn } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
+import { CardCondition, CardFinish, isCardCondition, isCardFinish } from "@/lib/cardAttributes";
 
 interface CreatePhysicalCardBody {
   cardId: string;
@@ -11,6 +12,10 @@ interface CreatePhysicalCardBody {
   collectionId?: string | null;
   notes?: string;
   tags?: string[];
+  /** Foil treatment of the new copies; omit for non-foil. */
+  finish?: CardFinish;
+  /** Wear grade of the new copies; omit for Near Mint. */
+  condition?: CardCondition;
   /** If set, the created card(s) are also assigned to this deck. */
   deckId?: string;
   sectionId?: string;
@@ -41,11 +46,25 @@ export async function POST(request: NextRequest) {
     const userId = session!.user._id;
 
     const body = (await request.json()) as CreatePhysicalCardBody;
-    const { cardId, collectionId, notes, tags, deckId, sectionId, columnId, index } = body;
+    const { cardId, collectionId, notes, tags, finish, condition, deckId, sectionId, columnId } =
+      body;
+    const { index } = body;
     const quantity = Math.max(1, Math.floor(body.quantity ?? 1));
 
     if (!cardId) {
       return Response.json({ error: "cardId is required" }, { status: 400 });
+    }
+    if (finish !== undefined && !isCardFinish(finish)) {
+      return Response.json(
+        { error: "finish must be one of nonfoil, foil, etched" },
+        { status: 400 }
+      );
+    }
+    if (condition !== undefined && !isCardCondition(condition)) {
+      return Response.json(
+        { error: "condition must be one of NM, LP, MP, HP, DMG" },
+        { status: 400 }
+      );
     }
 
     const isEphemeral = !collectionId;
@@ -83,7 +102,9 @@ export async function POST(request: NextRequest) {
         collectionId: collectionId ?? null,
         deckId: deckId ?? null,
         notes,
-        tags
+        tags,
+        finish,
+        condition
       }))
     );
     const createdIds = created.map((c) => c._id);

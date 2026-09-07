@@ -1,4 +1,5 @@
 import { SlimMtgCard } from "./MtgCard";
+import { CardCondition, CardFinish } from "@/lib/cardAttributes";
 
 /**
  * A single physical card copy.
@@ -7,6 +8,10 @@ import { SlimMtgCard } from "./MtgCard";
  * optionally assigned to at most one deck (`deckId`). These back-references are
  * the source of truth for membership. A card with `collectionId === null` is
  * **ephemeral**: it lives only inside its deck and is deleted when removed from it.
+ *
+ * `finish` and `condition` are optional: an absent value means the default
+ * (`nonfoil` / `NM`), so pre-existing documents need no backfill — read them via
+ * `effectiveFinish` / `effectiveCondition` from `src/lib/cardAttributes.ts`.
  */
 export interface PhysicalCard {
   _id: string;
@@ -18,7 +23,17 @@ export interface PhysicalCard {
   deckId?: string | null;
   notes?: string;
   tags?: string[];
+  /** Foil treatment of this copy; absent = non-foil. */
+  finish?: CardFinish;
+  /** Wear grade of this copy; absent = Near Mint. */
+  condition?: CardCondition;
 }
+
+/**
+ * The per-copy fields a caller can set when creating new copies (search-page
+ * add-meta bar, drag items, "add another copy"). Absent/undefined = default.
+ */
+export type NewCopyMeta = Pick<PhysicalCard, "notes" | "tags" | "finish" | "condition">;
 
 /**
  * A physical card joined with its Scryfall card data and cross-membership labels
@@ -32,6 +47,10 @@ export interface DetailedPhysicalCard {
   deckId?: string | null;
   notes?: string;
   tags?: string[];
+  /** Foil treatment of this copy; absent = non-foil. */
+  finish?: CardFinish;
+  /** Wear grade of this copy; absent = Near Mint. */
+  condition?: CardCondition;
   /** True when this is an ephemeral (deck-only) card with no collection. */
   isEphemeral?: boolean;
   /** Name of the collection this card belongs to (for the deck view badge) */

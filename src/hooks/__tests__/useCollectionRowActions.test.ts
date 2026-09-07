@@ -33,6 +33,8 @@ function makeRow(over: Partial<CollectionGroupRow> = {}): CollectionGroupRow {
   return {
     key: "k1",
     card: { id: "card-1", name: "Lightning Bolt" } as never,
+    finish: "nonfoil",
+    condition: "NM",
     deckId: null,
     physicalCardIds: ["p1", "p2", "p3"],
     quantity: 3,

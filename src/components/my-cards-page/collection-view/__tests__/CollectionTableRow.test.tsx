@@ -65,6 +65,8 @@ function makeRow(over: Partial<CollectionGroupRow> = {}): CollectionGroupRow {
   return {
     key: "k1",
     card,
+    finish: "nonfoil",
+    condition: "NM",
     deckId: null,
     physicalCardIds: ["p1", "p2", "p3", "p4"],
     quantity: 4,
@@ -189,6 +191,23 @@ describe("CollectionTableRow context menu", () => {
     expect(screen.queryByText(/Remove copy from deck/)).not.toBeInTheDocument();
   });
 
+  it("Add another copy carries the row's non-default finish/condition only", () => {
+    openMenu(makeRow({ finish: "foil", condition: "NM" }));
+    fireEvent.click(menuItemFor(/Add another copy/));
+    expect(m.create).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ cardId: "card-1", finish: "foil", quantity: 1 })
+    );
+    expect(m.create.mock.calls[0][0]).not.toHaveProperty("condition");
+  });
+
+  it("Delete a copy targets the row's finish and condition group", () => {
+    openMenu(makeRow({ finish: "etched", condition: "MP" }));
+    fireEvent.click(menuItemFor(/Delete a copy/));
+    expect(m.remove).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ finish: "etched", condition: "MP", quantity: 1 })
+    );
+  });
+
   it("Add another copy creates exactly one copy in this collection", () => {
     openMenu(makeRow());
     fireEvent.click(menuItemFor(/Add another copy/));
@@ -203,5 +222,19 @@ describe("CollectionTableRow context menu", () => {
     expect(m.remove).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ cardId: "card-1", collectionId: "c1", quantity: 1 })
     );
+  });
+});
+
+describe("CollectionTableRow attribute badges", () => {
+  it("shows no badges for an ordinary non-foil / NM row", () => {
+    renderRow(makeRow());
+    expect(screen.queryByTestId("card-attribute-badges")).not.toBeInTheDocument();
+  });
+
+  it("shows finish and condition badges when they differ from the defaults", () => {
+    renderRow(makeRow({ finish: "foil", condition: "LP" }));
+    const badges = screen.getByTestId("card-attribute-badges");
+    expect(badges).toHaveTextContent("Foil");
+    expect(badges).toHaveTextContent("LP");
   });
 });

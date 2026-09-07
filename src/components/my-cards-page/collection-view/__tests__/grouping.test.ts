@@ -32,6 +32,8 @@ function makeRow(overrides: Partial<CollectionGroupRow>): CollectionGroupRow {
   return {
     key: overrides.key ?? "k",
     card: makeCard(),
+    finish: "nonfoil",
+    condition: "NM",
     deckId: null,
     physicalCardIds: [],
     quantity: 1,
@@ -51,6 +53,26 @@ describe("groupCollectionCards", () => {
     const plain = rows.find((r) => !r.notes)!;
     expect(plain.quantity).toBe(2);
     expect(plain.physicalCardIds.sort()).toEqual(["p1", "p2"]);
+  });
+
+  it("splits rows by finish and condition, treating unset as non-foil / NM", () => {
+    const bolt = makeCard();
+    const rows = groupCollectionCards([
+      makePhysical("p1", bolt),
+      makePhysical("p2", bolt, { finish: "nonfoil", condition: "NM" }),
+      makePhysical("p3", bolt, { finish: "foil" }),
+      makePhysical("p4", bolt, { condition: "LP" }),
+      makePhysical("p5", bolt, { finish: "foil", condition: "NM" })
+    ]);
+    expect(rows).toHaveLength(3);
+    const plain = rows.find((r) => r.finish === "nonfoil" && r.condition === "NM")!;
+    expect(plain.physicalCardIds.sort()).toEqual(["p1", "p2"]);
+    const foil = rows.find((r) => r.finish === "foil")!;
+    expect(foil.condition).toBe("NM");
+    expect(foil.physicalCardIds.sort()).toEqual(["p3", "p5"]);
+    const played = rows.find((r) => r.condition === "LP")!;
+    expect(played.finish).toBe("nonfoil");
+    expect(played.physicalCardIds).toEqual(["p4"]);
   });
 });
 
@@ -98,6 +120,18 @@ describe("sortGroupRows", () => {
       makeRow({ key: "undated", card: makeCard({ released_at: undefined }) })
     ]);
     expect(rows.map((r) => r.key)).toEqual(["undated", "dated"]);
+  });
+
+  it("orders non-foil before foil and better condition first within a printing", () => {
+    const card = makeCard();
+    const rows = sortGroupRows([
+      makeRow({ key: "foil-lp", card, finish: "foil", condition: "LP" }),
+      makeRow({ key: "plain-hp", card, condition: "HP" }),
+      makeRow({ key: "etched", card, finish: "etched" }),
+      makeRow({ key: "plain", card }),
+      makeRow({ key: "foil", card, finish: "foil" })
+    ]);
+    expect(rows.map((r) => r.key)).toEqual(["plain", "plain-hp", "foil", "foil-lp", "etched"]);
   });
 
   it("keeps loose-before-deck and deck-name tiebreaks after equal dates", () => {
