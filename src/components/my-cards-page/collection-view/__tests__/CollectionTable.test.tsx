@@ -7,7 +7,10 @@ import type { CollectionGroupRow } from "@/components/my-cards-page/collection-v
 
 const m = vi.hoisted(() => ({
   moveOneToCollection: vi.fn(),
-  addOneToDeck: vi.fn()
+  addOneToDeck: vi.fn(),
+  setSelectedCard: vi.fn(),
+  quotes: {} as Record<string, { prices: Record<string, string | null>; updatedAt: string | null }>,
+  priceRequests: [] as Array<{ ids: string[]; enabled: boolean }>
 }));
 
 vi.mock("@/hooks/drag-drop/useCollectionDropTarget", () => ({
@@ -20,7 +23,7 @@ vi.mock("@/hooks/useCollectionRowActions", () => ({
   })
 }));
 vi.mock("@/context/CardSelectionContext", () => ({
-  useCardSelection: () => ({ setSelectedCard: vi.fn() })
+  useCardSelection: () => ({ setSelectedCard: m.setSelectedCard, selectedCopies: null })
 }));
 vi.mock("@/context/SettingsContext", () => ({
   useCardPreviewSettings: () => ({
@@ -30,15 +33,41 @@ vi.mock("@/context/SettingsContext", () => ({
 vi.mock("@/components/search/CardSearchBar", () => ({
   default: () => <div data-testid="search-bar" />
 }));
+// Price quotes + currency have their own tests; stub them (and record requests).
+vi.mock("@/hooks/react-query/useCardPriceQuotes", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/react-query/useCardPriceQuotes")>();
+  return {
+    ...actual,
+    useCardPriceQuotes: (ids: string[], options?: { enabled?: boolean }) => {
+      m.priceRequests.push({ ids, enabled: options?.enabled ?? true });
+      return { quotes: m.quotes, isLoading: false, error: null };
+    }
+  };
+});
+vi.mock("@/hooks/useCurrency", () => ({
+  useCurrency: () => ({
+    currency: "USD",
+    configured: "USD",
+    rate: 1,
+    loading: false,
+    format: (usd: number | null) => (usd === null ? null : `$${usd.toFixed(2)}`)
+  })
+}));
 vi.mock("@/components/my-cards-page/collection-view/CollectionTableRow", () => ({
   default: ({
     row,
-    onClick
+    onClick,
+    showPrice
   }: {
     row: CollectionGroupRow;
     onClick?: (card: CollectionGroupRow["card"]) => void;
+    showPrice?: boolean;
   }) => (
-    <div data-testid="collection-row" onClick={() => onClick?.(row.card)}>
+    <div
+      data-testid="collection-row"
+      data-show-price={showPrice ? "true" : undefined}
+      onClick={() => onClick?.(row.card)}
+    >
       {row.card.name}
       {row.deckName ? ` (${row.deckName})` : ""}
     </div>
@@ -103,6 +132,129 @@ const shock = makeCard({ id: "card-2", name: "Shock" });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  m.quotes = {};
+  m.priceRequests = [];
+  window.localStorage.clear();
+});
+
+describe("CollectionTable selection", () => {
+  it("selects a clicked row's card together with its copies and collection name", () => {
+    const bolt = makeCard();
+    renderTable([
+      makePhysical("p1", bolt, { finish: "foil" }),
+      makePhysical("p2", bolt, { finish: "foil" })
+    ]);
+    fireEvent.click(screen.getAllByTestId("collection-row")[0]);
+    expect(m.setSelectedCard).toHaveBeenCalledWith(
+      bolt,
+      expect.objectContaining({
+        cardId: "card-1",
+        physicalCardIds: ["p1", "p2"],
+        finish: "foil",
+        condition: "NM",
+        isProxy: false,
+        locationName: "Main Collection"
+      })
+    );
+  });
+});
+
+describe("CollectionTable price toggle", () => {
+  const bolt = makeCard();
+  const quoted = {
+    prices: {
+      usd: "1.50",
+      usd_foil: "4.00",
+      usd_etched: null,
+      eur: null,
+      eur_foil: null,
+      tix: null
+    },
+    updatedAt: new Date().toISOString()
+  };
+
+  it("is off by default: no price column, no value, and quotes are not requested", () => {
+    renderTable([makePhysical("p1", bolt)]);
+    expect(screen.queryByText("Price")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("collection-value")).not.toBeInTheDocument();
+    expect(m.priceRequests.every((r) => !r.enabled)).toBe(true);
+    expect(screen.getByLabelText("Show prices")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("toggling on shows the price column, passes it to rows, and totals the rows' value", () => {
+    m.quotes = { "card-1": quoted };
+    renderTable([
+      makePhysical("p1", bolt),
+      makePhysical("p2", bolt),
+      makePhysical("p3", bolt, { finish: "foil" })
+    ]);
+    fireEvent.click(screen.getByLabelText("Show prices"));
+
+    expect(screen.getByText("Price")).toBeInTheDocument();
+    expect(m.priceRequests.at(-1)).toEqual({ ids: ["card-1", "card-1"], enabled: true });
+    expect(
+      screen.getAllByTestId("collection-row").every((r) => r.dataset.showPrice === "true")
+    ).toBe(true);
+    // 2 × $1.50 non-foil + 1 × $4.00 foil, all estimated from the printing (no copy fetch yet)
+    expect(screen.getByTestId("collection-value")).toHaveTextContent("$7.00");
+    expect(screen.getByTestId("collection-value")).toHaveTextContent("(3 estimated)");
+    expect(screen.getByTestId("collection-value")).not.toHaveTextContent("unpriced");
+    expect(
+      screen.getByTestId("collection-value").querySelector("[data-age-level]")
+    ).toHaveAttribute("data-age-level", "stale");
+  });
+
+  it("counts copies without a price as unpriced and persists the toggle", () => {
+    m.quotes = { "card-1": { ...quoted, prices: { ...quoted.prices, usd_foil: null } } };
+    renderTable([makePhysical("p1", bolt), makePhysical("p2", bolt, { finish: "foil" })]);
+    fireEvent.click(screen.getByLabelText("Show prices"));
+    expect(screen.getByTestId("collection-value")).toHaveTextContent("$1.50");
+    expect(screen.getByTestId("collection-value")).toHaveTextContent("(2 estimated, 1 unpriced)");
+    expect(JSON.parse(window.localStorage.getItem("collection-show-prices")!)).toBe(true);
+  });
+
+  it("counts proxies at $0: not estimated, not unpriced", () => {
+    m.quotes = { "card-1": quoted };
+    renderTable([
+      makePhysical("p1", bolt, { tags: ["Proxy"] }),
+      makePhysical("p2", bolt, { tags: ["Proxy"] }),
+      makePhysical("p3", bolt, {
+        price: {
+          usd: "1.50",
+          finish: "nonfoil",
+          condition: "NM",
+          conditionMatched: true,
+          updatedAt: new Date().toISOString()
+        }
+      })
+    ]);
+    fireEvent.click(screen.getByLabelText("Show prices"));
+    const value = screen.getByTestId("collection-value");
+    expect(value).toHaveTextContent("$1.50");
+    expect(value).not.toHaveTextContent("estimated");
+    expect(value).not.toHaveTextContent("unpriced");
+    expect(value.querySelector("[data-age-level]")).toHaveAttribute("data-age-level", "fresh");
+  });
+
+  it("values copies at their own fetched price and marks the total fresh when nothing is estimated", () => {
+    m.quotes = { "card-1": quoted };
+    const priced = {
+      usd: "0.90",
+      finish: "nonfoil",
+      condition: "LP",
+      conditionMatched: true,
+      updatedAt: new Date().toISOString()
+    };
+    renderTable([
+      makePhysical("p1", bolt, { condition: "LP", price: priced }),
+      makePhysical("p2", bolt, { condition: "LP", price: priced })
+    ]);
+    fireEvent.click(screen.getByLabelText("Show prices"));
+    const value = screen.getByTestId("collection-value");
+    expect(value).toHaveTextContent("$1.80");
+    expect(value).not.toHaveTextContent("estimated");
+    expect(value.querySelector("[data-age-level]")).toHaveAttribute("data-age-level", "fresh");
+  });
 });
 
 describe("CollectionTable hide-cards-in-decks toggle", () => {

@@ -1,6 +1,8 @@
 import connectDB from "@/db/mongoose";
-import { getCardPrices } from "@/lib/server/cardPrices";
+import { getCardPriceQuotes, toPriceQuotesResponse } from "@/lib/server/cardPrices";
 import { NextRequest } from "next/server";
+import { getAuthSession } from "@/auth";
+import { userPriceSourceOrder } from "@/lib/server/priceSourceOrder";
 
 /** Upper bound on ids per request, to cap the number of Scryfall batches. */
 const MAX_IDS = 500;
@@ -9,12 +11,16 @@ const MAX_IDS = 500;
  * POST /api/cards/prices
  * Body: { ids: string[] } — Scryfall card ids.
  *
- * Returns up-to-date prices for each requested card:
- *   { prices: { [cardId]: { usd, usd_foil, usd_etched, eur, eur_foil, tix } } }
+ * Returns up-to-date prices for each requested card plus when each was written
+ * (so the client can show how old a price is):
+ *   {
+ *     prices:    { [cardId]: { usd, usd_foil, usd_etched, eur, eur_foil, tix } },
+ *     updatedAt: { [cardId]: ISO string | null }
+ *   }
  *
- * Prices are served from a 24h cache and refreshed from Scryfall's
- * /cards/collection endpoint (batched at 75) only when stale/missing. One
- * endpoint serves a single card or a list.
+ * Prices live on the card documents; those stamped within 24h are served as-is
+ * and the rest are refreshed through the user's price sources in priority order
+ * (see src/lib/server/priceSources). One endpoint serves a single card or a list.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -38,10 +44,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: `ids must not exceed ${MAX_IDS} entries` }, { status: 400 });
     }
 
-    const prices = await getCardPrices(ids as string[]);
-    return Response.json({ prices });
+    const session = await getAuthSession();
+    const sources = await userPriceSourceOrder(session!.user._id);
+    const quotes = await getCardPriceQuotes(ids as string[], { sources });
+    return Response.json(toPriceQuotesResponse(quotes));
   } catch (error) {
     console.error("Error fetching card prices:", error);
-    return Response.json({ error: "Failed to fetch prices from Scryfall" }, { status: 502 });
+    return Response.json(
+      { error: "Failed to fetch prices from any price source" },
+      { status: 502 }
+    );
   }
 }

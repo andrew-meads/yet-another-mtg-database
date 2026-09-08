@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils";
 import { Library, Layers } from "lucide-react";
 import { SetSvg } from "@/components/SetSvg";
 import CardAttributeBadges from "@/components/CardAttributeBadges";
+import { SelectedCopies } from "@/context/CardSelectionContext";
+import { copySetFromCopies } from "@/lib/copyPricing";
+import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import {
   CardCondition,
   CardFinish,
@@ -38,6 +41,8 @@ interface Loc {
   condition: CardCondition;
   quantity: number;
   freeQuantity: number;
+  /** The copies behind this row, so clicking it selects them with the card. */
+  copies: DetailedPhysicalCard[];
 }
 
 export default function CardLocationsView({ cardName }: { cardName: string }) {
@@ -48,7 +53,13 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
   const [selection, setSelection] = useState<{ cardName: string; key: string } | null>(null);
 
   const handleClick = (loc: Loc) => {
-    setSelectedCard(loc.card);
+    const copies: SelectedCopies = {
+      cardId: loc.card.id,
+      physicalCardIds: loc.copies.map((c) => c._id),
+      ...copySetFromCopies(loc.copies),
+      locationName: loc.locationName
+    };
+    setSelectedCard(loc.card, copies);
     setSelection({ cardName, key: loc.key });
   };
 
@@ -102,6 +113,7 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
         const existing = collectionMap.get(collKey);
         if (existing) {
           existing.quantity++;
+          existing.copies.push(entry);
           if (!entry.deckId) existing.freeQuantity++;
         } else {
           collectionMap.set(collKey, {
@@ -115,7 +127,8 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
             finish,
             condition,
             quantity: 1,
-            freeQuantity: entry.deckId ? 0 : 1
+            freeQuantity: entry.deckId ? 0 : 1,
+            copies: [entry]
           });
         }
 
@@ -129,6 +142,7 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
           const existingDeck = children.get(deckKey);
           if (existingDeck) {
             existingDeck.quantity++;
+            existingDeck.copies.push(entry);
           } else {
             children.set(deckKey, {
               key: deckKey,
@@ -141,7 +155,8 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
               finish,
               condition,
               quantity: 1,
-              freeQuantity: 0
+              freeQuantity: 0,
+              copies: [entry]
             });
           }
         }

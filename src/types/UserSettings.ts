@@ -31,6 +31,21 @@ export const DEFAULT_CARD_PREVIEW_SETTINGS: CardPreviewSettings = {
   delayMs: CARD_PREVIEW_MIN_DELAY
 };
 
+import { PriceSourcePreference } from "@/lib/priceSources";
+
+/** User-configurable pricing settings. */
+export interface PricingSettings {
+  /** ISO 4217 code prices are shown in (sources quote USD; others are converted). */
+  currency: string;
+  /**
+   * Price sources in priority order with an enabled flag; a refresh tries them
+   * in order until one yields a price. Absent = every source, default order.
+   */
+  sources?: PriceSourcePreference[];
+}
+
+export const DEFAULT_PRICING_SETTINGS: PricingSettings = { currency: "USD" };
+
 /** A reference to a collection or deck the user has open in the workspace. */
 export interface OpenEntityRef {
   id: string;
@@ -55,6 +70,7 @@ export interface AiSettingsMasked {
 export interface UserSettingsPayload {
   cardPreview?: CardPreviewSettings;
   openEntities?: OpenEntityRef[];
+  pricing?: PricingSettings;
   ai?: AiSettingsMasked;
 }
 

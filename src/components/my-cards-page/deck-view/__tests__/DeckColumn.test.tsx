@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, act } from "@testing-library/react";
+import { render, act, fireEvent } from "@testing-library/react";
 import type { MtgCard } from "@/types/MtgCard";
 import type { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 
@@ -10,7 +10,12 @@ const h = vi.hoisted(() => ({
     physicalCardIds: string[];
     cards: MtgCard[] | undefined;
     getItem?: () => PhysicalCardDragItem;
-  }>
+  }>,
+  select: vi.fn()
+}));
+
+vi.mock("@/context/CardSelectionContext", () => ({
+  useCardSelection: () => ({ selectedCard: null, selectedCopies: null, setSelectedCard: h.select })
 }));
 
 vi.mock("@/hooks/drag-drop/usePhysicalCardDragSource", () => ({
@@ -74,6 +79,49 @@ function makeEphemeralColumn(ids: string[]): DeckColumnData {
 
 beforeEach(() => {
   h.dragCalls = [];
+  h.select.mockClear();
+});
+
+describe("DeckColumn selection", () => {
+  it("selects a clicked card together with that one copy", () => {
+    const { getByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: {
+          _id: "col-1",
+          cards: [{ ...makeCard("p0"), finish: "foil", condition: "LP", collectionName: "Main" }]
+        }
+      })
+    );
+    fireEvent.click(getByTestId("deck-card-p0"));
+    expect(h.select).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "card-p0" }),
+      expect.objectContaining({
+        cardId: "card-p0",
+        physicalCardIds: ["p0"],
+        finish: "foil",
+        condition: "LP",
+        isProxy: false,
+        locationName: "Main"
+      })
+    );
+  });
+
+  it("labels an ephemeral copy as deck-only", () => {
+    const { getByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeEphemeralColumn(["e0"])
+      })
+    );
+    fireEvent.click(getByTestId("deck-card-e0"));
+    expect(h.select).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ physicalCardIds: ["e0"], locationName: "this deck only" })
+    );
+  });
 });
 
 describe("DeckColumn drag selection", () => {

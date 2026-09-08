@@ -5,6 +5,8 @@ export interface MtgCard {
   id: string;
   lang: string;
   tcgplayer_id?: number;
+  /** TCGplayer product id of the etched-foil printing, when it is a separate product. */
+  tcgplayer_etched_id?: number;
   layout: string;
   oracle_id?: string;
 
@@ -117,4 +119,6 @@ export type SlimMtgCard = Pick<
   | "rarity"
   | "image_uris"
   | "card_faces"
+  | "prices"
+  | "prices_updated_at"
 >;

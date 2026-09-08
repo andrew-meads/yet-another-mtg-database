@@ -8,8 +8,11 @@ import {
   CARD_PREVIEW_MIN_DELAY,
   CardPreviewSettings,
   OpenEntityRef,
+  PricingSettings,
   UserSettingsPayload
 } from "@/types/UserSettings";
+import { isSupportedCurrency } from "@/lib/pricing";
+import { PRICE_SOURCE_IDS } from "@/lib/priceSources";
 
 /** Default OpenAI-compatible endpoint used when the user leaves the base URL blank. */
 export const DEFAULT_AI_BASE_URL = "https://api.openai.com/v1";
@@ -34,15 +37,33 @@ export const openEntitiesSchema = z
   )
   .max(200);
 
+export const pricingSchema = z.strictObject({
+  currency: z
+    .string()
+    .refine(isSupportedCurrency, { message: "currency must be a supported ISO 4217 code" }),
+  sources: z
+    .array(z.strictObject({ id: z.enum(PRICE_SOURCE_IDS), enabled: z.boolean() }))
+    .max(PRICE_SOURCE_IDS.length)
+    .refine((list) => new Set(list.map((s) => s.id)).size === list.length, {
+      message: "sources must not repeat a source"
+    })
+    .optional()
+});
+
 /** Body of PATCH /api/settings — at least one section must be present. */
 export const settingsPatchSchema = z
   .strictObject({
     cardPreview: cardPreviewSchema.optional(),
-    openEntities: openEntitiesSchema.optional()
+    openEntities: openEntitiesSchema.optional(),
+    pricing: pricingSchema.optional()
   })
-  .refine((value) => value.cardPreview !== undefined || value.openEntities !== undefined, {
-    message: "Provide at least one settings section"
-  });
+  .refine(
+    (value) =>
+      value.cardPreview !== undefined ||
+      value.openEntities !== undefined ||
+      value.pricing !== undefined,
+    { message: "Provide at least one settings section" }
+  );
 
 /**
  * Body of PUT /api/settings/ai. `apiKey` semantics: omitted = keep the stored
@@ -81,6 +102,7 @@ export function toClientSettings(doc: LeanUserSettings | null): UserSettingsPayl
   return {
     cardPreview: doc.cardPreview as CardPreviewSettings | undefined,
     openEntities: doc.openEntities as OpenEntityRef[] | undefined,
+    pricing: doc.pricing as PricingSettings | undefined,
     ai: maskAi(doc.ai)
   };
 }
@@ -92,6 +114,7 @@ export async function patchUserSettings(
   const $set: Record<string, unknown> = {};
   if (patch.cardPreview !== undefined) $set.cardPreview = patch.cardPreview;
   if (patch.openEntities !== undefined) $set.openEntities = patch.openEntities;
+  if (patch.pricing !== undefined) $set.pricing = patch.pricing;
 
   return UserSettingsModel.findOneAndUpdate(
     { owner: new Types.ObjectId(userId) },

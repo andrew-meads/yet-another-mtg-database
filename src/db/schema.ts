@@ -22,6 +22,15 @@ interface PhysicalCardDoc {
   finish?: CardFinish;
   /** Absent = Near Mint (see src/lib/cardAttributes.ts). */
   condition?: CardCondition;
+  /** Last price fetched for this copy's finish + condition; absent = never fetched. */
+  price?: {
+    usd: string | null;
+    source?: string;
+    finish: string;
+    condition: string;
+    conditionMatched: boolean;
+    updatedAt: Date;
+  };
 }
 
 interface CollectionDoc {
@@ -101,6 +110,10 @@ export interface UserSettingsDoc {
     kind: string;
     pinned?: boolean;
   }[];
+  pricing?: {
+    currency: string;
+    sources?: { id: string; enabled: boolean }[];
+  };
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -120,6 +133,7 @@ const cardSchema = new Schema<MtgCard>(
     id: { type: String, required: true, unique: true },
     lang: { type: String, required: true },
     tcgplayer_id: Number,
+    tcgplayer_etched_id: Number,
     layout: { type: String, required: true },
     oracle_id: String,
 
@@ -206,11 +220,25 @@ const cardSchema = new Schema<MtgCard>(
       usd_etched: String,
       eur: String,
       eur_foil: String,
-      tix: String
+      tix: String,
+      // Which price source wrote these (absent = Scryfall; never backfilled).
+      source: String
     },
     prices_updated_at: Date
   },
   { strict: true, collection: "cards" }
+);
+
+const copyPriceSchema = new Schema(
+  {
+    usd: { type: String, default: null },
+    source: String,
+    finish: { type: String, required: true },
+    condition: { type: String, required: true },
+    conditionMatched: { type: Boolean, required: true },
+    updatedAt: { type: Date, required: true }
+  },
+  { _id: false }
 );
 
 // A single physical card copy. Belongs to at most one collection and optionally
@@ -237,7 +265,9 @@ const physicalCardSchema = new Schema<PhysicalCardDoc>(
     // default (nonfoil / NM), so documents written before these fields existed
     // need no backfill. The enum only validates values that are present.
     finish: { type: String, enum: CARD_FINISHES, required: false },
-    condition: { type: String, enum: CARD_CONDITIONS, required: false }
+    condition: { type: String, enum: CARD_CONDITIONS, required: false },
+    // Per-copy price (see CopyPrice in src/types/CardPrice.ts); absent = never fetched.
+    price: { type: copyPriceSchema, default: undefined }
   },
   { strict: true, timestamps: true }
 );
@@ -344,6 +374,22 @@ const cardPreviewSettingsSchema = new Schema(
   { _id: false }
 );
 
+const priceSourcePreferenceSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    enabled: { type: Boolean, required: true }
+  },
+  { _id: false }
+);
+
+const pricingSettingsSchema = new Schema(
+  {
+    currency: { type: String, required: true },
+    sources: { type: [priceSourcePreferenceSchema], default: undefined }
+  },
+  { _id: false }
+);
+
 const openEntityRefSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -358,7 +404,8 @@ const userSettingsSchema = new Schema<UserSettingsDoc>(
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     ai: { type: aiSettingsSchema, default: undefined },
     cardPreview: { type: cardPreviewSettingsSchema, default: undefined },
-    openEntities: { type: [openEntityRefSchema], default: undefined }
+    openEntities: { type: [openEntityRefSchema], default: undefined },
+    pricing: { type: pricingSettingsSchema, default: undefined }
   },
   { strict: true, timestamps: true }
 );

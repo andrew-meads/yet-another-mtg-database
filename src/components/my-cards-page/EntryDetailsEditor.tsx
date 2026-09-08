@@ -3,6 +3,7 @@ import { Input } from "../ui/input";
 import TagInput from "../TagInput";
 import CardAttributePickers from "@/components/CardAttributePickers";
 import { useUpdatePhysicalCard } from "@/hooks/react-query/useUpdatePhysicalCard";
+import { useRefreshCopyPrices } from "@/hooks/react-query/useRefreshCopyPrices";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useRetrieveTags } from "@/hooks/react-query/useRetrieveTags";
 import { CardCondition, CardFinish } from "@/lib/cardAttributes";
@@ -19,6 +20,8 @@ interface EntryDetailsEditorProps {
 /**
  * Editor for a grouped row's shared notes, tags, finish, and condition. Applies
  * changes to every physical card in the group so they stay grouped together.
+ * A finish or condition change also re-fetches the copies' prices for the new
+ * finish + condition once every copy has been updated.
  */
 export default function EntryDetailsEditor({
   notes,
@@ -27,7 +30,8 @@ export default function EntryDetailsEditor({
   condition,
   physicalCardIds
 }: EntryDetailsEditorProps) {
-  const { mutate: updateCard } = useUpdatePhysicalCard();
+  const { mutate: updateCard, mutateAsync: updateCardAsync } = useUpdatePhysicalCard();
+  const { mutate: refreshCopyPrices } = useRefreshCopyPrices();
   const [localNotes, setLocalNotes] = useState(notes || "");
   const debouncedNotes = useDebouncedValue(localNotes, 500);
   const { data: predefinedTags = [] } = useRetrieveTags();
@@ -54,16 +58,24 @@ export default function EntryDetailsEditor({
     physicalCardIds.forEach((physicalCardId) => updateCard({ physicalCardId, tags: newTags }));
   };
 
-  const handleFinishChange = (newFinish: CardFinish) => {
+  const handleFinishChange = async (newFinish: CardFinish) => {
     if (newFinish === finish) return;
-    physicalCardIds.forEach((physicalCardId) => updateCard({ physicalCardId, finish: newFinish }));
+    await Promise.all(
+      physicalCardIds.map((physicalCardId) =>
+        updateCardAsync({ physicalCardId, finish: newFinish })
+      )
+    );
+    refreshCopyPrices(physicalCardIds);
   };
 
-  const handleConditionChange = (newCondition: CardCondition) => {
+  const handleConditionChange = async (newCondition: CardCondition) => {
     if (newCondition === condition) return;
-    physicalCardIds.forEach((physicalCardId) =>
-      updateCard({ physicalCardId, condition: newCondition })
+    await Promise.all(
+      physicalCardIds.map((physicalCardId) =>
+        updateCardAsync({ physicalCardId, condition: newCondition })
+      )
     );
+    refreshCopyPrices(physicalCardIds);
   };
 
   return (

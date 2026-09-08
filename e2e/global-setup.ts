@@ -158,7 +158,26 @@ async function globalSetup() {
       updatedAt: new Date()
     }
   ] as never);
-  await db.collection("cards").insertMany(CARDS as never);
+  // Every seeded card gets a FRESH price stamp so the price route never reaches
+  // out to Scryfall during e2e; only Shivan Dragon and Grizzly Bears carry a price.
+  const PRICES: Record<string, { usd: string; usd_foil?: string }> = {
+    "e2e-shivan": { usd: "12.50" },
+    "e2e-grizzly": { usd: "0.25", usd_foil: "1.75" }
+  };
+  await db.collection("cards").insertMany(
+    CARDS.map((card) => ({
+      ...card,
+      prices: {
+        usd: PRICES[card.id as string]?.usd ?? null,
+        usd_foil: PRICES[card.id as string]?.usd_foil ?? null,
+        usd_etched: null,
+        eur: null,
+        eur_foil: null,
+        tix: null
+      },
+      prices_updated_at: new Date()
+    })) as never
+  );
 
   // A deck with one "Main" section, two columns: column A holds an ordered run of
   // three physical cards; column B is empty. Used by dragDeck.spec.ts to verify
@@ -184,12 +203,22 @@ async function globalSetup() {
 
   // Two loose (no-deck) copies of Grizzly Bears in the Main Collection so a partial-drag
   // test can split one copy off via the drag-count control.
+  // Both copies carry a copy-level price record, so their collection row shows a
+  // real (fresh) copy price rather than the printing's estimate.
   await db.collection("physicalcards").insertMany(
     [new Types.ObjectId(), new Types.ObjectId()].map((_id) => ({
       _id,
       owner: userId,
       cardId: "e2e-grizzly",
       collectionId,
+      price: {
+        usd: "0.30",
+        source: "scryfall",
+        finish: "nonfoil",
+        condition: "NM",
+        conditionMatched: true,
+        updatedAt: new Date()
+      },
       createdAt: new Date(),
       updatedAt: new Date()
     })) as never

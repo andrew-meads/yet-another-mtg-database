@@ -1,22 +1,28 @@
 import { CardData } from "@/db/schema";
-import { CardPrices } from "@/types/CardPrice";
-import { scryfallFetch } from "@/lib/scryfall";
+import { CardPriceQuotesResponse, CardPrices, PriceQuote } from "@/types/CardPrice";
+import {
+  PriceSourceId,
+  DEFAULT_PRICE_SOURCE_PREFERENCES,
+  enabledSourceOrder
+} from "@/lib/priceSources";
+import { resolvePricesViaSources } from "@/lib/server/priceSources";
+import { EMPTY_PRICES, SourceCard } from "@/lib/server/priceSources/types";
+import {
+  SCRYFALL_COLLECTION_BATCH,
+  chunk,
+  extractPrices
+} from "@/lib/server/priceSources/scryfall";
 
-/** Prices older than this are refreshed from Scryfall (which updates ~daily). */
+// Re-exported for existing importers (init-db, tests, the AI tools).
+export { EMPTY_PRICES, SCRYFALL_COLLECTION_BATCH, chunk, extractPrices };
+
+/** Prices older than this are refreshed (the marketplaces update ~daily). */
 export const PRICE_STALENESS_MS = 24 * 60 * 60 * 1000;
 
-/** Scryfall's /cards/collection accepts at most this many identifiers per request. */
-export const SCRYFALL_COLLECTION_BATCH = 75;
-
-/** Every finish, defaulting to null — the shape returned for an unpriced card. */
-export const EMPTY_PRICES: CardPrices = {
-  usd: null,
-  usd_foil: null,
-  usd_etched: null,
-  eur: null,
-  eur_foil: null,
-  tix: null
-};
+/** The source order used when a caller has no user preference (e.g. AI tools). */
+export const DEFAULT_SOURCE_ORDER: PriceSourceId[] = enabledSourceOrder(
+  DEFAULT_PRICE_SOURCE_PREFERENCES
+);
 
 /** The minimal slice of a raw Scryfall card object the price helpers need. */
 export interface ScryfallPricedCard {
@@ -24,28 +30,9 @@ export interface ScryfallPricedCard {
   prices?: Partial<CardPrices> | null;
 }
 
-/**
- * Pull the six price fields off a raw Scryfall card object (or a card document),
- * defaulting any missing finish to null. Pure — safe to unit-test without a DB
- * or network.
- */
-export function extractPrices(card: { prices?: Partial<CardPrices> | null }): CardPrices {
-  const p = card.prices ?? {};
-  return {
-    usd: p.usd ?? null,
-    usd_foil: p.usd_foil ?? null,
-    usd_etched: p.usd_etched ?? null,
-    eur: p.eur ?? null,
-    eur_foil: p.eur_foil ?? null,
-    tix: p.tix ?? null
-  };
-}
-
-/** Split an array into consecutive chunks of at most `size`. */
-export function chunk<T>(items: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
+export interface PriceLookupOptions {
+  /** Sources to try, in priority order (defaults to every source, default order). */
+  sources?: PriceSourceId[];
 }
 
 /** Whether a price timestamp is still within the staleness window. */
@@ -77,7 +64,8 @@ export function buildPriceUpdates(cards: ScryfallPricedCard[], now: Date = new D
  * `cards` documents, OVERWRITING whatever prices they held and stamping
  * `prices_updated_at` = now (so the write counts as a fresh refresh for 24h).
  * Used by `init-db` to refresh prices of cards that already existed on a
- * re-import (new cards carry their prices in the insert itself).
+ * re-import (new cards carry their prices in the insert itself). Bulk-data
+ * prices are Scryfall's, so no `source` is stamped (absent = Scryfall).
  *
  * @returns the number of distinct card ids written
  */
@@ -88,69 +76,153 @@ export async function applyCardPrices(cards: ScryfallPricedCard[]): Promise<numb
   return ops.length;
 }
 
+function toIso(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+}
+
+const SOURCE_CARD_PROJECTION = {
+  _id: 0,
+  id: 1,
+  set: 1,
+  tcgplayer_id: 1,
+  tcgplayer_etched_id: 1,
+  prices: 1,
+  prices_updated_at: 1
+} as const;
+
+type StoredCard = SourceCard & { prices?: Partial<CardPrices> | null; prices_updated_at?: Date };
+
 /**
- * Fetch fresh prices for the given Scryfall ids from Scryfall's /cards/collection
- * endpoint, in batches of 75. Returns a map of cardId -> CardPrices for the cards
- * Scryfall returned (ids in `not_found` are simply absent from the map).
+ * Fetch prices for the given held cards through the source chain and write
+ * them onto the card documents with a fresh stamp. Cards no source could price
+ * are stored as EMPTY_PRICES (so they aren't re-fetched every request) — but
+ * only when every source answered; if a source failed, those cards keep
+ * whatever they had (stale or nothing) and are returned as-is, so an outage
+ * never gets recorded as "this card has no price". Returns quotes keyed by id.
  *
- * @throws if any batch request fails (non-ok response or network error), so the
- * caller can surface a 502.
+ * @throws when a source failed and nothing could be priced.
  */
-async function fetchPricesFromScryfall(ids: string[]): Promise<Record<string, CardPrices>> {
-  const result: Record<string, CardPrices> = {};
-  for (const batch of chunk(ids, SCRYFALL_COLLECTION_BATCH)) {
-    const url = `${process.env.SCRYFALL_API_BASE_URL}/cards/collection`;
-    const response = await scryfallFetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifiers: batch.map((id) => ({ id })) })
-    });
-    if (!response.ok) {
-      throw new Error(`Scryfall /cards/collection returned ${response.status}`);
+async function fetchAndStore(
+  cards: StoredCard[],
+  order: PriceSourceId[],
+  stamp: Date
+): Promise<Record<string, PriceQuote>> {
+  const { prices, failures } = await resolvePricesViaSources(cards, order);
+  const result: Record<string, PriceQuote> = {};
+  const writes: ScryfallPricedCard[] = [];
+  for (const card of cards) {
+    const found = prices[card.id];
+    if (found) {
+      writes.push({ id: card.id, prices: found });
+      result[card.id] = { prices: found, updatedAt: stamp.toISOString() };
+    } else if (failures.length === 0) {
+      writes.push({ id: card.id, prices: EMPTY_PRICES });
+      result[card.id] = { prices: EMPTY_PRICES, updatedAt: stamp.toISOString() };
+    } else {
+      result[card.id] = { prices: extractPrices(card), updatedAt: toIso(card.prices_updated_at) };
     }
-    const body = (await response.json()) as {
-      data?: Array<{ id: string } & Record<string, unknown>>;
-    };
-    for (const card of body.data ?? []) {
-      result[card.id] = extractPrices(card as { prices?: Partial<CardPrices> | null });
-    }
+  }
+  if (writes.length > 0) {
+    await CardData.bulkWrite(buildPriceUpdates(writes, stamp), { ordered: false });
   }
   return result;
 }
 
 /**
- * Resolve prices for the given card ids from the `cards` collection, serving
- * values stamped < 24h ago as-is and batch-refreshing stale/never-priced cards
- * from Scryfall, writing the results back onto the card documents. Returns a map
- * of cardId -> CardPrices. Ids we don't hold a card for resolve to EMPTY_PRICES
- * without a Scryfall call (there is no document to keep a price on); a held card
- * Scryfall no longer returns is stamped with EMPTY_PRICES so it isn't re-fetched
- * every request.
+ * Resolve price quotes (prices + when they were written) for the given card
+ * ids from the `cards` collection, serving values stamped < 24h ago as-is and
+ * refreshing stale/never-priced cards through the price-source chain (the
+ * user's enabled sources in priority order; see `resolvePricesViaSources`),
+ * writing the results back onto the card documents. Ids we don't hold a card
+ * for resolve to EMPTY_PRICES with a null stamp and no upstream call (there is
+ * no document to keep a price on); a held card no source can price is stamped
+ * with EMPTY_PRICES so it isn't re-fetched every request.
  */
-export async function getCardPrices(cardIds: string[]): Promise<Record<string, CardPrices>> {
+export async function getCardPriceQuotes(
+  cardIds: string[],
+  options: PriceLookupOptions = {}
+): Promise<Record<string, PriceQuote>> {
   const ids = [...new Set(cardIds)];
   if (ids.length === 0) return {};
 
-  const cards = await CardData.find(
+  const cards = (await CardData.find(
     { id: { $in: ids } },
-    { _id: 0, id: 1, prices: 1, prices_updated_at: 1 }
-  ).lean();
+    SOURCE_CARD_PROJECTION
+  ).lean()) as unknown as StoredCard[];
 
   const now = Date.now();
-  const result: Record<string, CardPrices> = {};
-  const stale: string[] = [];
+  const result: Record<string, PriceQuote> = {};
+  const stale: StoredCard[] = [];
   for (const card of cards) {
-    if (isFresh(card.prices_updated_at, now)) result[card.id] = extractPrices(card);
-    else stale.push(card.id);
+    if (isFresh(card.prices_updated_at, now)) {
+      result[card.id] = { prices: extractPrices(card), updatedAt: toIso(card.prices_updated_at) };
+    } else {
+      stale.push(card);
+    }
   }
 
   if (stale.length > 0) {
-    const fetched = await fetchPricesFromScryfall(stale);
-    const refreshed = stale.map((id) => ({ id, prices: fetched[id] ?? EMPTY_PRICES }));
-    await CardData.bulkWrite(buildPriceUpdates(refreshed, new Date(now)), { ordered: false });
-    for (const { id, prices } of refreshed) result[id] = prices;
+    Object.assign(
+      result,
+      await fetchAndStore(stale, options.sources ?? DEFAULT_SOURCE_ORDER, new Date(now))
+    );
   }
 
-  for (const id of ids) result[id] ??= EMPTY_PRICES;
+  for (const id of ids) result[id] ??= { prices: EMPTY_PRICES, updatedAt: null };
+  return result;
+}
+
+/**
+ * Re-fetch prices for the given ids REGARDLESS of how fresh they are (the
+ * user's explicit "refresh" action), through the source chain, writing them
+ * onto the card documents with a fresh stamp. Only held cards are looked up;
+ * ids we hold no card for resolve to EMPTY_PRICES with a null stamp.
+ *
+ * @throws when every source fails, so the route can surface a 502.
+ */
+export async function refreshCardPriceQuotes(
+  cardIds: string[],
+  options: PriceLookupOptions = {}
+): Promise<Record<string, PriceQuote>> {
+  const ids = [...new Set(cardIds)];
+  if (ids.length === 0) return {};
+
+  const held = (await CardData.find(
+    { id: { $in: ids } },
+    SOURCE_CARD_PROJECTION
+  ).lean()) as unknown as StoredCard[];
+  const result: Record<string, PriceQuote> = {};
+
+  if (held.length > 0) {
+    Object.assign(
+      result,
+      await fetchAndStore(held, options.sources ?? DEFAULT_SOURCE_ORDER, new Date())
+    );
+  }
+
+  for (const id of ids) result[id] ??= { prices: EMPTY_PRICES, updatedAt: null };
+  return result;
+}
+
+/** Split a quote map into the `{ prices, updatedAt }` wire shape of the price routes. */
+export function toPriceQuotesResponse(quotes: Record<string, PriceQuote>): CardPriceQuotesResponse {
+  const prices: Record<string, CardPrices> = {};
+  const updatedAt: Record<string, string | null> = {};
+  for (const [id, quote] of Object.entries(quotes)) {
+    prices[id] = quote.prices;
+    updatedAt[id] = quote.updatedAt;
+  }
+  return { prices, updatedAt };
+}
+
+/** `getCardPriceQuotes` reduced to the prices alone (the AI tools' shape). */
+export async function getCardPrices(
+  cardIds: string[],
+  options: PriceLookupOptions = {}
+): Promise<Record<string, CardPrices>> {
+  const quotes = await getCardPriceQuotes(cardIds, options);
+  const result: Record<string, CardPrices> = {};
+  for (const [id, quote] of Object.entries(quotes)) result[id] = quote.prices;
   return result;
 }

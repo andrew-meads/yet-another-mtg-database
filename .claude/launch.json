@@ -4,14 +4,30 @@
     {
       "name": "dev-devlogin",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:devlogin"],
+      "runtimeArgs": [
+        "run",
+        "dev:devlogin"
+      ],
       "port": 3000
     },
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "dev-devlogin-3001",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "PORT=3001 NEXTAUTH_URL=http://localhost:3001 AUTH_DEV_LOGIN=true npx next dev -p 3001"
+      ],
+      "port": 3001,
+      "autoPort": false
     }
   ]
 }

@@ -7,6 +7,8 @@ import { useCardSelection } from "@/context/CardSelectionContext";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SetSvg } from "@/components/SetSvg";
+import PriceTag from "@/components/pricing/PriceTag";
+import { PriceQuote } from "@/types/CardPrice";
 
 /**
  * Props for the CardListItem component
@@ -15,6 +17,8 @@ export interface CardListItemProps {
   /** The card to display */
   card: MtgCard;
   priority?: boolean;
+  /** Best-known price quote for the card (null = no price data at all). */
+  priceQuote?: PriceQuote | null;
 }
 
 /**
@@ -26,7 +30,7 @@ export interface CardListItemProps {
  * - Card details on the right (name, set, type, mana cost)
  * - Tap to select the card (shows full details in Card Details tab)
  */
-export default function CardListItem({ card, priority = false }: CardListItemProps) {
+export default function CardListItem({ card, priority = false, priceQuote }: CardListItemProps) {
   const { selectedCard, setSelectedCard } = useCardSelection();
   const router = useRouter();
   const isSelected = selectedCard?.id === card.id;
@@ -77,7 +81,7 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
         {/* Type line */}
         <p className="text-muted-foreground truncate text-xs">{card.type_line}</p>
 
-        {/* Mana cost and P/T */}
+        {/* Mana cost, P/T and price */}
         <div className="flex items-center gap-2 text-xs">
           {card.mana_cost && <ManaCost cost={card.mana_cost} />}
           {card.power && card.toughness && (
@@ -85,6 +89,12 @@ export default function CardListItem({ card, priority = false }: CardListItemPro
               {card.power}/{card.toughness}
             </span>
           )}
+          <PriceTag
+            prices={priceQuote?.prices}
+            updatedAt={priceQuote?.updatedAt}
+            cardId={card.id}
+            className="ml-auto"
+          />
         </div>
       </div>
     </div>

@@ -94,10 +94,27 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from
   the database; mana symbols rendered via `mana-font`.
-- **Card pricing** — up-to-date USD prices for a card or a list of cards, kept on the
-  card records (seeded by the bulk import) and refreshed from Scryfall once they are
-  older than 24h, plus conversion into a chosen currency using a live exchange rate
-  (Frankfurter).
+- **Card pricing** — Scryfall market prices are kept on the card records (seeded by the
+  bulk import) and refreshed from Scryfall once they are older than 24h. Prices show in
+  the currency you pick in Settings (USD by default, converted with a daily reference
+  rate from Frankfurter) on the card-search page and in the selected-card panel, and a
+  toggle on each collection page adds a price column (each copy priced by its finish)
+  plus the total value of the listed cards. Every price carries a small coloured dot
+  showing how old it is: green under a day, amber under a week, red older, grey never
+  fetched — and a small refresh icon beside it re-fetches that card's price on
+  demand. Three price sources are built in, all free and key-less: Scryfall,
+  TCGplayer market prices (via the daily TCGCSV mirror), and Mana Pool. In
+  Settings you order them by priority and switch any off; a refresh tries them
+  top to bottom until one has a price for the card, and each stored price
+  remembers which source it came from. On a collection page each row is priced
+  for its copies' own finish and condition (Mana Pool offers condition tiers;
+  Scryfall and TCGplayer are Near Mint market prices, used as a finish-level
+  fallback and flagged as such): until a row's copies have been priced, the
+  printing's price is shown as an estimate and always marked stale, and
+  changing a row's finish or condition re-fetches its price automatically. Copies
+  tagged `Proxy` are always worth $0, whatever the market says. Clicking a
+  collection row, a deck card, or a card-locations row shows those copies' price
+  at the top of the card panel, above the printing's prices.
 - **Hover card preview** — hovering a row in search results or a collection shows a card
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay
@@ -190,6 +207,8 @@ Copy `.env.example` to `.env` and fill in the values:
 | `MONGO_DB_URI` | MongoDB connection string (default `mongodb://127.0.0.1:27017/yet-another-mtg-database`) |
 | `ALL_CARDS_FILE` | Default path to the Scryfall bulk file (`*.jsonl.gz`, or a legacy `*.json`) used by `init-db` |
 | `SCRYFALL_API_BASE_URL` | Base URL of the Scryfall API (default `https://api.scryfall.com`), used to fetch individual cards, set icons, and card prices on demand |
+| `TCGCSV_BASE_URL` | Base URL of the TCGCSV mirror of TCGplayer prices used by the TCGplayer price source (default `https://tcgcsv.com` — free, no API key) |
+| `MANAPOOL_API_BASE_URL` | Base URL of Mana Pool, used by the Mana Pool price source (default `https://manapool.com` — free, no API key) |
 | `EXCHANGE_RATE_API_BASE_URL` | Base URL of the currency exchange-rate API used to convert USD card prices (default `https://api.frankfurter.dev/v1` — free, no API key) |
 | `ACADEMY_RUINS_API_BASE_URL` | Base URL of the Academy Ruins API used by the AI deck advisor's Comprehensive-Rules lookups (default `https://api.academyruins.com` — free, no API key) |
 | `COMMANDER_SPELLBOOK_API_BASE_URL` | Base URL of the Commander Spellbook API used by the AI deck advisor's combo lookups (default `https://backend.commanderspellbook.com` — free, no API key) |

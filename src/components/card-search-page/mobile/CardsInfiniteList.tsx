@@ -1,7 +1,8 @@
 // src/components/card-search-page/mobile/CardsInfiniteList.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { quoteForCard, useCardPriceQuotes } from "@/hooks/react-query/useCardPriceQuotes";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MtgCard } from "@/types/MtgCard";
 import CardListItem from "./CardListItem";
@@ -36,6 +37,11 @@ export default function CardsInfiniteList({
   // Flatten all pages into single array and remove duplicates by card id
   const allCards = cardPages?.flat(1) || [];
   const uniqueCards = Array.from(new Map(allCards.map((card) => [card.id, card])).values());
+
+  // Price quotes for the loaded cards (see CardsTable for the same pattern).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cardIds = useMemo(() => uniqueCards.map((c) => c.id), [uniqueCards.length, cardPages]);
+  const { quotes } = useCardPriceQuotes(cardIds);
 
   // Initialize virtualizer. The React Compiler intentionally skips memoizing the value
   // returned by TanStack Virtual's useVirtualizer (it returns non-memoizable functions).
@@ -167,7 +173,11 @@ export default function CardsInfiniteList({
                     </div>
                   )
                 ) : (
-                  <CardListItem card={card} priority={virtualItem.index < 4} />
+                  <CardListItem
+                    card={card}
+                    priority={virtualItem.index < 4}
+                    priceQuote={quoteForCard(card, quotes)}
+                  />
                 )}
               </div>
             );

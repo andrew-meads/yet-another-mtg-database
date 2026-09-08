@@ -12,6 +12,12 @@ vi.mock("@tanstack/react-virtual", () => ({
   })
 }));
 
+// Price quotes need a QueryClient + network; they have their own tests.
+vi.mock("@/hooks/react-query/useCardPriceQuotes", () => ({
+  useCardPriceQuotes: () => ({ quotes: {}, isLoading: false, error: null }),
+  quoteForCard: () => null
+}));
+
 import CardsInfiniteList from "@/components/card-search-page/mobile/CardsInfiniteList";
 
 function renderList(query: string, isLoading = false) {

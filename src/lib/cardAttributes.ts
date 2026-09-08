@@ -126,3 +126,18 @@ export function describeAttributes(
   if (c !== DEFAULT_CONDITION) parts.push(c);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
+
+/**
+ * The tag that marks a physical copy as a proxy. A proxy is worth $0 regardless
+ * of any price source; matched case-insensitively so "proxy" / "PROXY" count.
+ */
+export const PROXY_TAG = "Proxy";
+
+export function isProxyTag(tag: string): boolean {
+  return tag.trim().toLowerCase() === PROXY_TAG.toLowerCase();
+}
+
+/** Whether a copy with these tags is a proxy. */
+export function isProxyCopy(tags: readonly string[] | null | undefined): boolean {
+  return (tags ?? []).some(isProxyTag);
+}

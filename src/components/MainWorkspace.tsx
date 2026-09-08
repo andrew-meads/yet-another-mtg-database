@@ -4,6 +4,7 @@ import type React from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import CardArtView from "@/components/CardArtView";
 import { CardTextView } from "@/components/CardTextView";
+import CardPricesPanel from "@/components/pricing/CardPricesPanel";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useSearchDocs } from "@/context/SearchDocsContext";
 import { useAiChat } from "@/context/AiChatContext";
@@ -140,6 +141,7 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
               {/* Bottom: Card Text */}
               <ResizablePanel defaultSize={35} minSize={30}>
                 <div className="h-full overflow-y-auto p-4">
+                  <CardPricesPanel card={selectedCard} />
                   <CardTextView card={selectedCard} />
                 </div>
               </ResizablePanel>

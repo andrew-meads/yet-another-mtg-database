@@ -4,6 +4,7 @@ import { useCardSelection } from "@/context/CardSelectionContext";
 import { useRouter } from "next/navigation";
 import CardArtView from "@/components/CardArtView";
 import { CardTextView } from "@/components/CardTextView";
+import CardPricesPanel from "@/components/pricing/CardPricesPanel";
 import CardLocationsView from "@/components/CardLocationsView";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -68,8 +69,9 @@ export default function SelectedCardPage() {
           <CardLocationsView cardName={selectedCard.name} />
         </div>
 
-        {/* Card Text */}
+        {/* Prices + Card Text */}
         <div>
+          <CardPricesPanel card={selectedCard} />
           <CardTextView card={selectedCard} />
         </div>
       </div>

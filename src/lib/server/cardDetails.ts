@@ -2,6 +2,7 @@ import { CardData, CollectionModel, DeckModel, TagModel } from "@/db/schema";
 import { CardDataMap, DetailedPhysicalCardEntry } from "@/types/PhysicalCard";
 import { SlimMtgCard } from "@/types/MtgCard";
 import { CardCondition, CardFinish } from "@/lib/cardAttributes";
+import { CopyPrice } from "@/types/CardPrice";
 
 /** Minimal shape of a lean PhysicalCard document used for detailing. */
 export interface LeanPhysicalCard {
@@ -14,6 +15,7 @@ export interface LeanPhysicalCard {
   tags?: string[];
   finish?: CardFinish;
   condition?: CardCondition;
+  price?: CopyPrice;
 }
 
 /**
@@ -56,7 +58,9 @@ export const SLIM_CARD_PROJECTION = {
   "card_faces.loyalty": 1,
   "card_faces.image_uris.small": 1,
   "card_faces.image_uris.normal": 1,
-  "card_faces.image_uris.large": 1
+  "card_faces.image_uris.large": 1,
+  prices: 1,
+  prices_updated_at: 1
 } as const;
 
 export interface DetailedPhysicalCardsResult {
@@ -111,6 +115,7 @@ export async function detailPhysicalCards(
         // undefined keys so ordinary copies stay slim on the wire.
         finish: pc.finish,
         condition: pc.condition,
+        price: pc.price,
         isEphemeral,
         collectionName: isEphemeral ? undefined : collMap.get(String(pc.collectionId)),
         deckName: pc.deckId ? deckMap.get(String(pc.deckId)) : undefined

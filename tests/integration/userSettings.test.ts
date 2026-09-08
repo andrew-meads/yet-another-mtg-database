@@ -54,6 +54,49 @@ describe("PATCH /api/settings", () => {
     expect(body.settings.cardPreview).toEqual(cardPreview);
   });
 
+  it("persists the pricing section and rejects unsupported currencies", async () => {
+    const res = await patchSettings(
+      jsonRequest("/api/settings", "PATCH", { pricing: { currency: "NZD" } })
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).settings.pricing).toEqual({ currency: "NZD" });
+    const readBack = await getSettings(jsonRequest("/api/settings", "GET"));
+    expect((await readBack.json()).settings.pricing).toEqual({ currency: "NZD" });
+
+    for (const currency of ["XXX", "usd", "", 3]) {
+      const bad = await patchSettings(
+        jsonRequest("/api/settings", "PATCH", { pricing: { currency } })
+      );
+      expect(bad.status).toBe(400);
+    }
+  });
+
+  it("persists an ordered price-source list and rejects unknown or repeated sources", async () => {
+    const sources = [
+      { id: "tcgplayer", enabled: true },
+      { id: "scryfall", enabled: false }
+    ];
+    const res = await patchSettings(
+      jsonRequest("/api/settings", "PATCH", { pricing: { currency: "USD", sources } })
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).settings.pricing).toEqual({ currency: "USD", sources });
+
+    for (const bad of [
+      [{ id: "cardkingdom", enabled: true }],
+      [
+        { id: "scryfall", enabled: true },
+        { id: "scryfall", enabled: false }
+      ],
+      [{ id: "scryfall" }]
+    ]) {
+      const r = await patchSettings(
+        jsonRequest("/api/settings", "PATCH", { pricing: { currency: "USD", sources: bad } })
+      );
+      expect(r.status).toBe(400);
+    }
+  });
+
   it("rejects an empty patch", async () => {
     const res = await patchSettings(jsonRequest("/api/settings", "PATCH", {}));
     expect(res.status).toBe(400);

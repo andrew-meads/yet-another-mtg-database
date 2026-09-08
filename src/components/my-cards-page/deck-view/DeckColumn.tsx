@@ -18,6 +18,7 @@ import { useDeletePhysicalCard } from "@/hooks/react-query/useDeletePhysicalCard
 import { useDeleteColumn } from "@/hooks/react-query/useDeckColumns";
 import { StickyNote, Tag, Library, Trash2, Layers, Sparkles } from "lucide-react";
 import CardAttributeBadges from "@/components/CardAttributeBadges";
+import { copiesFromPhysical } from "@/lib/selectedCopies";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ContextMenu,
@@ -119,7 +120,13 @@ function DeckCardImage({
           }}
           onClick={(e) => {
             e.stopPropagation();
-            setSelectedCard(card.card);
+            setSelectedCard(
+              card.card,
+              copiesFromPhysical(
+                card,
+                card.collectionName ?? (card.isEphemeral ? "this deck only" : undefined)
+              )
+            );
           }}
         >
           <SimpleCardArtView

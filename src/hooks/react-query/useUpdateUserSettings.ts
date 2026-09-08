@@ -1,16 +1,20 @@
 "use client";
 
 import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
-import { CardPreviewSettings, OpenEntityRef, UserSettingsResponse } from "@/types/UserSettings";
+import {
+  CardPreviewSettings,
+  OpenEntityRef,
+  PricingSettings,
+  UserSettingsResponse
+} from "@/types/UserSettings";
 
 export interface UpdateUserSettingsRequest {
   cardPreview?: CardPreviewSettings;
   openEntities?: OpenEntityRef[];
+  pricing?: PricingSettings;
 }
 
-async function updateUserSettings(
-  patch: UpdateUserSettingsRequest
-): Promise<UserSettingsResponse> {
+async function updateUserSettings(patch: UpdateUserSettingsRequest): Promise<UserSettingsResponse> {
   const res = await fetch("/api/settings", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

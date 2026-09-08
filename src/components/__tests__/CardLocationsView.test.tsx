@@ -743,4 +743,45 @@ describe("CardLocationsView finish / condition", () => {
     expect(rows[1]).toHaveTextContent("Foil");
     expect(rows[1]).toHaveTextContent("LP");
   });
+
+  it("selects the card together with the row's copies when a row is clicked", async () => {
+    const user = userEvent.setup();
+    h.locationsData = {
+      locations: [
+        {
+          collectionId: "coll-1",
+          collectionName: "Main Collection",
+          cards: [
+            {
+              _id: "pc-1",
+              card: mockCard,
+              collectionId: "coll-1",
+              collectionName: "Main",
+              finish: "foil"
+            },
+            {
+              _id: "pc-2",
+              card: mockCard,
+              collectionId: "coll-1",
+              collectionName: "Main",
+              finish: "foil"
+            }
+          ]
+        }
+      ]
+    };
+    renderView();
+    await user.click(screen.getByText("Main Collection"));
+    expect(h.setSelectedCard).toHaveBeenCalledWith(
+      mockCard,
+      expect.objectContaining({
+        cardId: "card-1",
+        physicalCardIds: ["pc-1", "pc-2"],
+        finish: "foil",
+        condition: "NM",
+        isProxy: false,
+        locationName: "Main Collection"
+      })
+    );
+  });
 });

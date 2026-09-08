@@ -67,6 +67,7 @@ function makeRow(over: Partial<CollectionGroupRow> = {}): CollectionGroupRow {
     card,
     finish: "nonfoil",
     condition: "NM",
+    isProxy: false,
     deckId: null,
     physicalCardIds: ["p1", "p2", "p3", "p4"],
     quantity: 4,
@@ -236,5 +237,93 @@ describe("CollectionTableRow attribute badges", () => {
     const badges = screen.getByTestId("card-attribute-badges");
     expect(badges).toHaveTextContent("Foil");
     expect(badges).toHaveTextContent("LP");
+  });
+});
+
+describe("CollectionTableRow price column", () => {
+  const quote = {
+    prices: {
+      usd: "1.50",
+      usd_foil: "4.00",
+      usd_etched: null,
+      eur: null,
+      eur_foil: null,
+      tix: null
+    },
+    updatedAt: new Date().toISOString()
+  };
+
+  it("renders no price cell unless showPrice is set", () => {
+    renderRow(makeRow());
+    expect(screen.queryByTestId("price-tag")).not.toBeInTheDocument();
+  });
+
+  it("shows the printing's finish price as a stale estimate when the copies were never priced", () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <CollectionTableRow
+          collectionId="c1"
+          row={makeRow({ finish: "foil", quantity: 3 })}
+          showPrice
+          priceQuote={quote}
+        />
+      </QueryClientProvider>
+    );
+    const tag = screen.getByTestId("price-tag");
+    expect(tag).toHaveTextContent("$4.00");
+    expect(tag).toHaveAttribute("data-price-kind", "estimate");
+    expect(tag.querySelector("[data-age-level]")).toHaveAttribute("data-age-level", "stale");
+    expect(tag.querySelector("[data-age-level]")).toHaveAccessibleName(
+      /Estimated from the printing/
+    );
+    expect(screen.getByRole("button", { name: "Refresh price" })).toBeInTheDocument();
+  });
+
+  it("shows the copies' own price with its real age once they have been priced", () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <CollectionTableRow
+          collectionId="c1"
+          row={makeRow({
+            finish: "foil",
+            condition: "LP",
+            quantity: 2,
+            copyPrice: {
+              usd: 3.5,
+              source: "manapool",
+              conditionMatched: true,
+              updatedAt: new Date().toISOString()
+            }
+          })}
+          showPrice
+          priceQuote={quote}
+        />
+      </QueryClientProvider>
+    );
+    const tag = screen.getByTestId("price-tag");
+    expect(tag).toHaveTextContent("$3.50");
+    expect(tag).toHaveAttribute("data-price-kind", "copy");
+    expect(tag.querySelector("[data-age-level]")).toHaveAttribute("data-age-level", "fresh");
+  });
+
+  it("shows $0 for a proxy row, with no age dot and no refresh", () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <CollectionTableRow
+          collectionId="c1"
+          row={makeRow({ tags: ["Proxy"], isProxy: true, quantity: 2 })}
+          showPrice
+          priceQuote={quote}
+        />
+      </QueryClientProvider>
+    );
+    const tag = screen.getByTestId("price-tag");
+    expect(tag).toHaveTextContent("$0.00");
+    expect(tag).toHaveAttribute("data-price-kind", "proxy");
+    expect(tag.querySelector("[data-age-level]")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Refresh price" })).not.toBeInTheDocument();
   });
 });

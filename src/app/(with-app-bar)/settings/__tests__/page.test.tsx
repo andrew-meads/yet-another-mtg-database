@@ -47,7 +47,7 @@ beforeEach(() => {
 describe("SettingsPage", () => {
   it("toggling the switch persists the enabled flag immediately", () => {
     renderPage();
-    const toggle = screen.getByRole("switch");
+    const toggle = screen.getByRole("switch", { name: /Show card preview on hover/ });
     expect(toggle).toBeChecked();
 
     fireEvent.click(toggle);
@@ -71,7 +71,7 @@ describe("SettingsPage", () => {
 
   it("disables the sliders when the preview is turned off", () => {
     renderPage();
-    fireEvent.click(screen.getByRole("switch"));
+    fireEvent.click(screen.getByRole("switch", { name: /Show card preview on hover/ }));
     for (const slider of screen.getAllByRole("slider")) {
       expect(slider).toHaveAttribute("data-disabled");
     }

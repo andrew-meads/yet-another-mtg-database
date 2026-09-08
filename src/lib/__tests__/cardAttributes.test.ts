@@ -11,6 +11,8 @@ import {
   finishRank,
   isCardCondition,
   isCardFinish,
+  isProxyCopy,
+  isProxyTag,
   sparseAttributes
 } from "@/lib/cardAttributes";
 
@@ -82,5 +84,17 @@ describe("describeAttributes", () => {
     expect(describeAttributes("foil", undefined)).toBe("Foil");
     expect(describeAttributes(undefined, "HP")).toBe("HP");
     expect(describeAttributes("etched", "LP")).toBe("Etched foil · LP");
+  });
+});
+
+describe("proxy tag", () => {
+  it("matches the Proxy tag case-insensitively and ignores surrounding whitespace", () => {
+    expect(isProxyTag("Proxy")).toBe(true);
+    expect(isProxyTag(" proxy ")).toBe(true);
+    expect(isProxyTag("PROXY")).toBe(true);
+    expect(isProxyTag("proxies")).toBe(false);
+    expect(isProxyCopy(["staple", "Proxy"])).toBe(true);
+    expect(isProxyCopy(["staple"])).toBe(false);
+    expect(isProxyCopy(undefined)).toBe(false);
   });
 });

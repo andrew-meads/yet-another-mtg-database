@@ -12,14 +12,20 @@ import CollectionTableRow from "@/components/my-cards-page/collection-view/Colle
 import { useCollectionDropTarget } from "@/hooks/drag-drop/useCollectionDropTarget";
 import { useCollectionRowActions } from "@/hooks/useCollectionRowActions";
 import {
-  COLLECTION_GRID,
+  collectionGrid,
   excludeDeckRows,
   groupCollectionCards,
   sortGroupRows
 } from "@/components/my-cards-page/collection-view/grouping";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { quoteForCard, useCardPriceQuotes } from "@/hooks/react-query/useCardPriceQuotes";
+import { useCurrency } from "@/hooks/useCurrency";
+import { oldestStamp, totalUsd } from "@/lib/pricing";
+import PriceAgeDot from "@/components/pricing/PriceAgeDot";
+import { copiesFromRow } from "@/lib/selectedCopies";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Layers } from "lucide-react";
+import { Layers, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NoughtyEasterEgg from "@/components/NoughtyEasterEgg";
 import { isNoughtyQuery } from "@/lib/easterEggs";
@@ -44,7 +50,10 @@ export interface CollectionTableProps {
  * Search uses the shared Scryfall-style engine: the query is run server-side via
  * `GET /api/collections/[id]?q=...`, so the cards passed in are already filtered.
  * A toggle next to the search bar additionally hides rows whose copies are
- * assigned to a deck (client-side, on top of the server-filtered cards).
+ * assigned to a deck (client-side, on top of the server-filtered cards), and a
+ * second (device-local, persisted) toggle shows a price column — each row's
+ * finish-specific Scryfall price in the user's currency — plus the total value
+ * of the listed rows in the header. Quotes are only fetched while it is on.
  *
  * Rows have a right-click context menu and keyboard shortcuts (+ / = and d)
  * acting on one existing copy at a time — see `useCollectionRowActions`.
@@ -54,14 +63,16 @@ export default function CollectionTable({
   initialQuery,
   onSearchChange
 }: CollectionTableProps) {
-  const [hovered, setHovered] = useState<{ card: SlimMtgCard; pos: { x: number; y: number } } | null>(
-    null
-  );
+  const [hovered, setHovered] = useState<{
+    card: SlimMtgCard;
+    pos: { x: number; y: number };
+  } | null>(null);
   const [isAnyRowDragging, setIsAnyRowDragging] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [activeQuery, setActiveQuery] = useState(initialQuery ?? "");
   const [hideDeckCards, setHideDeckCards] = useState(false);
+  const [showPrices, setShowPrices] = useLocalStorage<boolean>("collection-show-prices", false);
 
   const { setSelectedCard } = useCardSelection();
   const { cardPreview } = useCardPreviewSettings();
@@ -73,6 +84,31 @@ export default function CollectionTable({
   const rows = useMemo(() => {
     return hideDeckCards ? excludeDeckRows(allRows) : allRows;
   }, [allRows, hideDeckCards]);
+
+  // Prices: quotes for every distinct printing in view, fetched only while the
+  // toggle is on; rows fall back to the prices their slim card data carried.
+  const cardIds = useMemo(() => rows.map((r) => r.card.id), [rows]);
+  const { quotes } = useCardPriceQuotes(cardIds, { enabled: showPrices });
+  const { format } = useCurrency();
+  const valuation = useMemo(() => {
+    if (!showPrices) return null;
+    const quoted = rows.map((r) => ({ row: r, quote: quoteForCard(r.card, quotes) }));
+    const total = totalUsd(
+      quoted.map(({ row, quote }) => ({
+        // Proxies are worth $0 regardless of any source.
+        unitUsd: row.isProxy ? 0 : row.copyPrice ? row.copyPrice.usd : undefined,
+        prices: quote?.prices,
+        finish: row.finish,
+        quantity: row.quantity
+      }))
+    );
+    return {
+      ...total,
+      oldest: oldestStamp(
+        quoted.map(({ row, quote }) => row.copyPrice?.updatedAt ?? quote?.updatedAt)
+      )
+    };
+  }, [rows, quotes, showPrices]);
 
   const handleQueryChange = (query: string) => {
     setActiveQuery(query);
@@ -148,14 +184,14 @@ export default function CollectionTable({
       if (nextIndex !== currentIndex && rows[nextIndex]) {
         const nextRow = rows[nextIndex];
         setSelectedKey(nextRow.key);
-        setSelectedCard(nextRow.card);
+        setSelectedCard(nextRow.card, copiesFromRow(nextRow, collection.name));
         virtualizerRef.current.scrollToIndex(nextIndex, { align: "auto" });
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedKey, rows, setSelectedCard, moveOneToCollection, addOneToDeck]);
+  }, [selectedKey, rows, setSelectedCard, moveOneToCollection, addOneToDeck, collection.name]);
 
   // Hover popup management
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -205,6 +241,37 @@ export default function CollectionTable({
       <div className="bg-background flex items-center justify-between gap-3 border-b p-3">
         <div className="text-muted-foreground shrink-0 text-sm">
           {rows.reduce((sum, r) => sum + r.quantity, 0)} cards
+          {valuation && (
+            <span
+              className="ml-2 inline-flex items-center gap-1.5 tabular-nums"
+              data-testid="collection-value"
+            >
+              · {format(valuation.usd)}
+              <PriceAgeDot
+                updatedAt={valuation.oldest}
+                override={
+                  valuation.estimated > 0
+                    ? {
+                        level: "stale",
+                        description: `${valuation.estimated} ${valuation.estimated === 1 ? "copy is" : "copies are"} estimated from the printing's price — refresh rows to price them for their finish and condition`
+                      }
+                    : undefined
+                }
+              />
+              {(valuation.unpriced > 0 || valuation.estimated > 0) && (
+                <span className="text-xs">
+                  (
+                  {[
+                    valuation.estimated > 0 ? `${valuation.estimated} estimated` : null,
+                    valuation.unpriced > 0 ? `${valuation.unpriced} unpriced` : null
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  )
+                </span>
+              )}
+            </span>
+          )}
         </div>
         <CardSearchBar
           initialQuery={initialQuery}
@@ -228,12 +295,29 @@ export default function CollectionTable({
             <p>Hide cards that are in decks</p>
           </TooltipContent>
         </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant={showPrices ? "default" : "outline"}
+              size="icon-sm"
+              onClick={() => setShowPrices((v) => !v)}
+              aria-label="Show prices"
+              aria-pressed={showPrices}
+            >
+              <DollarSign />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Show prices and the collection&apos;s value</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Header */}
       <div
         className="bg-muted/40 text-muted-foreground grid items-center gap-2 border-b p-2 text-xs font-medium uppercase"
-        style={{ gridTemplateColumns: COLLECTION_GRID }}
+        style={{ gridTemplateColumns: collectionGrid(showPrices) }}
       >
         <span />
         <span>Name</span>
@@ -243,6 +327,7 @@ export default function CollectionTable({
         <span className="text-center">CMC</span>
         <span className="text-center">P/T</span>
         <span className="text-center">Deck</span>
+        {showPrices && <span className="text-right">Price</span>}
         <span className="text-center">Quantity</span>
       </div>
 
@@ -287,7 +372,7 @@ export default function CollectionTable({
                     row={row}
                     onClick={(card) => {
                       setSelectedKey(row.key);
-                      setSelectedCard(card);
+                      setSelectedCard(card, copiesFromRow(row, collection.name));
                     }}
                     isSelected={selectedKey === row.key}
                     isExpanded={expandedKey === row.key}
@@ -296,6 +381,8 @@ export default function CollectionTable({
                     onHoverLeave={handleRowLeave}
                     onHoverMove={handleRowMove}
                     onDragStateChange={setIsAnyRowDragging}
+                    showPrice={showPrices}
+                    priceQuote={showPrices ? quoteForCard(row.card, quotes) : null}
                   />
                 </div>
               );

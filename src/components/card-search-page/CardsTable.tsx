@@ -5,6 +5,7 @@ import { MtgCard, SlimMtgCard } from "@/types/MtgCard";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useCardPreviewSettings } from "@/context/SettingsContext";
+import { quoteForCard, useCardPriceQuotes } from "@/hooks/react-query/useCardPriceQuotes";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
 import { useAddCardToActiveDeck } from "@/hooks/useAddCardToActiveDeck";
@@ -133,6 +134,12 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
 
   // User-configurable hover preview settings (enabled / size / delay)
   const { cardPreview } = useCardPreviewSettings();
+
+  // Price quotes for every visible card (served from the card documents, refreshed
+  // server-side when older than a day). Rows fall back to the prices the search
+  // result itself carried until the quotes land.
+  const cardIds = useMemo(() => cards.map((c) => c.id), [cards]);
+  const { quotes } = useCardPriceQuotes(cardIds);
 
   // === REFS ===
 
@@ -347,6 +354,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
             <TableHead className="text-center">CMC</TableHead>
             <TableHead className="text-center">P/T</TableHead>
             <TableHead className="text-center">Loyalty</TableHead>
+            <TableHead className="text-right">Price</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -365,6 +373,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
               onAddToDeck={addToDeck}
               isSelected={selectedCard?.id === card.id}
               rowRef={getRowRef(card.id)}
+              priceQuote={quoteForCard(card, quotes)}
             />
           ))}
         </TableBody>

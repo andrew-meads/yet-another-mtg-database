@@ -1,5 +1,10 @@
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import { SlimMtgCard } from "@/types/MtgCard";
+import { RowCopyPrice, rowCopyPrice } from "@/lib/copyPricing";
+
+// The row-price fold lives with the other copy-pricing logic; re-exported for existing importers.
+export { rowCopyPrice };
+export type { RowCopyPrice };
 import {
   CardCondition,
   CardFinish,
@@ -7,7 +12,8 @@ import {
   conditionRank,
   effectiveCondition,
   effectiveFinish,
-  finishRank
+  finishRank,
+  isProxyCopy
 } from "@/lib/cardAttributes";
 
 /**
@@ -15,6 +21,7 @@ import {
  * finish + condition + deck. Finish/condition are the EFFECTIVE values (unset
  * copies group with explicit non-foil / NM ones).
  */
+
 export interface CollectionGroupRow {
   key: string;
   card: SlimMtgCard;
@@ -22,6 +29,9 @@ export interface CollectionGroupRow {
   tags?: string[];
   finish: CardFinish;
   condition: CardCondition;
+  copyPrice?: RowCopyPrice;
+  /** True when the row's copies carry the "Proxy" tag: worth $0, never priced. */
+  isProxy: boolean;
   /** Single deck membership for this row (null = loose copies). */
   deckId: string | null;
   deckName?: string;
@@ -33,14 +43,24 @@ export interface CollectionGroupRow {
 export const COLLECTION_GRID =
   "2.25rem minmax(160px,1.6fr) 7rem minmax(120px,1fr) 3.5rem 3rem 3.5rem 7rem 10rem";
 
+/** The same template with a price column (before Quantity) when prices are shown. */
+export const COLLECTION_GRID_PRICED =
+  "2.25rem minmax(160px,1.6fr) 7rem minmax(120px,1fr) 3.5rem 3rem 3.5rem 7rem 6.5rem 10rem";
+
+export function collectionGrid(showPrices: boolean): string {
+  return showPrices ? COLLECTION_GRID_PRICED : COLLECTION_GRID;
+}
+
 export function groupCollectionCards(cards: DetailedPhysicalCard[]): CollectionGroupRow[] {
   const map = new Map<string, CollectionGroupRow>();
+  const copiesByKey = new Map<string, DetailedPhysicalCard[]>();
   for (const c of cards) {
     const tagsKey = (c.tags ?? []).slice().sort().join(",");
     const deckId = c.deckId ?? null;
     // Key layout: cardId|notes|tags|deckId|finish|condition (the row's data-testid
     // is derived from it, so the attributes go last to keep the prefix readable).
     const key = `${c.card.id}|${c.notes ?? ""}|${tagsKey}|${deckId ?? ""}|${attributesKey(c.finish, c.condition)}`;
+    copiesByKey.set(key, [...(copiesByKey.get(key) ?? []), c]);
     const existing = map.get(key);
     if (existing) {
       existing.physicalCardIds.push(c._id);
@@ -53,12 +73,16 @@ export function groupCollectionCards(cards: DetailedPhysicalCard[]): CollectionG
         tags: c.tags,
         finish: effectiveFinish(c.finish),
         condition: effectiveCondition(c.condition),
+        isProxy: isProxyCopy(c.tags),
         deckId,
         deckName: c.deckName,
         physicalCardIds: [c._id],
         quantity: 1
       });
     }
+  }
+  for (const row of map.values()) {
+    row.copyPrice = rowCopyPrice(copiesByKey.get(row.key) ?? [], row.finish, row.condition);
   }
   return [...map.values()];
 }

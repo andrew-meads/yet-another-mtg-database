@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   excludeDeckRows,
   groupCollectionCards,
+  rowCopyPrice,
   sortGroupRows,
   CollectionGroupRow
 } from "@/components/my-cards-page/collection-view/grouping";
@@ -34,6 +35,7 @@ function makeRow(overrides: Partial<CollectionGroupRow>): CollectionGroupRow {
     card: makeCard(),
     finish: "nonfoil",
     condition: "NM",
+    isProxy: false,
     deckId: null,
     physicalCardIds: [],
     quantity: 1,
@@ -73,6 +75,71 @@ describe("groupCollectionCards", () => {
     const played = rows.find((r) => r.condition === "LP")!;
     expect(played.finish).toBe("nonfoil");
     expect(played.physicalCardIds).toEqual(["p4"]);
+  });
+});
+
+describe("rowCopyPrice", () => {
+  const now = new Date("2026-09-08T12:00:00Z").toISOString();
+  const earlier = new Date("2026-09-07T12:00:00Z").toISOString();
+  const priced = (over: Partial<NonNullable<DetailedPhysicalCard["price"]>> = {}) => ({
+    price: {
+      usd: "1.50",
+      source: "scryfall",
+      finish: "nonfoil",
+      condition: "NM",
+      conditionMatched: true,
+      updatedAt: now,
+      ...over
+    }
+  });
+
+  it("folds matching copy records into one price with the oldest stamp", () => {
+    expect(rowCopyPrice([priced(), priced({ updatedAt: earlier })], "nonfoil", "NM")).toEqual({
+      usd: 1.5,
+      source: "scryfall",
+      conditionMatched: true,
+      updatedAt: earlier
+    });
+  });
+
+  it("is undefined when any copy was never priced or was priced for a different finish/condition", () => {
+    expect(rowCopyPrice([priced(), {}], "nonfoil", "NM")).toBeUndefined();
+    expect(rowCopyPrice([priced({ finish: "foil" })], "nonfoil", "NM")).toBeUndefined();
+    expect(rowCopyPrice([priced({ condition: "LP" })], "nonfoil", "NM")).toBeUndefined();
+    expect(rowCopyPrice([], "nonfoil", "NM")).toBeUndefined();
+  });
+
+  it("keeps a fetched-but-unpriced record (null usd) and reports an unmatched condition", () => {
+    expect(rowCopyPrice([priced({ usd: null, conditionMatched: false })], "nonfoil", "NM")).toEqual(
+      {
+        usd: null,
+        source: "scryfall",
+        conditionMatched: false,
+        updatedAt: now
+      }
+    );
+  });
+
+  it("flags rows whose copies carry the Proxy tag", () => {
+    const bolt = makeCard();
+    const rows = groupCollectionCards([
+      makePhysical("p1", bolt, { tags: ["proxy"] }),
+      makePhysical("p2", bolt)
+    ]);
+    expect(rows.find((r) => r.tags?.includes("proxy"))!.isProxy).toBe(true);
+    expect(rows.find((r) => !r.tags)!.isProxy).toBe(false);
+  });
+
+  it("groupCollectionCards attaches the row's copy price", () => {
+    const bolt = makeCard();
+    const rows = groupCollectionCards([
+      makePhysical("p1", bolt, priced()),
+      makePhysical("p2", bolt, priced()),
+      makePhysical("p3", bolt, { finish: "foil" })
+    ]);
+    const plain = rows.find((r) => r.finish === "nonfoil")!;
+    expect(plain.copyPrice?.usd).toBe(1.5);
+    expect(rows.find((r) => r.finish === "foil")!.copyPrice).toBeUndefined();
   });
 });
 

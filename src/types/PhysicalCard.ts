@@ -1,5 +1,6 @@
 import { SlimMtgCard } from "./MtgCard";
 import { CardCondition, CardFinish } from "@/lib/cardAttributes";
+import { CopyPrice } from "./CardPrice";
 
 /**
  * A single physical card copy.
@@ -27,6 +28,8 @@ export interface PhysicalCard {
   finish?: CardFinish;
   /** Wear grade of this copy; absent = Near Mint. */
   condition?: CardCondition;
+  /** Last price fetched for this copy's finish + condition; absent = never fetched. */
+  price?: CopyPrice;
 }
 
 /**
@@ -51,6 +54,8 @@ export interface DetailedPhysicalCard {
   finish?: CardFinish;
   /** Wear grade of this copy; absent = Near Mint. */
   condition?: CardCondition;
+  /** Last price fetched for this copy's finish + condition; absent = never fetched. */
+  price?: CopyPrice;
   /** True when this is an ephemeral (deck-only) card with no collection. */
   isEphemeral?: boolean;
   /** Name of the collection this card belongs to (for the deck view badge) */

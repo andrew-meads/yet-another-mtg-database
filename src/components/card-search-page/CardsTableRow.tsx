@@ -22,6 +22,8 @@ import { getEntityIcon } from "@/lib/collectionUtils";
 import { Star, Plus, Sparkles } from "lucide-react";
 import clsx from "clsx";
 import { SetSvg } from "@/components/SetSvg";
+import PriceTag from "@/components/pricing/PriceTag";
+import { PriceQuote } from "@/types/CardPrice";
 
 /**
  * Props for CardsTableRow component
@@ -50,6 +52,8 @@ interface CardsTableRowProps {
   isSelected?: boolean;
   /** Ref for scroll-into-view functionality (keyboard navigation) */
   rowRef?: React.RefObject<HTMLTableRowElement | null>;
+  /** Best-known price quote for the card (null = no price data at all). */
+  priceQuote?: PriceQuote | null;
 }
 
 /**
@@ -72,7 +76,8 @@ export default function CardsTableRow({
   onAddToCollection,
   onAddToDeck,
   isSelected,
-  rowRef
+  rowRef,
+  priceQuote
 }: CardsTableRowProps) {
   // === DRAG AND DROP ===
   // Make the row draggable using react-dnd, carrying any notes/tags/finish/condition
@@ -221,6 +226,13 @@ export default function CardsTableRow({
           <TableCell className="text-center">{card.cmc}</TableCell>
           <TableCell className="text-center">{powerToughness}</TableCell>
           <TableCell className="text-center">{loyalty}</TableCell>
+          <TableCell className="text-right">
+            <PriceTag
+              prices={priceQuote?.prices}
+              updatedAt={priceQuote?.updatedAt}
+              cardId={card.id}
+            />
+          </TableCell>
           <TableCell className="w-[50px]">
             <Tooltip>
               <TooltipTrigger asChild>

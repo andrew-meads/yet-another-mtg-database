@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +11,7 @@ import {
   type CardPreviewSize
 } from "@/context/SettingsContext";
 import AiSettingsSection from "@/components/settings/AiSettingsSection";
+import PricingSettingsSection from "@/components/settings/PricingSettingsSection";
 
 const SIZE_OPTIONS: CardPreviewSize[] = ["small", "normal", "large"];
 const SIZE_LABELS: Record<CardPreviewSize, string> = {
@@ -105,6 +100,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PricingSettingsSection />
 
       <AiSettingsSection />
     </div>

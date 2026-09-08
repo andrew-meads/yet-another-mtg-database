@@ -44,7 +44,9 @@ import CardAttributeBadges from "@/components/CardAttributeBadges";
 import { sparseAttributes } from "@/lib/cardAttributes";
 import { SetSvg } from "@/components/SetSvg";
 import { cn } from "@/lib/utils";
-import { CollectionGroupRow, COLLECTION_GRID } from "./grouping";
+import { CollectionGroupRow, collectionGrid } from "./grouping";
+import CopyPriceTag from "@/components/pricing/CopyPriceTag";
+import { PriceQuote } from "@/types/CardPrice";
 
 interface CollectionTableRowProps {
   collectionId: string;
@@ -58,6 +60,10 @@ interface CollectionTableRowProps {
   onHoverLeave?: () => void;
   onHoverMove?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDragStateChange?: (isDragging: boolean) => void;
+  /** Render the price column (the table's price toggle). */
+  showPrice?: boolean;
+  /** Best-known price quote for the row's printing (null = no price data). */
+  priceQuote?: PriceQuote | null;
 }
 
 export default function CollectionTableRow({
@@ -71,7 +77,9 @@ export default function CollectionTableRow({
   onHoverEnter,
   onHoverLeave,
   onHoverMove,
-  onDragStateChange
+  onDragStateChange,
+  showPrice = false,
+  priceQuote
 }: CollectionTableRowProps) {
   const { card } = row;
   const isLoose = row.deckId === null;
@@ -224,7 +232,7 @@ export default function CollectionTableRow({
               "group hover:bg-muted/50 relative grid cursor-pointer items-center gap-2 px-2 py-1.5 text-sm",
               isSelected && "bg-accent"
             )}
-            style={{ gridTemplateColumns: COLLECTION_GRID }}
+            style={{ gridTemplateColumns: collectionGrid(showPrice) }}
             onClick={() => onClick?.(card)}
             onMouseEnter={onHoverEnter}
             onMouseLeave={onHoverLeave}
@@ -375,6 +383,13 @@ export default function CollectionTableRow({
                 <span className="text-muted-foreground">—</span>
               )}
             </div>
+
+            {/* Price: the copies' own finish + condition price, or the printing's as a stale estimate */}
+            {showPrice && (
+              <div className="flex justify-end text-xs">
+                <CopyPriceTag row={row} quote={priceQuote} />
+              </div>
+            )}
 
             {/* Quantity */}
             <div
