@@ -147,7 +147,7 @@ describe("CardPricesPanel (selected copies)", () => {
     expect(block).toHaveTextContent("Your 2 copies");
     expect(block).toHaveTextContent("in Main Collection");
     expect(block).toHaveTextContent("Foil · LP (Lightly Played)");
-    expect(screen.getByTestId("your-copies-price")).toHaveTextContent("2 × $3.50 = $7.00");
+    expect(screen.getByTestId("your-copies-price")).toHaveTextContent("$3.50 ea");
     expect(screen.getByTestId("your-copies-detail")).toHaveTextContent(
       "Mana Pool price for foil, LP (Lightly Played), in USD"
     );
@@ -164,7 +164,7 @@ describe("CardPricesPanel (selected copies)", () => {
     render(<CardPricesPanel card={card} />);
     const block = screen.getByTestId("your-copies");
     expect(block).toHaveAttribute("data-price-kind", "estimate");
-    expect(screen.getByTestId("your-copies-price")).toHaveTextContent("2 × $4.00 = $8.00");
+    expect(screen.getByTestId("your-copies-price")).toHaveTextContent("$4.00 ea");
     expect(block.querySelector("[data-age-level]")).toHaveAttribute("data-age-level", "stale");
     expect(block).toHaveTextContent("estimated");
     expect(screen.getByTestId("your-copies-detail")).toHaveTextContent("not yet priced for LP");
@@ -209,7 +209,7 @@ describe("CardPricesPanel (selected copies)", () => {
     };
     render(<CardPricesPanel card={card} />);
     expect(screen.getByTestId("your-copies")).toHaveAttribute("data-price-kind", "copy");
-    expect(screen.getByTestId("your-copies-price")).toHaveTextContent("2 × $3.25 = $6.50");
+    expect(screen.getByTestId("your-copies-price")).toHaveTextContent("$3.25 ea");
   });
 
   it("ignores copies that belong to another printing", () => {

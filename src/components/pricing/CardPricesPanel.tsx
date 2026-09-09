@@ -145,9 +145,7 @@ function YourCopies({
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-muted-foreground">{attrs}</span>
         <span className="text-right font-medium tabular-nums" data-testid="your-copies-price">
-          {count > 1 && view.usd !== null
-            ? `${count} × ${text} = ${format(view.usd * count)}`
-            : text}
+          {count > 1 && view.usd !== null ? `${text} ea` : text}
         </span>
       </div>
       <p className="text-muted-foreground mt-1 text-xs" data-testid="your-copies-detail">
