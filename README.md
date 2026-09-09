@@ -50,6 +50,14 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   own rows, and non-default values show as small badges in the collection table, on
   deck-view cards, and in the card-locations panel. Unset values mean non-foil /
   Near Mint, so existing collections need no migration.
+- **Selected-card panel** — clicking any card (search result, collection row, deck
+  card) shows it in the side column: the card image on top, then **Text / Copies /
+  Prices** tabs. Text is the rules text; Copies lists every collection and deck that
+  holds a copy (deck rows nested under their collection, with the set, finish and
+  condition badges, tags, notes, each row's price, and an open button); Prices holds
+  the printing's per-finish prices and the selected copies' price. The image/tabs
+  split and the last-used tab are remembered per device. On phones the same panel
+  is a full-screen page.
 - **Drag-and-drop organization** — move and copy cards between collections with
   react-dnd.
 - **Active collection & active deck** — mark one collection and one deck as "active"
@@ -114,7 +122,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   changing a row's finish or condition re-fetches its price automatically. Copies
   tagged `Proxy` are always worth $0, whatever the market says. Clicking a
   collection row, a deck card, or a card-locations row shows those copies' price
-  at the top of the card panel, above the printing's prices.
+  on the card panel's Prices tab, above the printing's prices, and the panel's
+  Copies tab prices every row.
 - **Hover card preview** — hovering a row in search results or a collection shows a card
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay

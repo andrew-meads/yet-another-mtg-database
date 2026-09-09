@@ -2,15 +2,12 @@
 
 import type React from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import CardArtView from "@/components/CardArtView";
-import { CardTextView } from "@/components/CardTextView";
-import CardPricesPanel from "@/components/pricing/CardPricesPanel";
+import CardDetailsPanel from "@/components/card-details/CardDetailsPanel";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useSearchDocs } from "@/context/SearchDocsContext";
 import { useAiChat } from "@/context/AiChatContext";
 import SearchDocsPanel from "@/components/search/SearchDocsPanel";
 import AiChatPanel from "@/components/ai/AiChatPanel";
-import CardLocationsView from "./CardLocationsView";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 
@@ -108,44 +105,10 @@ function DesktopMainWorkspace({ children }: React.PropsWithChildren) {
         }}
         className="min-w-0 flex-1 rounded-md border"
       >
-        {/* Left: Card Details - split into image (top) and text (bottom) */}
+        {/* Left: Card Details — image on top, tabbed text/copies/prices below (CardDetailsPanel) */}
         <ResizablePanel defaultSize={layout[0]} minSize={15} collapsible>
           {selectedCard ? (
-            <ResizablePanelGroup direction="vertical">
-              {/* Top: Card Image */}
-              <ResizablePanel defaultSize={45} minSize={30} className="overflow-hidden p-4">
-                <div className="size-full">
-                  <CardArtView
-                    card={selectedCard}
-                    variant="large"
-                    flippable={true}
-                    draggable={true}
-                    width="100%"
-                    height="100%"
-                    priority
-                  />
-                </div>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              {/* Middle: Card locations */}
-              <ResizablePanel defaultSize={20} minSize={10}>
-                <div className="h-full overflow-y-auto p-4">
-                  <CardLocationsView cardName={selectedCard?.name} />
-                </div>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              {/* Bottom: Card Text */}
-              <ResizablePanel defaultSize={35} minSize={30}>
-                <div className="h-full overflow-y-auto p-4">
-                  <CardPricesPanel card={selectedCard} />
-                  <CardTextView card={selectedCard} />
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+            <CardDetailsPanel card={selectedCard} layout="split" />
           ) : (
             <div className="text-muted-foreground grid size-full place-items-center p-4">
               <div className="space-y-2 text-center">

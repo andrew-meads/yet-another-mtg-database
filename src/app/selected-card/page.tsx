@@ -2,23 +2,31 @@
 
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useRouter } from "next/navigation";
-import CardArtView from "@/components/CardArtView";
-import { CardTextView } from "@/components/CardTextView";
-import CardPricesPanel from "@/components/pricing/CardPricesPanel";
-import CardLocationsView from "@/components/CardLocationsView";
+import CardDetailsPanel from "@/components/card-details/CardDetailsPanel";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useMounted } from "@/hooks/useMounted";
 
 /**
  * SelectedCardPage Component
  *
  * Mobile-friendly page for viewing a selected card's details.
- * Displays the card's artwork, locations, and text information.
+ * Displays the card's artwork above the tabbed text / copies / prices details.
  * Shows a message if no card is selected.
+ *
+ * The selection (and the remembered details tab) live in localStorage, which
+ * the server can't see, so the page renders a blank frame until mounted — the
+ * server HTML and the hydrating client then agree instead of React throwing a
+ * hydration mismatch and rebuilding the tree.
  */
 export default function SelectedCardPage() {
   const { selectedCard } = useCardSelection();
   const router = useRouter();
+  const mounted = useMounted();
+
+  if (!mounted) {
+    return <div className="bg-background min-h-screen" data-testid="selected-card-hydrating" />;
+  }
 
   if (!selectedCard) {
     return (
@@ -49,31 +57,9 @@ export default function SelectedCardPage() {
         </div>
       </div>
 
-      {/* Card details */}
-      <div className="space-y-4 overflow-y-auto p-4">
-        {/* Card Image */}
-        <div className="mx-auto aspect-5/7 w-full max-w-md">
-          <CardArtView
-            card={selectedCard}
-            variant="large"
-            flippable={true}
-            draggable={false}
-            width="100%"
-            height="100%"
-          />
-        </div>
-
-        {/* Card Locations */}
-        <div>
-          <h3 className="mb-2 text-sm font-semibold">Locations</h3>
-          <CardLocationsView cardName={selectedCard.name} />
-        </div>
-
-        {/* Prices + Card Text */}
-        <div>
-          <CardPricesPanel card={selectedCard} />
-          <CardTextView card={selectedCard} />
-        </div>
+      {/* Card details: image, then the Text / Copies / Prices tabs (shared with desktop) */}
+      <div className="overflow-y-auto p-4">
+        <CardDetailsPanel card={selectedCard} layout="stack" />
       </div>
     </div>
   );

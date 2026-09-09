@@ -24,6 +24,8 @@ test("search results always show each card's price with an age indicator", async
 test("the selected-card panel lists the printing's prices", async ({ page }) => {
   await page.goto("/search");
   await page.getByTestId("search-card-e2e-grizzly").click();
+  // Prices live on their own tab of the card panel (Text is the default).
+  await page.getByRole("tab", { name: "Prices" }).click();
   const panel = page.getByTestId("card-prices-panel");
   await expect(panel).toBeVisible();
   await expect(panel).toContainText("Non-foil");
@@ -170,6 +172,7 @@ test("clicking a collection row shows that row's copies' price in the card panel
   const grizzly = page.getByTestId(/^collection-row-e2e-grizzly/).first();
   await expect(grizzly).toBeVisible({ timeout: 30_000 });
   await grizzly.click();
+  await page.getByRole("tab", { name: "Prices" }).click();
 
   const copies = page.getByTestId("your-copies");
   await expect(copies).toBeVisible();
@@ -179,7 +182,7 @@ test("clicking a collection row shows that row's copies' price in the card panel
   await expect(copies.locator("[data-age-level]")).toHaveAttribute("data-age-level", "fresh");
   await expect(page.getByText("This printing")).toBeVisible();
 
-  // Selecting a plain search result drops the copy block again.
+  // Selecting a plain search result drops the copy block again (the Prices tab is remembered).
   await page.goto("/search");
   await page.getByTestId("search-card-e2e-grizzly").click();
   await expect(page.getByTestId("card-prices-panel")).toBeVisible();

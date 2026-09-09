@@ -31,7 +31,7 @@ export function CardTextView({ card }: { card: SlimMtgCard }) {
     card.card_faces?.map((f) => f.oracle_text).filter((t) => t && t.trim() !== "") || [];
   if (card.oracle_text && card.oracle_text.trim() !== "") oracleTexts.unshift(card.oracle_text);
   return (
-    <div className="text-foreground flex flex-col gap-5">
+    <div className="text-foreground flex flex-col gap-4 text-sm">
       {faces.map((face, index) => (
         <Fragment key={index}>
           <CardFace face={face} />
@@ -55,7 +55,7 @@ function CardFace({ face }: { face: IFace }) {
     <div className="text-foreground">
       {/* Card Face Header - Name and Mana Cost */}
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-lg font-bold">{face.name}</h3>
+        <h3 className="text-base font-bold">{face.name}</h3>
         {face.mana_cost && <ManaCost cost={face.mana_cost} />}
       </div>
 

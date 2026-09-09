@@ -1,23 +1,22 @@
+"use client";
+
 import { useCardLocations } from "@/hooks/react-query/useCardLocations";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SlimMtgCard } from "@/types/MtgCard";
 import { useMemo, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Library, Layers } from "lucide-react";
+import { Library, Layers, SquareArrowOutUpRight } from "lucide-react";
 import { SetSvg } from "@/components/SetSvg";
 import CardAttributeBadges from "@/components/CardAttributeBadges";
 import { SelectedCopies } from "@/context/CardSelectionContext";
-import { copySetFromCopies } from "@/lib/copyPricing";
+import {
+  ESTIMATED_PRICE_DESCRIPTION,
+  copyPriceView,
+  copySetFromCopies,
+  describeCopyPriceView
+} from "@/lib/copyPricing";
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import {
   CardCondition,
@@ -28,6 +27,10 @@ import {
   effectiveFinish,
   finishRank
 } from "@/lib/cardAttributes";
+import { quoteForCard, useCardPriceQuotes } from "@/hooks/react-query/useCardPriceQuotes";
+import { useCurrency } from "@/hooks/useCurrency";
+import PriceAgeDot from "@/components/pricing/PriceAgeDot";
+import RefreshPriceButton from "@/components/pricing/RefreshPriceButton";
 
 interface Loc {
   key: string;
@@ -45,6 +48,17 @@ interface Loc {
   copies: DetailedPhysicalCard[];
 }
 
+/**
+ * Where the user's copies of a card live, as a compact list built for a narrow
+ * column: one row per (collection, printing, finish, condition, notes, tags)
+ * group, its deck rows nested beneath it. The first line carries the location
+ * and the count; the second the printing (set icon + code), any non-default
+ * finish/condition badges, tags and notes — nothing is padded out with "—"
+ * placeholders — and the copies' price (their own finish + condition price
+ * when fetched, else the printing's price marked as an estimate, or $0 for a
+ * proxy; the same decision as the collection row cell). Clicking a row selects
+ * the card **with those copies**; the open icon navigates to the entity.
+ */
 export default function CardLocationsView({ cardName }: { cardName: string }) {
   const { data: cardLocations, isLoading } = useCardLocations(cardName);
   const { setSelectedCard } = useCardSelection();
@@ -63,7 +77,7 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
     setSelection({ cardName, key: loc.key });
   };
 
-  const handleDoubleClick = (loc: Loc) => {
+  const handleOpen = (loc: Loc) => {
     if (loc.type === "collection") {
       router.push(`/my-cards/collections/${loc.locationId}`);
     } else {
@@ -171,103 +185,178 @@ export default function CardLocationsView({ cardName }: { cardName: string }) {
     return result;
   }, [cardLocations]);
 
-  const totalQuantity = locations
-    .filter((l) => l.type === "collection")
-    .reduce((sum, l) => sum + l.quantity, 0);
-  const totalFree = locations
-    .filter((l) => l.type === "collection")
-    .reduce((sum, l) => sum + l.freeQuantity, 0);
+  // Quotes for every printing listed, so each collection row can show its copies' price.
+  const cardIds = useMemo(() => [...new Set(locations.map((l) => l.card.id))].sort(), [locations]);
+  const { quotes } = useCardPriceQuotes(cardIds);
+
+  if (isLoading) {
+    return <p className="text-muted-foreground text-sm">Loading locations...</p>;
+  }
+  if (locations.length === 0) {
+    return (
+      <p className="text-muted-foreground text-sm">You don&apos;t own any copies of this card.</p>
+    );
+  }
 
   return (
-    <div>
-      {isLoading && <p className="text-muted-foreground text-sm">Loading locations...</p>}
-      {!isLoading && locations.length === 0 && (
-        <p className="text-muted-foreground text-sm">No locations found</p>
-      )}
-      {locations.length > 0 && (
-        <>
-          <p className="text-muted-foreground mb-2 text-sm">
-            {totalQuantity} {totalQuantity === 1 ? "copy" : "copies"} total
-            {totalFree < totalQuantity && `, ${totalFree} free`}
-          </p>
-          <Table stickyHeader>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-center">Set</TableHead>
-                <TableHead className="text-center">Finish</TableHead>
-                <TableHead className="text-center">Notes</TableHead>
-                <TableHead className="text-center">Tags</TableHead>
-                <TableHead className="text-center">Qty</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {locations.map((loc) => {
-                const isSelected = selection?.cardName === cardName && selection?.key === loc.key;
-                const qtyLabel =
-                  loc.type === "collection" && loc.freeQuantity < loc.quantity
-                    ? `${loc.quantity} (${loc.freeQuantity} free)`
-                    : `${loc.quantity}`;
-                return (
-                  <TableRow
-                    key={loc.key}
-                    className={cn(
-                      "cursor-pointer",
-                      isSelected && "bg-primary/10 hover:bg-primary/15"
-                    )}
-                    onClick={() => handleClick(loc)}
-                    onDoubleClick={() => handleDoubleClick(loc)}
+    <div role="list" className="flex flex-col gap-0.5 text-sm" data-testid="card-locations">
+      {locations.map((loc) => {
+        const isSelected = selection?.cardName === cardName && selection?.key === loc.key;
+        const isDeck = loc.type === "deck";
+        const qtyLabel =
+          loc.type === "collection" && loc.freeQuantity < loc.quantity
+            ? `${loc.quantity} (${loc.freeQuantity} free)`
+            : `${loc.quantity}`;
+        const hasDetails =
+          loc.finish !== "nonfoil" ||
+          loc.condition !== "NM" ||
+          loc.tags.length > 0 ||
+          loc.notes !== "";
+        return (
+          <div
+            key={loc.key}
+            role="listitem"
+            data-testid="card-location-row"
+            data-location-type={loc.type}
+            data-selected={isSelected || undefined}
+            className={cn(
+              "group hover:bg-muted/60 flex cursor-pointer flex-col gap-0.5 rounded-md px-2 py-1.5",
+              isDeck && "ml-5",
+              isSelected && "bg-primary/10 hover:bg-primary/15"
+            )}
+            onClick={() => handleClick(loc)}
+          >
+            {/* Line 1: location + count + open */}
+            <div className="flex items-center gap-1.5">
+              {isDeck ? (
+                <Layers className="text-muted-foreground size-3.5 shrink-0" aria-label="Deck" />
+              ) : (
+                <Library
+                  className="text-muted-foreground size-3.5 shrink-0"
+                  aria-label="Collection"
+                />
+              )}
+              <span className="min-w-0 flex-1 truncate font-medium" title={loc.locationName}>
+                {loc.locationName}
+              </span>
+              <span
+                className="text-muted-foreground shrink-0 text-xs tabular-nums"
+                data-testid="card-location-qty"
+              >
+                {qtyLabel}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`Open ${isDeck ? "deck" : "collection"} ${loc.locationName}`}
+                    className="text-muted-foreground/50 hover:text-foreground focus-visible:ring-ring inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded focus-visible:ring-1 focus-visible:outline-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpen(loc);
+                    }}
                   >
-                    <TableCell>
-                      {/* Deck rows sit under their owning collection; indent them to show the nesting. */}
-                      <span
-                        className={cn("flex items-center gap-1.5", loc.type === "deck" && "pl-5")}
-                      >
-                        {loc.type === "collection" ? (
-                          <Library className="text-muted-foreground size-3.5 shrink-0" />
-                        ) : (
-                          <Layers className="text-muted-foreground size-3.5 shrink-0" />
-                        )}
-                        {loc.locationName}
+                    <SquareArrowOutUpRight className="size-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Open {isDeck ? "deck" : "collection"}</TooltipContent>
+              </Tooltip>
+            </div>
+
+            {/* Line 2 (collection rows only — deck rows share their parent's printing): set,
+                non-default attributes, tags, notes, and the copies' price. */}
+            {!isDeck && (
+              <div className="text-muted-foreground flex min-w-0 items-center gap-x-2 pl-5 text-xs">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex shrink-0 items-center gap-1">
+                        <SetSvg
+                          setCode={loc.card.set}
+                          rarityCode={loc.card.rarity}
+                          width={16}
+                          height={16}
+                        />
+                        <span className="uppercase">{loc.card.set}</span>
                       </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="inline-flex items-center justify-center">
-                            <SetSvg
-                              setCode={loc.card.set}
-                              rarityCode={loc.card.rarity}
-                              width={22}
-                              height={22}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {loc.card.set_name}{" "}
-                          <em className="text-muted-foreground text-xs">
-                            ({loc.card.set.toUpperCase()})
-                          </em>{" "}
-                          {loc.card.rarity}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell className="text-center">
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {loc.card.set_name}{" "}
+                      <em className="text-muted-foreground text-xs">
+                        ({loc.card.set.toUpperCase()})
+                      </em>{" "}
+                      {loc.card.rarity}
+                    </TooltipContent>
+                  </Tooltip>
+                  {hasDetails && (
+                    <>
                       <CardAttributeBadges finish={loc.finish} condition={loc.condition} />
-                      {loc.finish === "nonfoil" && loc.condition === "NM" && "—"}
-                    </TableCell>
-                    <TableCell className="text-center">{loc.notes || "—"}</TableCell>
-                    <TableCell className="text-center">
-                      {loc.tags.length > 0 ? loc.tags.join(", ") : "—"}
-                    </TableCell>
-                    <TableCell className="text-center">{qtyLabel}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </>
-      )}
+                      {loc.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="bg-secondary text-secondary-foreground rounded px-1 leading-4"
+                          data-testid="card-location-tag"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {loc.notes && (
+                        <span className="truncate italic" title={loc.notes}>
+                          {loc.notes}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+                <LocationPrice loc={loc} quotes={quotes} />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+/** The copies' unit price for a collection row, with its age dot and a refresh for those copies. */
+function LocationPrice({
+  loc,
+  quotes
+}: {
+  loc: Loc;
+  quotes: ReturnType<typeof useCardPriceQuotes>["quotes"];
+}) {
+  const { format, currency } = useCurrency();
+  const set = copySetFromCopies(loc.copies);
+  const view = copyPriceView(set, quoteForCard(loc.card, quotes));
+  const text = view.usd === null ? "—" : format(view.usd);
+  const description =
+    view.kind === "proxy"
+      ? `Proxy — counted as ${format(0)} regardless of market prices`
+      : describeCopyPriceView(view, set, currency);
+
+  return (
+    <span
+      className="text-foreground inline-flex shrink-0 items-center gap-1 tabular-nums"
+      data-testid="card-location-price"
+      data-price-kind={view.kind}
+    >
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>{text}</span>
+        </TooltipTrigger>
+        <TooltipContent>{description}</TooltipContent>
+      </Tooltip>
+      {view.kind === "copy" && <PriceAgeDot updatedAt={view.updatedAt} />}
+      {view.kind === "estimate" && (
+        <PriceAgeDot
+          updatedAt={view.updatedAt}
+          override={{ level: "stale", description: ESTIMATED_PRICE_DESCRIPTION }}
+        />
+      )}
+      {view.kind !== "proxy" && (
+        <RefreshPriceButton physicalCardIds={loc.copies.map((c) => c._id)} />
+      )}
+    </span>
   );
 }
