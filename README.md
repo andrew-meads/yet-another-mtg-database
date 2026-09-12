@@ -314,8 +314,9 @@ src/
                         # so Next's image optimizer can load Scryfall card images
 ```
 
-See [`CLAUDE.md`](CLAUDE.md) for a deeper tour of the architecture (search engine, auth,
-data layer, and scanning internals).
+See [`CLAUDE.md`](CLAUDE.md) for the architecture map and cross-cutting conventions, and the
+reference docs under [`docs/`](docs/) for a deeper tour of each area (data model, search
+engine, auth, pricing, AI features, scanning, deployment).
 
 ## Deployment
 

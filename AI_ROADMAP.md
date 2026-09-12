@@ -1,9 +1,9 @@
 # AI Assistant Roadmap
 
 This document parks the remaining phases of the AI-agent plan so a future agent (or
-human) can continue it without the original planning conversation. **Read CLAUDE.md
-first** — it documents the codebase architecture and the already-shipped AI
-foundations this roadmap builds on. Phases 0–3 are **done and shipped**; what
+human) can continue it without the original planning conversation. **Read CLAUDE.md and
+`docs/user-settings-and-ai.md` first** — they document the codebase architecture and the
+already-shipped AI foundations this roadmap builds on. Phases 0–3 are **done and shipped**; what
 remains is the Phase 4 backlog.
 
 ## Where things stand (Phases 0–3, shipped)
@@ -37,8 +37,8 @@ remains is the Phase 4 backlog.
   leniently by `parseTranslateSearchResult`) + `src/lib/ai/prompts/searchSyntax.ts`
   (cheat-sheet generated from `SEARCH_DOC_SECTIONS`).
 
-**Phase 2 — chat infrastructure + deck advisor (read-only)** — see CLAUDE.md's
-"AI deck advisor chat" section for the full architecture. In brief:
+**Phase 2 — chat infrastructure + deck advisor (read-only)** — see the "AI deck
+advisor chat" section of `docs/user-settings-and-ai.md` for the full architecture. In brief:
 
 - `POST /api/ai/chat` (`streamText` → `toUIMessageStream` + `createUIMessageStreamResponse`, client-held
   transcript), agent registry (`src/lib/ai/agents/`, persona `deck-advisor`),
@@ -112,8 +112,8 @@ remains is the Phase 4 backlog.
 | Token cost | Deck/collection context enters via tools (`readDeck`), never client-stuffed prompts; LLM-facing card payloads slimmed (no `image_uris`), ~20-result caps with totals; `stopWhen: isStepCount(8)` loop cap | |
 | Errors | 400 bad body, `409 ai_not_configured`, 502 provider/output failures with diagnostics | Established convention. |
 
-**Phase 3 — proposals, "alternatives I own", combos** — see CLAUDE.md's "AI deck
-advisor chat" section for the full architecture. In brief:
+**Phase 3 — proposals, "alternatives I own", combos** — see the "AI deck advisor
+chat" section of `docs/user-settings-and-ai.md` for the full architecture. In brief:
 
 - `proposeDeckChanges` tool: its input IS the proposal; execute validates
   ownership/card names/copy counts/sections and echoes a normalized proposal
@@ -158,10 +158,10 @@ advisor chat" section for the full architecture. In brief:
 
 ## House rules that trip up newcomers
 
-- Every plan must include tests, `npm run lint`, and README/CLAUDE.md updates.
+- Every plan must include tests, `npm run lint`, and README/CLAUDE.md/`docs/` updates.
 - Card identity is the Scryfall string `id`, never Mongo `_id`; `PhysicalCard`
   back-refs are the membership source of truth; writes go back-ref-first; no
-  multi-doc transactions (see CLAUDE.md's physical-card-instance model).
+  multi-doc transactions (see `docs/data-model.md`).
 - API conventions: `Response.json`, errors `{ error: string }`, routes trust
   `src/proxy.ts` for auth and read `session!.user._id` via `getAuthSession()`,
   ownership enforced by `owner: userId` in every query.
