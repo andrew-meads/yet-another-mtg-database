@@ -13,9 +13,6 @@ yarn.lock
 
 *.md
 
-# card-scanner source has its own style (Python + a Vite harness)
-card-scanner
-
 # Backup database files
 backup
 backup/**

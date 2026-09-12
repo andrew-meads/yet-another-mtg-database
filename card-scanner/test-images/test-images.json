@@ -1,0 +1,156 @@
+[
+  {
+    "fileName": "01-rise-ran-aang.jpg",
+    "description": "3 cards on a white background, in portrait orientation.",
+    "cards": [
+      {
+        "name": "The Rise of Sozin",
+        "set": "TLA",
+        "number": "0117"
+      },
+      {
+        "name": "Ran and Shaw",
+        "set": "TLA",
+        "number": "0150"
+      },
+      {
+        "name": "Aang, at the Crossroads",
+        "set": "TLA",
+        "number": "0304"
+      }
+    ]
+  },
+  {
+    "fileName": "02-wurmcoil-engine.jpg",
+    "description": "A single card on a white background, in a slightly angled off-portrait orientation. The card has been signed by the artist.",
+    "cards": [
+      {
+        "name": "Wurmcoil Engine",
+        "set": "SOM",
+        "number": "223",
+        "finish": "foil",
+        "extra": "signed, promo"
+      }
+    ]
+  },
+  {
+    "fileName": "03-pyroclasm.jpg",
+    "description": "A single card on a white background, at a 45 degreee angle",
+    "cards": [
+      {
+        "name": "Pyroclasm",
+        "set": "ICE"
+      }
+    ]
+  },
+  {
+    "fileName": "04-armed-dangerous.jpg",
+    "description": "A single split card in portrait orientation, so the card names are on the side. The card is on a white background.",
+    "cards": [
+      {
+        "name": "Armed // Dangerous",
+        "set": "DGM",
+        "number": "122"
+      }
+    ]
+  },
+  {
+    "fileName": "05-sideways-cards.jpg",
+    "description": "Three cards rotated 90 degrees clockwise (i.e. in landscape mode), on a white background. The cards are top to bottom. The first one is a split card.",
+    "cards": [
+      {
+        "name": "Armed // Dangerous",
+        "set": "DGM",
+        "number": "122"
+      },
+      {
+        "name": "Aang, Swift Saviour",
+        "set": "TLA",
+        "number": "0204"
+      },
+      {
+        "name": "Pyroclasm",
+        "set": "ICE"
+      }
+    ]
+  },
+  {
+    "fileName": "06-various-cards.jpg",
+    "description": "Five different cards, in a variety of orientations, on a white background.",
+    "cards": [
+      {
+        "name": "Jhoira, Ageless Innovator",
+        "set": "DMU",
+        "number": "301"
+      },
+      {
+        "name": "Dragon Whelp",
+        "set": "DMU",
+        "number": "120"
+      },
+      {
+        "name": "Wurzelmauer",
+        "name-en": "Wall of Roots",
+        "set": "MIR",
+        "number": "253"
+      },
+      {
+        "name": "Armed // Dangerous",
+        "set": "DGM",
+        "number": "122"
+      },
+      {
+        "name": "Kaya, Bane of the Dead",
+        "set": "WAR",
+        "number": "231"
+      }
+    ]
+  },
+  {
+    "fileName": "07-8-sideways-cards.jpg",
+    "description": "8 cards, all sideways orientation, on a white background.",
+    "cards": [
+      {
+        "name": "Decimate",
+        "set": "DMR",
+        "number": "188"
+      },
+      {
+        "name": "Diaochan, Artful Beauty",
+        "flavorName": "Azula, Flame of Ember Island",
+        "set": "TLE",
+        "number": "0027"
+      },
+      {
+        "name": "Arcanis the Omnipotent",
+        "set": "DMR",
+        "number": "280"
+      },
+      {
+        "name": "Meteor Sword",
+        "set": "TLA",
+        "number": "0258"
+      },
+      {
+        "name": "Mind Stone",
+        "set": "DMR",
+        "number": "232"
+      },
+      {
+        "name": "White Lotus Hideout",
+        "set": "TLA",
+        "number": "0281"
+      },
+      {
+        "name": "Flametongue Kavu",
+        "set": "DMR",
+        "number": "432"
+      },
+      {
+        "name": "Wild Growth",
+        "set": "DMR",
+        "number": "184"
+      }
+    ]
+  }
+]
