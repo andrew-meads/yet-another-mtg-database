@@ -1,8 +1,9 @@
 # Deployment
 
 Multi-stage `Dockerfile` (Node 22) + `docker-compose.yml` running the app, MongoDB, and the
-external card-scanner stack (`ghcr.io/andrew-meads/card-scanner-backend` + its Postgres DB)
-behind a Caddy reverse proxy (configured via labels in compose). Production sets
+card-scanner stack (`card-scanner` from the prebuilt `ghcr.io/andrew-meads/card-scanner-backend`
+image + `card-scanner-db`, Postgres 16) behind a Caddy reverse proxy (configured via labels
+in compose). Production sets
 `NODE_ENV=production`, so real Google login is used (the dev login provider is never
 registered — see [auth.md](auth.md)).
 
@@ -13,6 +14,27 @@ docker compose up -d --build
 For local development use `docker-compose-dev.yml` instead — the same stack minus the app
 service and the reverse proxy (MongoDB on host port `27017`, the scanner on `8000`), with
 the Next.js app run on the host via `npm run dev`.
+
+## Card-scanner image and index
+
+The scanner's source is in `card-scanner/backend` (see
+[card-scanner/README.md](../card-scanner/README.md)); the compose files pull the prebuilt
+image rather than building it, and the app's `.dockerignore` excludes `card-scanner/` from
+the Next.js build context. To ship a scanner change, rebuild and push the image:
+
+```bash
+docker build -t ghcr.io/andrew-meads/card-scanner-backend:latest card-scanner/backend
+docker push ghcr.io/andrew-meads/card-scanner-backend:latest
+```
+
+The identification index lives in Postgres on the `card-scanner-pgdata` named volume (kept
+across `down`/`up`, wiped only by `down -v`), so a fresh deployment must build it once:
+
+```bash
+docker compose exec card-scanner python -m app.build_index --all   # resumable; hours
+```
+
+Crops and the index error log are bind-mounted to `./data/cards` on the host.
 
 ## Response compression happens at Caddy
 

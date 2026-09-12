@@ -169,8 +169,9 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 - **UI:** shadcn/ui (Radix primitives) + Tailwind CSS v4, `mana-font`, `lucide-react`
 - **Drag & drop:** react-dnd (HTML5 backend)
 - **Card data:** Scryfall bulk JSON
-- **Card scanner:** external [`card-scanner-backend`](https://github.com/andrew-meads)
-  service (`ghcr.io/andrew-meads/card-scanner-backend`), proxied by `POST /api/scan`
+- **Card scanner:** Python service in [`card-scanner/`](card-scanner/) (FastAPI + OpenCV +
+  a PostgreSQL image index; shipped as `ghcr.io/andrew-meads/card-scanner-backend`),
+  proxied by `POST /api/scan`
 
 ## Prerequisites
 
@@ -195,6 +196,10 @@ cp .env.example .env
 
 # 3. Start backing services (MongoDB + card-scanner backend)
 docker compose -f docker-compose-dev.yml up -d
+
+# 3b. (Optional — needed for card scanning) build the scanner's Scryfall image index.
+#     Slow for --all (~100k images); pass set codes instead to index just a few sets.
+docker compose -f docker-compose-dev.yml exec card-scanner python -m app.build_index --all
 
 # 4. Seed the database from a Scryfall bulk file
 npm run init-db -- -f bulk-data/oracle-cards-XXXX.jsonl.gz
@@ -289,11 +294,17 @@ need real OAuth values in the host's `.env`.
 
 ## Card scanning
 
-`POST /api/scan` is a thin, auth-guarded proxy to the external card-scanner backend. It
-forwards an uploaded image to `${SCANNER_BASE_URL}/api/scan` and returns the scanner's
-result verbatim — each detected card's de-skewed crop plus a ranked list of candidate
-Scryfall printings. Run the scanner via the dev/prod compose files (it ships as
-`ghcr.io/andrew-meads/card-scanner-backend` and depends on its own Postgres database).
+The recognition service lives in [`card-scanner/`](card-scanner/): a FastAPI + OpenCV
+backend that finds and de-skews every card in a photo, then identifies each crop against a
+PostgreSQL index of Scryfall card images (a perceptual-hash shortlist re-ranked by ORB
+feature matching). `POST /api/scan` is a thin, auth-guarded proxy to it: it forwards the
+uploaded image to `${SCANNER_BASE_URL}/api/scan`, then re-hydrates each ranked candidate
+from this app's own `cards` collection by Scryfall id, so the results page shows the same
+card data as everywhere else. The scanner runs from the dev/prod compose files (as the
+prebuilt `ghcr.io/andrew-meads/card-scanner-backend` image plus its own Postgres) and
+**returns no matches until its index has been built** — see
+[`card-scanner/README.md`](card-scanner/README.md) for indexing, tuning, and the accuracy
+harness.
 
 ## Project structure
 
@@ -312,6 +323,8 @@ src/
 ├── types/        # TypeScript interfaces — source of truth for document shapes
 └── instrumentation.ts  # Server boot hook: gives the global fetch a custom User-Agent
                         # so Next's image optimizer can load Scryfall card images
+card-scanner/     # The Python card-scanner backend (FastAPI + OpenCV + Postgres index) that
+                  # /api/scan proxies to — a separate service with its own README and Dockerfile
 ```
 
 See [`CLAUDE.md`](CLAUDE.md) for the architecture map and cross-cutting conventions, and the
@@ -321,7 +334,8 @@ engine, auth, pricing, AI features, scanning, deployment).
 ## Deployment
 
 `docker-compose.yml` defines the full production stack — the Next.js app, MongoDB, and
-the card-scanner backend (with its Postgres DB) — behind a Caddy reverse proxy:
+the card-scanner backend (the prebuilt image, built from `card-scanner/backend`, with its
+Postgres DB) — behind a Caddy reverse proxy:
 
 ```bash
 docker compose up -d --build

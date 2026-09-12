@@ -41,6 +41,7 @@
     ".next-ai-verify/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "card-scanner"
   ]
 }

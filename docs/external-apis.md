@@ -10,7 +10,7 @@ Copy `.env.example` to `.env`.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` / `NEXTAUTH_URL` | NextAuth Google OAuth. |
 | `AUTH_DEV_LOGIN` | `"true"` outside production registers the dev-only Credentials provider (see [auth.md](auth.md)). |
 | `SETTINGS_ENCRYPTION_KEY` | Optional 64-hex-char key; AES-256-GCM-encrypts secrets stored in user settings (currently the per-user AI API key) via `src/lib/server/secretBox.ts`. Without it secrets are stored plaintext with a one-time warning. |
-| `SCANNER_BASE_URL` | External card-scanner backend the `/api/scan` route proxies to (default `http://localhost:8000`). |
+| `SCANNER_BASE_URL` | The card-scanner backend (`card-scanner/`) that `/api/scan` and `/api/scan/crops/[file]` proxy to (default `http://localhost:8000`; the production compose sets `http://card-scanner:8000`). |
 | `ALL_CARDS_FILE` | Default bulk import path for `init-db`. |
 | `SCRYFALL_API_BASE_URL` | Scryfall API base (default `https://api.scryfall.com`); used by the card-refresh, set-icon, and card-price routes. |
 | `TCGCSV_BASE_URL` | TCGCSV mirror of TCGplayer prices (default `https://tcgcsv.com`); free, key-less. |
@@ -27,6 +27,11 @@ max of 10 requests/second — **all Scryfall `fetch`es go through `scryfallFetch
 `SCRYFALL_HEADERS`**, which attaches the headers and rate-limits starts to <= 10/s via an
 in-process serialized queue (relies on the server being a long-lived singleton; not
 coordinated across instances).
+
+The Python scanner in `card-scanner/` is a separate process with its own Scryfall client
+(`SCRYFALL_USER_AGENT`, `SCRYFALL_REQUEST_DELAY` — 100 ms between requests by default) for
+building its image index. Its rate limit is not coordinated with the app's, so avoid
+running a full `build_index --all` at the same time as a Scryfall-heavy app task.
 
 ## Scryfall image CDN & the default User-Agent (`src/instrumentation.ts`)
 

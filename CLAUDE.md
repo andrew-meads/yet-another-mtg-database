@@ -10,7 +10,7 @@ A personal Magic: The Gathering card database and collection manager. Next.js 16
 Router, React 19) frontend + API routes, backed by MongoDB via Mongoose. Card data
 originates from Scryfall bulk JSON. Features: Scryfall-style search, collections and decks
 with drag-and-drop, per-copy finish/condition and pricing, an AI deck advisor, and
-camera-based card scanning (proxied to an external card-scanner backend).
+camera-based card scanning (proxied to the Python card-scanner backend in `card-scanner/`).
 
 ## Planning & implementation checklist
 
@@ -73,7 +73,7 @@ Copy `.env.example` to `.env` first. The full variable list, with defaults, is i
 | Prices on cards, price sources, per-copy prices, currency | `src/lib/server/cardPrices.ts`, `src/lib/server/priceSources/`, `src/lib/pricing.ts`, `src/components/pricing/` | [docs/pricing.md](docs/pricing.md) |
 | Server-side user settings, AI provider, NL search, deck-advisor chat + tools | `src/lib/server/userSettings.ts`, `src/lib/ai/`, `src/app/api/ai/` | [docs/user-settings-and-ai.md](docs/user-settings-and-ai.md), `AI_ROADMAP.md` |
 | Deck export (txt/csv/xlsx/pdf) | `src/lib/deckExport.ts`, `src/lib/server/deckExport*.ts` | [docs/deck-export.md](docs/deck-export.md) |
-| Card scanning proxy + camera flow | `src/app/api/scan/`, `src/app/scan/` | [docs/card-scanning.md](docs/card-scanning.md) |
+| Card scanning: proxy + camera/results UI, and the Python scanner backend itself | `src/app/api/scan/`, `src/app/scan/`, `src/components/scan/`, `card-scanner/` | [docs/card-scanning.md](docs/card-scanning.md), [card-scanner/README.md](card-scanner/README.md) |
 | Bulk import, release-date backfill, whitelist script | `src/scripts/`, `src/lib/server/scryfallBulkStream.ts` | [docs/database-seeding.md](docs/database-seeding.md) |
 | Env vars, Scryfall etiquette, User-Agent instrumentation, set icons | `src/lib/scryfall.ts`, `src/instrumentation.ts` | [docs/external-apis.md](docs/external-apis.md) |
 | Test projects, E2E harness | `vitest.config.ts`, `tests/`, `e2e/` | [docs/testing.md](docs/testing.md) |
@@ -102,13 +102,21 @@ These bite across features. The docs explain the why.
 - **All `/api/*` routes except `/api/auth/*` are gated by the `src/proxy.ts` middleware**
   (Next 16's renamed `middleware.ts`). Routes that need the user call `getAuthSession()`.
 - **All Scryfall calls go through `scryfallFetch`** (required headers, ≤10 req/s). Never
-  call Scryfall with a bare `fetch`.
+  call Scryfall with a bare `fetch`. (The Python scanner in `card-scanner/` has its own
+  throttled Scryfall client for index builds; this rule is about the Next app.)
 - **The owned-filter `$lookup` must stay in `localField`/`foreignField` form** and
   `physicalcards.cardId` must stay indexed, or broad owned searches take minutes.
 - **Adding a search operator** = new file in `src/lib/search/operators/`, export from
   `operators/index.ts`, register in `config.ts`, and document in
   `src/components/search/searchDocs.tsx` (a unit test cross-checks the docs, and the AI
   prompt is generated from them).
+- **`card-scanner/` is a separate Python service, not part of the Next build.** It is
+  excluded from `npm run lint`, `tsconfig.json`, Prettier, and the app's Docker context, and
+  has no test suite (`python -m app.evaluate` is its accuracy harness). It ships as the
+  `ghcr.io/andrew-meads/card-scanner-backend` image the compose files pull, and scans
+  return no matches until its Postgres image index has been built.
+- **`POST /api/scan` trusts only `scryfallId` from the scanner** and re-hydrates matches
+  from the local `cards` collection; ids missing locally are dropped.
 - **AI tools never write.** Deck changes go through the propose-and-confirm
   `proposeDeckChanges` tool and are applied only by the user in the UI. Every tool is
   owner-scoped and wraps server helpers directly (no HTTP self-calls).

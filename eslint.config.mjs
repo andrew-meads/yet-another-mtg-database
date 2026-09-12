@@ -28,7 +28,11 @@ const eslintConfig = defineConfig([
     ".next-e2e/**",
     "out/**",
     "build/**",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    // The card-scanner backend (Python) and its standalone Vite harness are not part of
+    // the Next.js app; the Tailwind plugin would otherwise try to resolve globals.css
+    // relative to card-scanner/frontend and crash.
+    "card-scanner/**"
   ]),
   // Honour the common _underscore convention for intentionally unused vars/args.
   {

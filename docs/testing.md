@@ -41,3 +41,7 @@ The suite (Vitest 4 + Playwright) lives in three Vitest projects plus E2E. Confi
 Each feature doc under `docs/` ends with (or embeds) the list of its unit / integration /
 jsdom / e2e test files. When you add a feature, add tests at every applicable layer and
 list them in the relevant doc.
+
+The Python card-scanner in `card-scanner/` is outside all of the above (Vitest, ESLint,
+and `tsconfig.json` exclude it) and has no automated suite of its own; its accuracy harness
+is `python -m app.evaluate` — see [card-scanner/README.md](../card-scanner/README.md).

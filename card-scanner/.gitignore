@@ -1,0 +1,19 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# --- Node ---
+node_modules/
+frontend/dist/
+
+# --- Runtime output: saved card crops ---
+data/cards/*
+!data/cards/.gitkeep
+
+# --- Env / editor ---
+.env
+.DS_Store

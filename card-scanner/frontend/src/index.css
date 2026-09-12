@@ -1,0 +1,187 @@
+/* Lightweight global styling for the prototype. */
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --accent: #6d28d9;
+  --error: #dc2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+}
+header p {
+  margin: 0 0 1.5rem;
+  opacity: 0.8;
+}
+
+/* --- Capture controls --- */
+.capture .preview {
+  margin-bottom: 1rem;
+}
+.capture video {
+  width: 100%;
+  max-height: 60vh;
+  background: #000;
+  border-radius: 12px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+button,
+.file-fallback {
+  font: inherit;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.file-fallback {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* --- Status / messages --- */
+.status {
+  font-style: italic;
+}
+.error {
+  color: var(--error);
+}
+.empty {
+  opacity: 0.8;
+}
+
+/* --- Results: one row per detected card --- */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.detected {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 12px;
+}
+
+.crop {
+  margin: 0;
+  flex: 0 0 140px;
+}
+.crop img {
+  width: 140px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.crop figcaption {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+/* Identification panel */
+.ident {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ident.empty {
+  opacity: 0.8;
+  font-style: italic;
+}
+.best {
+  display: flex;
+  gap: 0.75rem;
+}
+.best .thumb {
+  width: 110px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+}
+.best-meta h3 {
+  margin: 0 0 0.25rem;
+}
+.best-meta .sub {
+  margin: 0 0 0.25rem;
+  opacity: 0.85;
+}
+.best-meta .metrics {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+.badge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: #b45309;
+  color: #fff;
+  vertical-align: middle;
+}
+
+.alts {
+  margin-top: 0.6rem;
+}
+.candidate-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.candidate-list li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+.candidate-list img {
+  width: 40px;
+  border-radius: 4px;
+}
+
+@media (max-width: 560px) {
+  .detected {
+    flex-direction: column;
+  }
+}
+
+/* --- Debug overlay --- */
+.debug {
+  margin-top: 1.5rem;
+}
+.debug-img {
+  width: 100%;
+  margin-top: 0.75rem;
+  border-radius: 8px;
+}

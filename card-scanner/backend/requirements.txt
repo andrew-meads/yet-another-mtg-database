@@ -1,0 +1,15 @@
+# Web framework + ASGI server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+# Multipart parsing for file uploads (POST /api/scan)
+python-multipart>=0.0.9
+# Computer vision. The "headless" build skips GUI/GL system libs, so the Docker
+# image needs no extra apt packages (libGL etc).
+opencv-python-headless>=4.9
+numpy>=1.26
+# EXIF-aware image decoding (corrects phone photo orientation)
+Pillow>=10.2
+# PostgreSQL driver (v3) + connection pool. [binary] bundles libpq, so the slim
+# image needs no extra apt packages.
+psycopg[binary]>=3.2
+psycopg-pool>=3.2

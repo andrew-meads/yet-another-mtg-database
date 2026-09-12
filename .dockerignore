@@ -49,6 +49,9 @@ next-env.d.ts
 /bulk-data/
 /data/**
 
+# card-scanner backend source (built as its own image from card-scanner/backend)
+/card-scanner/
+
 # Backup database files
 backup
 backup/**
