@@ -113,7 +113,7 @@ export function CardDetailsTabs({
   const [storedTab, setStoredTab] = useLocalStorage<CardDetailsTab>(CARD_PANEL_TAB_KEY, "text");
   const tab = isTab(storedTab) ? storedTab : "text";
   // Same query key as the Copies tab's own fetch, so the badge costs no extra request.
-  const { data: locations } = useCardLocations(card.name);
+  const { data: locations, isLoading: locationsLoading } = useCardLocations(card.name);
   const copyCount = (locations?.locations ?? []).reduce((sum, l) => sum + l.cards.length, 0);
 
   const content = cn("min-h-0 px-3 pb-3", fill && "overflow-y-auto");
@@ -131,7 +131,17 @@ export function CardDetailsTabs({
         <TabsTrigger value="text">Text</TabsTrigger>
         <TabsTrigger value="copies">
           Copies
-          {copyCount > 0 && (
+          {/* While the copies are being fetched (e.g. right after switching cards) keep a
+              same-sized pulsing pill in the badge's place, so the tab label doesn't
+              jump as the count vanishes and reappears. */}
+          {locationsLoading && (
+            <span
+              className="bg-muted-foreground/25 inline-block h-4 w-5 animate-pulse rounded-full"
+              data-testid="copies-tab-count-pending"
+              aria-hidden="true"
+            />
+          )}
+          {!locationsLoading && copyCount > 0 && (
             <span
               className="bg-primary/15 text-foreground rounded-full px-1.5 text-[11px] leading-4 font-semibold tabular-nums"
               data-testid="copies-tab-count"

@@ -6,11 +6,12 @@ import type { CardLocationsResponse } from "@/hooks/react-query/useCardLocations
 import type { SlimMtgCard } from "@/types/MtgCard";
 
 const h = vi.hoisted(() => ({
-  locations: null as CardLocationsResponse | null
+  locations: null as CardLocationsResponse | null,
+  locationsLoading: false
 }));
 
 vi.mock("@/hooks/react-query/useCardLocations", () => ({
-  useCardLocations: () => ({ data: h.locations, isLoading: false })
+  useCardLocations: () => ({ data: h.locations, isLoading: h.locationsLoading })
 }));
 vi.mock("@/components/CardArtView", () => ({
   default: ({ card }: { card: SlimMtgCard }) => <div data-testid="card-art">{card.name}</div>
@@ -48,6 +49,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   h.locations = null;
+  h.locationsLoading = false;
   window.localStorage.clear();
 });
 
@@ -109,6 +111,36 @@ describe("CardDetailsTabs", () => {
     };
     rerender(<CardDetailsTabs card={{ ...card }} fill />);
     expect(screen.getByTestId("copies-tab-count")).toHaveTextContent("3");
+  });
+
+  it("holds a placeholder pill in the badge's place while the copies are loading", () => {
+    h.locationsLoading = true;
+    const { rerender } = render(<CardDetailsTabs card={card} fill />);
+    expect(screen.getByTestId("copies-tab-count-pending")).toBeInTheDocument();
+    expect(screen.queryByTestId("copies-tab-count")).not.toBeInTheDocument();
+
+    // Fetch resolves: the pill gives way to the real count...
+    h.locationsLoading = false;
+    h.locations = {
+      locations: [
+        {
+          collectionId: "c1",
+          collectionName: "Main",
+          cards: [{ _id: "p1", card, collectionId: "c1" }]
+        }
+      ]
+    };
+    rerender(<CardDetailsTabs card={{ ...card }} fill />);
+    expect(screen.queryByTestId("copies-tab-count-pending")).not.toBeInTheDocument();
+    expect(screen.getByTestId("copies-tab-count")).toHaveTextContent("1");
+
+    // ...and switching to a card whose copies are still loading brings the pill back
+    // instead of briefly dropping the badge.
+    h.locationsLoading = true;
+    h.locations = null;
+    rerender(<CardDetailsTabs card={{ ...card, name: "Grizzly Bears" }} fill />);
+    expect(screen.getByTestId("copies-tab-count-pending")).toBeInTheDocument();
+    expect(screen.queryByTestId("copies-tab-count")).not.toBeInTheDocument();
   });
 });
 

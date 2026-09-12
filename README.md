@@ -124,6 +124,11 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   collection row, a deck card, or a card-locations row shows those copies' price
   on the card panel's Prices tab, above the printing's prices, and the panel's
   Copies tab prices every row.
+- **Loading placeholders** — while a card image is still downloading (the selected-card
+  panel, deck-view card stacks, drag previews) a card-shaped pulsing placeholder stands
+  in for it, so switching cards never leaves the previous card's picture on screen, and
+  the Copies tab keeps a placeholder pill where its count goes until the copies have
+  loaded.
 - **Hover card preview** — hovering a row in search results or a collection shows a card
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay

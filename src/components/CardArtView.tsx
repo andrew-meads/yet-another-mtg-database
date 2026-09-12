@@ -4,6 +4,7 @@ import { SlimMtgCard } from "@/types/MtgCard";
 import clsx from "clsx";
 import { useState } from "react";
 import Image from "next/image";
+import { ImageIcon } from "lucide-react";
 import { useNewCardDragSource } from "@/hooks/drag-drop/useNewCardDragSource";
 
 /**
@@ -221,27 +222,109 @@ function CardImage({
   // Default to h-full if no explicit dimensions provided (backward compatibility)
   if (!containerWidth && !containerHeight) style.height = "100%";
 
+  // Which source has finished loading (or failed). Keyed by URI rather than a bare
+  // boolean so that switching to a different card automatically counts as "not loaded"
+  // again without an effect: the placeholder shows the moment the source changes.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const loaded = imageUri !== undefined && loadedSrc === imageUri;
+  const failed = imageUri !== undefined && failedSrc === imageUri;
+
   // Render a container that allows the image to scale down to fit its parent height
-  if (!imageUri) {
+  if (!imageUri || failed) {
     return (
-      <div className="flex items-center justify-center bg-gray-200 text-gray-500" style={style}>
+      <div
+        className="flex items-center justify-center bg-gray-200 text-gray-500"
+        style={style}
+        data-testid="card-image-unavailable"
+      >
         No image available{alt !== "" && ` for ${alt}`}
       </div>
     );
   }
 
-  // Use Next/Image with fill, contained within a box sized by height + aspect-ratio
+  // Use Next/Image with fill, contained within a box sized by height + aspect-ratio.
+  // The image is keyed by its URI so a new card never keeps showing the previous
+  // card's bitmap while its own is still downloading; the placeholder sits beneath
+  // it until `onLoad` fires (next/image also fires it for already-cached images).
   return (
-    <div className="relative" style={style}>
+    <div
+      className="relative"
+      style={style}
+      data-testid="card-image"
+      data-loaded={loaded ? "true" : "false"}
+    >
+      {!loaded && <CardImagePlaceholder width={width} height={height} />}
       <Image
+        key={imageUri}
         src={imageUri}
         alt={alt}
         fill
-        className="object-contain"
+        className={clsx(
+          "object-contain transition-opacity duration-200",
+          loaded ? "opacity-100" : "opacity-0"
+        )}
         sizes="(max-width: 640px) 40vw, (max-width: 1024px) 25vw, 286px"
         priority={priority}
+        onLoad={() => setLoadedSrc(imageUri)}
+        onError={() => setFailedSrc(imageUri)}
       />
     </div>
+  );
+}
+
+/**
+ * CardImagePlaceholder - a card-shaped, softly pulsing stand-in shown while a card
+ * image is still downloading. It is an SVG drawn in the image's natural aspect ratio
+ * and scaled with `xMidYMid meet`, which letterboxes it exactly like the real image's
+ * `object-contain` does - so whatever box the image will occupy (a full-width pane, a
+ * fixed deck-view slot), the placeholder is the same card-shaped area, never the whole box.
+ */
+export function CardImagePlaceholder({
+  width,
+  height,
+  className
+}: {
+  /** Natural image width (defines the aspect ratio) */
+  width: number;
+  /** Natural image height (defines the aspect ratio) */
+  height: number;
+  className?: string;
+}) {
+  // Real MTG cards have ~2.5mm corners on a 63mm-wide card (~4% of the width).
+  const corner = width * 0.04;
+  const inset = width * 0.05;
+  const iconSize = width * 0.22;
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
+      className={clsx(
+        "absolute inset-0 size-full animate-pulse",
+        className // eslint-disable-line tailwindcss/no-custom-classname
+      )}
+      data-testid="card-image-placeholder"
+      aria-hidden="true"
+    >
+      <rect width={width} height={height} rx={corner} className="fill-muted" />
+      <rect
+        x={inset}
+        y={inset}
+        width={width - inset * 2}
+        height={height - inset * 2}
+        rx={corner * 0.6}
+        className="stroke-muted-foreground/20 fill-none"
+        strokeWidth={width * 0.006}
+      />
+      <ImageIcon
+        x={(width - iconSize) / 2}
+        y={(height - iconSize) / 2}
+        width={iconSize}
+        height={iconSize}
+        strokeWidth={1.5}
+        className="text-muted-foreground/40"
+      />
+    </svg>
   );
 }
 
