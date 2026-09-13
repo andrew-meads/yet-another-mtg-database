@@ -511,7 +511,8 @@ with fake downloads, and the FastAPI app through `TestClient`. Unit tests never 
 network, and run with OCR disabled; `integration` / `network` marked tests need
 `SCANNER_INTEGRATION=1` / `SCANNER_NETWORK=1`. CI: `.github/workflows/card-scanner.yml`
 (lint, tests, manifest validation, both detection harnesses against the committed baselines,
-and the Docker `test` stage).
+and the Docker `test` stage) — triggered manually from the Actions tab or with
+`gh workflow run card-scanner`, not on push.
 
 **Regression workflow.** After a change: `make test`, then `make eval-photos` and the
 synthetic set (`make synth` + `evaluate_photos ../data/synth-regression --detection-only

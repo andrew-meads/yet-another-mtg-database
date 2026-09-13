@@ -1,18 +1,13 @@
-# CI for the Python card-scanner backend (card-scanner/). Path-filtered so the
-# Next.js app is untouched. CPU-only: no Postgres, no Scryfall, no OCR models —
-# the unit suite fakes the index and the OCR engine, and the detection harness
+# CI for the Python card-scanner backend (card-scanner/). Run on demand from
+# the Actions tab (or `gh workflow run card-scanner`), not on push: the
+# scanner is a separate service that changes in bursts, and the run is a few
+# minutes of CPU. CPU-only: no Postgres, no Scryfall, no OCR models — the
+# unit suite fakes the index and the OCR engine, and the detection harness
 # runs against the labelled test photos and a fixed-seed synthetic set.
 name: card-scanner
 
 on:
-  push:
-    paths:
-      - "card-scanner/**"
-      - ".github/workflows/card-scanner.yml"
-  pull_request:
-    paths:
-      - "card-scanner/**"
-      - ".github/workflows/card-scanner.yml"
+  workflow_dispatch:
 
 concurrency:
   group: card-scanner-${{ github.ref }}

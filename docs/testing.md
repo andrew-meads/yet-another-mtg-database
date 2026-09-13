@@ -62,5 +62,6 @@ The Python scanner in `card-scanner/` is outside the Vitest projects, ESLint and
 
 Run on the host with `npm run scanner:venv` once, then `npm run scanner:test`,
 `npm run scanner:lint`, `npm run scanner:eval`; or inside the exact runtime image with
-`docker build --target test card-scanner/backend`. CI runs all of it in
-`.github/workflows/card-scanner.yml`. See [card-scanner/README.md](../card-scanner/README.md).
+`docker build --target test card-scanner/backend`. The GitHub Actions workflow
+`.github/workflows/card-scanner.yml` runs all of it, but only on demand (Actions tab or
+`gh workflow run card-scanner`), not on push. See [card-scanner/README.md](../card-scanner/README.md).
