@@ -935,7 +935,10 @@ def nms(
     NMS_IOU`` **or** whose smaller member is ``NMS_CONTAINMENT`` inside the
     other. The containment rule is what removes the art box found inside a
     card, and the inset colour-mask quad once its expanded twin verified (or
-    vice versa). Suppressed candidates get ``rejected = "nms:<k>"`` where ``k``
+    vice versa). One exception: a kept quad that is a small piece nested inside
+    a later, better-scored quad of the same tier gives its slot up to it (see
+    :func:`_nested_swap`) — a glare-cut half of a card must not suppress the
+    card. Suppressed candidates get ``rejected = "nms:<k>"`` where ``k``
     is the 1-based index of the winner in the returned list.
 
     Returns the winners in priority order.
@@ -955,6 +958,41 @@ def nms(
                 break
         if suppressed_by is None:
             kept.append(cand)
+        elif _nested_swap(cand, kept[suppressed_by - 1]):
+            # The winner is a small piece nested inside this better-shaped quad
+            # (a glare-cut half of a card: it hashes about as well as the whole
+            # card because half a card is still that card). The whole card
+            # takes the slot; the piece is suppressed by it, and everything the
+            # piece had already suppressed stays suppressed by the same slot.
+            piece = kept[suppressed_by - 1]
+            kept[suppressed_by - 1] = cand
+            piece.rejected = f"nms:{suppressed_by}"
         else:
             cand.rejected = f"nms:{suppressed_by}"
     return kept
+
+
+def _nested_swap(cand: Candidate, winner: Candidate) -> bool:
+    """Whether ``cand`` should replace the nested, smaller ``winner`` it lost to.
+
+    All of: the winner is at most ``NMS_NESTED_SWAP_RATIO`` of ``cand``'s area
+    and lies inside it; both were hashed against the index, sit in the same
+    verification tier and are within ``NMS_NESTED_SWAP_MAX_GAP`` bits (a piece
+    at 16 must never displace a card at 9; without hashes nothing swaps, since a
+    pair blob containing a card scores as well as the card); and ``cand`` has
+    the better geometric score. A card-plus-shadow quad is only
+    ~10 % larger than the card, so the area ratio keeps it from ever swapping in.
+    """
+    if winner.area > config.NMS_NESTED_SWAP_RATIO * cand.area:
+        return False
+    if containment(winner.quad, cand.quad) < config.NMS_CONTAINMENT:
+        return False
+    if VERIFY_RANK.get(cand.verify, 9) != VERIFY_RANK.get(winner.verify, 9):
+        return False
+    # Without hash distances neither quad is known to be a card at all, and a
+    # 2 x 1 pair blob containing a card scores as well as the card: no swap.
+    if cand.hash_distance is None or winner.hash_distance is None:
+        return False
+    if cand.hash_distance - winner.hash_distance > config.NMS_NESTED_SWAP_MAX_GAP:
+        return False
+    return cand.score >= winner.score

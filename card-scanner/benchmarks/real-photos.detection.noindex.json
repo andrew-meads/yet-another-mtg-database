@@ -1,7 +1,7 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T04:54:45+00:00",
-  "git_sha": "8a58eb4",
+  "created": "2026-09-13T05:00:07+00:00",
+  "git_sha": "76f0b84",
   "versions": {
     "python": "3.14.2",
     "opencv": "5.0.0",
@@ -129,10 +129,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 150.976,
-      "median": 147.0,
-      "p95": 249.36,
-      "max": 283.2
+      "mean": 152.476,
+      "median": 146.5,
+      "p95": 253.82,
+      "max": 290.3
     },
     "identify_ms": {
       "n": 0,
@@ -202,10 +202,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 283.2,
-        "median": 283.2,
-        "p95": 283.2,
-        "max": 283.2
+        "mean": 290.3,
+        "median": 290.3,
+        "p95": 290.3,
+        "max": 290.3
       },
       "identify_ms": {
         "n": 0,
@@ -274,10 +274,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 182.8,
-        "median": 182.8,
-        "p95": 182.8,
-        "max": 182.8
+        "mean": 181.8,
+        "median": 181.8,
+        "p95": 181.8,
+        "max": 181.8
       },
       "identify_ms": {
         "n": 0,
@@ -346,10 +346,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 189.9,
-        "median": 189.9,
-        "p95": 189.9,
-        "max": 189.9
+        "mean": 187.7,
+        "median": 187.7,
+        "p95": 187.7,
+        "max": 187.7
       },
       "identify_ms": {
         "n": 0,
@@ -418,10 +418,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 215.85,
-        "median": 215.85,
-        "p95": 238.395,
-        "max": 240.9
+        "mean": 215.2,
+        "median": 215.2,
+        "p95": 241.75,
+        "max": 244.7
       },
       "identify_ms": {
         "n": 0,
@@ -490,10 +490,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 119.07,
-        "median": 103.55,
-        "p95": 186.29,
-        "max": 194.3
+        "mean": 121.47,
+        "median": 106.65,
+        "p95": 190.295,
+        "max": 196.1
       },
       "identify_ms": {
         "n": 0,
@@ -562,10 +562,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 141.3,
-        "median": 141.3,
-        "p95": 141.3,
-        "max": 141.3
+        "mean": 140.7,
+        "median": 140.7,
+        "p95": 140.7,
+        "max": 140.7
       },
       "identify_ms": {
         "n": 0,
@@ -634,10 +634,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 147.0,
-        "median": 147.0,
-        "p95": 147.0,
-        "max": 147.0
+        "mean": 146.5,
+        "median": 146.5,
+        "p95": 146.5,
+        "max": 146.5
       },
       "identify_ms": {
         "n": 0,
@@ -710,7 +710,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 176.5,
+      "detect_ms": 183.2,
       "verify_mode": "off",
       "gt": [
         {
@@ -980,7 +980,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 67.6,
+      "detect_ms": 66.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -1088,7 +1088,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 82.0,
+      "detect_ms": 83.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -1196,7 +1196,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 71.4,
+      "detect_ms": 70.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -1304,7 +1304,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 105.3,
+      "detect_ms": 109.4,
       "verify_mode": "off",
       "gt": [
         {
@@ -1574,7 +1574,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 163.0,
+      "detect_ms": 164.8,
       "verify_mode": "off",
       "gt": [
         {
@@ -2006,7 +2006,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 194.3,
+      "detect_ms": 196.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -2629,7 +2629,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 147.0,
+      "detect_ms": 146.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -2925,7 +2925,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 141.3,
+      "detect_ms": 140.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -3195,7 +3195,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 189.9,
+      "detect_ms": 187.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -3598,7 +3598,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 190.8,
+      "detect_ms": 185.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -4004,7 +4004,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 182.8,
+      "detect_ms": 181.8,
       "verify_mode": "off",
       "gt": [
         {
@@ -4274,7 +4274,7 @@
       "det_fp": 3,
       "det_partial": 0,
       "unmatched_detections": 3,
-      "detect_ms": 240.9,
+      "detect_ms": 244.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -4677,7 +4677,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 101.8,
+      "detect_ms": 103.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -4866,7 +4866,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 137.8,
+      "detect_ms": 142.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -5414,7 +5414,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 91.0,
+      "detect_ms": 94.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -5687,7 +5687,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 283.2,
+      "detect_ms": 290.3,
       "verify_mode": "off",
       "gt": [
         {

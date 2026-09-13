@@ -413,6 +413,11 @@ NMS_CONTAINMENT = _env_float("NMS_CONTAINMENT", 0.9)
 # supported one (loses to a card's inner frame under a strong tilt). Verified
 # candidates always order by hash distance, then score.
 NMS_UNVERIFIED_ORDER = os.environ.get("NMS_UNVERIFIED_ORDER", "area").strip().lower()
+# A kept quad no larger than this fraction of a later same-tier quad that contains it, and
+# within this many hash bits of it, gives the slot up when the larger one scores better —
+# a glare-cut half of a card hashes about as well as the card and must not suppress it.
+NMS_NESTED_SWAP_RATIO = _env_float("NMS_NESTED_SWAP_RATIO", 0.6)
+NMS_NESTED_SWAP_MAX_GAP = _env_int("NMS_NESTED_SWAP_MAX_GAP", 4)
 # Unverified candidates re-found by at least this many sweep passes ("hits") rank
 # ahead of one-off quads regardless of size. A card outline is found by ~30 of
 # the 32 passes; a card glued to a tile line or a shadow, or a colour-mask blob,

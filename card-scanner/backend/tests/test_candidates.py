@@ -220,6 +220,61 @@ def test_nms_overlapping_keeps_the_better_hash():
     assert a.rejected == "nms:1"
 
 
+def _piece_and_whole(
+    *, piece_hd=10, whole_hd=12, piece_score=0.91, whole_score=0.97, tier="ambiguous"
+):
+    whole = _cand(_CARD_QUAD, metrics={"hits": 1})
+    whole.verify, whole.hash_distance, whole.score = tier, whole_hd, whole_score
+    # The upper 45 % of the card: a glare-cut half.
+    tl, tr, br, bl = _CARD_QUAD
+    top = np.float32([tl, tr, tr + 0.45 * (br - tr), tl + 0.45 * (bl - tl)])
+    piece = _cand(top, metrics={"hits": 1})
+    piece.verify, piece.hash_distance, piece.score = tier, piece_hd, piece_score
+    return piece, whole
+
+
+def test_nms_half_card_does_not_suppress_the_full_card():
+    """A nested piece with the (slightly) better hash gives its slot to the whole card."""
+    piece, whole = _piece_and_whole()
+    kept = cm.nms([piece, whole])
+    assert kept == [whole] and piece.rejected == "nms:1" and whole.rejected is None
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"whole_score": 0.85},  # the whole scores worse: the piece keeps its slot
+        {"piece_hd": 9, "whole_hd": 16},  # hash gap too wide: the piece hashes far better
+        {"whole_hd": 12, "piece_hd": 10, "tier": "accepted"},  # accepted 12 is impossible, use rank
+    ],
+)
+def test_nms_nested_swap_needs_score_and_a_small_hash_gap(kw):
+    piece, whole = _piece_and_whole(**kw)
+    if kw.get("tier") == "accepted":
+        whole.verify = "ambiguous"  # different tiers: the accepted piece stays
+    kept = cm.nms([piece, whole])
+    assert kept == [piece] and whole.rejected == "nms:1"
+
+
+def test_nms_nested_swap_never_lifts_an_unverified_quad_over_a_verified_one():
+    piece, whole = _piece_and_whole()
+    whole.verify, whole.hash_distance = "unverified", None
+    assert cm.nms([piece, whole]) == [piece]
+
+
+def test_nms_nested_swap_needs_hashes_on_both_sides():
+    """Without an index nothing is known to be a card: the larger quad never swaps in."""
+    piece, whole = _piece_and_whole(tier="unverified")
+    piece.hash_distance = whole.hash_distance = None
+    kept = cm.nms([piece, whole])  # unverified order: largest first → the whole wins outright
+    assert kept == [whole]
+    # ... but a *kept* piece (ranked first by consensus hits) is never displaced.
+    piece.metrics["hits"] = 30
+    whole.metrics["hits"] = 1
+    piece.rejected = whole.rejected = None
+    assert cm.nms([piece, whole]) == [piece]
+
+
 def test_nms_disjoint_quads_both_survive():
     a = _cand(_CARD_QUAD)
     b = _cand(_CARD_QUAD + np.float32([400, 0]))

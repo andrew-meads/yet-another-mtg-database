@@ -250,7 +250,13 @@ refinement → warp. Modules: `candidates.py` (strategies, filters, NMS), `verif
 5. **NMS** — IoU 0.5 and containment 0.9 across all strategies, ordered verified >
    ambiguous > unverified, then hash distance, then *consensus* (a real card outline is re-found
    by ~30 of the 32 sweep passes, a card-plus-tile-line once; `NMS_CONSENSUS_HITS`), score,
-   area; nested art/text boxes lose to the card that contains them.
+   area; nested art/text boxes lose to the card that contains them. One exception to
+   "first kept wins": a kept quad that is a small piece (≤ `NMS_NESTED_SWAP_RATIO` of the
+   area) nested inside a later quad of the same tier, both hashed and within
+   `NMS_NESTED_SWAP_MAX_GAP` bits, gives its slot to the larger one when that scores better —
+   a glare-cut half of a card hashes about as well as the card (half a card is still that
+   card) and used to suppress it. Without hashes nothing swaps: a 2×1 pair blob scores as
+   well as a card it contains.
 6. **Refinement + warp** — corners are refined at full resolution (intensity profiles along
    each side's outward normal, outermost strong gradient, Huber `fitLine`, guarded), then a
    single-resample warp produces the 487×680 portrait crop (63:88, Scryfall "normal" size)
@@ -573,6 +579,7 @@ new knobs there with a comment and a sensible default rather than hardcoding thr
 | `APPROX_EPSILONS`, `MIN_RECTANGULARITY`, `MAX_ANGLE_DEV_DEG`, `ASPECT_MIN`/`ASPECT_MAX`, `MIN_EDGE_SUPPORT`, `EDGE_SUPPORT_TOLERANCE` | see `config.py` | Quad extraction and the geometric filters. |
 | `MIN_RECTANGULARITY_SUPPORTED`, `SUPPORTED_MIN_EDGE_SUPPORT`, `SUPPORTED_MAX_ANGLE_DEV_DEG`, `SUPPORTED_MAX_FRAME_FRACTION` | 0.5, 0.95, 10, 0.9 | A quad under `MIN_RECTANGULARITY` still passes when its outline is on the edge map for ≥ 95 % of its perimeter with square corners (a thin outline traced as a partial ring); never for a quad spanning 90 % of the frame both ways. Such quads rank behind filled ones in NMS until a hash arbitrates. |
 | `NMS_IOU`, `NMS_CONTAINMENT`, `NMS_CONSENSUS_HITS`, `NMS_UNVERIFIED_ORDER`, `MAX_CARDS` | `0.5`, `0.9`, `6`, `area`, `20` | Non-maximum suppression. |
+| `NMS_NESTED_SWAP_RATIO`, `NMS_NESTED_SWAP_MAX_GAP` | `0.6`, `4` | A kept piece this small inside a later same-tier quad, both hashed and this close in Hamming bits, yields to it when the larger scores better. |
 | `VERIFY_MODE`, `VERIFY_MAX_HAMMING`, `VERIFY_AMBIGUOUS_HAMMING`, `VERIFY_MIN_INDEX_SIZE`, `VERIFY_THUMB_LONG_EDGE`, `VERIFY_MIN_INLIERS`, `VERIFY_ORB_GATE`, `MAX_AMBIGUOUS` | `auto`, `8`, `16`, `50000`, `180`, `8`, `all`, `6` | Index verification of candidates (hash zones, then the Stage-2 inlier gate). |
 | `BG_MODE`, `BG_BORDER_FRACTION`, `BG_DELTA_E`, `BG_MAX_SPREAD`, `BG_EMIT_EXPANDED` | `auto`, `0.04`, `12`, `14`, `true` | Colour-mask strategy. |
 | `SPLIT_TOUCHING` | `false` | Grid split of merged touching cards (opt-in). |
