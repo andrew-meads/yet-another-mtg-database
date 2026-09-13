@@ -1,0 +1,30 @@
+# Tooling config for the card-scanner backend. The app itself is not packaged
+# (it runs as `app.*` modules from this directory); this file only configures
+# pytest and ruff. Dependencies live in requirements*.txt (+ generated locks).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --strict-markers"
+markers = [
+  "integration: needs a reachable Postgres index (set SCANNER_INTEGRATION=1 to run)",
+  "network: talks to Scryfall (set SCANNER_NETWORK=1 to run)",
+  "slow: takes more than ~5 s",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = [".venv", "models"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+# E501 is enforced by the formatter's wrapping; long URLs/SQL strings in comments are OK.
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI's `File(...)` default is the framework's declared idiom.
+"app/main.py" = ["B008"]

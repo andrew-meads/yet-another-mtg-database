@@ -12,6 +12,10 @@ services:
   card-scanner-db:
     image: postgres:16
     container_name: card-scanner-db
+    ports:
+      # Dev only: lets the host venv run the accuracy harnesses / label tooling
+      # against the live index (config.DATABASE_URL defaults to localhost:5432).
+      - "5432:5432"
     environment:
       POSTGRES_USER: cardscanner
       POSTGRES_PASSWORD: cardscanner
@@ -41,10 +45,16 @@ services:
     volumes:
       # De-skewed crops + the index error log: bind-mounted so they're easy to inspect.
       - ./data/cards:/data/cards
+      # Scryfall image cache: images downloaded by the indexer / eval / synth are kept
+      # here so a re-index never re-downloads them (~7-10 GB for the full index).
+      - ./data/scryfall-cache:/data/scryfall-cache
+      # Labelled test photos for the real-photo accuracy harness (read-only).
+      - ./card-scanner/test-images:/data/test-images:ro
     networks:
       - yamtgd-net
     environment:
       CARDS_DIR: /data/cards
+      IMAGE_CACHE_DIR: /data/scryfall-cache
       DATABASE_URL: postgresql://cardscanner:cardscanner@card-scanner-db:5432/cardscanner
     restart: unless-stopped
 

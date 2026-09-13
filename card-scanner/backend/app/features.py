@@ -5,7 +5,7 @@ Stage 1 (pHash) narrows the whole index to a small shortlist by overall
 appearance. Stage 2 confirms the *specific* card by matching local keypoint
 descriptors (ORB or SIFT) between the query crop and each shortlisted
 reference, then geometrically verifying the matches with a RANSAC homography.
-The candidate with the most geometric inliers wins.
+The candidate with the most *validated* geometric inliers wins.
 
 Design choices mirror the reference project (YAMCR) where sensible:
 - **Histogram equalisation** before detection for lighting invariance.
@@ -13,11 +13,21 @@ Design choices mirror the reference project (YAMCR) where sensible:
 - Descriptors are stored in the DB (not images).
 We differ by using ORB/SIFT (SURF is patented and absent from pip OpenCV) and by
 adding RANSAC homography verification (stronger than association-only scoring).
+
+Homography validation (:func:`validate_homography`): the query crop and the indexed
+reference are both de-skewed, portrait, frame-filling images of a card, so a true
+match maps the query almost onto itself — a near-similarity with rotation ≈ 0°
+(or ≈ 180° for an upside-down crop), scale ≈ 1 and no perspective. RANSAC will
+happily fit a wild homography through a handful of coincidental matches on the
+wrong card; rejecting those fits is what stops them counting as inliers. The
+validated rotation also tells the caller whether the crop is upside down.
 """
 
 from __future__ import annotations
 
 import io
+import math
+from dataclasses import dataclass
 
 import cv2
 import numpy as np
@@ -66,7 +76,8 @@ def compute_descriptors(image_bgr: np.ndarray, detector=None):
     return detector.detectAndCompute(gray, None)
 
 
-# --- (De)serialisation of features for the SQLite BLOB columns ---------------
+# --- (De)serialisation of features for the BYTEA columns ----------------------
+
 
 def _ser_array(arr: np.ndarray | None) -> bytes | None:
     """Serialise a NumPy array to bytes (dtype/shape preserved) via ``np.save``."""
@@ -81,7 +92,7 @@ def _deser_array(blob: bytes | None) -> np.ndarray | None:
     """Inverse of :func:`_ser_array`."""
     if blob is None:
         return None
-    return np.load(io.BytesIO(blob), allow_pickle=False)
+    return np.load(io.BytesIO(bytes(blob)), allow_pickle=False)
 
 
 def serialize_features(keypoints, descriptors):
@@ -108,25 +119,117 @@ def keypoints_to_points(keypoints) -> np.ndarray | None:
     return np.array([kp.pt for kp in keypoints], dtype=np.float32)
 
 
-def score_match(q_pts, q_desc, c_pts, c_desc, matcher=None):
-    """Score how well a query matches a candidate via descriptor + geometric checks.
+# --- Homography validation ---------------------------------------------------------
 
-    Pipeline: kNN match (k=2) → Lowe ratio test → if enough good matches, fit a
-    RANSAC homography and count inliers. The inlier count is the primary score
-    (it rewards matches that are *geometrically consistent*, not just locally
-    similar); the good-match count is the fallback when there are too few points
-    to fit a homography.
+
+def validate_homography(
+    h_matrix: np.ndarray | None,
+    width: int,
+    height: int,
+    *,
+    max_area_ratio: float | None = None,
+    max_center_shift: float | None = None,
+    max_perspective: float | None = None,
+    rotation_tol: float | None = None,
+) -> tuple[bool, float | None]:
+    """Sanity-check a query→candidate homography for two de-skewed card images.
+
+    Maps the query's corners through ``h_matrix`` and requires the image to be a
+    convex quad of similar area, roughly centred, with negligible perspective and a
+    rotation within ``rotation_tol`` degrees of 0° or 180°.
+
+    Returns:
+        ``(ok, rotation_deg)`` where ``rotation_deg`` is the mapped top edge's
+        angle in ``[0, 360)`` (None when the matrix is unusable).
+    """
+    max_area_ratio = max_area_ratio or config.HOMOGRAPHY_MAX_AREA_RATIO
+    max_center_shift = max_center_shift or config.HOMOGRAPHY_MAX_CENTER_SHIFT
+    max_perspective = max_perspective or config.HOMOGRAPHY_MAX_PERSPECTIVE
+    rotation_tol = rotation_tol or config.HOMOGRAPHY_ROTATION_TOL
+
+    if h_matrix is None or h_matrix.shape != (3, 3) or not np.all(np.isfinite(h_matrix)):
+        return False, None
+    if abs(h_matrix[2, 2]) < 1e-9:
+        return False, None
+    h_norm = h_matrix / h_matrix[2, 2]
+
+    corners = np.float32([[0, 0], [width, 0], [width, height], [0, height]]).reshape(-1, 1, 2)
+    mapped = cv2.perspectiveTransform(corners, h_norm).reshape(4, 2)
+    if not np.all(np.isfinite(mapped)):
+        return False, None
+
+    top = mapped[1] - mapped[0]
+    rotation = math.degrees(math.atan2(float(top[1]), float(top[0]))) % 360.0
+    dist_to_axis = min(rotation, abs(rotation - 180.0), 360.0 - rotation)
+
+    area = abs(cv2.contourArea(mapped.astype(np.float32)))
+    ratio = area / float(width * height)
+    center_shift = np.abs(mapped.mean(axis=0) - (width / 2.0, height / 2.0))
+    ok = (
+        cv2.isContourConvex(mapped.astype(np.float32))
+        and (1.0 / max_area_ratio) <= ratio <= max_area_ratio
+        and center_shift[0] <= max_center_shift * width
+        and center_shift[1] <= max_center_shift * height
+        and abs(h_norm[2, 0]) <= max_perspective
+        and abs(h_norm[2, 1]) <= max_perspective
+        and dist_to_axis <= rotation_tol
+    )
+    return bool(ok), rotation
+
+
+def _homography_method() -> int:
+    """OpenCV robust-estimation flag for the configured method."""
+    if config.HOMOGRAPHY_METHOD == "magsac":
+        return cv2.USAC_MAGSAC
+    return cv2.RANSAC
+
+
+# --- Scoring ---------------------------------------------------------------------
+
+
+@dataclass
+class MatchResult:
+    """Outcome of matching one query against one candidate.
+
+    ``inliers`` is the RANSAC inlier count *only if* the homography passed
+    validation (0 otherwise), so it can be used directly as a ranking score.
+    ``good`` is the ratio-test survivor count, the fallback signal when no
+    (valid) homography could be fitted; ``rotation`` is the validated fit's
+    rotation in degrees (≈0 or ≈180), ``None`` without a valid fit.
+    """
+
+    good: int
+    inliers: int
+    valid: bool
+    rotation: float | None
+
+    @property
+    def score(self) -> float:
+        """Ranking score: validated inliers, with good matches as a sub-unit tie-break.
+
+        The good-match count must never compete on the inlier scale: cards that
+        share a frame and fonts collect 50-80 ratio-test survivors *without* any
+        geometric consistency, which would outrank a true match's 40 validated
+        inliers. Dividing by 1000 keeps ``good`` (capped by the feature count,
+        ≤ 500) below one inlier, so it only orders rows that tie on inliers —
+        including the all-zero case of an index without descriptors, which then
+        still degrades to good-match order and finally the pHash order.
+        """
+        return float(self.inliers) + self.good / 1000.0
+
+
+def score_match_ex(q_pts, q_desc, c_pts, c_desc, matcher=None, size=None) -> MatchResult:
+    """Full scoring: kNN → ratio test → RANSAC homography → validation.
 
     Args:
         q_pts, q_desc: query keypoint positions ``(N,2)`` and descriptors.
         c_pts, c_desc: candidate keypoint positions and descriptors.
         matcher: optional reusable :class:`cv2.BFMatcher`.
-
-    Returns:
-        ``(score, inliers)`` floats/ints; ``(0.0, 0)`` if matching isn't possible.
+        size: ``(width, height)`` of the query image for validation; defaults to
+            the standard crop size.
     """
     if q_desc is None or c_desc is None or len(q_desc) < 2 or len(c_desc) < 2:
-        return 0.0, 0
+        return MatchResult(0, 0, False, None)
 
     matcher = matcher or make_matcher()
     knn = matcher.knnMatch(q_desc, c_desc, k=2)
@@ -139,16 +242,45 @@ def score_match(q_pts, q_desc, c_pts, c_desc, matcher=None):
         if len(pair) == 2 and pair[0].distance < config.RATIO_TEST * pair[1].distance
     ]
 
-    # Need >= 4 correspondences to estimate a homography.
-    if len(good) < 4:
-        return float(len(good)), 0
+    # A homography needs 4 correspondences, but fitting one through fewer than
+    # MIN_GOOD_MATCHES coincidental matches only produces junk inliers on wrong
+    # cards (measured: ~60 of 100 shortlist rows paid for RANSAC, ~10 deserved it).
+    if len(good) < max(4, config.MIN_GOOD_MATCHES):
+        return MatchResult(len(good), 0, False, None)
 
     src = np.float32([q_pts[m.queryIdx] for m in good]).reshape(-1, 1, 2)
     dst = np.float32([c_pts[m.trainIdx] for m in good]).reshape(-1, 1, 2)
-    _, mask = cv2.findHomography(src, dst, cv2.RANSAC, 5.0)
+    h_matrix, mask = cv2.findHomography(
+        src,
+        dst,
+        _homography_method(),
+        5.0,
+        maxIters=config.HOMOGRAPHY_MAX_ITERS,
+        confidence=config.HOMOGRAPHY_CONFIDENCE,
+    )
     inliers = int(mask.sum()) if mask is not None else 0
+    if inliers == 0:
+        return MatchResult(len(good), 0, False, None)
 
-    # Prefer the geometrically verified inlier count; fall back to good-match
-    # count if the homography couldn't be estimated.
-    score = float(inliers) if inliers > 0 else float(len(good))
-    return score, inliers
+    width, height = size or (config.OUTPUT_WIDTH, config.OUTPUT_HEIGHT)
+    if config.HOMOGRAPHY_VALIDATE:
+        valid, rotation = validate_homography(h_matrix, width, height)
+        if not valid:
+            return MatchResult(len(good), 0, False, rotation)
+        return MatchResult(len(good), inliers, True, rotation)
+    return MatchResult(len(good), inliers, True, None)
+
+
+def score_match(q_pts, q_desc, c_pts, c_desc, matcher=None):
+    """Score how well a query matches a candidate via descriptor + geometric checks.
+
+    Thin wrapper over :func:`score_match_ex` kept for callers that only need the
+    classic ``(score, inliers)`` pair: the inlier count is the primary score (it
+    rewards *geometrically consistent* matches, not just locally similar ones);
+    the good-match count is the fallback when no valid homography exists.
+
+    Returns:
+        ``(score, inliers)``; ``(0.0, 0)`` if matching isn't possible.
+    """
+    res = score_match_ex(q_pts, q_desc, c_pts, c_desc, matcher)
+    return res.score, res.inliers

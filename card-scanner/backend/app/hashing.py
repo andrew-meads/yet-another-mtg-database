@@ -118,3 +118,28 @@ def hamming_to_array(query_hashes: list[int], db: np.ndarray) -> np.ndarray:
     if best is None:
         return np.zeros(len(db), dtype=np.int64)
     return best.astype(np.int64)
+
+
+def mask_glare(
+    image_bgr: np.ndarray,
+    *,
+    value_thresh: int = 245,
+    saturation_thresh: int = 40,
+    max_area: float = 0.15,
+    radius: int = 3,
+) -> np.ndarray:
+    """Inpaint specular glare (bright, colourless blobs) before hashing a query.
+
+    Foil cards and glossy sleeves reflect the light source as saturated white
+    patches that dominate a low-frequency hash. Pixels that are both very bright
+    (V) and colourless (low S) are inpainted from their surroundings. If the mask
+    would cover more than ``max_area`` of the image the card itself is probably
+    just bright (a white-bordered card, a white frame), so the image is returned
+    untouched rather than smeared.
+    """
+    hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
+    mask = ((hsv[..., 2] >= value_thresh) & (hsv[..., 1] <= saturation_thresh)).astype(np.uint8)
+    if mask.sum() == 0 or mask.mean() > max_area:
+        return image_bgr
+    mask = cv2.dilate(mask * 255, np.ones((3, 3), np.uint8), iterations=1)
+    return cv2.inpaint(image_bgr, mask, radius, cv2.INPAINT_TELEA)

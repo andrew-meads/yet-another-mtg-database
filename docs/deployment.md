@@ -23,9 +23,18 @@ image rather than building it, and the app's `.dockerignore` excludes `card-scan
 the Next.js build context. To ship a scanner change, rebuild and push the image:
 
 ```bash
-docker build -t ghcr.io/andrew-meads/card-scanner-backend:latest card-scanner/backend
+docker build --target runtime -t ghcr.io/andrew-meads/card-scanner-backend:latest card-scanner/backend
 docker push ghcr.io/andrew-meads/card-scanner-backend:latest
 ```
+
+Run the suite inside the image first: `docker build --target test card-scanner/backend`
+(the `runtime` stage is the default target; `test` adds the dev dependencies and runs
+ruff + pytest). The compose files bind-mount `data/scryfall-cache` (the Scryfall image
+cache that makes re-indexing a one-time download; ~7-10 GB for the full index) and
+`card-scanner/test-images` (read-only, for the real-photo harness) into the container,
+and set `IMAGE_CACHE_DIR`. The image also downloads and SHA-verifies its OCR models at
+build time, so the running service never talks to the model host.
+
 
 The identification index lives in Postgres on the `card-scanner-pgdata` named volume (kept
 across `down`/`up`, wiped only by `down -v`), so a fresh deployment must build it once:

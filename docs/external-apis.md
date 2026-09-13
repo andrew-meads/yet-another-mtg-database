@@ -31,7 +31,12 @@ coordinated across instances).
 The Python scanner in `card-scanner/` is a separate process with its own Scryfall client
 (`SCRYFALL_USER_AGENT`, `SCRYFALL_REQUEST_DELAY` — 100 ms between requests by default) for
 building its image index. Its rate limit is not coordinated with the app's, so avoid
-running a full `build_index --all` at the same time as a Scryfall-heavy app task.
+running a full `build_index --all` at the same time as a Scryfall-heavy app task. Card images
+it downloads (index builds, the evaluation harness, the synthetic-data generator) are cached
+on disk under `IMAGE_CACHE_DIR` (`data/scryfall-cache/` via the compose bind mount), so only
+cache misses hit Scryfall and a full re-index never re-downloads. The one-off metadata
+backfill (`python -m app.backfill_metadata`) streams Scryfall's bulk `default_cards` export
+instead of paging the API.
 
 ## Scryfall image CDN & the default User-Agent (`src/instrumentation.ts`)
 

@@ -1,0 +1,6365 @@
+{
+  "schema": "card-scanner.evaluate-photos/1",
+  "created": "2026-09-13T02:25:10+00:00",
+  "git_sha": "1cdd24b",
+  "versions": {
+    "python": "3.14.2",
+    "opencv": "5.0.0",
+    "numpy": "2.5.3",
+    "rapidfuzz": "3.14.6"
+  },
+  "config": {
+    "WORK_LONG_EDGE": 1000,
+    "MIN_AREA_RATIO": 0.01,
+    "MAX_AREA_RATIO": 0.98,
+    "APPROX_EPSILON_RATIO": 0.02,
+    "CANNY_LOW": 75,
+    "CANNY_HIGH": 200,
+    "OUTPUT_HEIGHT": 680,
+    "OUTPUT_WIDTH": 487,
+    "PHASH_SIZE": 8,
+    "PHASH_HIGHFREQ_FACTOR": 4,
+    "SHORTLIST_K": 100,
+    "FEATURE_DETECTOR": "orb",
+    "ORB_FEATURES": 500,
+    "SIFT_FEATURES": 500,
+    "RATIO_TEST": 0.75,
+    "MIN_GOOD_MATCHES": 8,
+    "MIN_INLIERS": 15,
+    "CONFIDENT_MARGIN": 2.0,
+    "TOP_N_MATCHES": 5,
+    "DETECT_STRATEGIES": [
+      "edges",
+      "color"
+    ],
+    "CANNY_MODE": "auto",
+    "WORK_LONG_EDGES": [
+      1000
+    ],
+    "MIN_SIDE_PX": 40,
+    "NMS_IOU": 0.5,
+    "NMS_CONTAINMENT": 0.9,
+    "NMS_CONSENSUS_HITS": 6,
+    "VERIFY_MODE": "auto",
+    "VERIFY_MAX_HAMMING": 8,
+    "VERIFY_AMBIGUOUS_HAMMING": 16,
+    "VERIFY_MIN_INDEX_SIZE": 50000,
+    "SPLIT_TOUCHING": false,
+    "REFINE_CORNERS": true,
+    "OCR_ENABLED": true,
+    "OCR_MAX_LINES": 6,
+    "OCR_MIN_CONF": 0.7,
+    "OCR_BANDS_LAZY": true,
+    "NAME_MIN_SCORE": 80,
+    "NAME_MAX_ROWS": 40,
+    "SHORTLIST_MAX": 220,
+    "FUSION_NAME_W": 12.0,
+    "FUSION_CN_W": 10.0,
+    "FUSION_BORDER_W": 8.0,
+    "HOMOGRAPHY_VALIDATE": true
+  },
+  "index_size": null,
+  "datasets": [
+    "../test-images"
+  ],
+  "options": {
+    "detection_only": true,
+    "gt_crops": false,
+    "iou": 0.7,
+    "top_n": 5,
+    "tag": null,
+    "include_drafts": false,
+    "seed": 0
+  },
+  "summary": {
+    "photos": 17,
+    "gt_cards": 68,
+    "gt_with_quads": 68,
+    "photos_with_quads": 17,
+    "photos_fully_labelled": 17,
+    "detections": 65,
+    "det_tp": 60,
+    "det_fn": 8,
+    "det_fp": 5,
+    "det_recall": 0.8824,
+    "det_precision": 0.9231,
+    "fp_per_photo": 0.2941,
+    "corner_err_px": {
+      "n": 60,
+      "mean": 10.11,
+      "median": 0.48,
+      "p95": 44.555,
+      "max": 61.08
+    },
+    "corner_err_pct": {
+      "n": 60,
+      "mean": 1.047,
+      "median": 0.058,
+      "p95": 5.345,
+      "max": 7.513
+    },
+    "count_ok": 11,
+    "count_ok_rate": 0.6471,
+    "unresolved": 0,
+    "fuzzy_resolutions": 0,
+    "id_evaluated": 0,
+    "top1_strict": 0,
+    "top1_family": 0,
+    "top1_lenient": 0,
+    "topn_strict": 0,
+    "topn_family": 0,
+    "topn_lenient": 0,
+    "top1_strict_rate": null,
+    "top1_family_rate": null,
+    "top1_lenient_rate": null,
+    "topn_strict_rate": null,
+    "topn_family_rate": null,
+    "topn_lenient_rate": null,
+    "stage1_recall": null,
+    "stage1_recall_hash": null,
+    "ocr_ran": 0,
+    "ocr_name_read": 0,
+    "ocr_name_ok": 0,
+    "ocr_collector_read": 0,
+    "ocr_collector_ok": 0,
+    "false_confident": 0,
+    "false_confident_rate": null,
+    "detect_ms": {
+      "n": 17,
+      "mean": 214.253,
+      "median": 185.8,
+      "p95": 433.48,
+      "max": 961.4
+    },
+    "identify_ms": {
+      "n": 0,
+      "mean": null,
+      "median": null,
+      "p95": null,
+      "max": null
+    }
+  },
+  "by_background": {
+    "binder-page": {
+      "photos": 1,
+      "gt_cards": 9,
+      "gt_with_quads": 9,
+      "photos_with_quads": 1,
+      "photos_fully_labelled": 1,
+      "detections": 8,
+      "det_tp": 8,
+      "det_fn": 1,
+      "det_fp": 0,
+      "det_recall": 0.8889,
+      "det_precision": 1.0,
+      "fp_per_photo": 0.0,
+      "corner_err_px": {
+        "n": 8,
+        "mean": 5.47,
+        "median": 0.365,
+        "p95": 27.041,
+        "max": 41.37
+      },
+      "corner_err_pct": {
+        "n": 8,
+        "mean": 0.705,
+        "median": 0.045,
+        "p95": 3.494,
+        "max": 5.345
+      },
+      "count_ok": 0,
+      "count_ok_rate": 0.0,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 1,
+        "mean": 301.5,
+        "median": 301.5,
+        "p95": 301.5,
+        "max": 301.5
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    },
+    "carpet-dark": {
+      "photos": 1,
+      "gt_cards": 3,
+      "gt_with_quads": 3,
+      "photos_with_quads": 1,
+      "photos_fully_labelled": 1,
+      "detections": 3,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 0,
+      "det_recall": 1.0,
+      "det_precision": 1.0,
+      "fp_per_photo": 0.0,
+      "corner_err_px": {
+        "n": 3,
+        "mean": 0.42,
+        "median": 0.42,
+        "p95": 0.474,
+        "max": 0.48
+      },
+      "corner_err_pct": {
+        "n": 3,
+        "mean": 0.048,
+        "median": 0.044,
+        "p95": 0.057,
+        "max": 0.058
+      },
+      "count_ok": 1,
+      "count_ok_rate": 1.0,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 1,
+        "mean": 193.6,
+        "median": 193.6,
+        "p95": 193.6,
+        "max": 193.6
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    },
+    "fabric-dark": {
+      "photos": 1,
+      "gt_cards": 4,
+      "gt_with_quads": 4,
+      "photos_with_quads": 1,
+      "photos_fully_labelled": 1,
+      "detections": 5,
+      "det_tp": 4,
+      "det_fn": 0,
+      "det_fp": 1,
+      "det_recall": 1.0,
+      "det_precision": 0.8,
+      "fp_per_photo": 1.0,
+      "corner_err_px": {
+        "n": 4,
+        "mean": 0.403,
+        "median": 0.395,
+        "p95": 0.468,
+        "max": 0.48
+      },
+      "corner_err_pct": {
+        "n": 4,
+        "mean": 0.05,
+        "median": 0.046,
+        "p95": 0.061,
+        "max": 0.064
+      },
+      "count_ok": 0,
+      "count_ok_rate": 0.0,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 1,
+        "mean": 198.4,
+        "median": 198.4,
+        "p95": 198.4,
+        "max": 198.4
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    },
+    "playmat": {
+      "photos": 2,
+      "gt_cards": 9,
+      "gt_with_quads": 9,
+      "photos_with_quads": 2,
+      "photos_fully_labelled": 2,
+      "detections": 10,
+      "det_tp": 7,
+      "det_fn": 2,
+      "det_fp": 3,
+      "det_recall": 0.7778,
+      "det_precision": 0.7,
+      "fp_per_photo": 1.5,
+      "corner_err_px": {
+        "n": 7,
+        "mean": 14.449,
+        "median": 0.36,
+        "p95": 51.91,
+        "max": 55.18
+      },
+      "corner_err_pct": {
+        "n": 7,
+        "mean": 1.712,
+        "median": 0.046,
+        "p95": 6.103,
+        "max": 6.424
+      },
+      "count_ok": 1,
+      "count_ok_rate": 0.5,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 2,
+        "mean": 214.45,
+        "median": 214.45,
+        "p95": 214.585,
+        "max": 214.6
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    },
+    "white-paper": {
+      "photos": 10,
+      "gt_cards": 37,
+      "gt_with_quads": 37,
+      "photos_with_quads": 10,
+      "photos_fully_labelled": 10,
+      "detections": 32,
+      "det_tp": 32,
+      "det_fn": 5,
+      "det_fp": 0,
+      "det_recall": 0.8649,
+      "det_precision": 1.0,
+      "fp_per_photo": 0.0,
+      "corner_err_px": {
+        "n": 32,
+        "mean": 14.264,
+        "median": 12.66,
+        "p95": 41.331,
+        "max": 61.08
+      },
+      "corner_err_pct": {
+        "n": 32,
+        "mean": 1.392,
+        "median": 1.3,
+        "p95": 3.684,
+        "max": 7.513
+      },
+      "count_ok": 8,
+      "count_ok_rate": 0.8,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 10,
+        "mean": 219.82,
+        "median": 114.0,
+        "p95": 642.305,
+        "max": 961.4
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    },
+    "wood-dark": {
+      "photos": 1,
+      "gt_cards": 3,
+      "gt_with_quads": 3,
+      "photos_with_quads": 1,
+      "photos_fully_labelled": 1,
+      "detections": 3,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 0,
+      "det_recall": 1.0,
+      "det_precision": 1.0,
+      "fp_per_photo": 0.0,
+      "corner_err_px": {
+        "n": 3,
+        "mean": 0.363,
+        "median": 0.38,
+        "p95": 0.425,
+        "max": 0.43
+      },
+      "corner_err_pct": {
+        "n": 3,
+        "mean": 0.046,
+        "median": 0.05,
+        "p95": 0.053,
+        "max": 0.053
+      },
+      "count_ok": 1,
+      "count_ok_rate": 1.0,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 1,
+        "mean": 151.8,
+        "median": 151.8,
+        "p95": 151.8,
+        "max": 151.8
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    },
+    "wood-light": {
+      "photos": 1,
+      "gt_cards": 3,
+      "gt_with_quads": 3,
+      "photos_with_quads": 1,
+      "photos_fully_labelled": 1,
+      "detections": 4,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 1,
+      "det_recall": 1.0,
+      "det_precision": 0.75,
+      "fp_per_photo": 1.0,
+      "corner_err_px": {
+        "n": 3,
+        "mean": 0.433,
+        "median": 0.43,
+        "p95": 0.475,
+        "max": 0.48
+      },
+      "corner_err_pct": {
+        "n": 3,
+        "mean": 0.059,
+        "median": 0.058,
+        "p95": 0.064,
+        "max": 0.065
+      },
+      "count_ok": 0,
+      "count_ok_rate": 0.0,
+      "unresolved": 0,
+      "fuzzy_resolutions": 0,
+      "id_evaluated": 0,
+      "top1_strict": 0,
+      "top1_family": 0,
+      "top1_lenient": 0,
+      "topn_strict": 0,
+      "topn_family": 0,
+      "topn_lenient": 0,
+      "top1_strict_rate": null,
+      "top1_family_rate": null,
+      "top1_lenient_rate": null,
+      "topn_strict_rate": null,
+      "topn_family_rate": null,
+      "topn_lenient_rate": null,
+      "stage1_recall": null,
+      "stage1_recall_hash": null,
+      "ocr_ran": 0,
+      "ocr_name_read": 0,
+      "ocr_name_ok": 0,
+      "ocr_collector_read": 0,
+      "ocr_collector_ok": 0,
+      "false_confident": 0,
+      "false_confident_rate": null,
+      "detect_ms": {
+        "n": 1,
+        "mean": 169.9,
+        "median": 169.9,
+        "p95": 169.9,
+        "max": 169.9
+      },
+      "identify_ms": {
+        "n": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    }
+  },
+  "failures": [
+    "08-wood-light-3cards.jpg: detected 4 of 3 listed cards",
+    "08-wood-light-3cards.jpg: false positive detection #3",
+    "10-fabric-dark-4cards.jpg: detected 5 of 4 listed cards",
+    "10-fabric-dark-4cards.jpg: false positive detection #4",
+    "11-playmat-5cards.jpg: false positive detection #2",
+    "11-playmat-5cards.jpg: false positive detection #4",
+    "11-playmat-5cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)",
+    "11-playmat-5cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
+    "13-playmat-plain-4cards.jpg: detected 5 of 4 listed cards",
+    "13-playmat-plain-4cards.jpg: false positive detection #4",
+    "15-tight-grid-9cards.jpg: detected 7 of 9 listed cards",
+    "15-tight-grid-9cards.jpg: Amy Rose SLD:2083: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: Light Up the Stage FCA:0039: not detected (no quad at IoU threshold)",
+    "16-fanned-overlap-4cards.jpg: detected 1 of 4 listed cards",
+    "16-fanned-overlap-4cards.jpg: Aang's Iceberg TLA:0005: not detected (no quad at IoU threshold)",
+    "16-fanned-overlap-4cards.jpg: Abundance USG:229: not detected (no quad at IoU threshold)",
+    "16-fanned-overlap-4cards.jpg: Light Up the Stage FCA:0039: not detected (no quad at IoU threshold)",
+    "17-binder-page-9cards.jpg: detected 8 of 9 listed cards",
+    "17-binder-page-9cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)"
+  ],
+  "photos": [
+    {
+      "dataset": "../test-images",
+      "fileName": "01-rise-ran-aang.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        4000,
+        3000
+      ],
+      "n_gt": 3,
+      "n_gt_quads": 3,
+      "fully_labelled": true,
+      "n_detected": 3,
+      "count_ok": true,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 961.4,
+      "gt": [
+        {
+          "index": 0,
+          "name": "The Rise of Sozin",
+          "set": "TLA",
+          "number": "0117",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              272,
+              780
+            ],
+            [
+              1220,
+              756
+            ],
+            [
+              1212,
+              2080
+            ],
+            [
+              180,
+              2116
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9769,
+          "corner_err_px": 12.96,
+          "corner_err_pct": 1.254,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Ran and Shaw",
+          "set": "TLA",
+          "number": "0150",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1524,
+              752
+            ],
+            [
+              2484,
+              720
+            ],
+            [
+              2544,
+              2076
+            ],
+            [
+              1524,
+              2088
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9796,
+          "corner_err_px": 10.95,
+          "corner_err_pct": 1.074,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Aang, at the Crossroads",
+          "set": "TLA",
+          "number": "0304",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2752,
+              620
+            ],
+            [
+              3728,
+              644
+            ],
+            [
+              3848,
+              1996
+            ],
+            [
+              2840,
+              1892
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9674,
+          "corner_err_px": 23.18,
+          "corner_err_pct": 2.288,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              279,
+              772
+            ],
+            [
+              1233,
+              759
+            ],
+            [
+              1216,
+              2095
+            ],
+            [
+              169,
+              2122
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              2722,
+              623
+            ],
+            [
+              3728,
+              636
+            ],
+            [
+              3863,
+              2023
+            ],
+            [
+              2863,
+              1897
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1528,
+              740
+            ],
+            [
+              2492,
+              720
+            ],
+            [
+              2549,
+              2090
+            ],
+            [
+              1518,
+              2094
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "02-wurmcoil-engine.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 1,
+      "n_gt_quads": 1,
+      "fully_labelled": true,
+      "n_detected": 1,
+      "count_ok": true,
+      "det_tp": 1,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 71.4,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Wurmcoil Engine",
+          "set": "PSOM",
+          "number": "223*",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              708,
+              1272
+            ],
+            [
+              2016,
+              1104
+            ],
+            [
+              2300,
+              2976
+            ],
+            [
+              908,
+              3176
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9767,
+          "corner_err_px": 15.48,
+          "corner_err_pct": 1.101,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              707,
+              1254
+            ],
+            [
+              2024,
+              1095
+            ],
+            [
+              2312,
+              2987
+            ],
+            [
+              898,
+              3187
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "03-pyroclasm.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 1,
+      "n_gt_quads": 1,
+      "fully_labelled": true,
+      "n_detected": 1,
+      "count_ok": true,
+      "det_tp": 1,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 85.7,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Pyroclasm",
+          "set": "ICE",
+          "number": null,
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1188,
+              768
+            ],
+            [
+              2492,
+              1288
+            ],
+            [
+              1748,
+              3276
+            ],
+            [
+              328,
+              2636
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9698,
+          "corner_err_px": 21.54,
+          "corner_err_pct": 1.383,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              1179,
+              754
+            ],
+            [
+              2511,
+              1280
+            ],
+            [
+              1772,
+              3296
+            ],
+            [
+              327,
+              2654
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "04-armed-dangerous.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 1,
+      "n_gt_quads": 1,
+      "fully_labelled": true,
+      "n_detected": 1,
+      "count_ok": true,
+      "det_tp": 1,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 73.3,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Armed // Dangerous",
+          "set": "DGM",
+          "number": "122",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              696,
+              956
+            ],
+            [
+              2152,
+              912
+            ],
+            [
+              2256,
+              3028
+            ],
+            [
+              692,
+              3076
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9696,
+          "corner_err_px": 24.89,
+          "corner_err_pct": 1.59,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              699,
+              929
+            ],
+            [
+              2172,
+              907
+            ],
+            [
+              2264,
+              3057
+            ],
+            [
+              672,
+              3085
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "05-sideways-cards.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 3,
+      "n_gt_quads": 3,
+      "fully_labelled": true,
+      "n_detected": 3,
+      "count_ok": true,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 114.6,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Armed // Dangerous",
+          "set": "DGM",
+          "number": "122",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2256,
+              144
+            ],
+            [
+              2296,
+              1172
+            ],
+            [
+              844,
+              1220
+            ],
+            [
+              780,
+              136
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9731,
+          "corner_err_px": 14.37,
+          "corner_err_pct": 1.323,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Aang, Swift Saviour",
+          "set": "TLA",
+          "number": "0204",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2232,
+              1408
+            ],
+            [
+              2236,
+              2444
+            ],
+            [
+              772,
+              2492
+            ],
+            [
+              768,
+              1416
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9757,
+          "corner_err_px": 15.55,
+          "corner_err_pct": 1.446,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Pyroclasm",
+          "set": "ICE",
+          "number": null,
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2248,
+              2636
+            ],
+            [
+              2264,
+              3684
+            ],
+            [
+              796,
+              3800
+            ],
+            [
+              800,
+              2700
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9614,
+          "corner_err_px": 22.52,
+          "corner_err_pct": 2.047,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              752,
+              1419
+            ],
+            [
+              2234,
+              1398
+            ],
+            [
+              2253,
+              2444
+            ],
+            [
+              773,
+              2510
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              778,
+              2721
+            ],
+            [
+              2257,
+              2630
+            ],
+            [
+              2283,
+              3685
+            ],
+            [
+              797,
+              3830
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              780,
+              117
+            ],
+            [
+              2263,
+              137
+            ],
+            [
+              2302,
+              1183
+            ],
+            [
+              828,
+              1221
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "06-various-cards.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 5,
+      "n_gt_quads": 5,
+      "fully_labelled": true,
+      "n_detected": 5,
+      "count_ok": true,
+      "det_tp": 5,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 185.8,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Jhoira, Ageless Innovator",
+          "set": "DMU",
+          "number": "301",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              280,
+              476
+            ],
+            [
+              1244,
+              620
+            ],
+            [
+              1160,
+              1900
+            ],
+            [
+              176,
+              1828
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 4,
+          "match_how": "iou",
+          "iou": 0.9707,
+          "corner_err_px": 14.75,
+          "corner_err_pct": 1.494,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Dragon Whelp",
+          "set": "DMU",
+          "number": "120",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1304,
+              3704
+            ],
+            [
+              340,
+              3828
+            ],
+            [
+              272,
+              2476
+            ],
+            [
+              1232,
+              2404
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "rot180",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9669,
+          "corner_err_px": 15.33,
+          "corner_err_pct": 1.577,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Wurzelmauer",
+          "set": "MIR",
+          "number": "253",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2472,
+              224
+            ],
+            [
+              2672,
+              1088
+            ],
+            [
+              1496,
+              1340
+            ],
+            [
+              1284,
+              432
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.984,
+          "corner_err_px": 6.97,
+          "corner_err_pct": 0.748,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Armed // Dangerous",
+          "set": "DGM",
+          "number": "122",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2840,
+              1860
+            ],
+            [
+              2676,
+              2708
+            ],
+            [
+              1496,
+              2476
+            ],
+            [
+              1684,
+              1584
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9782,
+          "corner_err_px": 8.91,
+          "corner_err_pct": 0.977,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 4,
+          "name": "Kaya, Bane of the Dead",
+          "set": "WAR",
+          "number": "231",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2708,
+              2988
+            ],
+            [
+              2740,
+              3800
+            ],
+            [
+              1604,
+              3928
+            ],
+            [
+              1564,
+              3116
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.8408,
+          "corner_err_px": 61.08,
+          "corner_err_pct": 7.513,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              265,
+              2472
+            ],
+            [
+              1251,
+              2408
+            ],
+            [
+              1309,
+              3720
+            ],
+            [
+              328,
+              3841
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              1685,
+              1577
+            ],
+            [
+              2849,
+              1860
+            ],
+            [
+              2678,
+              2719
+            ],
+            [
+              1488,
+              2479
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1280,
+              429
+            ],
+            [
+              2480,
+              221
+            ],
+            [
+              2675,
+              1090
+            ],
+            [
+              1498,
+              1349
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1517,
+              3062
+            ],
+            [
+              2733,
+              2943
+            ],
+            [
+              2781,
+              3821
+            ],
+            [
+              1568,
+              3994
+            ]
+          ],
+          "gt_index": 4,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              262,
+              473
+            ],
+            [
+              1248,
+              606
+            ],
+            [
+              1166,
+              1909
+            ],
+            [
+              173,
+              1842
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "07-8-sideways-cards.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 8,
+      "n_gt_quads": 8,
+      "fully_labelled": true,
+      "n_detected": 8,
+      "count_ok": true,
+      "det_tp": 8,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 247.4,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Decimate",
+          "set": "DMR",
+          "number": "188",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1396,
+              52
+            ],
+            [
+              1396,
+              948
+            ],
+            [
+              136,
+              940
+            ],
+            [
+              136,
+              32
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 6,
+          "match_how": "iou",
+          "iou": 0.979,
+          "corner_err_px": 13.3,
+          "corner_err_pct": 1.465,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Diaochan, Artful Beauty",
+          "set": "TLE",
+          "number": "0027",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2788,
+              28
+            ],
+            [
+              2800,
+              924
+            ],
+            [
+              1536,
+              932
+            ],
+            [
+              1532,
+              40
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 7,
+          "match_how": "iou",
+          "iou": 0.9737,
+          "corner_err_px": 11.37,
+          "corner_err_pct": 1.269,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Arcanis the Omnipotent",
+          "set": "DMR",
+          "number": "280",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1404,
+              1056
+            ],
+            [
+              1416,
+              1952
+            ],
+            [
+              152,
+              1968
+            ],
+            [
+              144,
+              1064
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 5,
+          "match_how": "iou",
+          "iou": 0.9732,
+          "corner_err_px": 11.17,
+          "corner_err_pct": 1.235,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Meteor Sword",
+          "set": "TLA",
+          "number": "0258",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2800,
+              1048
+            ],
+            [
+              2812,
+              1944
+            ],
+            [
+              1544,
+              1952
+            ],
+            [
+              1536,
+              1056
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.9748,
+          "corner_err_px": 11.45,
+          "corner_err_pct": 1.278,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 4,
+          "name": "Mind Stone",
+          "set": "DMR",
+          "number": "232",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1432,
+              2000
+            ],
+            [
+              1428,
+              2908
+            ],
+            [
+              156,
+              2916
+            ],
+            [
+              160,
+              2004
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9726,
+          "corner_err_px": 12.36,
+          "corner_err_pct": 1.355,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 5,
+          "name": "White Lotus Hideout",
+          "set": "TLA",
+          "number": "0281",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2860,
+              2052
+            ],
+            [
+              2876,
+              2964
+            ],
+            [
+              1600,
+              2964
+            ],
+            [
+              1596,
+              2040
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 4,
+          "match_how": "iou",
+          "iou": 0.9754,
+          "corner_err_px": 12.25,
+          "corner_err_pct": 1.326,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 6,
+          "name": "Flametongue Kavu",
+          "set": "DMR",
+          "number": "432",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1440,
+              3016
+            ],
+            [
+              1424,
+              3936
+            ],
+            [
+              140,
+              3932
+            ],
+            [
+              160,
+              3000
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9708,
+          "corner_err_px": 14.5,
+          "corner_err_pct": 1.556,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 7,
+          "name": "Wild Growth",
+          "set": "DMR",
+          "number": "184",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2852,
+              3016
+            ],
+            [
+              2868,
+              3932
+            ],
+            [
+              1580,
+              3932
+            ],
+            [
+              1576,
+              3008
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9718,
+          "corner_err_px": 14.16,
+          "corner_err_pct": 1.533,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              1576,
+              3004
+            ],
+            [
+              2876,
+              3021
+            ],
+            [
+              2870,
+              3949
+            ],
+            [
+              1571,
+              3939
+            ]
+          ],
+          "gt_index": 7,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              158,
+              1993
+            ],
+            [
+              1436,
+              2000
+            ],
+            [
+              1428,
+              2925
+            ],
+            [
+              140,
+              2923
+            ]
+          ],
+          "gt_index": 4,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              151,
+              3011
+            ],
+            [
+              1439,
+              3003
+            ],
+            [
+              1436,
+              3947
+            ],
+            [
+              134,
+              3946
+            ]
+          ],
+          "gt_index": 6,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1529,
+              1055
+            ],
+            [
+              2801,
+              1034
+            ],
+            [
+              2823,
+              1949
+            ],
+            [
+              1544,
+              1965
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              1591,
+              2040
+            ],
+            [
+              2871,
+              2052
+            ],
+            [
+              2878,
+              2983
+            ],
+            [
+              1588,
+              2968
+            ]
+          ],
+          "gt_index": 5,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 5,
+          "quad": [
+            [
+              141,
+              1056
+            ],
+            [
+              1416,
+              1053
+            ],
+            [
+              1421,
+              1963
+            ],
+            [
+              141,
+              1974
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 6,
+          "quad": [
+            [
+              138,
+              23
+            ],
+            [
+              1411,
+              55
+            ],
+            [
+              1396,
+              962
+            ],
+            [
+              122,
+              936
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 7,
+          "quad": [
+            [
+              1531,
+              29
+            ],
+            [
+              2803,
+              25
+            ],
+            [
+              2804,
+              936
+            ],
+            [
+              1532,
+              937
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "08-wood-light-3cards.jpg",
+      "kind": "photo",
+      "background": "wood-light",
+      "tags": [],
+      "frame": [
+        2250,
+        3000
+      ],
+      "n_gt": 3,
+      "n_gt_quads": 3,
+      "fully_labelled": true,
+      "n_detected": 4,
+      "count_ok": false,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 1,
+      "unmatched_detections": 1,
+      "detect_ms": 169.9,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              117,
+              842
+            ],
+            [
+              846,
+              863
+            ],
+            [
+              820,
+              1872
+            ],
+            [
+              92,
+              1858
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9992,
+          "corner_err_px": 0.43,
+          "corner_err_pct": 0.058,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "A Realm Reborn",
+          "set": "FIN",
+          "number": "0344",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2045,
+              556
+            ],
+            [
+              2037,
+              1277
+            ],
+            [
+              1033,
+              1259
+            ],
+            [
+              1043,
+              532
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9985,
+          "corner_err_px": 0.48,
+          "corner_err_pct": 0.065,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2161,
+              1607
+            ],
+            [
+              2105,
+              2329
+            ],
+            [
+              1101,
+              2243
+            ],
+            [
+              1162,
+              1523
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9992,
+          "corner_err_px": 0.39,
+          "corner_err_pct": 0.054,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              1043,
+              532
+            ],
+            [
+              2045,
+              556
+            ],
+            [
+              2037,
+              1277
+            ],
+            [
+              1033,
+              1259
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              117,
+              842
+            ],
+            [
+              846,
+              863
+            ],
+            [
+              820,
+              1872
+            ],
+            [
+              92,
+              1858
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1162,
+              1523
+            ],
+            [
+              2161,
+              1607
+            ],
+            [
+              2105,
+              2329
+            ],
+            [
+              1101,
+              2243
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1426,
+              1271
+            ],
+            [
+              1823,
+              1282
+            ],
+            [
+              1820,
+              1578
+            ],
+            [
+              1410,
+              1544
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "09-wood-dark-3cards.jpg",
+      "kind": "photo",
+      "background": "wood-dark",
+      "tags": [],
+      "frame": [
+        4000,
+        3000
+      ],
+      "n_gt": 3,
+      "n_gt_quads": 3,
+      "fully_labelled": true,
+      "n_detected": 3,
+      "count_ok": true,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 151.8,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              484,
+              949
+            ],
+            [
+              1226,
+              875
+            ],
+            [
+              1206,
+              1975
+            ],
+            [
+              508,
+              1984
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9989,
+          "corner_err_px": 0.38,
+          "corner_err_pct": 0.05,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1526,
+              847
+            ],
+            [
+              2305,
+              832
+            ],
+            [
+              2267,
+              1934
+            ],
+            [
+              1526,
+              1859
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9996,
+          "corner_err_px": 0.28,
+          "corner_err_pct": 0.036,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              3157,
+              794
+            ],
+            [
+              3777,
+              1290
+            ],
+            [
+              3067,
+              2117
+            ],
+            [
+              2458,
+              1582
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.999,
+          "corner_err_px": 0.43,
+          "corner_err_pct": 0.053,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              3157,
+              794
+            ],
+            [
+              3777,
+              1290
+            ],
+            [
+              3067,
+              2117
+            ],
+            [
+              2458,
+              1582
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              1526,
+              847
+            ],
+            [
+              2305,
+              832
+            ],
+            [
+              2267,
+              1934
+            ],
+            [
+              1526,
+              1859
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              484,
+              949
+            ],
+            [
+              1226,
+              875
+            ],
+            [
+              1206,
+              1975
+            ],
+            [
+              508,
+              1984
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "10-fabric-dark-4cards.jpg",
+      "kind": "photo",
+      "background": "fabric-dark",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 4,
+      "n_gt_quads": 4,
+      "fully_labelled": true,
+      "n_detected": 5,
+      "count_ok": false,
+      "det_tp": 4,
+      "det_fn": 0,
+      "det_fp": 1,
+      "unmatched_detections": 1,
+      "detect_ms": 198.4,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              603,
+              887
+            ],
+            [
+              1339,
+              862
+            ],
+            [
+              1356,
+              1865
+            ],
+            [
+              565,
+              1857
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9992,
+          "corner_err_px": 0.34,
+          "corner_err_pct": 0.043,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1589,
+              947
+            ],
+            [
+              2301,
+              1070
+            ],
+            [
+              2379,
+              2057
+            ],
+            [
+              1627,
+              2069
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.9989,
+          "corner_err_px": 0.48,
+          "corner_err_pct": 0.064,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "A Realm Reborn",
+          "set": "FIN",
+          "number": "0344",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              440,
+              2000
+            ],
+            [
+              1286,
+              2079
+            ],
+            [
+              1043,
+              3248
+            ],
+            [
+              334,
+              3177
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.4,
+          "corner_err_pct": 0.047,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Light Up the Stage",
+          "set": "FCA",
+          "number": "0039",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1611,
+              2314
+            ],
+            [
+              2414,
+              2445
+            ],
+            [
+              2278,
+              3648
+            ],
+            [
+              1425,
+              3507
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.39,
+          "corner_err_pct": 0.046,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              440,
+              2000
+            ],
+            [
+              1286,
+              2079
+            ],
+            [
+              1043,
+              3248
+            ],
+            [
+              334,
+              3177
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              1611,
+              2314
+            ],
+            [
+              2414,
+              2445
+            ],
+            [
+              2278,
+              3648
+            ],
+            [
+              1425,
+              3507
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              603,
+              887
+            ],
+            [
+              1339,
+              862
+            ],
+            [
+              1356,
+              1865
+            ],
+            [
+              565,
+              1857
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1589,
+              947
+            ],
+            [
+              2301,
+              1070
+            ],
+            [
+              2379,
+              2057
+            ],
+            [
+              1627,
+              2069
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              32,
+              34
+            ],
+            [
+              2993,
+              5
+            ],
+            [
+              2967,
+              1635
+            ],
+            [
+              48,
+              1772
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "11-playmat-5cards.jpg",
+      "kind": "photo",
+      "background": "playmat",
+      "tags": [],
+      "frame": [
+        4000,
+        3000
+      ],
+      "n_gt": 5,
+      "n_gt_quads": 5,
+      "fully_labelled": true,
+      "n_detected": 5,
+      "count_ok": true,
+      "det_tp": 3,
+      "det_fn": 2,
+      "det_fp": 2,
+      "unmatched_detections": 2,
+      "detect_ms": 214.6,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1818,
+              1302
+            ],
+            [
+              1033,
+              1304
+            ],
+            [
+              1026,
+              266
+            ],
+            [
+              1682,
+              265
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "rot180",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.999,
+          "corner_err_px": 0.36,
+          "corner_err_pct": 0.046,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2982,
+              1424
+            ],
+            [
+              2228,
+              1441
+            ],
+            [
+              2206,
+              291
+            ],
+            [
+              2988,
+              261
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "rot180",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9991,
+          "corner_err_px": 0.35,
+          "corner_err_pct": 0.045,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "A Realm Reborn",
+          "set": "FIN",
+          "number": "0344",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              415,
+              1574
+            ],
+            [
+              1256,
+              1594
+            ],
+            [
+              1247,
+              2720
+            ],
+            [
+              432,
+              2703
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2236,
+              2732
+            ],
+            [
+              1484,
+              2708
+            ],
+            [
+              1504,
+              1635
+            ],
+            [
+              2280,
+              1641
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "rot180",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 4,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              3394,
+              2749
+            ],
+            [
+              2574,
+              2759
+            ],
+            [
+              2570,
+              1639
+            ],
+            [
+              3413,
+              1624
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "rot180",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9994,
+          "corner_err_px": 0.3,
+          "corner_err_pct": 0.035,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              2570,
+              1639
+            ],
+            [
+              3413,
+              1624
+            ],
+            [
+              3394,
+              2749
+            ],
+            [
+              2574,
+              2759
+            ]
+          ],
+          "gt_index": 4,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              2206,
+              291
+            ],
+            [
+              2988,
+              261
+            ],
+            [
+              2982,
+              1424
+            ],
+            [
+              2228,
+              1441
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1513,
+              2123
+            ],
+            [
+              2271,
+              2180
+            ],
+            [
+              2226,
+              2692
+            ],
+            [
+              1478,
+              2637
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1026,
+              266
+            ],
+            [
+              1682,
+              265
+            ],
+            [
+              1818,
+              1302
+            ],
+            [
+              1033,
+              1304
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              41,
+              18
+            ],
+            [
+              1084,
+              9
+            ],
+            [
+              1004,
+              1020
+            ],
+            [
+              23,
+              751
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "12-carpet-dark-3cards.jpg",
+      "kind": "photo",
+      "background": "carpet-dark",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 3,
+      "n_gt_quads": 3,
+      "fully_labelled": true,
+      "n_detected": 3,
+      "count_ok": true,
+      "det_tp": 3,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 193.6,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2005,
+              248
+            ],
+            [
+              2126,
+              1019
+            ],
+            [
+              981,
+              1151
+            ],
+            [
+              886,
+              336
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.999,
+          "corner_err_px": 0.48,
+          "corner_err_pct": 0.058,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2245,
+              1392
+            ],
+            [
+              2189,
+              2352
+            ],
+            [
+              1038,
+              2400
+            ],
+            [
+              970,
+              1522
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9992,
+          "corner_err_px": 0.42,
+          "corner_err_pct": 0.044,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2138,
+              2816
+            ],
+            [
+              2140,
+              3697
+            ],
+            [
+              990,
+              3677
+            ],
+            [
+              1031,
+              2856
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9991,
+          "corner_err_px": 0.36,
+          "corner_err_pct": 0.041,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              886,
+              336
+            ],
+            [
+              2005,
+              248
+            ],
+            [
+              2126,
+              1019
+            ],
+            [
+              981,
+              1151
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              970,
+              1522
+            ],
+            [
+              2245,
+              1392
+            ],
+            [
+              2189,
+              2352
+            ],
+            [
+              1038,
+              2400
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1031,
+              2856
+            ],
+            [
+              2138,
+              2816
+            ],
+            [
+              2140,
+              3697
+            ],
+            [
+              990,
+              3677
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "13-playmat-plain-4cards.jpg",
+      "kind": "photo",
+      "background": "playmat",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 4,
+      "n_gt_quads": 4,
+      "fully_labelled": true,
+      "n_detected": 5,
+      "count_ok": false,
+      "det_tp": 4,
+      "det_fn": 0,
+      "det_fp": 1,
+      "unmatched_detections": 1,
+      "detect_ms": 214.3,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1373,
+              1156
+            ],
+            [
+              1386,
+              1975
+            ],
+            [
+              178,
+              1991
+            ],
+            [
+              169,
+              1132
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.8659,
+          "corner_err_px": 55.18,
+          "corner_err_pct": 6.424,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2767,
+              1210
+            ],
+            [
+              2769,
+              1988
+            ],
+            [
+              1685,
+              1977
+            ],
+            [
+              1693,
+              1165
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.999,
+          "corner_err_px": 0.44,
+          "corner_err_pct": 0.055,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1401,
+              2218
+            ],
+            [
+              1424,
+              3049
+            ],
+            [
+              213,
+              3129
+            ],
+            [
+              195,
+              2259
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9996,
+          "corner_err_px": 0.23,
+          "corner_err_pct": 0.027,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2825,
+              2253
+            ],
+            [
+              2798,
+              3040
+            ],
+            [
+              1710,
+              3025
+            ],
+            [
+              1748,
+              2199
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.8836,
+          "corner_err_px": 44.28,
+          "corner_err_pct": 5.354,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              1746,
+              2231
+            ],
+            [
+              2772,
+              2278
+            ],
+            [
+              2752,
+              3012
+            ],
+            [
+              1710,
+              2992
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              1693,
+              1165
+            ],
+            [
+              2767,
+              1210
+            ],
+            [
+              2769,
+              1988
+            ],
+            [
+              1685,
+              1977
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              195,
+              2259
+            ],
+            [
+              1401,
+              2218
+            ],
+            [
+              1424,
+              3049
+            ],
+            [
+              213,
+              3129
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              170,
+              1198
+            ],
+            [
+              1339,
+              1175
+            ],
+            [
+              1353,
+              1953
+            ],
+            [
+              176,
+              1915
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              1444,
+              2361
+            ],
+            [
+              1732,
+              2516
+            ],
+            [
+              1710,
+              2975
+            ],
+            [
+              1421,
+              2813
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "14-foil-glare-2cards.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        4000,
+        3000
+      ],
+      "n_gt": 2,
+      "n_gt_quads": 2,
+      "fully_labelled": true,
+      "n_detected": 2,
+      "count_ok": true,
+      "det_tp": 2,
+      "det_fn": 0,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 113.4,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Abandon Attachments",
+          "set": "TLA",
+          "number": "0205",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              757,
+              504
+            ],
+            [
+              1945,
+              675
+            ],
+            [
+              1664,
+              2402
+            ],
+            [
+              391,
+              2203
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.43,
+          "corner_err_pct": 0.033,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2094,
+              543
+            ],
+            [
+              3305,
+              728
+            ],
+            [
+              3105,
+              2482
+            ],
+            [
+              1797,
+              2250
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9141,
+          "corner_err_px": 49.79,
+          "corner_err_pct": 3.749,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              757,
+              504
+            ],
+            [
+              1945,
+              675
+            ],
+            [
+              1664,
+              2402
+            ],
+            [
+              391,
+              2203
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              2136,
+              591
+            ],
+            [
+              3228,
+              772
+            ],
+            [
+              3113,
+              2487
+            ],
+            [
+              1832,
+              2260
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "15-tight-grid-9cards.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 9,
+      "n_gt_quads": 9,
+      "fully_labelled": true,
+      "n_detected": 7,
+      "count_ok": false,
+      "det_tp": 7,
+      "det_fn": 2,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 252.3,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              192,
+              48
+            ],
+            [
+              1069,
+              66
+            ],
+            [
+              1036,
+              1273
+            ],
+            [
+              144,
+              1250
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 5,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.39,
+          "corner_err_pct": 0.044,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Abandon Attachments",
+          "set": "TLA",
+          "number": "0205",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1095,
+              62
+            ],
+            [
+              1973,
+              29
+            ],
+            [
+              1962,
+              1255
+            ],
+            [
+              1074,
+              1263
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9992,
+          "corner_err_px": 0.42,
+          "corner_err_pct": 0.048,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Meteor Sword",
+          "set": "TLA",
+          "number": "0258",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2017,
+              64
+            ],
+            [
+              2889,
+              79
+            ],
+            [
+              2903,
+              1280
+            ],
+            [
+              2008,
+              1267
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 4,
+          "match_how": "iou",
+          "iou": 0.9994,
+          "corner_err_px": 0.31,
+          "corner_err_pct": 0.035,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Amy Rose",
+          "set": "SLD",
+          "number": "2083",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              191,
+              1325
+            ],
+            [
+              1074,
+              1296
+            ],
+            [
+              1054,
+              2552
+            ],
+            [
+              138,
+              2537
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 4,
+          "name": "Light Up the Stage",
+          "set": "FCA",
+          "number": "0039",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1073,
+              1298
+            ],
+            [
+              1973,
+              1300
+            ],
+            [
+              1965,
+              2554
+            ],
+            [
+              1060,
+              2549
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 5,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2001,
+              1327
+            ],
+            [
+              2903,
+              1329
+            ],
+            [
+              2920,
+              2591
+            ],
+            [
+              2014,
+              2592
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9991,
+          "corner_err_px": 0.4,
+          "corner_err_pct": 0.044,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 6,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              123,
+              2574
+            ],
+            [
+              1039,
+              2585
+            ],
+            [
+              1013,
+              3893
+            ],
+            [
+              70,
+              3895
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.5,
+          "corner_err_pct": 0.053,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 7,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1047,
+              2596
+            ],
+            [
+              1953,
+              2606
+            ],
+            [
+              1955,
+              3926
+            ],
+            [
+              1022,
+              3904
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.35,
+          "corner_err_pct": 0.038,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 8,
+          "name": "A Realm Reborn",
+          "set": "FIN",
+          "number": "0344",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2019,
+              2615
+            ],
+            [
+              2933,
+              2630
+            ],
+            [
+              2961,
+              3975
+            ],
+            [
+              2013,
+              3959
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 6,
+          "match_how": "iou",
+          "iou": 0.9349,
+          "corner_err_px": 34.41,
+          "corner_err_pct": 3.63,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              123,
+              2574
+            ],
+            [
+              1039,
+              2585
+            ],
+            [
+              1013,
+              3893
+            ],
+            [
+              70,
+              3895
+            ]
+          ],
+          "gt_index": 6,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              2001,
+              1327
+            ],
+            [
+              2903,
+              1329
+            ],
+            [
+              2920,
+              2591
+            ],
+            [
+              2014,
+              2592
+            ]
+          ],
+          "gt_index": 5,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1095,
+              62
+            ],
+            [
+              1973,
+              29
+            ],
+            [
+              1962,
+              1255
+            ],
+            [
+              1074,
+              1263
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1047,
+              2596
+            ],
+            [
+              1953,
+              2606
+            ],
+            [
+              1955,
+              3926
+            ],
+            [
+              1022,
+              3904
+            ]
+          ],
+          "gt_index": 7,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              2017,
+              64
+            ],
+            [
+              2889,
+              79
+            ],
+            [
+              2903,
+              1280
+            ],
+            [
+              2008,
+              1267
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 5,
+          "quad": [
+            [
+              192,
+              48
+            ],
+            [
+              1069,
+              66
+            ],
+            [
+              1036,
+              1273
+            ],
+            [
+              144,
+              1250
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 6,
+          "quad": [
+            [
+              2015,
+              2593
+            ],
+            [
+              2837,
+              2593
+            ],
+            [
+              2972,
+              3975
+            ],
+            [
+              2012,
+              3959
+            ]
+          ],
+          "gt_index": 8,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "16-fanned-overlap-4cards.jpg",
+      "kind": "photo",
+      "background": "white-paper",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 4,
+      "n_gt_quads": 4,
+      "fully_labelled": true,
+      "n_detected": 1,
+      "count_ok": false,
+      "det_tp": 1,
+      "det_fn": 3,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 92.9,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1616,
+              54
+            ],
+            [
+              2209,
+              934
+            ],
+            [
+              1054,
+              1758
+            ],
+            [
+              376,
+              849
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2233,
+              1042
+            ],
+            [
+              2389,
+              1954
+            ],
+            [
+              1061,
+              2012
+            ],
+            [
+              946,
+              1277
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9991,
+          "corner_err_px": 0.4,
+          "corner_err_pct": 0.044,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2489,
+              2132
+            ],
+            [
+              2252,
+              3130
+            ],
+            [
+              837,
+              2823
+            ],
+            [
+              1116,
+              1768
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Light Up the Stage",
+          "set": "FCA",
+          "number": "0039",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              2211,
+              3017
+            ],
+            [
+              1502,
+              3826
+            ],
+            [
+              382,
+              2827
+            ],
+            [
+              1174,
+              2018
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "cw90",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              946,
+              1277
+            ],
+            [
+              2233,
+              1042
+            ],
+            [
+              2389,
+              1954
+            ],
+            [
+              1061,
+              2012
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    },
+    {
+      "dataset": "../test-images",
+      "fileName": "17-binder-page-9cards.jpg",
+      "kind": "photo",
+      "background": "binder-page",
+      "tags": [],
+      "frame": [
+        3000,
+        4000
+      ],
+      "n_gt": 9,
+      "n_gt_quads": 9,
+      "fully_labelled": true,
+      "n_detected": 8,
+      "count_ok": false,
+      "det_tp": 8,
+      "det_fn": 1,
+      "det_fp": 0,
+      "unmatched_detections": 0,
+      "detect_ms": 301.5,
+      "gt": [
+        {
+          "index": 0,
+          "name": "Acornelia, Fashionable Filcher",
+          "set": "ULST",
+          "number": "18",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              163,
+              297
+            ],
+            [
+              898,
+              219
+            ],
+            [
+              927,
+              1263
+            ],
+            [
+              155,
+              1314
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.905,
+          "corner_err_px": 41.37,
+          "corner_err_pct": 5.345,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 1,
+          "name": "Abandon Attachments",
+          "set": "TLA",
+          "number": "0205",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              990,
+              238
+            ],
+            [
+              1735,
+              296
+            ],
+            [
+              1777,
+              1284
+            ],
+            [
+              1005,
+              1266
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 6,
+          "match_how": "iou",
+          "iou": 0.999,
+          "corner_err_px": 0.43,
+          "corner_err_pct": 0.056,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 2,
+          "name": "Meteor Sword",
+          "set": "TLA",
+          "number": "0258",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1795,
+              288
+            ],
+            [
+              2542,
+              223
+            ],
+            [
+              2619,
+              1235
+            ],
+            [
+              1850,
+              1279
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9995,
+          "corner_err_px": 0.23,
+          "corner_err_pct": 0.03,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 3,
+          "name": "Amy Rose",
+          "set": "SLD",
+          "number": "2083",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              143,
+              1427
+            ],
+            [
+              937,
+              1378
+            ],
+            [
+              960,
+              2517
+            ],
+            [
+              167,
+              2545
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 7,
+          "match_how": "iou",
+          "iou": 0.9994,
+          "corner_err_px": 0.26,
+          "corner_err_pct": 0.033,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 4,
+          "name": "Light Up the Stage",
+          "set": "FCA",
+          "number": "0039",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1016,
+              1379
+            ],
+            [
+              1796,
+              1388
+            ],
+            [
+              1852,
+              2467
+            ],
+            [
+              1045,
+              2511
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9991,
+          "corner_err_px": 0.39,
+          "corner_err_pct": 0.048,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 5,
+          "name": "Abundance",
+          "set": "USG",
+          "number": "229",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1871,
+              1389
+            ],
+            [
+              2640,
+              1345
+            ],
+            [
+              2739,
+              2431
+            ],
+            [
+              1937,
+              2465
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 5,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.34,
+          "corner_err_pct": 0.042,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 6,
+          "name": "Abduction",
+          "set": "WTH",
+          "number": "30",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              159,
+              2653
+            ],
+            [
+              971,
+              2629
+            ],
+            [
+              981,
+              3874
+            ],
+            [
+              152,
+              3859
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9994,
+          "corner_err_px": 0.33,
+          "corner_err_pct": 0.04,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 7,
+          "name": "Aang's Iceberg",
+          "set": "TLA",
+          "number": "0005",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1050,
+              2630
+            ],
+            [
+              1860,
+              2584
+            ],
+            [
+              1921,
+              3769
+            ],
+            [
+              1074,
+              3869
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": 4,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.41,
+          "corner_err_pct": 0.048,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        },
+        {
+          "index": 8,
+          "name": "A Realm Reborn",
+          "set": "FIN",
+          "number": "0344",
+          "resolved": {
+            "scryfall_id": null,
+            "oracle_id": null,
+            "how": "not-resolved",
+            "warning": null,
+            "set_code": null,
+            "collector_number": null,
+            "name": null
+          },
+          "has_quad": true,
+          "quad": [
+            [
+              1933,
+              2576
+            ],
+            [
+              2743,
+              2543
+            ],
+            [
+              2845,
+              3719
+            ],
+            [
+              2011,
+              3766
+            ]
+          ],
+          "quad_source": "verified",
+          "orientation": "upright",
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
+          "top1": null,
+          "strict_rank": null,
+          "family_rank": null,
+          "lenient_rank": null,
+          "stage1_hit": null,
+          "stage1_hit_hash": null,
+          "false_confident": false,
+          "id_evaluated": false,
+          "ocr_ran": false,
+          "ocr_name": null,
+          "ocr_name_ok": null,
+          "ocr_collector": null,
+          "ocr_collector_ok": null
+        }
+      ],
+      "detections": [
+        {
+          "index": 0,
+          "quad": [
+            [
+              1016,
+              1379
+            ],
+            [
+              1796,
+              1388
+            ],
+            [
+              1852,
+              2467
+            ],
+            [
+              1045,
+              2511
+            ]
+          ],
+          "gt_index": 4,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              1795,
+              288
+            ],
+            [
+              2542,
+              223
+            ],
+            [
+              2619,
+              1235
+            ],
+            [
+              1850,
+              1279
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              159,
+              2653
+            ],
+            [
+              971,
+              2629
+            ],
+            [
+              981,
+              3874
+            ],
+            [
+              152,
+              3859
+            ]
+          ],
+          "gt_index": 6,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              201,
+              334
+            ],
+            [
+              867,
+              264
+            ],
+            [
+              948,
+              1247
+            ],
+            [
+              158,
+              1346
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              1050,
+              2630
+            ],
+            [
+              1860,
+              2584
+            ],
+            [
+              1921,
+              3769
+            ],
+            [
+              1074,
+              3869
+            ]
+          ],
+          "gt_index": 7,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 5,
+          "quad": [
+            [
+              1871,
+              1389
+            ],
+            [
+              2640,
+              1345
+            ],
+            [
+              2739,
+              2431
+            ],
+            [
+              1937,
+              2465
+            ]
+          ],
+          "gt_index": 5,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 6,
+          "quad": [
+            [
+              990,
+              238
+            ],
+            [
+              1735,
+              296
+            ],
+            [
+              1777,
+              1284
+            ],
+            [
+              1005,
+              1266
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 7,
+          "quad": [
+            [
+              143,
+              1427
+            ],
+            [
+              937,
+              1378
+            ],
+            [
+              960,
+              2517
+            ],
+            [
+              167,
+              2545
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        }
+      ]
+    }
+  ]
+}

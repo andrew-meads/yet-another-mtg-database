@@ -4,3 +4,8 @@ __pycache__/
 venv/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+# OCR models are downloaded (and SHA-checked) by the Dockerfile itself.
+models/

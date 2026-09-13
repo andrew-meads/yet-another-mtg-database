@@ -20,7 +20,8 @@ Any non-trivial plan must include steps for:
    for the change, even if the task description doesn't mention it (see
    [docs/testing.md](docs/testing.md) for the layers).
 2. **Lint** — run `npm run lint` at the end and fix all errors and warnings before
-   considering the task done.
+   considering the task done (plus `npm run scanner:lint` and `npm run scanner:test` when
+   touching `card-scanner/`).
 3. **Documentation** — keep `README.md`, this file, and the relevant `docs/*.md` up to
    date. Feature detail belongs in `docs/`; this file only gets the map, conventions, and
    invariants that apply across the codebase.
@@ -44,6 +45,11 @@ npm run test:integration # API route + server-helper tests (mongodb-memory-serve
 npm run test:components  # React component/hook/context/page tests (jsdom + RTL)
 npm run test:coverage    # Vitest with v8 coverage
 npm run test:e2e         # Playwright E2E (run `npm run test:e2e:install` once first)
+
+npm run scanner:venv     # One-off: Python venv for the card-scanner (uv; picks up card-scanner/backend/.python-version)
+npm run scanner:test     # Card-scanner pytest suite (no Postgres/network/models needed)
+npm run scanner:lint     # Card-scanner ruff check + format check
+npm run scanner:eval     # Card-scanner real-photo accuracy harness (needs the scanner Postgres)
 ```
 
 Run a single Vitest project with `vitest run --project <unit|integration|jsdom>`.
@@ -76,7 +82,7 @@ Copy `.env.example` to `.env` first. The full variable list, with defaults, is i
 | Card scanning: proxy + camera/results UI, and the Python scanner backend itself | `src/app/api/scan/`, `src/app/scan/`, `src/components/scan/`, `card-scanner/` | [docs/card-scanning.md](docs/card-scanning.md), [card-scanner/README.md](card-scanner/README.md) |
 | Bulk import, release-date backfill, whitelist script | `src/scripts/`, `src/lib/server/scryfallBulkStream.ts` | [docs/database-seeding.md](docs/database-seeding.md) |
 | Env vars, Scryfall etiquette, User-Agent instrumentation, set icons | `src/lib/scryfall.ts`, `src/instrumentation.ts` | [docs/external-apis.md](docs/external-apis.md) |
-| Test projects, E2E harness | `vitest.config.ts`, `tests/`, `e2e/` | [docs/testing.md](docs/testing.md) |
+| Test projects, E2E harness, scanner pytest suite | `vitest.config.ts`, `tests/`, `e2e/`, `card-scanner/backend/tests/` | [docs/testing.md](docs/testing.md) |
 | Docker, Caddy, compression | `Dockerfile`, `docker-compose*.yml` | [docs/deployment.md](docs/deployment.md) |
 
 ## Invariants & gotchas
@@ -111,9 +117,14 @@ These bite across features. The docs explain the why.
   `src/components/search/searchDocs.tsx` (a unit test cross-checks the docs, and the AI
   prompt is generated from them).
 - **`card-scanner/` is a separate Python service, not part of the Next build.** It is
-  excluded from `npm run lint`, `tsconfig.json`, Prettier, and the app's Docker context, and
-  has no test suite (`python -m app.evaluate` is its accuracy harness). It ships as the
-  `ghcr.io/andrew-meads/card-scanner-backend` image the compose files pull, and scans
+  excluded from `npm run lint`, `tsconfig.json`, Prettier, and the app's Docker context. It
+  has its own pytest suite, ruff config and accuracy harnesses (`npm run scanner:test`,
+  `scanner:lint`, `scanner:eval`; CI `.github/workflows/card-scanner.yml`). Any detection or
+  identification change must be measured with `app.evaluate_photos` against the labelled
+  `card-scanner/test-images/test-images.json` (the user-authored manifest is the source of
+  truth; tooling only appends machine fields) and the committed baselines in
+  `card-scanner/benchmarks/`. It ships as the `ghcr.io/andrew-meads/card-scanner-backend`
+  image the compose files pull (build with `docker build --target runtime`), and scans
   return no matches until its Postgres image index has been built.
 - **`POST /api/scan` trusts only `scryfallId` from the scanner** and re-hydrates matches
   from the local `cards` collection; ids missing locally are dropped.

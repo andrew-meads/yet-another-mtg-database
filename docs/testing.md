@@ -42,6 +42,25 @@ Each feature doc under `docs/` ends with (or embeds) the list of its unit / inte
 jsdom / e2e test files. When you add a feature, add tests at every applicable layer and
 list them in the relevant doc.
 
-The Python card-scanner in `card-scanner/` is outside all of the above (Vitest, ESLint,
-and `tsconfig.json` exclude it) and has no automated suite of its own; its accuracy harness
-is `python -m app.evaluate` — see [card-scanner/README.md](../card-scanner/README.md).
+## Card-scanner (Python)
+
+The Python scanner in `card-scanner/` is outside the Vitest projects, ESLint and
+`tsconfig.json`, and has its own suite and tooling under `card-scanner/backend/`:
+
+- **pytest** (`tests/`): pure helpers (geometry, hashing, name normalisation, collector-line
+  parsing, fusion), synthetic-image detection (fake cards from `app.synth` on procedural
+  backgrounds), the matcher against a fake in-memory index, the OCR engine with a fake
+  backend, and the FastAPI app through Starlette's `TestClient`. No Postgres, network or
+  ONNX models are needed; OCR is disabled in the test environment. Tests marked
+  `integration` (a scratch Postgres database) run only with `SCANNER_INTEGRATION=1`,
+  `network` ones only with `SCANNER_NETWORK=1`.
+- **ruff** for lint + format (`pyproject.toml`).
+- **Accuracy harnesses**: `app.evaluate` (synthetic self-retrieval of identification),
+  `app.evaluate_photos` (the labelled real photos in `card-scanner/test-images/` and any
+  directory holding a `test-images.json` manifest, e.g. `app.synth` output), with committed
+  detection baselines in `card-scanner/benchmarks/` that gate CI.
+
+Run on the host with `npm run scanner:venv` once, then `npm run scanner:test`,
+`npm run scanner:lint`, `npm run scanner:eval`; or inside the exact runtime image with
+`docker build --target test card-scanner/backend`. CI runs all of it in
+`.github/workflows/card-scanner.yml`. See [card-scanner/README.md](../card-scanner/README.md).

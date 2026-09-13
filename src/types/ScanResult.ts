@@ -34,6 +34,35 @@ export interface RawScanMatch {
   hammingDistance?: number;
   featureScore?: number;
   inliers?: number;
+  /** Ratio-test survivors before geometric verification. */
+  goodMatches?: number;
+  /** Score after fusing inliers with the OCR name / collector-line evidence. */
+  fusedScore?: number;
+  /** Which confidence rule made the top match `confident` ("A" image margin, "B" name, "C" collector line). */
+  confidenceRule?: "A" | "B" | "C" | null;
+  /** The OCR-read card name this candidate matched, if any. */
+  nameMatch?: { key: string; score: number } | null;
+  /** The OCR-read collector line this candidate agrees with, if any. */
+  collectorMatch?: { set: string | null; number: string; lang: string | null } | null;
+  /** How the candidate entered the shortlist: "hash" (pHash), "name" and/or "cn" (OCR). */
+  shortlistSources?: string[];
+  /** Upright orientation of the crop implied by this candidate's validated homography (0 or 180). */
+  rotation?: 0 | 180 | null;
+}
+
+/** What the scanner's OCR stage read from a crop (informational; the app ignores it). */
+export interface RawScanOcr {
+  name: { key: string; score: number; text: string } | null;
+  candidates: Array<{ key: string; score: number }>;
+  collector: {
+    set: string | null;
+    number: string;
+    lang: string | null;
+    rarity: string | null;
+  } | null;
+  orientation: 0 | 180 | null;
+  elapsedMs: Record<string, number>;
+  lines?: Array<{ text: string; conf: number; source: string }>;
 }
 
 /** One detected card as returned by the scanner: its de-skewed crop plus ranked matches. */
@@ -45,6 +74,16 @@ export interface RawScannedCard {
   width: number;
   height: number;
   matches: RawScanMatch[];
+  /** Detection strategy that produced the quad ("edges", "color", "split", …). */
+  source?: string;
+  /** Detector's geometric candidate score (0–1). */
+  detectScore?: number;
+  /** Hamming distance of the crop to the nearest indexed card (the detector's verification). */
+  hashDistance?: number | null;
+  /** Orientation applied to the saved crop (0 or 180). */
+  orientation?: number | null;
+  /** OCR summary for the crop, or null when OCR did not run. */
+  ocr?: RawScanOcr | null;
 }
 
 /** Full verbatim response from the scanner backend. */

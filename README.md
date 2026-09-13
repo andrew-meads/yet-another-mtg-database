@@ -251,6 +251,9 @@ Copy `.env.example` to `.env` and fill in the values:
 | `npm run init-db` | Import Scryfall bulk card data into MongoDB |
 | `npm run whitelist-user` | Whitelist a user by email so they can sign in |
 | `npm run backfill-release-dates` | One-off upgrade: stamp `released_at` on existing cards from Scryfall's set list (new imports include it natively) |
+| `npm run scanner:venv` | One-off: create the card-scanner's Python venv (needs `uv`) |
+| `npm run scanner:test` / `scanner:lint` | The card-scanner's pytest suite / ruff |
+| `npm run scanner:eval` | The card-scanner's real-photo accuracy harness |
 
 ### Seeding the database
 
@@ -295,16 +298,18 @@ need real OAuth values in the host's `.env`.
 ## Card scanning
 
 The recognition service lives in [`card-scanner/`](card-scanner/): a FastAPI + OpenCV
-backend that finds and de-skews every card in a photo, then identifies each crop against a
-PostgreSQL index of Scryfall card images (a perceptual-hash shortlist re-ranked by ORB
-feature matching). `POST /api/scan` is a thin, auth-guarded proxy to it: it forwards the
-uploaded image to `${SCANNER_BASE_URL}/api/scan`, then re-hydrates each ranked candidate
-from this app's own `cards` collection by Scryfall id, so the results page shows the same
-card data as everywhere else. The scanner runs from the dev/prod compose files (as the
-prebuilt `ghcr.io/andrew-meads/card-scanner-backend` image plus its own Postgres) and
+backend that finds and de-skews every card in a photo (a multi-strategy classical detector
+whose candidates are verified against the image index), then identifies each crop against a
+PostgreSQL index of Scryfall card images: a perceptual-hash shortlist, widened by an OCR
+stage that reads the card name and collector line, re-ranked by ORB feature matching and
+fused with the text evidence. `POST /api/scan` is a thin, auth-guarded proxy to it: it
+forwards the uploaded image to `${SCANNER_BASE_URL}/api/scan`, then re-hydrates each ranked
+candidate from this app's own `cards` collection by Scryfall id, so the results page shows
+the same card data as everywhere else. The scanner runs from the dev/prod compose files (as
+the prebuilt `ghcr.io/andrew-meads/card-scanner-backend` image plus its own Postgres) and
 **returns no matches until its index has been built** — see
-[`card-scanner/README.md`](card-scanner/README.md) for indexing, tuning, and the accuracy
-harness.
+[`card-scanner/README.md`](card-scanner/README.md) for indexing, tuning, tests and the
+accuracy harnesses.
 
 ## Project structure
 

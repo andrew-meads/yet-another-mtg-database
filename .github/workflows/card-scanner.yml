@@ -1,0 +1,66 @@
+# CI for the Python card-scanner backend (card-scanner/). Path-filtered so the
+# Next.js app is untouched. CPU-only: no Postgres, no Scryfall, no OCR models —
+# the unit suite fakes the index and the OCR engine, and the detection harness
+# runs against the labelled test photos and a fixed-seed synthetic set.
+name: card-scanner
+
+on:
+  push:
+    paths:
+      - "card-scanner/**"
+      - ".github/workflows/card-scanner.yml"
+  pull_request:
+    paths:
+      - "card-scanner/**"
+      - ".github/workflows/card-scanner.yml"
+
+concurrency:
+  group: card-scanner-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: card-scanner/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: card-scanner/backend/.python-version
+          cache: pip
+          cache-dependency-path: card-scanner/backend/requirements-dev.lock
+      - name: Install (locked, no-deps)
+        run: pip install --no-deps -r requirements-dev.lock
+      - name: Lint
+        run: ruff check . && ruff format --check .
+      - name: Unit + synthetic tests
+        run: pytest
+      - name: Validate test-image manifest
+        run: python -m app.label_photos --validate ../test-images
+      - name: Detection harness (real photos vs baseline)
+        run: >
+          python -m app.evaluate_photos ../test-images --detection-only
+          --json /tmp/real.json --overlay-dir /tmp/overlays
+          --baseline ../benchmarks/real-photos.detection.json
+      - name: Detection harness (synthetic regression set vs baseline)
+        run: >
+          python -m app.synth --preset regression --out /tmp/synth &&
+          python -m app.evaluate_photos /tmp/synth --detection-only
+          --json /tmp/synth.json
+          --baseline ../benchmarks/synth-regression.detection.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scanner-eval
+          path: |
+            /tmp/real.json
+            /tmp/synth.json
+            /tmp/overlays
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build runtime image and run the suite inside it
+        run: docker build --target test card-scanner/backend

@@ -12,78 +12,62 @@ idempotent (rows are keyed by scryfall_id + face). The per-set unit makes it
 trivial to expand coverage later — eventually to all English sets.
 
 Scryfall etiquette: we send a descriptive User-Agent and throttle requests
-(`SCRYFALL_REQUEST_DELAY`). Card images are served from Scryfall's CDN.
+(`SCRYFALL_REQUEST_DELAY`). Card images are served from Scryfall's CDN and go
+through the on-disk image cache (`app.image_cache`), so a re-index of a set whose
+images are already cached does no image traffic at all — the throttle sleep is
+applied on cache misses only.
 """
 
 from __future__ import annotations
 
-import json
 import sys
 import time
 import traceback
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-import cv2
-import numpy as np
+from . import config, features, hashing, image_cache, index_db, metadata, scryfall
 
-from . import config, features, hashing, index_db
-
-_API = "https://api.scryfall.com"
+# The HTTP helpers used to live here; they moved to app.scryfall so the harnesses
+# and the image cache share them. These thin wrappers keep older call sites
+# working. They delegate at call time (rather than binding the function objects
+# at import) so a monkeypatched `scryfall.*` is honoured no matter when this
+# module was first imported.
+_API = scryfall.API
 
 
 def _get_json(url: str) -> dict:
-    """GET a Scryfall JSON endpoint with the configured User-Agent."""
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": config.SCRYFALL_USER_AGENT, "Accept": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.load(resp)
+    return scryfall.get_json(url)
 
 
-def _download_image(url: str) -> np.ndarray | None:
-    """Download and decode a card image to BGR, with a few retries."""
-    req = urllib.request.Request(
-        url, headers={"User-Agent": config.SCRYFALL_USER_AGENT, "Accept": "*/*"}
-    )
-    last_err: Exception | None = None
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = resp.read()
-            return cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
-        except Exception as err:  # network hiccups, decode errors
-            last_err = err
-            time.sleep(0.5 * (attempt + 1))
-    raise RuntimeError(f"Failed to download {url}: {last_err}")
+def _download_image(url: str):
+    return scryfall.download_image(url)
 
 
 def _iter_set_cards(set_code: str):
-    """Yield every card object in a set, following Scryfall's pagination."""
-    url = f"{_API}/cards/search?q=" + urllib.parse.quote(
-        f"set:{set_code} unique:prints"
-    )
-    while url:
-        page = _get_json(url)
-        for card in page.get("data", []):
-            yield card
-        url = page.get("next_page") if page.get("has_more") else None
-        time.sleep(config.SCRYFALL_REQUEST_DELAY)
+    return scryfall.iter_set_cards(set_code)
 
 
-def _faces_for(card: dict):
+def _get_sets() -> list[dict]:
+    return scryfall.get_sets()
+
+
+def _get_set(code: str) -> dict | None:
+    return scryfall.get_set(code)
+
+
+def _faces_for(card: dict, fmt: str | None = None):
     """Resolve the image source(s) for a card.
 
     Returns a list of ``(face_label, image_url, face_name)``. A top-level
     ``image_uris`` means a single image (covers normal cards *and* split/adventure
     cards, which render both halves on one face). Only true double-faced cards
     (transform / modal DFC) lack a top-level image and expose per-face
-    ``image_uris`` — those become one entry per face.
+    ``image_uris`` — those become one entry per face. ``fmt`` is the Scryfall
+    image size (default ``config.SCRYFALL_IMAGE_FORMAT``); the cache warmer passes
+    it explicitly so it can pre-fetch a size other than the one being indexed.
     """
-    fmt = config.SCRYFALL_IMAGE_FORMAT
+    fmt = fmt or config.SCRYFALL_IMAGE_FORMAT
     if card.get("image_uris"):
         return [("single", card["image_uris"].get(fmt), card.get("name"))]
 
@@ -91,9 +75,7 @@ def _faces_for(card: dict):
     for i, face in enumerate(card.get("card_faces", [])):
         image_uris = face.get("image_uris")
         if image_uris:
-            faces.append(
-                ("front" if i == 0 else "back", image_uris.get(fmt), face.get("name"))
-            )
+            faces.append(("front" if i == 0 else "back", image_uris.get(fmt), face.get("name")))
     return faces
 
 
@@ -147,7 +129,7 @@ class ErrorLog:
     def _ensure_open(self):
         if self._fh is None:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            self._fh = open(self.path, "a")
+            self._fh = open(self.path, "a")  # noqa: SIM115 - stays open across records; see close()
             self._fh.write(
                 f"\n===== index build run {datetime.now().isoformat(timespec='seconds')} =====\n"
             )
@@ -173,8 +155,8 @@ def index_set(
     conn,
     set_code: str,
     *,
-    status: "LiveStatus | None" = None,
-    errors: "ErrorLog | None" = None,
+    status: LiveStatus | None = None,
+    errors: ErrorLog | None = None,
     set_pos: int = 1,
     set_total: int = 1,
     set_name: str | None = None,
@@ -221,8 +203,11 @@ def index_set(
                 f"set={set_code} card={card.get('name')!r} "
                 f"scryfall_id={card.get('id')} face={face_label} url={image_url}"
             )
+            cache_hit = False
             try:
-                image = _download_image(image_url)
+                # Cached images skip the network entirely, so the Scryfall throttle
+                # below only applies when something was actually downloaded.
+                image, cache_hit = image_cache.fetch_image(card["id"], face_label, image_url)
                 if image is None:
                     if errors is not None:
                         errors.record(context + " — image decode returned None")
@@ -244,6 +229,12 @@ def index_set(
                     phash=phash,
                     kp_pts=kp_blob,
                     descriptors=desc_blob,
+                    # Text metadata for the OCR stage (same derivation the backfill uses),
+                    # so freshly indexed sets never need a backfill.
+                    metadata={
+                        **metadata.face_metadata(card, face_label),
+                        "meta_version": index_db.METADATA_VERSION,
+                    },
                 )
                 indexed += 1
             except Exception as err:  # keep going on a single bad card
@@ -252,7 +243,8 @@ def index_set(
                 # In live mode the tally shows in the block; otherwise log briefly.
                 if not (status and status.enabled):
                     print(f"  ! error on {card.get('name')}: {err}", file=sys.stderr)
-            time.sleep(config.SCRYFALL_REQUEST_DELAY)
+            if not cache_hit:
+                time.sleep(config.SCRYFALL_REQUEST_DELAY)
 
         _render(card_pos, card.get("name", "?"))
 
@@ -260,25 +252,6 @@ def index_set(
     index_db.mark_set_done(conn, set_code, indexed, card_count)
     conn.commit()
     return indexed
-
-
-def _get_sets() -> list[dict]:
-    """Fetch every Scryfall set object (handles pagination defensively)."""
-    sets: list[dict] = []
-    url = f"{_API}/sets"
-    while url:
-        page = _get_json(url)
-        sets.extend(page.get("data", []))
-        url = page.get("next_page") if page.get("has_more") else None
-    return sets
-
-
-def _get_set(code: str) -> dict | None:
-    """Fetch a single Scryfall set object by code (for its `card_count`)."""
-    try:
-        return _get_json(f"{_API}/sets/{urllib.parse.quote(code)}")
-    except Exception:
-        return None
 
 
 def _eligible_english_sets(sets: list[dict]):
@@ -311,9 +284,9 @@ def index_all_english(conn, force: bool = False, list_only: bool = False) -> int
     sets = _get_sets()
     eligible, excluded_counts = _eligible_english_sets(sets)
 
-    excluded_detail = ", ".join(
-        f"{k}={v}" for k, v in sorted(excluded_counts.items())
-    ) or "(none matched)"
+    excluded_detail = (
+        ", ".join(f"{k}={v}" for k, v in sorted(excluded_counts.items())) or "(none matched)"
+    )
     print(f"Scryfall has {len(sets)} sets.")
     print(f"Excluded types {sorted(config.EXCLUDED_SET_TYPES)}: {excluded_detail}")
     print(f"{len(eligible)} eligible sets.")
@@ -376,9 +349,15 @@ def index_all_english(conn, force: bool = False, list_only: bool = False) -> int
             )
 
         added = index_set(
-            conn, code, status=status, errors=errlog, set_pos=i,
-            set_total=len(eligible), set_name=s.get("name"),
-            size_before=index_db.count(conn), card_count=current_count,
+            conn,
+            code,
+            status=status,
+            errors=errlog,
+            set_pos=i,
+            set_total=len(eligible),
+            set_name=s.get("name"),
+            size_before=index_db.count(conn),
+            card_count=current_count,
         )
         if not status.enabled:
             print(f"    added {added} faces (index now {index_db.count(conn)} rows)")
@@ -386,8 +365,10 @@ def index_all_english(conn, force: bool = False, list_only: bool = False) -> int
 
     status.finish()
     errlog.close()
-    print(f"\nAll-English build done. {total} faces added this run; index holds "
-          f"{index_db.count(conn)} rows.")
+    print(
+        f"\nAll-English build done. {total} faces added this run; index holds "
+        f"{index_db.count(conn)} rows."
+    )
     if errlog.count:
         print(f"{errlog.count} card(s) errored — details in {errlog.path}")
     return total
@@ -427,23 +408,30 @@ def main(argv: list[str]) -> int:
                 if not status.enabled:
                     print(f"Indexing set '{code}' ...")
                 added = index_set(
-                    conn, code, status=status, errors=errlog, set_pos=i,
-                    set_total=len(positional), set_name=(meta or {}).get("name", code),
-                    size_before=index_db.count(conn), card_count=current_count,
+                    conn,
+                    code,
+                    status=status,
+                    errors=errlog,
+                    set_pos=i,
+                    set_total=len(positional),
+                    set_name=(meta or {}).get("name", code),
+                    size_before=index_db.count(conn),
+                    card_count=current_count,
                 )
                 if not status.enabled:
                     print(f"  indexed {added} faces from '{code}'")
                 total += added
             status.finish()
             errlog.close()
-            print(
-                f"\nDone. {total} faces this run; "
-                f"index now holds {index_db.count(conn)} rows."
-            )
+            print(f"\nDone. {total} faces this run; index now holds {index_db.count(conn)} rows.")
             if errlog.count:
                 print(f"{errlog.count} card(s) errored — details in {errlog.path}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    try:
+        code = main(sys.argv[1:])
+    finally:
+        index_db.close_pool()  # avoid the unclosed-pool finalisation warning on exit
+    raise SystemExit(code)

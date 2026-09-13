@@ -33,8 +33,13 @@ services:
     volumes:
       # De-skewed crops + the index error log: bind-mounted so they're easy to inspect.
       - ./data/cards:/data/cards
+      # Scryfall image cache (see README): re-indexing never re-downloads cached images.
+      - ./data/scryfall-cache:/data/scryfall-cache
+      # Labelled test photos for the real-photo accuracy harness (read-only).
+      - ./test-images:/data/test-images:ro
     environment:
       CARDS_DIR: /data/cards
+      IMAGE_CACHE_DIR: /data/scryfall-cache
       DATABASE_URL: postgresql://cardscanner:cardscanner@db:5432/cardscanner
     restart: unless-stopped
 

@@ -1,0 +1,8 @@
+# uv resolution overrides (`uv pip compile --override overrides.txt`).
+#
+# rapidocr declares the GUI `opencv-python` build as a dependency. We ship
+# opencv-python-headless, and both distributions provide the `cv2` module, so
+# installing both breaks imports. A marker that can never match removes the GUI
+# requirement from resolution entirely; the locks are then installed with
+# --no-deps so pip never re-adds it.
+opencv-python; sys_platform == "never"

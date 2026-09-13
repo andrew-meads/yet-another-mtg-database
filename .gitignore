@@ -59,3 +59,7 @@ data/cards/*
 # Backup database files
 backup
 backup/**
+# card-scanner runtime data (see card-scanner/README.md): cached Scryfall images and
+# generated synthetic datasets. Both are large and reproducible.
+data/scryfall-cache/
+data/synth*/
