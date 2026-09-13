@@ -320,8 +320,9 @@ def detect(image_bgr: np.ndarray, *, verify: bool = True) -> DetectionResult:
         mode = verify_mod.hash_verify(alive, work, mode=mode)
     timings["verify"] = (time.perf_counter() - t0) * 1000.0
 
-    # --- 6. NMS (children of a surviving parent go first), then the caps. ---
+    # --- 6. Containers out, children of a surviving parent out, NMS, then the caps. ---
     t0 = time.perf_counter()
+    cands_mod.reject_containers(all_cands)
     cands_mod.prune_split_children(all_cands)
     winners = cands_mod.nms(all_cands)
     final: list[Candidate] = []
@@ -424,6 +425,7 @@ _REASON_COLOURS: dict[str, tuple[int, int, int]] = {
     "dup": (90, 90, 90),
     "hash": (0, 0, 255),
     "nms": (255, 180, 0),
+    "container": (255, 100, 200),
     "ambiguous-cap": (0, 80, 255),
     "max-cards": (0, 80, 255),
     "orb": (60, 60, 255),
@@ -436,6 +438,7 @@ _REASON_PRIORITY = [
     "ambiguous-cap",
     "max-cards",
     "nms",
+    "container",
     "hash",
     "edge_support",
     "rect",

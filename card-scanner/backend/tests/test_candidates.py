@@ -275,6 +275,26 @@ def test_nms_nested_swap_needs_hashes_on_both_sides():
     assert cm.nms([piece, whole]) == [piece]
 
 
+def test_dedup_keeps_a_measured_quad_over_a_better_scored_split_tile():
+    measured = _cand(_CARD_QUAD, score=0.85, metrics={"hits": 3})
+    tile = _cand(_CARD_QUAD + np.float32([3, -2]), source="split", score=0.99, metrics={"hits": 1})
+    assert geometry.quad_iou(measured.quad, tile.quad) >= config.DEDUP_IOU
+    assert cm.dedup([tile, measured]) == [measured]
+    assert tile.rejected == "dup" and measured.metrics["hits"] == 4
+
+
+def test_nms_prefers_a_measured_outline_over_a_split_tile_of_the_same_card():
+    """Both accepted at the same distance: the tile's interpolated geometry loses."""
+    measured = _cand(_CARD_QUAD, score=0.9, verify="accepted", hash_distance=5)
+    tile = _cand(_CARD_QUAD + np.float32([12, -8]), source="split", score=0.95)
+    tile.verify, tile.hash_distance = "accepted", 5
+    assert cm.nms([tile, measured]) == [measured] and tile.rejected == "nms:1"
+    # A tile still beats a measured outline of a *worse* tier.
+    measured.verify, measured.hash_distance = "ambiguous", 12
+    tile.rejected = measured.rejected = None
+    assert cm.nms([tile, measured]) == [tile]
+
+
 def test_nms_disjoint_quads_both_survive():
     a = _cand(_CARD_QUAD)
     b = _cand(_CARD_QUAD + np.float32([400, 0]))
@@ -342,6 +362,83 @@ def test_split_merged_needs_seam_evidence():
     assert cm.split_merged(parent, _support_for(_ROW_2x1)) == []
 
 
+def _row_and_children(*, n=2, child_score=0.9, parent_verify="unverified", child_verify=None):
+    """A 1 x n row blob and its n tiles, all alive and scored."""
+    tl, tr, br, bl = _CARD_QUAD
+    w = tr - tl
+    row = _cand(np.float32([tl, tl + n * w, bl + n * w, bl]), score=0.85)
+    row.verify = parent_verify
+    tiles = [
+        _cand(
+            np.float32([tl + i * w, tl + (i + 1) * w, bl + (i + 1) * w, bl + i * w]),
+            score=child_score,
+        )
+        for i in range(n)
+    ]
+    if child_verify:
+        for tile in tiles:
+            tile.verify = child_verify
+    return row, tiles
+
+
+def test_reject_containers_drops_a_row_blob_whose_tiles_the_index_accepted():
+    row, tiles = _row_and_children(child_verify="accepted")
+    tiles[0].source = tiles[1].source = "split"  # even split tiles count once accepted
+    rejected = cm.reject_containers([row, *tiles])
+    assert rejected == [row] and row.rejected == "container"
+    assert all(t.alive for t in tiles)
+
+
+def test_reject_containers_drops_a_row_blob_tiled_by_independent_cards():
+    row, tiles = _row_and_children()  # unverified, found on their own, cover 100 %
+    assert cm.reject_containers([row, *tiles]) == [row]
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"n": 1},  # one child is a nested box, not a row
+        {"child_score": 0.5},  # weak children do not make a container
+        {"parent_verify": "accepted"},  # the index recognised the parent: it is the card
+    ],
+)
+def test_reject_containers_leaves_the_parent_alone(kw):
+    row, tiles = _row_and_children(**kw)
+    assert cm.reject_containers([row, *tiles]) == [] and row.alive
+
+
+def test_reject_containers_without_an_index_needs_independent_tiles_that_cover_it():
+    """A card's own art box and text box (well under 85 % of it) never count, and
+    unverified split tiles never count either."""
+    tl, tr, br, bl = _CARD_QUAD
+    card = _cand(_CARD_QUAD, score=0.95)
+    art = _cand(cm.expand_quad(_CARD_QUAD, 0.85, 0.45) - np.float32([0, 60]), score=0.9)
+    text = _cand(cm.expand_quad(_CARD_QUAD, 0.85, 0.25) + np.float32([0, 90]), score=0.9)
+    assert cm.reject_containers([card, art, text]) == [] and card.alive
+    row, tiles = _row_and_children()
+    tiles[0].source = tiles[1].source = "split"
+    assert cm.reject_containers([row, *tiles]) == [] and row.alive
+    # Once hashed, a container only falls to *accepted* children: ambiguous inner
+    # boxes covering it do not count, whatever their coverage.
+    row, tiles = _row_and_children(child_verify="ambiguous")
+    row.verify, row.hash_distance = "ambiguous", 12
+    for tile in tiles:
+        tile.hash_distance = 14
+    assert cm.reject_containers([row, *tiles]) == [] and row.alive
+
+
+def test_reject_containers_ignores_dead_children_and_similar_sizes():
+    row, tiles = _row_and_children()
+    tiles[0].rejected = "hash"
+    assert cm.reject_containers([row, *tiles]) == []
+    tiles[0].rejected = None
+    # A sleeve-inflated row (10 % bigger) is only ~91 % covered by the two cards:
+    # under the 92 % bar it is left for NMS to sort out; the row itself still goes.
+    near = _cand(cm.expand_quad(row.quad, 1.05, 1.05), score=0.9)
+    assert cm.reject_containers([near, row, *tiles]) == [row]
+    assert all(t.alive for t in tiles) and near.alive
+
+
 def test_prune_split_children_when_parent_survives():
     parent = _cand(_ROW_2x1)
     support = _support_for(_ROW_2x1)
@@ -351,6 +448,20 @@ def test_prune_split_children_when_parent_survives():
     assert all(c.rejected == "split" for c in children)
 
     parent.rejected = "hash"
+    for c in children:
+        c.rejected = None
+    cm.prune_split_children([parent, *children])
+    assert all(c.rejected is None for c in children)
+
+    # A parent that failed a geometric filter was never card-like: its tiles die too.
+    for reason in ("aspect", "rect", "area", "edge_support"):
+        parent.rejected = reason
+        for c in children:
+            c.rejected = None
+        cm.prune_split_children([parent, *children])
+        assert all(c.rejected == "split" for c in children), reason
+
+    parent.rejected = "container"
     for c in children:
         c.rejected = None
     cm.prune_split_children([parent, *children])

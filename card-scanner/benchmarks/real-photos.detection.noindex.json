@@ -1,7 +1,7 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T05:00:07+00:00",
-  "git_sha": "76f0b84",
+  "created": "2026-09-13T05:16:11+00:00",
+  "git_sha": "26d19bb",
   "versions": {
     "python": "3.14.2",
     "opencv": "5.0.0",
@@ -44,7 +44,7 @@
     "VERIFY_MAX_HAMMING": 8,
     "VERIFY_AMBIGUOUS_HAMMING": 16,
     "VERIFY_MIN_INDEX_SIZE": 50000,
-    "SPLIT_TOUCHING": false,
+    "SPLIT_TOUCHING": true,
     "REFINE_CORNERS": true,
     "OCR_ENABLED": true,
     "OCR_MAX_LINES": 6,
@@ -77,32 +77,32 @@
     "gt_with_quads": 68,
     "photos_with_quads": 17,
     "photos_fully_labelled": 17,
-    "detections": 59,
-    "det_tp": 48,
-    "det_fn": 20,
-    "det_fp": 11,
-    "det_recall": 0.7059,
-    "det_recall_visible": 0.7385,
+    "detections": 68,
+    "det_tp": 59,
+    "det_fn": 9,
+    "det_fp": 9,
+    "det_recall": 0.8676,
+    "det_recall_visible": 0.9077,
     "det_recall_occluded": 0.0,
     "det_partial": 0,
-    "det_precision": 0.8136,
-    "fp_per_photo": 0.6471,
+    "det_precision": 0.8676,
+    "fp_per_photo": 0.5294,
     "corner_err_px": {
-      "n": 48,
-      "mean": 25.91,
-      "median": 5.945,
-      "p95": 107.454,
+      "n": 59,
+      "mean": 21.986,
+      "median": 5.19,
+      "p95": 105.293,
       "max": 114.86
     },
     "corner_err_pct": {
-      "n": 48,
-      "mean": 2.985,
-      "median": 0.586,
-      "p95": 12.866,
+      "n": 59,
+      "mean": 2.525,
+      "median": 0.555,
+      "p95": 12.782,
       "max": 13.829
     },
-    "count_ok": 10,
-    "count_ok_rate": 0.5882,
+    "count_ok": 11,
+    "count_ok_rate": 0.6471,
     "unresolved": 0,
     "fuzzy_resolutions": 0,
     "id_evaluated": 0,
@@ -129,10 +129,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 152.476,
-      "median": 146.5,
-      "p95": 253.82,
-      "max": 290.3
+      "mean": 185.971,
+      "median": 190.0,
+      "p95": 316.52,
+      "max": 369.4
     },
     "identify_ms": {
       "n": 0,
@@ -202,10 +202,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 290.3,
-        "median": 290.3,
-        "p95": 290.3,
-        "max": 290.3
+        "mean": 369.4,
+        "median": 369.4,
+        "p95": 369.4,
+        "max": 369.4
       },
       "identify_ms": {
         "n": 0,
@@ -274,10 +274,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 181.8,
-        "median": 181.8,
-        "p95": 181.8,
-        "max": 181.8
+        "mean": 214.1,
+        "median": 214.1,
+        "p95": 214.1,
+        "max": 214.1
       },
       "identify_ms": {
         "n": 0,
@@ -346,10 +346,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 187.7,
-        "median": 187.7,
-        "p95": 187.7,
-        "max": 187.7
+        "mean": 234.5,
+        "median": 234.5,
+        "p95": 234.5,
+        "max": 234.5
       },
       "identify_ms": {
         "n": 0,
@@ -418,10 +418,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 215.2,
-        "median": 215.2,
-        "p95": 241.75,
-        "max": 244.7
+        "mean": 242.85,
+        "median": 242.85,
+        "p95": 267.375,
+        "max": 270.1
       },
       "identify_ms": {
         "n": 0,
@@ -438,32 +438,32 @@
       "gt_with_quads": 37,
       "photos_with_quads": 10,
       "photos_fully_labelled": 10,
-      "detections": 24,
-      "det_tp": 21,
-      "det_fn": 16,
-      "det_fp": 3,
-      "det_recall": 0.5676,
-      "det_recall_visible": 0.6176,
+      "detections": 33,
+      "det_tp": 32,
+      "det_fn": 5,
+      "det_fp": 1,
+      "det_recall": 0.8649,
+      "det_recall_visible": 0.9412,
       "det_recall_occluded": 0.0,
       "det_partial": 0,
-      "det_precision": 0.875,
-      "fp_per_photo": 0.3,
+      "det_precision": 0.9697,
+      "fp_per_photo": 0.1,
       "corner_err_px": {
-        "n": 21,
-        "mean": 9.178,
-        "median": 5.19,
-        "p95": 37.78,
+        "n": 32,
+        "mean": 7.694,
+        "median": 4.255,
+        "p95": 35.926,
         "max": 49.79
       },
       "corner_err_pct": {
-        "n": 21,
-        "mean": 0.811,
-        "median": 0.555,
-        "p95": 3.498,
+        "n": 32,
+        "mean": 0.71,
+        "median": 0.433,
+        "p95": 3.557,
         "max": 3.749
       },
-      "count_ok": 7,
-      "count_ok_rate": 0.7,
+      "count_ok": 8,
+      "count_ok_rate": 0.8,
       "unresolved": 0,
       "fuzzy_resolutions": 0,
       "id_evaluated": 0,
@@ -490,10 +490,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 121.47,
-        "median": 106.65,
-        "p95": 190.295,
-        "max": 196.1
+        "mean": 150.56,
+        "median": 120.55,
+        "p95": 280.485,
+        "max": 303.3
       },
       "identify_ms": {
         "n": 0,
@@ -562,10 +562,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 140.7,
-        "median": 140.7,
-        "p95": 140.7,
-        "max": 140.7
+        "mean": 159.0,
+        "median": 159.0,
+        "p95": 159.0,
+        "max": 159.0
       },
       "identify_ms": {
         "n": 0,
@@ -634,10 +634,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 146.5,
-        "median": 146.5,
-        "p95": 146.5,
-        "max": 146.5
+        "mean": 193.2,
+        "median": 193.2,
+        "p95": 193.2,
+        "max": 193.2
       },
       "identify_ms": {
         "n": 0,
@@ -650,13 +650,6 @@
     }
   },
   "failures": [
-    "07-8-sideways-cards.jpg: detected 6 of 8 listed cards",
-    "07-8-sideways-cards.jpg: false positive detection #0",
-    "07-8-sideways-cards.jpg: false positive detection #1",
-    "07-8-sideways-cards.jpg: Arcanis the Omnipotent DMR:280: not detected (no quad at IoU threshold)",
-    "07-8-sideways-cards.jpg: Mind Stone DMR:232: not detected (no quad at IoU threshold)",
-    "07-8-sideways-cards.jpg: White Lotus Hideout TLA:0281: not detected (no quad at IoU threshold)",
-    "07-8-sideways-cards.jpg: Wild Growth DMR:184: not detected (no quad at IoU threshold)",
     "08-wood-light-3cards.jpg: detected 4 of 3 listed cards",
     "08-wood-light-3cards.jpg: false positive detection #3",
     "10-fabric-dark-4cards.jpg: detected 6 of 4 listed cards",
@@ -673,17 +666,10 @@
     "13-playmat-plain-4cards.jpg: false positive detection #4",
     "13-playmat-plain-4cards.jpg: false positive detection #5",
     "13-playmat-plain-4cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: detected 1 of 9 listed cards",
-    "15-tight-grid-9cards.jpg: false positive detection #0",
-    "15-tight-grid-9cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: Abandon Attachments TLA:0205: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: Meteor Sword TLA:0258: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: detected 8 of 9 listed cards",
+    "15-tight-grid-9cards.jpg: false positive detection #7",
     "15-tight-grid-9cards.jpg: Amy Rose SLD:2083: not detected (no quad at IoU threshold)",
     "15-tight-grid-9cards.jpg: Light Up the Stage FCA:0039: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: Abundance USG:229: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: Abduction WTH:30: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: Aang's Iceberg TLA:0005: not detected (no quad at IoU threshold)",
-    "15-tight-grid-9cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)",
     "16-fanned-overlap-4cards.jpg: detected 1 of 4 listed cards",
     "16-fanned-overlap-4cards.jpg: Aang's Iceberg TLA:0005: not detected (occluded card)",
     "16-fanned-overlap-4cards.jpg: Abundance USG:229: not detected (occluded card)",
@@ -710,7 +696,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 183.2,
+      "detect_ms": 187.4,
       "verify_mode": "off",
       "gt": [
         {
@@ -980,7 +966,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 66.3,
+      "detect_ms": 69.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -1088,7 +1074,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 83.3,
+      "detect_ms": 85.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -1196,7 +1182,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 70.7,
+      "detect_ms": 78.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -1304,7 +1290,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 109.4,
+      "detect_ms": 115.8,
       "verify_mode": "off",
       "gt": [
         {
@@ -1574,7 +1560,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 164.8,
+      "detect_ms": 190.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -1999,14 +1985,14 @@
       "n_gt": 8,
       "n_gt_quads": 8,
       "fully_labelled": true,
-      "n_detected": 6,
-      "count_ok": false,
-      "det_tp": 4,
-      "det_fn": 4,
-      "det_fp": 2,
+      "n_detected": 8,
+      "count_ok": true,
+      "det_tp": 8,
+      "det_fn": 0,
+      "det_fp": 0,
       "det_partial": 0,
-      "unmatched_detections": 2,
-      "detect_ms": 196.1,
+      "unmatched_detections": 0,
+      "detect_ms": 252.6,
       "verify_mode": "off",
       "gt": [
         {
@@ -2045,7 +2031,7 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": 3,
+          "det_index": 4,
           "match_how": "iou",
           "iou": 0.992,
           "corner_err_px": 3.27,
@@ -2100,7 +2086,7 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": 5,
+          "det_index": 7,
           "match_how": "iou",
           "iou": 0.993,
           "corner_err_px": 3.05,
@@ -2155,11 +2141,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 6,
+          "match_how": "iou",
+          "iou": 0.9903,
+          "corner_err_px": 3.83,
+          "corner_err_pct": 0.418,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2210,7 +2196,7 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": 4,
+          "det_index": 5,
           "match_how": "iou",
           "iou": 0.9908,
           "corner_err_px": 4.31,
@@ -2265,11 +2251,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.9904,
+          "corner_err_px": 4.41,
+          "corner_err_pct": 0.476,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2320,11 +2306,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9937,
+          "corner_err_px": 2.48,
+          "corner_err_pct": 0.266,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2375,7 +2361,7 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": 2,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9708,
           "corner_err_px": 12.95,
@@ -2430,11 +2416,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "cw90",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9889,
+          "corner_err_px": 5.98,
+          "corner_err_pct": 0.643,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2453,58 +2439,6 @@
       "detections": [
         {
           "index": 0,
-          "quad": [
-            [
-              1595,
-              2038
-            ],
-            [
-              2875,
-              2052
-            ],
-            [
-              2873,
-              3950
-            ],
-            [
-              1567,
-              3938
-            ]
-          ],
-          "gt_index": null,
-          "is_fp": true,
-          "partial_of": null,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
-              138,
-              1056
-            ],
-            [
-              1413,
-              1053
-            ],
-            [
-              1435,
-              2925
-            ],
-            [
-              152,
-              2923
-            ]
-          ],
-          "gt_index": null,
-          "is_fp": true,
-          "partial_of": null,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 2,
           "quad": [
             [
               151,
@@ -2530,7 +2464,85 @@
           "identify_ms": null
         },
         {
+          "index": 1,
+          "quad": [
+            [
+              1576,
+              3004
+            ],
+            [
+              2876,
+              3021
+            ],
+            [
+              2870,
+              3949
+            ],
+            [
+              1571,
+              3939
+            ]
+          ],
+          "gt_index": 7,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1591,
+              2040
+            ],
+            [
+              2871,
+              2052
+            ],
+            [
+              2878,
+              2983
+            ],
+            [
+              1588,
+              2968
+            ]
+          ],
+          "gt_index": 5,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
           "index": 3,
+          "quad": [
+            [
+              158,
+              1993
+            ],
+            [
+              1436,
+              2000
+            ],
+            [
+              1428,
+              2925
+            ],
+            [
+              140,
+              2923
+            ]
+          ],
+          "gt_index": 4,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
           "quad": [
             [
               138,
@@ -2556,7 +2568,7 @@
           "identify_ms": null
         },
         {
-          "index": 4,
+          "index": 5,
           "quad": [
             [
               1529,
@@ -2582,7 +2594,33 @@
           "identify_ms": null
         },
         {
-          "index": 5,
+          "index": 6,
+          "quad": [
+            [
+              141,
+              1056
+            ],
+            [
+              1416,
+              1053
+            ],
+            [
+              1421,
+              1963
+            ],
+            [
+              141,
+              1974
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 7,
           "quad": [
             [
               1531,
@@ -2629,7 +2667,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 146.5,
+      "detect_ms": 193.2,
       "verify_mode": "off",
       "gt": [
         {
@@ -2925,7 +2963,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 140.7,
+      "detect_ms": 159.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -3195,7 +3233,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 187.7,
+      "detect_ms": 234.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -3598,7 +3636,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 185.7,
+      "detect_ms": 215.6,
       "verify_mode": "off",
       "gt": [
         {
@@ -4004,7 +4042,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 181.8,
+      "detect_ms": 214.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -4274,7 +4312,7 @@
       "det_fp": 3,
       "det_partial": 0,
       "unmatched_detections": 3,
-      "detect_ms": 244.7,
+      "detect_ms": 270.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -4677,7 +4715,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 103.9,
+      "detect_ms": 125.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -4859,14 +4897,14 @@
       "n_gt": 9,
       "n_gt_quads": 9,
       "fully_labelled": true,
-      "n_detected": 1,
+      "n_detected": 8,
       "count_ok": false,
-      "det_tp": 0,
-      "det_fn": 9,
+      "det_tp": 7,
+      "det_fn": 2,
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 142.9,
+      "detect_ms": 303.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -4905,11 +4943,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 6,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.39,
+          "corner_err_pct": 0.044,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4960,11 +4998,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 4,
+          "match_how": "iou",
+          "iou": 0.9992,
+          "corner_err_px": 0.42,
+          "corner_err_pct": 0.048,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5015,11 +5053,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 5,
+          "match_how": "iou",
+          "iou": 0.9994,
+          "corner_err_px": 0.31,
+          "corner_err_pct": 0.035,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5180,11 +5218,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 3,
+          "match_how": "iou",
+          "iou": 0.9991,
+          "corner_err_px": 0.4,
+          "corner_err_pct": 0.044,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5235,11 +5273,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.5,
+          "corner_err_pct": 0.053,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5290,11 +5328,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 2,
+          "match_how": "iou",
+          "iou": 0.9993,
+          "corner_err_px": 0.35,
+          "corner_err_pct": 0.038,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5345,11 +5383,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 0,
+          "match_how": "iou",
+          "iou": 0.9349,
+          "corner_err_px": 34.41,
+          "corner_err_pct": 3.63,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5370,20 +5408,202 @@
           "index": 0,
           "quad": [
             [
-              223,
-              68
+              2015,
+              2593
             ],
             [
-              2987,
-              27
+              2837,
+              2593
             ],
             [
-              2891,
-              3980
+              2972,
+              3975
+            ],
+            [
+              2012,
+              3959
+            ]
+          ],
+          "gt_index": 8,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              123,
+              2574
+            ],
+            [
+              1039,
+              2585
+            ],
+            [
+              1013,
+              3893
             ],
             [
               70,
-              3862
+              3895
+            ]
+          ],
+          "gt_index": 6,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1047,
+              2596
+            ],
+            [
+              1953,
+              2606
+            ],
+            [
+              1955,
+              3926
+            ],
+            [
+              1022,
+              3904
+            ]
+          ],
+          "gt_index": 7,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              2001,
+              1327
+            ],
+            [
+              2903,
+              1329
+            ],
+            [
+              2920,
+              2591
+            ],
+            [
+              2014,
+              2592
+            ]
+          ],
+          "gt_index": 5,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              1095,
+              62
+            ],
+            [
+              1973,
+              29
+            ],
+            [
+              1962,
+              1255
+            ],
+            [
+              1074,
+              1263
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 5,
+          "quad": [
+            [
+              2017,
+              64
+            ],
+            [
+              2889,
+              79
+            ],
+            [
+              2903,
+              1280
+            ],
+            [
+              2008,
+              1267
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 6,
+          "quad": [
+            [
+              192,
+              48
+            ],
+            [
+              1069,
+              66
+            ],
+            [
+              1036,
+              1273
+            ],
+            [
+              144,
+              1250
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 7,
+          "quad": [
+            [
+              194,
+              1246
+            ],
+            [
+              1958,
+              1315
+            ],
+            [
+              2024,
+              2558
+            ],
+            [
+              136,
+              2539
             ]
           ],
           "gt_index": null,
@@ -5414,7 +5634,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 94.1,
+      "detect_ms": 96.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -5687,7 +5907,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 290.3,
+      "detect_ms": 369.4,
       "verify_mode": "off",
       "gt": [
         {

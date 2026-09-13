@@ -317,3 +317,60 @@ def test_draw_debug_overlay_accepts_a_detection_result(
     # The rejected candidates and legend add ink that the cards-only overlay lacks.
     assert not np.array_equal(with_rejected, without)
     assert not np.array_equal(without, image)
+
+
+# --- touching cards: the grid split and the container guard --------------------------
+
+
+def _packed_row(compose_simple, fake_cards, rng, n: int, gap_px: float = 4.0, scale=0.5):
+    """``n`` upright cards side by side, ``gap_px`` apart, on paper."""
+    h, w = fake_cards[0].shape[:2]
+    cw = w * scale
+    x0 = 800 - (n * cw + (n - 1) * gap_px) / 2 + cw / 2
+    placements = [(x0 + i * (cw + gap_px), 600, 0.0, scale) for i in range(n)]
+    return compose_simple(rng, fake_cards[:n], "paper", placements)
+
+
+def test_detect_splits_two_touching_cards(compose_simple, fake_cards, rng):
+    image, quads = _packed_row(compose_simple, fake_cards, rng, 2)
+    result = detection.detect(image)
+    assert len(result.cards) == 2, [c.source for c in result.cards]
+    # Tiles are interpolated from the merged blob (gap included), so a little looser
+    # than the 0.9 a measured outline must reach.
+    for truth in quads:
+        assert max(_quad_iou(truth, c.quad) for c in result.cards) >= 0.8
+
+
+def test_detect_finds_every_card_of_a_three_by_three_grid(compose_simple, fake_cards, rng):
+    """A 3 x 3 pack is itself card-shaped; the container guard keeps the nine cards.
+
+    8 px gaps on this 1600 px canvas are the ~15 px gaps of a 3000 px phone photo; at
+    half that the outlines merge at working resolution and only split tiles exist,
+    which without an index never outlive their parent (see prune_split_children).
+    """
+    h, w = fake_cards[0].shape[:2]
+    scale, gap = 0.4, 8.0
+    cw, ch = w * scale, h * scale
+    placements = [
+        (800 + (i - 1) * (cw + gap), 600 + (j - 1) * (ch + gap), 0.0, scale)
+        for j in range(3)
+        for i in range(3)
+    ]
+    image, quads = compose_simple(rng, fake_cards[:9], "paper", placements)
+    result = detection.detect(image)
+    assert len(result.cards) == 9, [c.source for c in result.cards]
+    for truth in quads:
+        assert max(_quad_iou(truth, c.quad) for c in result.cards) >= 0.85
+    assert any(c.rejected == "container" for c in result.rejected)
+
+
+@pytest.mark.parametrize("background", ["paper", "solid-light", "solid-dark"])
+def test_detect_never_halves_a_lone_sideways_card(compose_simple, fake_cards, rng, background):
+    """A landscape card has a 2 x 1 row's proportions; the seam test must veto the split."""
+    image, (truth,) = compose_simple(
+        rng, fake_cards[:1], _background(background, rng), [(800, 600, 90.0, 0.5)]
+    )
+    result = detection.detect(image)
+    assert len(result.cards) == 1 and result.cards[0].source != "split"
+    assert _quad_iou(truth, result.cards[0].quad) >= 0.9
+    assert not any(c.rejected == "container" for c in result.rejected)

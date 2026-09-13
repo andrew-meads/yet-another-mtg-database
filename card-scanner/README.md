@@ -220,9 +220,17 @@ refinement → warp. Modules: `candidates.py` (strategies, filters, NMS), `verif
      surfaces (dark table, black cloth, plain playmat). Because a black border merges with a
      dark surface it also emits a border-expanded twin (63/57 × 88/82) and lets verification
      pick.
-   - **Grid split** (`SPLIT_TOUCHING`, off by default: half a card hashes as well as a whole
-     one, so it needs touching-card photos to tune against) — a candidate whose aspect is
-     n×63 : m×88 is tiled and each tile verified individually.
+   - **Grid split** (`SPLIT_TOUCHING`, on by default) — a candidate whose aspect is
+     n×63 : m×88 is tiled and each tile verified individually, provided the internal seams
+     are on the edge map (a lone sideways card has a 2 × 1 row's proportions but no seam).
+     Half a card hashes as well as a whole one, so tiles never out-rank a parent the index
+     accepted; and a **container guard** rejects any non-accepted candidate that merely
+     contains two or more *accepted* candidates each under 1/1.8 of its area — or, when
+     nothing was hashed, two or more independently found card-like candidates that tile
+     ≥ 92 % of it (a 3 × 3 binder page is itself card-shaped and, without an index, used to
+     win NMS by area and swallow all nine cards; a card's own art and text boxes never
+     reach that coverage). Tiles never outlive a parent that failed a geometric filter,
+     never absorb a measured outline in dedup, and rank behind measured outlines in NMS.
    Every contour becomes a quad through `quad_from_contour`: convex hull → `approxPolyDP`
    at several epsilons → for 5–10 vertices the four longest edges are intersected → a
    `minAreaRect` fallback when the hull is rectangular enough.
@@ -579,6 +587,7 @@ new knobs there with a comment and a sensible default rather than hardcoding thr
 | `APPROX_EPSILONS`, `MIN_RECTANGULARITY`, `MAX_ANGLE_DEV_DEG`, `ASPECT_MIN`/`ASPECT_MAX`, `MIN_EDGE_SUPPORT`, `EDGE_SUPPORT_TOLERANCE` | see `config.py` | Quad extraction and the geometric filters. |
 | `MIN_RECTANGULARITY_SUPPORTED`, `SUPPORTED_MIN_EDGE_SUPPORT`, `SUPPORTED_MAX_ANGLE_DEV_DEG`, `SUPPORTED_MAX_FRAME_FRACTION` | 0.5, 0.95, 10, 0.9 | A quad under `MIN_RECTANGULARITY` still passes when its outline is on the edge map for ≥ 95 % of its perimeter with square corners (a thin outline traced as a partial ring); never for a quad spanning 90 % of the frame both ways. Such quads rank behind filled ones in NMS until a hash arbitrates. |
 | `NMS_IOU`, `NMS_CONTAINMENT`, `NMS_CONSENSUS_HITS`, `NMS_UNVERIFIED_ORDER`, `MAX_CARDS` | `0.5`, `0.9`, `6`, `area`, `20` | Non-maximum suppression. |
+| `SPLIT_TOUCHING`, `CONTAINER_MIN_CHILDREN`, `CONTAINER_MIN_AREA_RATIO`, `CONTAINER_MIN_CHILD_SCORE`, `CONTAINER_MIN_COVERAGE` | `true`, `2`, `1.8`, `0.8`, `0.92` | Grid split of touching cards, and the container guard: a non-accepted candidate holding this many *accepted* candidates (each this much smaller) is a row/grid, not a card; when nothing was hashed, independently found children scoring at least this must instead tile it to this coverage. |
 | `NMS_NESTED_SWAP_RATIO`, `NMS_NESTED_SWAP_MAX_GAP` | `0.6`, `4` | A kept piece this small inside a later same-tier quad, both hashed and this close in Hamming bits, yields to it when the larger scores better. |
 | `VERIFY_MODE`, `VERIFY_MAX_HAMMING`, `VERIFY_AMBIGUOUS_HAMMING`, `VERIFY_MIN_INDEX_SIZE`, `VERIFY_THUMB_LONG_EDGE`, `VERIFY_MIN_INLIERS`, `VERIFY_ORB_GATE`, `MAX_AMBIGUOUS` | `auto`, `8`, `16`, `50000`, `180`, `8`, `all`, `6` | Index verification of candidates (hash zones, then the Stage-2 inlier gate). |
 | `BG_MODE`, `BG_BORDER_FRACTION`, `BG_DELTA_E`, `BG_MAX_SPREAD`, `BG_EMIT_EXPANDED` | `auto`, `0.04`, `12`, `14`, `true` | Colour-mask strategy. |

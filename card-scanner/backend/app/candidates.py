@@ -62,6 +62,7 @@ REASONS = (
     "edge_support",
     "dup",
     "hash",
+    "container",
     "nms",
     "split",
     "ambiguous-cap",
@@ -154,6 +155,11 @@ class Candidate:
         # a hash to arbitrate it ranks behind every ordinary candidate, so a
         # ring traced around a card's *shadow* cannot out-size the card itself.
         if self.metrics.get("rect_by_support") and self.hash_distance is None:
+            tier += 0.25
+        # A split tile's geometry is interpolated from its parent blob, never
+        # measured on the card; when the same card also has a measured outline
+        # in the same tier, that outline must win (and suppress the tile).
+        if self.source == "split":
             tier += 0.25
         if self.verify in ("accepted", "ambiguous"):
             return (tier, distance, 0, -self.score, -self.area)
@@ -754,14 +760,95 @@ def split_merged(
     return children
 
 
-def prune_split_children(cands: list[Candidate]) -> None:
-    """Reject every alive ``split`` child whose parent is still alive.
+def reject_containers(cands: list[Candidate]) -> list[Candidate]:
+    """Reject a candidate that merely contains several cards.
 
-    Called after verification and before NMS: a parent that survived hashing
-    (or was never hashed) is the card; its tiles are not. Reason ``split``.
+    A tight row or grid of cards is itself a clean rectangle — a 2 × 1 row of
+    portrait cards has one landscape card's proportions, a 3 × 3 binder page
+    one portrait card's — and it wins NMS by area, suppressing every card
+    inside it, unless something says the cards are the real thing. Two kinds
+    of evidence do, and a container the index *accepted* is never rejected
+    (that is a real card whose inner boxes or seam split produced the
+    "children"; :func:`prune_split_children` removes those next):
+
+    * **Hashed children.** At least ``CONTAINER_MIN_CHILDREN`` alive candidates
+      the index ``accepted``, each inside the container (containment ≥
+      ``NMS_CONTAINMENT``) and at most ``1 / CONTAINER_MIN_AREA_RATIO`` of its
+      area. Half a real card in a 2 × 1 row is a real card, so its tiles
+      qualify; a card's art box does not, because the index does not accept it.
+    * **A tiling, when nothing was hashed.** Only for a container with no hash
+      distance (no index at all): at least ``CONTAINER_MIN_CHILDREN`` alive,
+      independently found (not ``split``) candidates scoring ≥
+      ``CONTAINER_MIN_CHILD_SCORE``, pairwise non-overlapping, that together
+      cover ≥ ``CONTAINER_MIN_COVERAGE`` of the container. Nine cards in a
+      binder page cover ~95 % of the page blob and two cards in a row ~97 %;
+      a card's art box plus text box reach ~87 % of an inset card quad, hence
+      the 92 % bar. Once the index has spoken, only accepted children count —
+      an ambiguous inner box is not a card, whatever it covers.
+
+    Called after verification and before :func:`prune_split_children`.
+    Returns the rejected containers (reason ``container``).
+    """
+    alive = [c for c in cands if c.alive]
+    rejected: list[Candidate] = []
+    for cand in alive:
+        if cand.verify == "accepted":
+            continue
+        limit = cand.area / config.CONTAINER_MIN_AREA_RATIO
+        inside = [
+            other
+            for other in alive
+            if other is not cand
+            and other.area <= limit
+            and containment(other.quad, cand.quad) >= config.NMS_CONTAINMENT
+        ]
+        accepted = [o for o in inside if o.verify == "accepted"]
+        if len(accepted) >= config.CONTAINER_MIN_CHILDREN:
+            cand.rejected = "container"
+            rejected.append(cand)
+            continue
+        if cand.hash_distance is not None:
+            continue  # hashed but not accepted, and no accepted children: keep it
+        tiles: list[Candidate] = []
+        for other in sorted(inside, key=lambda o: -o.area):
+            if other.source == "split" or other.score < config.CONTAINER_MIN_CHILD_SCORE:
+                continue
+            if all(quad_iou(other.quad, t.quad) < 0.3 for t in tiles):
+                tiles.append(other)
+        coverage = sum(t.area for t in tiles) / max(cand.area, 1e-9)
+        if (
+            len(tiles) >= config.CONTAINER_MIN_CHILDREN
+            and coverage >= config.CONTAINER_MIN_COVERAGE
+        ):
+            cand.rejected = "container"
+            rejected.append(cand)
+    return rejected
+
+
+# A split child may only outlive a parent that was beaten by evidence about the
+# *cards*: the index refused the merged blob, or the container guard found the
+# cards inside it. A parent that failed a geometric filter was never card-like
+# and its tiles are texture; a parent still alive is the card.
+_SPLIT_PARENT_DEFEATS = frozenset({"hash", "container"})
+
+
+def prune_split_children(cands: list[Candidate]) -> None:
+    """Reject every ``split`` child except those of a parent the evidence defeated.
+
+    Called after verification and the container guard, before NMS. A child
+    stays alive only when its parent was rejected by ``hash`` (the merged blob
+    hashes like nothing in the index) or ``container`` (its tiles were
+    recognised as cards); a parent that is still alive is the card, and a
+    parent that failed a geometric filter (a wood-grain rectangle, a card's
+    inner frame) leaves tiles that are not cards. Reason ``split``.
     """
     for c in cands:
-        if c.alive and c.source == "split" and c.parent is not None and c.parent.alive:
+        if (
+            c.alive
+            and c.source == "split"
+            and c.parent is not None
+            and (c.parent.alive or c.parent.rejected not in _SPLIT_PARENT_DEFEATS)
+        ):
             c.rejected = "split"
 
 
@@ -894,11 +981,15 @@ def dedup(cands: list[Candidate], iou_threshold: float | None = None) -> list[Ca
     survivor's. Returns the alive candidates.
     """
     thr = config.DEDUP_IOU if iou_threshold is None else iou_threshold
-    # A border-expanded twin carries no evidence of its own, so it must never
-    # absorb a candidate that does; it survives dedup only when nothing else
-    # near-duplicates it.
+    # A border-expanded twin carries no evidence of its own, and a split tile's
+    # geometry is interpolated from its parent blob rather than measured, so
+    # neither may absorb a candidate that was measured on the card; they
+    # survive dedup only when nothing measured near-duplicates them. (A tile
+    # that absorbed a measured quad would then die with its parent, taking the
+    # card with it.)
     alive = sorted(
-        (c for c in cands if c.alive), key=lambda c: (c.source == "color+", -c.score, -c.area)
+        (c for c in cands if c.alive),
+        key=lambda c: (c.source == "color+", c.source == "split", -c.score, -c.area),
     )
     deduper = _Deduper(thr)
     kept: list[Candidate] = []

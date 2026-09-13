@@ -471,12 +471,22 @@ BG_DELTA_E = _env_float("BG_DELTA_E", 12.0)
 BG_MAX_SPREAD = _env_float("BG_MAX_SPREAD", 14.0)
 BG_EMIT_EXPANDED = _env_bool("BG_EMIT_EXPANDED", True)
 # Tile a candidate whose aspect matches n x m touching cards into its children
-# (candidates.split_merged) so a tight row or grid is not one giant "card". Off
-# by default: on both the real photos and the synthetic set the children were
-# the main source of false positives (half a card hashes as well as a whole one)
-# while no touching-card photo existed yet to show the gain. Turn on to measure
-# once such photos are labelled.
-SPLIT_TOUCHING = _env_bool("SPLIT_TOUCHING", False)
+# (candidates.split_merged) so a tight row or grid is not one giant "card". On by
+# default since the tight-grid photos were labelled: the seam-support test keeps a lone
+# sideways card from being halved, verification keeps a hashed parent ahead of its
+# tiles, and the container guard below stops the merged blob from winning NMS by area
+# when there is no index to hash it away.
+SPLIT_TOUCHING = _env_bool("SPLIT_TOUCHING", True)
+# candidates.reject_containers: a candidate at least CONTAINER_MIN_AREA_RATIO times larger
+# than, and containing, CONTAINER_MIN_CHILDREN alive candidates scoring at least
+# CONTAINER_MIN_CHILD_SCORE is a row/grid of cards, not a card — unless the index accepted it.
+CONTAINER_MIN_CHILDREN = _env_int("CONTAINER_MIN_CHILDREN", 2)
+CONTAINER_MIN_AREA_RATIO = _env_float("CONTAINER_MIN_AREA_RATIO", 1.8)
+CONTAINER_MIN_CHILD_SCORE = _env_float("CONTAINER_MIN_CHILD_SCORE", 0.8)
+# ... and, when nothing was hashed at all, the (non-overlapping, independently found)
+# children must together cover this fraction of the container: real tilings reach
+# 95-97 %, a card's own art box plus text box at most ~87 % of an inset card quad.
+CONTAINER_MIN_COVERAGE = _env_float("CONTAINER_MIN_COVERAGE", 0.92)
 
 # Full-resolution corner refinement (geometry.refine_corners): intensity profiles
 # along each side's outward normal, from REFINE_BAND_IN inside to REFINE_BAND_OUT
