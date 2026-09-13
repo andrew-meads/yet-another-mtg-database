@@ -813,7 +813,8 @@
           [1054, 1758],
           [376, 849]
         ],
-        "quadSource": "verified"
+        "quadSource": "verified",
+        "occluded": true
       },
       {
         "name": "Abduction",
@@ -837,7 +838,8 @@
           [837, 2823],
           [1116, 1768]
         ],
-        "quadSource": "verified"
+        "quadSource": "verified",
+        "occluded": true
       },
       {
         "name": "Light Up the Stage",
@@ -850,7 +852,8 @@
           [382, 2827],
           [1174, 2018]
         ],
-        "quadSource": "verified"
+        "quadSource": "verified",
+        "occluded": true
       }
     ]
   },

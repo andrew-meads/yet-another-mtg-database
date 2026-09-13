@@ -66,6 +66,8 @@ from . import config, detection, geometry, labels
 
 SCHEMA = "card-scanner.evaluate-photos/1"
 OVERLAY_WIDTH = 1600
+# An unmatched detection this far inside an occluded card's quad is its visible part.
+PARTIAL_CONTAINMENT = 0.8
 
 # Config values worth snapshotting into a report (no secrets: DATABASE_URL is
 # deliberately absent). Anything that changes detection or matching behaviour.
@@ -350,6 +352,7 @@ def evaluate_entry(entry: dict, root: Path, maps: labels.IndexMaps | None, opts:
                 "has_quad": quad is not None,
                 "quad": labels.quad_to_json(quad) if quad is not None else None,
                 "quad_source": card.get("quadSource"),
+                "occluded": bool(card.get("occluded")),
                 "orientation": labels.orientation_of(quad) if quad is not None else None,
                 "det_index": None,
                 "match_how": None,
@@ -450,11 +453,26 @@ def evaluate_entry(entry: dict, root: Path, maps: labels.IndexMaps | None, opts:
 
     # Only an entry whose every card is quad-labelled can call a leftover
     # detection a false positive; elsewhere it may simply be an unlabelled card.
+    # A leftover that lies almost entirely inside an *occluded* card's (amodal)
+    # quad is that card's visible part — the detector found something real but
+    # not the whole card — and is a "partial": neither a hit nor a false positive.
     fully_labelled = kind == "photo" and bool(cards) and len(labelled) == len(cards)
+    occluded_gt = [
+        (labelled[gj], gt_quads[gj])
+        for gj in range(len(labelled))
+        if gt_rows[labelled[gj]]["occluded"]
+    ]
     for di in free_det:
-        det_rows[di]["is_fp"] = fully_labelled
+        partial_of = None
+        for gi, gq in occluded_gt:
+            if geometry.containment(det_quads[di], gq) >= PARTIAL_CONTAINMENT:
+                partial_of = gi
+                break
+        det_rows[di]["partial_of"] = partial_of
+        det_rows[di]["is_fp"] = fully_labelled and partial_of is None
     for row in det_rows:
         row.setdefault("is_fp", False)
+        row.setdefault("partial_of", None)
 
     # --- identification scoring ----------------------------------------------------
     if identify:
@@ -511,6 +529,7 @@ def evaluate_entry(entry: dict, root: Path, maps: labels.IndexMaps | None, opts:
             "quad": d["quad"],
             "gt_index": d["gt_index"],
             "is_fp": d["is_fp"],
+            "partial_of": d["partial_of"],
             "top1": _slim_match(d["results"][0] if d["results"] else None),
             "identify_ms": None if d["identify_ms"] is None else round(d["identify_ms"], 1),
         }
@@ -531,6 +550,7 @@ def evaluate_entry(entry: dict, root: Path, maps: labels.IndexMaps | None, opts:
         "det_tp": len(matches),
         "det_fn": len(unmatched_gt),
         "det_fp": sum(1 for d in det_rows if d["is_fp"]),
+        "det_partial": sum(1 for d in det_rows if d["partial_of"] is not None),
         "unmatched_detections": len(free_det),
         "detect_ms": round(detect_ms, 1),
         "verify_mode": verify_mode,
@@ -570,6 +590,13 @@ def summarize(photos: list[dict]) -> dict:
     det_tp = sum(p["det_tp"] for p in photos)
     det_fn = sum(p["det_fn"] for p in photos)
     det_fp = sum(p["det_fp"] for p in photos)
+    det_partial = sum(p.get("det_partial", 0) for p in photos)
+    # Recall split by whether the labelled card is covered by another card: the
+    # visible-card number is what a classical detector is judged on, the
+    # occluded one is the honest score for overlap handling.
+    quad_gts = [g for g in gts if g["has_quad"]]
+    visible = [g for g in quad_gts if not g.get("occluded")]
+    occluded = [g for g in quad_gts if g.get("occluded")]
     corner_px = [g["corner_err_px"] for g in gts if g["corner_err_px"] is not None]
     corner_pct = [g["corner_err_pct"] for g in gts if g["corner_err_pct"] is not None]
 
@@ -600,6 +627,13 @@ def summarize(photos: list[dict]) -> dict:
         "det_fn": det_fn,
         "det_fp": det_fp,
         "det_recall": _rate(det_tp, det_tp + det_fn),
+        "det_recall_visible": _rate(
+            sum(1 for g in visible if g["det_index"] is not None), len(visible)
+        ),
+        "det_recall_occluded": _rate(
+            sum(1 for g in occluded if g["det_index"] is not None), len(occluded)
+        ),
+        "det_partial": det_partial,
         "det_precision": _rate(det_tp, det_tp + det_fp),
         "fp_per_photo": _rate(det_fp, len(fully)),
         "corner_err_px": _pctl(corner_px),
@@ -658,6 +692,9 @@ def failures(photos: list[dict]) -> list[str]:
         if not p["count_ok"]:
             out.append(f"{tag}: detected {p['n_detected']} of {p['n_gt']} listed cards")
         for d in p["detections"]:
+            if d.get("partial_of") is not None:
+                covered = p["gt"][d["partial_of"]]["name"]
+                out.append(f"{tag}: partial detection #{d['index']} (visible part of {covered})")
             if d["is_fp"]:
                 top = d["top1"]
                 what = (
@@ -670,7 +707,8 @@ def failures(photos: list[dict]) -> list[str]:
                 out.append(f"{tag}: {name}: label unresolved — {g['resolved']['warning']}")
                 continue
             if g["has_quad"] and g["det_index"] is None:
-                out.append(f"{tag}: {name}: not detected (no quad at IoU threshold)")
+                why = "occluded card" if g.get("occluded") else "no quad at IoU threshold"
+                out.append(f"{tag}: {name}: not detected ({why})")
             if not g["id_evaluated"]:
                 continue
             top = g["top1"]
@@ -702,6 +740,7 @@ def failures(photos: list[dict]) -> list[str]:
 # tolerance; "max" = must not rise by more than tolerance + allowance.
 _DETECTION_GATES = (
     (("det_recall",), "min", 0.0),
+    (("det_recall_visible",), "min", 0.0),
     (("det_precision",), "min", 0.0),
     (("fp_per_photo",), "max", 0.1),
     (("corner_err_pct", "p95"), "max", 0.3),
@@ -835,6 +874,10 @@ def _print_summary(title: str, s: dict, detection_only: bool) -> None:
         f"{_pct(s['count_ok_rate'], s['count_ok'], s['photos'])}"
     )
     print(f"  det recall @IoU    : {_pct(s['det_recall'], s['det_tp'], s['det_tp'] + s['det_fn'])}")
+    print(
+        f"  visible / occluded : {_pct(s['det_recall_visible'])} / {_pct(s['det_recall_occluded'])}"
+        f"   partial detections: {s['det_partial']}"
+    )
     print(
         f"  det precision      : {_pct(s['det_precision'], s['det_tp'], s['det_tp'] + s['det_fp'])}"
         f"   FP/photo: {_fmt(s['fp_per_photo'])}"
@@ -1064,6 +1107,8 @@ _GT = (0, 200, 0)  # green
 _TP = (255, 120, 0)  # blue
 _FP = (0, 0, 230)  # red
 _FN = (0, 140, 255)  # orange
+_OCC = (200, 0, 200)  # magenta: an occluded card (dashed when missed)
+_PARTIAL = (200, 200, 0)  # cyan: a detection that is the visible part of an occluded card
 
 
 def _dashed_poly(canvas: np.ndarray, pts: np.ndarray, colour, thickness: int) -> None:
@@ -1087,7 +1132,7 @@ def _outlined_text(canvas: np.ndarray, text: str, org: tuple[int, int], colour) 
 
 
 def draw_eval_overlay(image_bgr: np.ndarray, photo: dict) -> np.ndarray:
-    """GT green, TP blue, FP red, FN orange dashed, with top-1 text per detection."""
+    """GT green, TP blue, FP red, FN orange dashed, occluded GT magenta, partials cyan."""
     h, w = image_bgr.shape[:2]
     scale = min(1.0, OVERLAY_WIDTH / w)
     canvas = cv2.resize(
@@ -1099,17 +1144,24 @@ def draw_eval_overlay(image_bgr: np.ndarray, photo: dict) -> np.ndarray:
         if g["quad"] is None:
             continue
         pts = np.asarray(g["quad"], dtype=np.float32) * scale
+        occluded = bool(g.get("occluded"))
         if g["det_index"] is None:
-            _dashed_poly(canvas, pts, _FN, t + 1)
-            _outlined_text(canvas, f"FN {g['name']}", tuple(pts[0].astype(int) + (8, -8)), _FN)
+            colour = _OCC if occluded else _FN
+            _dashed_poly(canvas, pts, colour, t + 1)
+            tag = "FN (occluded)" if occluded else "FN"
+            _outlined_text(
+                canvas, f"{tag} {g['name']}", tuple(pts[0].astype(int) + (8, -8)), colour
+            )
         else:
-            cv2.polylines(canvas, [pts.astype(np.int32).reshape(-1, 1, 2)], True, _GT, t)
+            colour = _OCC if occluded else _GT
+            cv2.polylines(canvas, [pts.astype(np.int32).reshape(-1, 1, 2)], True, colour, t)
     for d in photo["detections"]:
         pts = np.asarray(d["quad"], dtype=np.float32) * scale
-        colour = _FP if d["is_fp"] else _TP
+        partial = d.get("partial_of") is not None
+        colour = _FP if d["is_fp"] else (_PARTIAL if partial else _TP)
         cv2.polylines(canvas, [pts.astype(np.int32).reshape(-1, 1, 2)], True, colour, t)
         top = d["top1"]
-        label = "FP " if d["is_fp"] else ""
+        label = "FP " if d["is_fp"] else ("partial " if partial else "")
         if top:
             label += f"{top['name']} {top['set']}:{top['collectorNumber']} ({top['inliers']})"
         elif d["gt_index"] is not None:

@@ -38,10 +38,12 @@ def _gt(
     how="exact",
     warning=None,
     top1=None,
+    occluded=False,
 ):
     return {
         "index": 0,
         "name": name,
+        "occluded": occluded,
         "set": "tla",
         "number": "1",
         "resolved": {
@@ -82,21 +84,37 @@ def _gt(
     }
 
 
-def _photo(name, gts, *, background="white-paper", n_det=None, fp=0, fully=True, kind="photo"):
-    n_det = len([g for g in gts if g["det_index"] is not None]) + fp if n_det is None else n_det
+def _photo(
+    name,
+    gts,
+    *,
+    background="white-paper",
+    n_det=None,
+    fp=0,
+    partial_of=(),
+    fully=True,
+    kind="photo",
+):
+    """``partial_of``: GT indexes, one per extra detection that is an occluded card's visible part."""
+    matched = len([g for g in gts if g["det_index"] is not None])
+    n_det = matched + fp + len(partial_of) if n_det is None else n_det
     tp = sum(1 for g in gts if g["has_quad"] and g["det_index"] is not None)
     fn = sum(1 for g in gts if g["has_quad"] and g["det_index"] is None)
-    dets = [
-        {
-            "index": i,
-            "quad": [[0, 0], [10, 0], [10, 10], [0, 10]],
-            "gt_index": None,
-            "is_fp": i >= n_det - fp,
-            "top1": None,
-            "identify_ms": 100.0,
-        }
-        for i in range(n_det)
-    ]
+    dets = []
+    for i in range(n_det):
+        k = i - matched  # extras come after the matched detections
+        partial = partial_of[k] if 0 <= k < len(partial_of) else None
+        dets.append(
+            {
+                "index": i,
+                "quad": [[0, 0], [10, 0], [10, 10], [0, 10]],
+                "gt_index": None,
+                "is_fp": partial is None and k >= len(partial_of) and k >= 0,
+                "partial_of": partial,
+                "top1": None,
+                "identify_ms": 100.0,
+            }
+        )
     return {
         "dataset": "x",
         "fileName": name,
@@ -112,7 +130,8 @@ def _photo(name, gts, *, background="white-paper", n_det=None, fp=0, fully=True,
         "det_tp": tp,
         "det_fn": fn,
         "det_fp": fp,
-        "unmatched_detections": fp,
+        "det_partial": len(partial_of),
+        "unmatched_detections": fp + len(partial_of),
         "detect_ms": 20.0,
         "gt": gts,
         "detections": dets,
@@ -152,28 +171,49 @@ def photos():
             fully=False,
             background="wood-dark",
         ),
+        # Overlap entry: one occluded card found, one occluded card missed whose
+        # visible part came back as a detection (a partial, not a false positive).
+        _photo(
+            "d.jpg",
+            [
+                _gt("D1"),
+                _gt("D2", occluded=True),
+                _gt("D3", occluded=True, det_index=None, evaluated=False),
+            ],
+            partial_of=(2,),
+            background="white-paper",
+        ),
     ]
 
 
 def test_summarize_counts(photos):
     s = ep.summarize(photos)
-    assert s["photos"] == 3 and s["gt_cards"] == 7 and s["gt_with_quads"] == 5
-    assert s["photos_with_quads"] == 2 and s["photos_fully_labelled"] == 2
-    assert (s["det_tp"], s["det_fn"], s["det_fp"]) == (4, 1, 1)
-    assert s["det_recall"] == pytest.approx(0.8) and s["det_precision"] == pytest.approx(0.8)
-    assert s["fp_per_photo"] == pytest.approx(0.5)  # 1 FP over 2 fully-labelled photos
-    assert s["corner_err_px"]["n"] == 4 and s["corner_err_px"]["max"] == 4.0
-    assert s["corner_err_pct"]["p95"] == pytest.approx(0.925, abs=1e-3)
-    # b: 2 TP + 1 FP = 3 detections for 3 listed cards → the count check alone passes.
-    assert s["count_ok"] == 2 and s["count_ok_rate"] == pytest.approx(2 / 3, abs=1e-3)
-    # Identification denominators: 2 (a) + 2 (b, B1 not detected) + 2 (c, both listed) = 6.
-    assert s["id_evaluated"] == 6
-    assert s["top1_strict"] == 3 and s["top1_lenient"] == 4 and s["topn_lenient"] == 4
-    assert s["top1_strict_rate"] == pytest.approx(0.5)
-    assert s["stage1_recall"] == pytest.approx(4 / 5, abs=1e-3)  # C2 has no shortlist
-    assert s["false_confident"] == 1 and s["false_confident_rate"] == pytest.approx(1 / 6, abs=1e-3)
+    assert s["photos"] == 4 and s["gt_cards"] == 10 and s["gt_with_quads"] == 8
+    assert s["photos_with_quads"] == 3 and s["photos_fully_labelled"] == 3
+    assert (s["det_tp"], s["det_fn"], s["det_fp"]) == (6, 2, 1)
+    assert s["det_recall"] == pytest.approx(0.75) and s["det_precision"] == pytest.approx(
+        6 / 7, abs=1e-4
+    )
+    assert s["fp_per_photo"] == pytest.approx(1 / 3, abs=1e-4)  # 1 FP over 3 fully-labelled photos
+    # Occlusion-aware split: B1 is the only visible miss, D3 the only occluded one,
+    # and D3's visible part is a partial (not a false positive).
+    assert s["det_recall_visible"] == pytest.approx(5 / 6, abs=1e-4)
+    assert s["det_recall_occluded"] == pytest.approx(0.5)
+    assert s["det_partial"] == 1
+    assert s["corner_err_px"]["n"] == 6 and s["corner_err_px"]["max"] == 4.0
+    assert s["corner_err_pct"]["p95"] == pytest.approx(0.875, abs=1e-3)
+    # b: 2 TP + 1 FP = 3 detections for 3 listed cards → the count check alone passes;
+    # d: 2 TP + 1 partial = 3 detections for 3 listed cards, likewise.
+    assert s["count_ok"] == 3 and s["count_ok_rate"] == pytest.approx(3 / 4, abs=1e-3)
+    # Identification denominators: 2 (a) + 2 (b, B1 not detected) + 2 (c, both listed)
+    # + 2 (d, D3 not detected) = 8.
+    assert s["id_evaluated"] == 8
+    assert s["top1_strict"] == 5 and s["top1_lenient"] == 6 and s["topn_lenient"] == 6
+    assert s["top1_strict_rate"] == pytest.approx(5 / 8, abs=1e-4)
+    assert s["stage1_recall"] == pytest.approx(6 / 7, abs=1e-3)  # C2 has no shortlist
+    assert s["false_confident"] == 1 and s["false_confident_rate"] == pytest.approx(1 / 8, abs=1e-3)
     assert s["unresolved"] == 0
-    assert s["detect_ms"]["mean"] == 20.0 and s["identify_ms"]["n"] == 6
+    assert s["detect_ms"]["mean"] == 20.0 and s["identify_ms"]["n"] == 9
 
 
 def test_summarize_empty_and_by_background(photos):
@@ -181,8 +221,10 @@ def test_summarize_empty_and_by_background(photos):
     assert s["photos"] == 0 and s["det_recall"] is None and s["corner_err_px"]["mean"] is None
     by_bg = ep.summarize_by_background(photos)
     assert list(by_bg) == ["white-paper", "wood-dark"]
-    assert by_bg["white-paper"]["det_recall"] == 1.0
+    assert by_bg["white-paper"]["det_recall"] == pytest.approx(0.8, abs=1e-4)  # a: 2/2, d: 2/3
+    assert by_bg["white-paper"]["det_recall_visible"] == 1.0
     assert by_bg["wood-dark"]["det_recall"] == pytest.approx(2 / 3, abs=1e-3)
+    assert by_bg["wood-dark"]["det_recall_occluded"] is None  # no occluded cards there
 
 
 def test_failures_lists_everything_interesting(photos):
@@ -196,6 +238,9 @@ def test_failures_lists_everything_interesting(photos):
     assert "C2" in lines and "no detection's results matched" in lines
     assert "c.jpg: detected 1 of 2" in lines
     assert "A2" not in lines  # clean hit
+    assert "D3" in lines and "not detected (occluded card)" in lines
+    assert "d.jpg: partial detection #2 (visible part of D3)" in lines
+    assert "d.jpg: false positive" not in lines and "D2" not in lines  # occluded hit is clean
 
 
 def test_diff_reports_gates(photos):
@@ -213,6 +258,9 @@ def test_diff_reports_gates(photos):
     problems = ep.diff_reports(worse, base)
     text = "\n".join(problems)
     assert "det_recall dropped" in text and "fp_per_photo rose" in text
+    vis = json.loads(json.dumps(base))
+    vis["summary"]["det_recall_visible"] -= 0.1
+    assert any("det_recall_visible dropped" in p for p in ep.diff_reports(vis, base))
     assert "corner_err_pct.p95 rose" in text and "corner_err_px.p95 rose" in text
     assert "top1_strict_rate" not in text  # identification not gated by default
     assert "top1_strict_rate" in "\n".join(ep.diff_reports(worse, base, gate_identification=True))
@@ -257,7 +305,7 @@ def test_write_csv(tmp_path: Path, photos):
     ep.write_csv(out, photos)
     with open(out, newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    assert len(rows) == 7 + 1  # one per GT card + one FP row
+    assert len(rows) == 10 + 1  # one per GT card + one FP row (a partial is not an FP row)
     assert rows[0]["row_kind"] == "gt" and rows[0]["name"] == "A1"
     assert [r for r in rows if r["row_kind"] == "fp"][0]["fileName"] == "b.jpg"
 
