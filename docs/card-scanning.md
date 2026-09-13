@@ -17,7 +17,10 @@ auth-guarded proxy plus the capture and results UI.
   `data/scryfall-cache/`, and the labelled test photos read-only from `card-scanner/test-images/`.
 - Its `POST /api/scan` detects every card in a photo (a multi-strategy classical detector
   whose candidate quads are verified against the image index, so plain-white backgrounds are
-  no longer required), de-skews each one, and returns ranked candidates from a three-stage
+  no longer required; touching cards are split apart and a card partly under another card is
+  rebuilt from its three visible corners, coming back with `source: "completed"` and the
+  full card's quad, only when identification confirms it), de-skews each one, and returns
+  ranked candidates from a three-stage
   matcher: 64-bit pHash shortlist → **OCR of the card name and collector line** (RapidOCR /
   onnxruntime; fuzzy-matched against the index and *added* to the shortlist, never used to
   filter it) → ORB + validated RANSAC homography, fused with the text evidence. Shape:

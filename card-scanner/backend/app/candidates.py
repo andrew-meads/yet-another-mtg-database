@@ -37,6 +37,7 @@ import numpy as np
 
 from . import config
 from .geometry import (
+    _intersection_area,
     containment,
     interior_angles,
     order_points,
@@ -114,6 +115,10 @@ class Candidate:
     hash_distance: int | None = None
     verify: str = "unverified"
     parent: Candidate | None = field(default=None, repr=False, compare=False)
+    # The convex hull of the source contour, simplified to 5-12 vertices when
+    # it was not already a quad (working-image coordinates). What an occluded
+    # card leaves behind: see complete_occluded.
+    poly: np.ndarray | None = field(default=None, repr=False, compare=False)
 
     @property
     def alive(self) -> bool:
@@ -161,6 +166,10 @@ class Candidate:
         # in the same tier, that outline must win (and suppress the tile).
         if self.source == "split":
             tier += 0.25
+        # A completed (occluded) card is built on inference, not an outline:
+        # it ranks behind every candidate that was actually seen.
+        if self.source == "completed":
+            tier += 2.5
         if self.verify in ("accepted", "ambiguous"):
             return (tier, distance, 0, -self.score, -self.area)
         # Consensus first: a quad that several sweep passes re-found (a card
@@ -375,12 +384,24 @@ def _contours_to_candidates(
             and cv2.arcLength(contours[i], True) > 1.5 * hull_perimeter
             and area < 0.5 * cv2.contourArea(hull)
         )
+        # Keep the simplified hull when it is more than a quad: a card with a
+        # corner under another card leaves an L whose hull is a pentagon, and
+        # complete_occluded can rebuild the card from its three true corners.
+        poly = None
+        if hull_perimeter > 0:
+            # Finer than the quad extraction's 2 %: at that epsilon the hull of
+            # an L collapses to the very quad that just failed, and the notch
+            # is gone.
+            approx = cv2.approxPolyDP(hull, 0.01 * hull_perimeter, True).reshape(-1, 2)
+            if 5 <= len(approx) <= 12:
+                poly = approx.astype(np.float32)
         out.append(
             Candidate(
                 quad=quad,
                 source=source,
                 params=dict(params),
                 metrics={"contour_area": float(area), "hits": 1, "ring": float(ring_like)},
+                poly=poly,
             )
         )
 
@@ -850,6 +871,166 @@ def prune_split_children(cands: list[Candidate]) -> None:
             and (c.parent.alive or c.parent.rejected not in _SPLIT_PARENT_DEFEATS)
         ):
             c.rejected = "split"
+
+
+# ---------------------------------------------------------------------------
+# Occlusion completion
+# ---------------------------------------------------------------------------
+
+
+def _vertex_angles(poly: np.ndarray) -> np.ndarray:
+    """Interior angle (degrees) at every vertex of a convex polygon."""
+    pts = np.asarray(poly, dtype=np.float64)
+    n = len(pts)
+    out = np.empty(n)
+    for i in range(n):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        u, v = a - b, c - b
+        cosang = np.dot(u, v) / max(np.linalg.norm(u) * np.linalg.norm(v), 1e-9)
+        out[i] = float(np.degrees(np.arccos(np.clip(cosang, -1.0, 1.0))))
+    return out
+
+
+def _segment_support(a: np.ndarray, b: np.ndarray, distance: np.ndarray, tol: float) -> float:
+    """Fraction of 50 points along ``a``→``b`` within ``tol`` px of the support map."""
+    h, w = distance.shape[:2]
+    t = np.linspace(0.0, 1.0, 50)
+    pts = a[None, :] + t[:, None] * (b - a)[None, :]
+    xs = np.clip(np.rint(pts[:, 0]).astype(int), 0, w - 1)
+    ys = np.clip(np.rint(pts[:, 1]).astype(int), 0, h - 1)
+    return float((distance[ys, xs] <= tol).mean())
+
+
+def three_corner_quads(
+    poly: np.ndarray,
+    *,
+    angle_tol: float = 15.0,
+    aspect_tol: float = 0.15,
+) -> list[np.ndarray]:
+    """Card quads implied by three consecutive right-angled vertices of ``poly``.
+
+    For every run ``c0, c1, c2`` of consecutive vertices whose interior angles
+    are all within ``angle_tol`` of 90° and whose two edges ``c0c1``, ``c1c2``
+    have a card's proportions (63:88 either way, within ``aspect_tol`` — 15 %,
+    because a hand of cards photographed close up shows 20 % perspective
+    between opposite sides; the occluder and side-support guards carry the
+    false-positive protection), the
+    fourth corner is completed as the parallelogram ``c0 + c2 - c1``. The
+    returned quads are in polygon order (``c0, c1, c2, c3``).
+    """
+    pts = np.asarray(poly, dtype=np.float64).reshape(-1, 2)
+    n = len(pts)
+    if n < 5:
+        return []
+    angles = _vertex_angles(pts)
+    right = np.abs(angles - 90.0) <= angle_tol
+    out: list[np.ndarray] = []
+    for i in range(n):
+        j, k = (i + 1) % n, (i + 2) % n
+        if not (right[i] and right[j] and right[k]):
+            continue
+        c0, c1, c2 = pts[i], pts[j], pts[k]
+        s1, s2 = np.linalg.norm(c1 - c0), np.linalg.norm(c2 - c1)
+        if s1 <= 0 or s2 <= 0:
+            continue
+        ratio = min(s1, s2) / max(s1, s2)
+        if abs(ratio - config.CARD_ASPECT_RATIO) > aspect_tol * config.CARD_ASPECT_RATIO:
+            continue
+        c3 = c0 + c2 - c1
+        out.append(np.asarray([c0, c1, c2, c3], dtype=np.float32))
+    return out
+
+
+def complete_occluded(
+    cands: list[Candidate],
+    winners: list[Candidate],
+    support: np.ndarray | None,
+    work_shape: tuple[int, ...],
+) -> list[Candidate]:
+    """Rebuild cards that another card covers from their three visible corners.
+
+    A partially covered card's visible region is an L whose hull is a
+    pentagon: the geometric filters reject it (a hull quad of an L fills badly
+    and its corners are wrong), but three of its vertices are the card's true
+    corners. For every rejected candidate with a stored ``poly``,
+    :func:`three_corner_quads` proposes the card; a proposal is kept when both
+    visible sides lie on the edge map for ``COMPLETION_MIN_SIDE_SUPPORT`` of
+    their length, its area is in range, and — the false-positive guard — the
+    completed corner lies inside a surviving winner: occlusion needs an
+    occluder, and a notch with nothing over it is not one. The new candidates
+    have ``source="completed"``, inherit the parent's params, and carry
+    ``rectangularity`` and ``edge_support`` preset (the hidden sides have no
+    evidence to measure). Verification treats them as never better than
+    ``ambiguous`` so identification's ORB gate must confirm them.
+
+    Returns the new candidates (not yet filtered, hashed or NMS'd), at most
+    ``MAX_COMPLETED``.
+    """
+    if support is None or not winners:
+        return []
+    distance = support_distance(support)
+    min_area, max_area = _area_bounds(work_shape)
+    winner_quads = [w.quad.astype(np.float32) for w in winners if w.alive]
+    out: list[Candidate] = []
+    seen = _Deduper(config.DEDUP_IOU)
+    for cand in cands:
+        if cand.alive or cand.poly is None or cand.source == "split":
+            continue
+        if cand.rejected not in ("rect", "concave", "angles", "aspect", "edge_support"):
+            continue
+        for quad in three_corner_quads(cand.poly):
+            area = quad_area(quad)
+            if area < min_area or area > max_area:
+                continue
+            if not cv2.isContourConvex(quad.reshape(-1, 1, 2)):
+                continue
+            c0, c1, c2, c3 = quad.astype(np.float64)
+            long_edge = max(np.linalg.norm(c1 - c0), np.linalg.norm(c2 - c1))
+            tol = max(2.0, config.EDGE_SUPPORT_TOLERANCE * long_edge)
+            sup = min(
+                _segment_support(c0, c1, distance, tol), _segment_support(c1, c2, distance, tol)
+            )
+            if sup < config.COMPLETION_MIN_SIDE_SUPPORT:
+                continue
+            q = order_points(quad)
+            # The occluder must be another card: a winner overlaps the
+            # proposal by at least COMPLETION_MIN_OVERLAP of its area (the
+            # covered corner region) without the proposal duplicating it (a
+            # lone card's own rounded-corner hull has three right angles too,
+            # and "completes" to the card that was already found). Overlap
+            # area rather than the completed corner itself: under perspective
+            # the parallelogram estimate of that corner can land a few dozen
+            # pixels off, and a corner just inside the occluder would fall out.
+            covered = False
+            duplicate = False
+            for w in winner_quads:
+                if quad_iou(q, w) >= config.NMS_IOU or containment(q, w) >= config.NMS_CONTAINMENT:
+                    duplicate = True
+                    break
+                if _intersection_area(q, w) >= config.COMPLETION_MIN_OVERLAP * area:
+                    covered = True
+            if duplicate or not covered:
+                continue
+            if seen.find(q) is not None:
+                continue
+            seen.add(q)
+            out.append(
+                Candidate(
+                    quad=q,
+                    source="completed",
+                    params=dict(cand.params),
+                    metrics={
+                        "hits": 1,
+                        "rectangularity": 1.0,
+                        "edge_support": sup,
+                        "completed_from": cand.rejected or "",
+                    },
+                    parent=cand,
+                )
+            )
+            if len(out) >= config.MAX_COMPLETED:
+                return out
+    return out
 
 
 # ---------------------------------------------------------------------------

@@ -374,3 +374,43 @@ def test_detect_never_halves_a_lone_sideways_card(compose_simple, fake_cards, rn
     assert len(result.cards) == 1 and result.cards[0].source != "split"
     assert _quad_iou(truth, result.cards[0].quad) >= 0.9
     assert not any(c.rejected == "container" for c in result.rejected)
+
+
+# --- occlusion completion through detect() ---------------------------------------------
+
+
+def _seeded_cards(n: int) -> list[np.ndarray]:
+    """Fake cards with fixed seeds (independent of the fixture cache) for exact repeatability."""
+    from app import synth
+
+    return [synth.make_fake_card(np.random.default_rng(i), i) for i in range(1, n + 1)]
+
+
+@pytest.mark.parametrize("overlap", [0.7, 0.5])
+def test_detect_completes_a_card_under_another(compose_simple, overlap):
+    """Two cards, the second laid over one corner of the first: both come back, the
+    covered one as ``completed`` with its amodal quad, always ``ambiguous``."""
+    cards = _seeded_cards(2)
+    under = (600, 550, 0.0, 0.5)
+    over = (600 + 487 * 0.5 * overlap, 550 + 680 * 0.5 * overlap, 25.0, 0.5)
+    image, quads = compose_simple(np.random.default_rng(1234), cards, "paper", [under, over])
+    result = detection.detect(image)
+    assert len(result.cards) == 2, [c.source for c in result.cards]
+    covered = next(c for c in result.cards if c.source == "completed")
+    assert _quad_iou(quads[0], covered.quad) >= 0.9
+    assert covered.verify == "ambiguous"
+    top = next(c for c in result.cards if c.source != "completed")
+    assert _quad_iou(quads[1], top.quad) >= 0.9
+
+
+def test_detect_does_not_complete_a_notched_lone_card(compose_simple):
+    cards = _seeded_cards(1)
+    image, (truth,) = compose_simple(
+        np.random.default_rng(1234), cards, "paper", [(800, 600, 0.0, 0.5)]
+    )
+    # A coaster-like disc over one corner, drawn in the background colour: a notch, no card.
+    x, y = int(truth[2][0]), int(truth[2][1])
+    cv2.circle(image, (x, y), 35, (235, 235, 235), -1)
+    result = detection.detect(image)
+    assert not any(c.source == "completed" for c in result.cards)
+    assert len(result.cards) == 1 and _quad_iou(truth, result.cards[0].quad) >= 0.9

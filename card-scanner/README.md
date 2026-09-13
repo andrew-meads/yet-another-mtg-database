@@ -140,7 +140,7 @@ curl -F image=@"test-images/07-8-sideways-cards.jpg" http://localhost:8000/api/s
       "url": "/cards/<batch>_0.jpg",
       "width": 487,
       "height": 680,
-      "source": "edges",             // detection strategy that produced the quad
+      "source": "edges",             // edges | color | color+ | split | completed (a card under another card)
       "detectScore": 0.93,           // geometric candidate score (0-1)
       "hashDistance": 6,             // Hamming distance to the nearest indexed card (verification)
       "orientation": 180,            // rotation applied so the saved crop is upright (0 | 180 | null)
@@ -265,7 +265,20 @@ refinement → warp. Modules: `candidates.py` (strategies, filters, NMS), `verif
    a glare-cut half of a card hashes about as well as the card (half a card is still that
    card) and used to suppress it. Without hashes nothing swaps: a 2×1 pair blob scores as
    well as a card it contains.
-6. **Refinement + warp** — corners are refined at full resolution: 64 intensity profiles
+6. **Occlusion completion** — a card under another card leaves an L whose hull is a
+   pentagon; the geometric filters reject its hull quad, but three of its vertices are the
+   card's true corners. Every rejected candidate keeps its simplified hull, and a run of
+   three consecutive right-angled vertices whose two sides have a card's proportions (within
+   15 %, for the perspective of a hand held close to the camera) completes the fourth corner
+   as a parallelogram. The proposal is kept only when both visible sides lie on the edge map
+   (`COMPLETION_MIN_SIDE_SUPPORT`) and a surviving card overlaps it by
+   `COMPLETION_MIN_OVERLAP` of its area without duplicating it — occlusion needs an
+   occluder; a notch with nothing over it is not one. Completed cards are `source:
+   "completed"`, never better than `ambiguous` whatever they hash at (their warp holds a
+   slice of the occluder; `VERIFY_COMPLETED_HAMMING`), rank behind everything actually
+   seen, and so live or die by identification's ORB gate. A card with only two visible
+   corners (two hypotheses, one of them the occluder's) is not attempted.
+7. **Refinement + warp** — corners are refined at full resolution: 64 intensity profiles
    along each side's outward normal, and in each one a gradient run counts as *this card's*
    edge only if it is dark→bright by a share of the outward contrast (the border ends where
    something brighter begins; the frame→border drop beside an inset line is bright→dark and
@@ -291,10 +304,17 @@ map and colour mask. `DEBUG_JSON` adds the candidate/rejection lists to the resp
 
 ### Known limitations
 
-- **Overlapping (partially occluded) cards**: the top card is found; the occluded one is not
-  completed from its visible corners. Strongly patterned playmats can still defeat the
-  classical strategies — both are the case for the planned learned detector (see the
-  plan's Phase 2).
+- **A card with only two visible corners** (most of it under another card) is not
+  completed: two hypotheses exist and one of them lies on the occluder, whose identity the
+  ORB gate would happily confirm.
+- **Borderless or thin-edge cards on a busy playmat** have no closed outline for any
+  strategy to trace; the labelled set holds one such miss. The learned detector (plan Phase
+  2, A19/A20) is worth building only once the labelled set holds at least five misses of
+  this class — shoot and label those photos first.
+- **Corner accuracy** follows a dark-border model: a black border on wood of the same
+  darkness has no edge to find, and a card brighter than its surroundings (a borderless
+  card in a binder pocket, a glare-bright foil border on a dark mat) sits outside it.
+  Identification's reference-image homography is the tool for those.
 - **Strong glare** can break the outline; verification + the colour mask recover most cases.
 
 ## Identification (Part 2)
@@ -601,6 +621,7 @@ new knobs there with a comment and a sensible default rather than hardcoding thr
 | `MIN_RECTANGULARITY_SUPPORTED`, `SUPPORTED_MIN_EDGE_SUPPORT`, `SUPPORTED_MAX_ANGLE_DEV_DEG`, `SUPPORTED_MAX_FRAME_FRACTION` | 0.5, 0.95, 10, 0.9 | A quad under `MIN_RECTANGULARITY` still passes when its outline is on the edge map for ≥ 95 % of its perimeter with square corners (a thin outline traced as a partial ring); never for a quad spanning 90 % of the frame both ways. Such quads rank behind filled ones in NMS until a hash arbitrates. |
 | `NMS_IOU`, `NMS_CONTAINMENT`, `NMS_CONSENSUS_HITS`, `NMS_UNVERIFIED_ORDER`, `MAX_CARDS` | `0.5`, `0.9`, `6`, `area`, `20` | Non-maximum suppression. |
 | `SPLIT_TOUCHING`, `CONTAINER_MIN_CHILDREN`, `CONTAINER_MIN_AREA_RATIO`, `CONTAINER_MIN_CHILD_SCORE`, `CONTAINER_MIN_COVERAGE` | `true`, `2`, `1.8`, `0.8`, `0.92` | Grid split of touching cards, and the container guard: a non-accepted candidate holding this many *accepted* candidates (each this much smaller) is a row/grid, not a card; when nothing was hashed, independently found children scoring at least this must instead tile it to this coverage. |
+| `COMPLETE_OCCLUDED`, `COMPLETION_MIN_SIDE_SUPPORT`, `COMPLETION_MIN_OVERLAP`, `MAX_COMPLETED`, `VERIFY_COMPLETED_HAMMING` | `true`, `0.9`, `0.05`, `4`, `22` | Occlusion completion: both visible sides on the edge map for this fraction, a surviving card overlapping the proposal by this share of its area, at most this many per photo; the hash distance a completed quad may sit at and still be kept (always `ambiguous`). |
 | `NMS_NESTED_SWAP_RATIO`, `NMS_NESTED_SWAP_MAX_GAP` | `0.6`, `4` | A kept piece this small inside a later same-tier quad, both hashed and this close in Hamming bits, yields to it when the larger scores better. |
 | `VERIFY_MODE`, `VERIFY_MAX_HAMMING`, `VERIFY_AMBIGUOUS_HAMMING`, `VERIFY_MIN_INDEX_SIZE`, `VERIFY_THUMB_LONG_EDGE`, `VERIFY_MIN_INLIERS`, `VERIFY_ORB_GATE`, `MAX_AMBIGUOUS` | `auto`, `8`, `16`, `50000`, `180`, `8`, `all`, `6` | Index verification of candidates (hash zones, then the Stage-2 inlier gate). |
 | `BG_MODE`, `BG_BORDER_FRACTION`, `BG_DELTA_E`, `BG_MAX_SPREAD`, `BG_EMIT_EXPANDED` | `auto`, `0.04`, `12`, `14`, `true` | Colour-mask strategy. |

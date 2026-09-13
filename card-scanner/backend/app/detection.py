@@ -84,7 +84,9 @@ class DetectedCard:
             (capped at ``OCR_MAX_HEIGHT`` rows), rotated like ``image``; the OCR
             band passes read the collector line from it. ``None`` only for
             cards constructed by hand.
-        source: Strategy that found it (``edges`` / ``color`` / ``color+`` / ``split``).
+        source: Strategy that found it (``edges`` / ``color`` / ``color+`` / ``split`` /
+            ``completed`` — a card under another card, rebuilt from three visible
+            corners: never better than ``ambiguous``, so the ORB gate decides).
         score: Geometric score in ``[0, 1]`` (aspect fit, rectangularity, edge support).
         hash_distance: Minimum Hamming distance to the index, when verified.
         orientation: Rotation (0 or 180) applied to the crop, from the hash variant.
@@ -305,6 +307,8 @@ def detect(image_bgr: np.ndarray, *, verify: bool = True) -> DetectionResult:
         if factor != 1.0:
             for c in cands:
                 c.quad = c.quad * factor
+                if c.poly is not None:
+                    c.poly = c.poly * factor
                 c.metrics.pop("area", None)
                 c.params["scale"] = long_edge
         all_cands.extend(cands)
@@ -338,6 +342,26 @@ def detect(image_bgr: np.ndarray, *, verify: bool = True) -> DetectionResult:
             continue
         final.append(c)
     timings["nms"] = (time.perf_counter() - t0) * 1000.0
+
+    # --- 6b. Cards under other cards: rebuilt from three visible corners. ---
+    if config.COMPLETE_OCCLUDED and final:
+        t0 = time.perf_counter()
+        completed = cands_mod.complete_occluded(all_cands, final, support_primary, work.shape)
+        if completed:
+            cands_mod.filter_candidates(completed, work.shape, None)
+            alive_completed = [c for c in completed if c.alive]
+            if verify and mode != "off":
+                verify_mod.hash_verify(alive_completed, work, mode=mode)
+            for c in alive_completed:
+                if c.alive:
+                    c.verify = "ambiguous"  # never trusted on geometry or hash alone
+            # Proposals never overlap a winner (complete_occluded refuses those),
+            # so NMS is only among themselves.
+            for c in cands_mod.nms([c for c in alive_completed if c.alive]):
+                if len(final) < config.MAX_CARDS:
+                    final.append(c)
+            all_cands.extend(completed)
+        timings["complete"] = (time.perf_counter() - t0) * 1000.0
 
     # --- 7. Full resolution: refine corners, warp once, rotate by orientation. ---
     t0 = time.perf_counter()

@@ -101,6 +101,16 @@ def hash_verify(cands: list[Candidate], work: np.ndarray, *, mode: str | None = 
         distance, variant = result
         cand.hash_distance = int(distance)
         cand.orientation = int(variant)
+        if cand.source == "completed":
+            # A rebuilt card's warp holds a slice of the occluder, so it hashes
+            # worse than a clean crop and is never trusted on the hash alone:
+            # ambiguous at best, so the ORB gate decides.
+            if mode == "filter" and distance > config.VERIFY_COMPLETED_HAMMING:
+                cand.verify = "rejected"
+                cand.rejected = "hash"
+            else:
+                cand.verify = "ambiguous"
+            continue
         if distance <= config.VERIFY_MAX_HAMMING:
             cand.verify = "accepted"
         elif mode == "filter" and distance <= config.VERIFY_AMBIGUOUS_HAMMING:

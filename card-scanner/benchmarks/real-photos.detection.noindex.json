@@ -1,7 +1,7 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T05:44:49+00:00",
-  "git_sha": "a4717ac",
+  "created": "2026-09-13T05:58:19+00:00",
+  "git_sha": "b8ee1ea",
   "versions": {
     "python": "3.14.2",
     "opencv": "5.0.0",
@@ -83,28 +83,28 @@
     "gt_with_quads": 68,
     "photos_with_quads": 17,
     "photos_fully_labelled": 17,
-    "detections": 68,
-    "det_tp": 59,
-    "det_fn": 9,
+    "detections": 69,
+    "det_tp": 60,
+    "det_fn": 8,
     "det_fp": 9,
-    "det_recall": 0.8676,
+    "det_recall": 0.8824,
     "det_recall_visible": 0.9077,
-    "det_recall_occluded": 0.0,
+    "det_recall_occluded": 0.3333,
     "det_partial": 0,
-    "det_precision": 0.8676,
+    "det_precision": 0.8696,
     "fp_per_photo": 0.5294,
     "corner_err_px": {
-      "n": 59,
-      "mean": 21.862,
-      "median": 5.56,
-      "p95": 86.617,
+      "n": 60,
+      "mean": 21.869,
+      "median": 5.59,
+      "p95": 86.253,
       "max": 112.63
     },
     "corner_err_pct": {
-      "n": 59,
-      "mean": 2.453,
-      "median": 0.566,
-      "p95": 9.962,
+      "n": 60,
+      "mean": 2.445,
+      "median": 0.573,
+      "p95": 9.945,
       "max": 12.619
     },
     "count_ok": 11,
@@ -135,10 +135,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 239.659,
-      "median": 226.4,
-      "p95": 435.1,
-      "max": 524.3
+      "mean": 249.829,
+      "median": 227.9,
+      "p95": 448.22,
+      "max": 524.7
     },
     "identify_ms": {
       "n": 0,
@@ -208,10 +208,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 524.3,
-        "median": 524.3,
-        "p95": 524.3,
-        "max": 524.3
+        "mean": 524.7,
+        "median": 524.7,
+        "p95": 524.7,
+        "max": 524.7
       },
       "identify_ms": {
         "n": 0,
@@ -280,10 +280,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 256.5,
-        "median": 256.5,
-        "p95": 256.5,
-        "max": 256.5
+        "mean": 273.7,
+        "median": 273.7,
+        "p95": 273.7,
+        "max": 273.7
       },
       "identify_ms": {
         "n": 0,
@@ -352,10 +352,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 289.5,
-        "median": 289.5,
-        "p95": 289.5,
-        "max": 289.5
+        "mean": 309.3,
+        "median": 309.3,
+        "p95": 309.3,
+        "max": 309.3
       },
       "identify_ms": {
         "n": 0,
@@ -424,10 +424,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 352.9,
-        "median": 352.9,
-        "p95": 406.81,
-        "max": 412.8
+        "mean": 365.3,
+        "median": 365.3,
+        "p95": 416.42,
+        "max": 422.1
       },
       "identify_ms": {
         "n": 0,
@@ -444,28 +444,28 @@
       "gt_with_quads": 37,
       "photos_with_quads": 10,
       "photos_fully_labelled": 10,
-      "detections": 33,
-      "det_tp": 32,
-      "det_fn": 5,
+      "detections": 34,
+      "det_tp": 33,
+      "det_fn": 4,
       "det_fp": 1,
-      "det_recall": 0.8649,
+      "det_recall": 0.8919,
       "det_recall_visible": 0.9412,
-      "det_recall_occluded": 0.0,
+      "det_recall_occluded": 0.3333,
       "det_partial": 0,
-      "det_precision": 0.9697,
+      "det_precision": 0.9706,
       "fp_per_photo": 0.1,
       "corner_err_px": {
-        "n": 32,
-        "mean": 11.527,
-        "median": 4.325,
-        "p95": 45.845,
+        "n": 33,
+        "mean": 11.854,
+        "median": 4.34,
+        "p95": 45.25,
         "max": 112.63
       },
       "corner_err_pct": {
-        "n": 32,
-        "mean": 1.06,
-        "median": 0.459,
-        "p95": 3.837,
+        "n": 33,
+        "mean": 1.088,
+        "median": 0.469,
+        "p95": 3.827,
         "max": 10.257
       },
       "count_ok": 8,
@@ -496,10 +496,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 185.83,
-        "median": 150.35,
-        "p95": 369.725,
-        "max": 408.2
+        "mean": 195.51,
+        "median": 161.2,
+        "p95": 387.205,
+        "max": 429.1
       },
       "identify_ms": {
         "n": 0,
@@ -568,10 +568,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 198.4,
-        "median": 198.4,
-        "p95": 198.4,
-        "max": 198.4
+        "mean": 212.1,
+        "median": 212.1,
+        "p95": 212.1,
+        "max": 212.1
       },
       "identify_ms": {
         "n": 0,
@@ -640,10 +640,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 241.4,
-        "median": 241.4,
-        "p95": 241.4,
-        "max": 241.4
+        "mean": 241.6,
+        "median": 241.6,
+        "p95": 241.6,
+        "max": 241.6
       },
       "identify_ms": {
         "n": 0,
@@ -676,8 +676,7 @@
     "15-tight-grid-9cards.jpg: false positive detection #7",
     "15-tight-grid-9cards.jpg: Amy Rose SLD:2083: not detected (no quad at IoU threshold)",
     "15-tight-grid-9cards.jpg: Light Up the Stage FCA:0039: not detected (no quad at IoU threshold)",
-    "16-fanned-overlap-4cards.jpg: detected 1 of 4 listed cards",
-    "16-fanned-overlap-4cards.jpg: Aang's Iceberg TLA:0005: not detected (occluded card)",
+    "16-fanned-overlap-4cards.jpg: detected 2 of 4 listed cards",
     "16-fanned-overlap-4cards.jpg: Abundance USG:229: not detected (occluded card)",
     "16-fanned-overlap-4cards.jpg: Light Up the Stage FCA:0039: not detected (occluded card)"
   ],
@@ -702,7 +701,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 213.4,
+      "detect_ms": 219.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -972,7 +971,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 79.7,
+      "detect_ms": 82.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -1080,7 +1079,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 103.9,
+      "detect_ms": 101.8,
       "verify_mode": "off",
       "gt": [
         {
@@ -1188,7 +1187,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 87.5,
+      "detect_ms": 88.6,
       "verify_mode": "off",
       "gt": [
         {
@@ -1296,7 +1295,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 143.4,
+      "detect_ms": 147.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -1566,7 +1565,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 226.4,
+      "detect_ms": 227.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -1998,7 +1997,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 322.7,
+      "detect_ms": 336.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -2673,7 +2672,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 241.4,
+      "detect_ms": 241.6,
       "verify_mode": "off",
       "gt": [
         {
@@ -2969,7 +2968,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 198.4,
+      "detect_ms": 212.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -3239,7 +3238,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 289.5,
+      "detect_ms": 309.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -3642,7 +3641,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 293.0,
+      "detect_ms": 308.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -4048,7 +4047,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 256.5,
+      "detect_ms": 273.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -4318,7 +4317,7 @@
       "det_fp": 3,
       "det_partial": 0,
       "unmatched_detections": 3,
-      "detect_ms": 412.8,
+      "detect_ms": 422.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -4721,7 +4720,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 157.3,
+      "detect_ms": 159.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -4910,7 +4909,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 408.2,
+      "detect_ms": 429.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -5633,14 +5632,14 @@
       "n_gt": 4,
       "n_gt_quads": 4,
       "fully_labelled": true,
-      "n_detected": 1,
+      "n_detected": 2,
       "count_ok": false,
-      "det_tp": 1,
-      "det_fn": 3,
+      "det_tp": 2,
+      "det_fn": 2,
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 115.8,
+      "detect_ms": 162.7,
       "verify_mode": "off",
       "gt": [
         {
@@ -5679,11 +5678,11 @@
           "quad_source": "verified",
           "occluded": true,
           "orientation": "cw90",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 1,
+          "match_how": "iou",
+          "iou": 0.9596,
+          "corner_err_px": 22.32,
+          "corner_err_pct": 1.968,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5890,6 +5889,32 @@
           "partial_of": null,
           "top1": null,
           "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
+              378,
+              852
+            ],
+            [
+              1613,
+              55
+            ],
+            [
+              2205,
+              931
+            ],
+            [
+              1006,
+              1696
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
         }
       ]
     },
@@ -5913,7 +5938,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 524.3,
+      "detect_ms": 524.7,
       "verify_mode": "off",
       "gt": [
         {

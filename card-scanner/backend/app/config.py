@@ -487,6 +487,17 @@ CONTAINER_MIN_CHILD_SCORE = _env_float("CONTAINER_MIN_CHILD_SCORE", 0.8)
 # children must together cover this fraction of the container: real tilings reach
 # 95-97 %, a card's own art box plus text box at most ~87 % of an inset card quad.
 CONTAINER_MIN_COVERAGE = _env_float("CONTAINER_MIN_COVERAGE", 0.92)
+# candidates.complete_occluded: a card covered by another card is rebuilt from three
+# visible corners when both visible sides lie on the edge map for this fraction of their
+# length and the completed corner lies inside a surviving card; at most this many per
+# photo. Such candidates are never better than ambiguous (VERIFY_COMPLETED_HAMMING is the
+# distance a completed quad may hash at: its warp holds ~30 % of the occluder), so
+# identification's ORB gate decides.
+COMPLETE_OCCLUDED = _env_bool("COMPLETE_OCCLUDED", True)
+COMPLETION_MIN_SIDE_SUPPORT = _env_float("COMPLETION_MIN_SIDE_SUPPORT", 0.9)
+MAX_COMPLETED = _env_int("MAX_COMPLETED", 4)
+COMPLETION_MIN_OVERLAP = _env_float("COMPLETION_MIN_OVERLAP", 0.05)
+VERIFY_COMPLETED_HAMMING = _env_int("VERIFY_COMPLETED_HAMMING", 22)
 
 # Full-resolution corner refinement (geometry.refine_corners): intensity profiles
 # along each side's outward normal, from REFINE_BAND_IN inside to REFINE_BAND_OUT

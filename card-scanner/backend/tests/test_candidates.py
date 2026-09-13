@@ -557,3 +557,75 @@ def test_candidate_to_json_scales_quad():
     assert js["params"] == {"blur": 5}
     assert js["metrics"]["aspect"] == 0.714
     assert js["hashDistance"] == 3
+
+
+# --- occlusion completion ------------------------------------------------------------
+
+
+def _l_shaped_hull(occluder_shift=(120.0, 120.0)):
+    """The hull of a card whose printed BR corner lies under another card.
+
+    The card is _CARD_QUAD; the occluder covers the corner region beyond the two cut
+    points, so the visible region's hull is the pentagon TL, TR, x, y, BL where x and
+    y are on the sides adjacent to BR.
+    """
+    tl, tr, br, bl = _CARD_QUAD
+    x = br - np.float32([0.0, occluder_shift[1]])  # on the right side, above BR
+    y = br - np.float32([occluder_shift[0], 0.0])  # on the bottom side, left of BR
+    return np.float32([tl, tr, x, y, bl])
+
+
+def test_three_corner_quads_rebuilds_the_hidden_corner():
+    poly = _l_shaped_hull()
+    quads = cm.three_corner_quads(poly)
+    assert len(quads) == 1
+    tl, tr, br, bl = _CARD_QUAD
+    # The run TL,TR is only two right angles with a card-shaped pair when BL joins: the
+    # returned quad starts at BL (BL, TL, TR, completed BR) in polygon order.
+    assert geometry.corner_error(geometry.order_points(quads[0]), _CARD_QUAD) < 1e-3
+
+
+def test_three_corner_quads_needs_card_proportions_and_right_angles():
+    tl, tr, br, bl = _CARD_QUAD
+    square = np.float32([[0, 0], [100, 0], [100, 60], [40, 100], [0, 100]])  # 100 x 100: not a card
+    assert cm.three_corner_quads(square) == []
+    poly = _l_shaped_hull()
+    poly[0] += np.float32([0, 60])  # skew the TL corner well off 90 degrees
+    assert cm.three_corner_quads(poly, angle_tol=15.0) == []
+
+
+def test_complete_occluded_needs_an_occluder_over_the_missing_corner():
+    poly = _l_shaped_hull()
+    parent = _cand(geometry.quad_from_contour(poly.reshape(-1, 1, 2)), rejected="rect")
+    parent.poly = poly
+    support = _support_for(_CARD_QUAD)
+    tl, tr, br, bl = _CARD_QUAD
+    # An occluder whose quad contains the hidden BR corner.
+    occluder = _cand(
+        np.float32([br - 150, br + [150, -150], br + 150, br + [-150, 150]]), score=0.9
+    )
+    occluder.verify = "accepted"
+    out = cm.complete_occluded([parent, occluder], [occluder], support, (750, 1000))
+    assert len(out) == 1 and out[0].source == "completed"
+    assert geometry.corner_error(out[0].quad, _CARD_QUAD) < 1e-3
+    assert out[0].metrics["edge_support"] >= config.COMPLETION_MIN_SIDE_SUPPORT
+    # No occluder over the corner (a notch with nothing on it): nothing is completed.
+    elsewhere = _cand(_CARD_QUAD + np.float32([600, 0]), score=0.9)
+    assert cm.complete_occluded([parent, elsewhere], [elsewhere], support, (750, 1000)) == []
+    # A winner that the proposal duplicates (the card itself was found): nothing either.
+    itself = _cand(_CARD_QUAD, score=0.9)
+    assert cm.complete_occluded([parent, itself], [itself], support, (750, 1000)) == []
+    # Visible sides not on the edge map: nothing.
+    assert (
+        cm.complete_occluded(
+            [parent, occluder], [occluder], np.zeros((750, 1000), np.uint8), (750, 1000)
+        )
+        == []
+    )
+
+
+def test_completed_candidates_rank_behind_everything_seen():
+    seen = _cand(_CARD_QUAD, score=0.5)
+    built = _cand(_CARD_QUAD + 300, source="completed", score=0.99)
+    built.verify, built.hash_distance = "ambiguous", 10
+    assert seen.sort_key() < built.sort_key()
