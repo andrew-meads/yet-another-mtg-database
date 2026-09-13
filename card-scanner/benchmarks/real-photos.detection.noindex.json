@@ -1,7 +1,7 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T04:43:31+00:00",
-  "git_sha": "f389a89",
+  "created": "2026-09-13T04:50:57+00:00",
+  "git_sha": "95b08dc",
   "versions": {
     "python": "3.14.2",
     "opencv": "5.0.0",
@@ -77,32 +77,32 @@
     "gt_with_quads": 68,
     "photos_with_quads": 17,
     "photos_fully_labelled": 17,
-    "detections": 57,
-    "det_tp": 47,
-    "det_fn": 21,
-    "det_fp": 10,
-    "det_recall": 0.6912,
-    "det_recall_visible": 0.7231,
+    "detections": 59,
+    "det_tp": 48,
+    "det_fn": 20,
+    "det_fp": 11,
+    "det_recall": 0.7059,
+    "det_recall_visible": 0.7385,
     "det_recall_occluded": 0.0,
     "det_partial": 0,
-    "det_precision": 0.8246,
-    "fp_per_photo": 0.5882,
+    "det_precision": 0.8136,
+    "fp_per_photo": 0.6471,
     "corner_err_px": {
-      "n": 47,
-      "mean": 24.697,
-      "median": 13.3,
-      "p95": 95.635,
+      "n": 48,
+      "mean": 24.25,
+      "median": 13.13,
+      "p95": 95.327,
       "max": 125.31
     },
     "corner_err_pct": {
-      "n": 47,
-      "mean": 2.806,
-      "median": 1.278,
-      "p95": 11.416,
+      "n": 48,
+      "mean": 2.755,
+      "median": 1.273,
+      "p95": 11.407,
       "max": 16.085
     },
-    "count_ok": 9,
-    "count_ok_rate": 0.5294,
+    "count_ok": 10,
+    "count_ok_rate": 0.5882,
     "unresolved": 0,
     "fuzzy_resolutions": 0,
     "id_evaluated": 0,
@@ -129,10 +129,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 150.959,
-      "median": 150.8,
-      "p95": 258.38,
-      "max": 272.3
+      "mean": 150.594,
+      "median": 147.2,
+      "p95": 247.7,
+      "max": 282.1
     },
     "identify_ms": {
       "n": 0,
@@ -150,32 +150,32 @@
       "gt_with_quads": 9,
       "photos_with_quads": 1,
       "photos_fully_labelled": 1,
-      "detections": 8,
-      "det_tp": 8,
-      "det_fn": 1,
+      "detections": 9,
+      "det_tp": 9,
+      "det_fn": 0,
       "det_fp": 0,
-      "det_recall": 0.8889,
-      "det_recall_visible": 0.8889,
+      "det_recall": 1.0,
+      "det_recall_visible": 1.0,
       "det_recall_occluded": null,
       "det_partial": 0,
       "det_precision": 1.0,
       "fp_per_photo": 0.0,
       "corner_err_px": {
-        "n": 8,
-        "mean": 10.418,
-        "median": 0.375,
-        "p95": 40.88,
+        "n": 9,
+        "mean": 9.618,
+        "median": 0.41,
+        "p95": 40.81,
         "max": 41.37
       },
       "corner_err_pct": {
-        "n": 8,
-        "mean": 1.318,
-        "median": 0.045,
-        "p95": 5.206,
+        "n": 9,
+        "mean": 1.214,
+        "median": 0.048,
+        "p95": 5.186,
         "max": 5.345
       },
-      "count_ok": 0,
-      "count_ok_rate": 0.0,
+      "count_ok": 1,
+      "count_ok_rate": 1.0,
       "unresolved": 0,
       "fuzzy_resolutions": 0,
       "id_evaluated": 0,
@@ -202,10 +202,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 272.3,
-        "median": 272.3,
-        "p95": 272.3,
-        "max": 272.3
+        "mean": 282.1,
+        "median": 282.1,
+        "p95": 282.1,
+        "max": 282.1
       },
       "identify_ms": {
         "n": 0,
@@ -274,10 +274,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 182.0,
-        "median": 182.0,
-        "p95": 182.0,
-        "max": 182.0
+        "mean": 183.0,
+        "median": 183.0,
+        "p95": 183.0,
+        "max": 183.0
       },
       "identify_ms": {
         "n": 0,
@@ -294,16 +294,16 @@
       "gt_with_quads": 4,
       "photos_with_quads": 1,
       "photos_fully_labelled": 1,
-      "detections": 5,
+      "detections": 6,
       "det_tp": 4,
       "det_fn": 0,
-      "det_fp": 1,
+      "det_fp": 2,
       "det_recall": 1.0,
       "det_recall_visible": 1.0,
       "det_recall_occluded": null,
       "det_partial": 0,
-      "det_precision": 0.8,
-      "fp_per_photo": 1.0,
+      "det_precision": 0.6667,
+      "fp_per_photo": 2.0,
       "corner_err_px": {
         "n": 4,
         "mean": 73.293,
@@ -346,10 +346,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 179.3,
-        "median": 179.3,
-        "p95": 179.3,
-        "max": 179.3
+        "mean": 187.0,
+        "median": 187.0,
+        "p95": 187.0,
+        "max": 187.0
       },
       "identify_ms": {
         "n": 0,
@@ -418,10 +418,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 219.05,
-        "median": 219.05,
-        "p95": 251.315,
-        "max": 254.9
+        "mean": 210.05,
+        "median": 210.05,
+        "p95": 236.195,
+        "max": 239.1
       },
       "identify_ms": {
         "n": 0,
@@ -490,10 +490,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 120.23,
-        "median": 103.0,
-        "p95": 186.185,
-        "max": 191.0
+        "mean": 120.08,
+        "median": 104.55,
+        "p95": 188.845,
+        "max": 192.4
       },
       "identify_ms": {
         "n": 0,
@@ -562,10 +562,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 141.5,
-        "median": 141.5,
-        "p95": 141.5,
-        "max": 141.5
+        "mean": 139.9,
+        "median": 139.9,
+        "p95": 139.9,
+        "max": 139.9
       },
       "identify_ms": {
         "n": 0,
@@ -634,10 +634,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 150.8,
-        "median": 150.8,
-        "p95": 150.8,
-        "max": 150.8
+        "mean": 147.2,
+        "median": 147.2,
+        "p95": 147.2,
+        "max": 147.2
       },
       "identify_ms": {
         "n": 0,
@@ -659,8 +659,9 @@
     "07-8-sideways-cards.jpg: Wild Growth DMR:184: not detected (no quad at IoU threshold)",
     "08-wood-light-3cards.jpg: detected 4 of 3 listed cards",
     "08-wood-light-3cards.jpg: false positive detection #3",
-    "10-fabric-dark-4cards.jpg: detected 5 of 4 listed cards",
+    "10-fabric-dark-4cards.jpg: detected 6 of 4 listed cards",
     "10-fabric-dark-4cards.jpg: false positive detection #1",
+    "10-fabric-dark-4cards.jpg: false positive detection #5",
     "11-playmat-5cards.jpg: detected 4 of 5 listed cards",
     "11-playmat-5cards.jpg: false positive detection #0",
     "11-playmat-5cards.jpg: false positive detection #1",
@@ -686,9 +687,7 @@
     "16-fanned-overlap-4cards.jpg: detected 1 of 4 listed cards",
     "16-fanned-overlap-4cards.jpg: Aang's Iceberg TLA:0005: not detected (occluded card)",
     "16-fanned-overlap-4cards.jpg: Abundance USG:229: not detected (occluded card)",
-    "16-fanned-overlap-4cards.jpg: Light Up the Stage FCA:0039: not detected (occluded card)",
-    "17-binder-page-9cards.jpg: detected 8 of 9 listed cards",
-    "17-binder-page-9cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)"
+    "16-fanned-overlap-4cards.jpg: Light Up the Stage FCA:0039: not detected (occluded card)"
   ],
   "photos": [
     {
@@ -711,7 +710,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 180.3,
+      "detect_ms": 184.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -981,7 +980,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 66.5,
+      "detect_ms": 67.5,
       "verify_mode": "off",
       "gt": [
         {
@@ -1089,7 +1088,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 94.3,
+      "detect_ms": 84.3,
       "verify_mode": "off",
       "gt": [
         {
@@ -1197,7 +1196,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 70.2,
+      "detect_ms": 69.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -1305,7 +1304,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 103.9,
+      "detect_ms": 104.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -1575,7 +1574,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 158.2,
+      "detect_ms": 164.2,
       "verify_mode": "off",
       "gt": [
         {
@@ -2007,7 +2006,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 191.0,
+      "detect_ms": 192.4,
       "verify_mode": "off",
       "gt": [
         {
@@ -2630,7 +2629,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 150.8,
+      "detect_ms": 147.2,
       "verify_mode": "off",
       "gt": [
         {
@@ -2926,7 +2925,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 141.5,
+      "detect_ms": 139.9,
       "verify_mode": "off",
       "gt": [
         {
@@ -3189,14 +3188,14 @@
       "n_gt": 4,
       "n_gt_quads": 4,
       "fully_labelled": true,
-      "n_detected": 5,
+      "n_detected": 6,
       "count_ok": false,
       "det_tp": 4,
       "det_fn": 0,
-      "det_fp": 1,
+      "det_fp": 2,
       "det_partial": 0,
-      "unmatched_detections": 1,
-      "detect_ms": 179.3,
+      "unmatched_detections": 2,
+      "detect_ms": 187.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -3550,6 +3549,32 @@
           "partial_of": null,
           "top1": null,
           "identify_ms": null
+        },
+        {
+          "index": 5,
+          "quad": [
+            [
+              2288,
+              3299
+            ],
+            [
+              2992,
+              3188
+            ],
+            [
+              2992,
+              3909
+            ],
+            [
+              2362,
+              4002
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
         }
       ]
     },
@@ -3573,7 +3598,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 183.2,
+      "detect_ms": 181.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -3979,7 +4004,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 182.0,
+      "detect_ms": 183.0,
       "verify_mode": "off",
       "gt": [
         {
@@ -4249,7 +4274,7 @@
       "det_fp": 3,
       "det_partial": 0,
       "unmatched_detections": 3,
-      "detect_ms": 254.9,
+      "detect_ms": 239.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -4652,7 +4677,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 102.1,
+      "detect_ms": 104.2,
       "verify_mode": "off",
       "gt": [
         {
@@ -4841,7 +4866,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 143.0,
+      "detect_ms": 138.2,
       "verify_mode": "off",
       "gt": [
         {
@@ -5389,7 +5414,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 92.8,
+      "detect_ms": 91.6,
       "verify_mode": "off",
       "gt": [
         {
@@ -5655,14 +5680,14 @@
       "n_gt": 9,
       "n_gt_quads": 9,
       "fully_labelled": true,
-      "n_detected": 8,
-      "count_ok": false,
-      "det_tp": 8,
-      "det_fn": 1,
+      "n_detected": 9,
+      "count_ok": true,
+      "det_tp": 9,
+      "det_fn": 0,
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 272.3,
+      "detect_ms": 282.1,
       "verify_mode": "off",
       "gt": [
         {
@@ -6141,11 +6166,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 8,
+          "match_how": "iou",
+          "iou": 0.9937,
+          "corner_err_px": 3.22,
+          "corner_err_pct": 0.386,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6365,6 +6390,32 @@
             ]
           ],
           "gt_index": 0,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 8,
+          "quad": [
+            [
+              1932,
+              2575
+            ],
+            [
+              2741,
+              2543
+            ],
+            [
+              2848,
+              3719
+            ],
+            [
+              2008,
+              3760
+            ]
+          ],
+          "gt_index": 8,
           "is_fp": false,
           "partial_of": null,
           "top1": null,

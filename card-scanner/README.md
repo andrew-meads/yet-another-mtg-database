@@ -228,7 +228,13 @@ refinement → warp. Modules: `candidates.py` (strategies, filters, NMS), `verif
    `minAreaRect` fallback when the hull is rectangular enough.
 3. **Filters** with reason codes (`area`, `concave`, `angles`, `aspect`, `rect`,
    `edge_support`): interior angles 90° ± 30°, aspect 0.55–0.92 (a 63:88 card is 0.716; a
-   30° tilt scales one axis by ~0.87), rectangularity and edge support floors.
+   30° tilt scales one axis by ~0.87), rectangularity and edge support floors. The fill floor
+   has one exception: a thin outline (a borderless card, a black border against a dark table)
+   is often traced as a *partial ring* whose enclosed area is a sliver although the contour
+   runs along the whole card edge, so a quad that fills ≥ 50 % and whose perimeter lies on
+   the edge map for ≥ 95 % with corners within 10° of square is kept (`rect_by_support`),
+   unless it spans 90 % of the frame both ways (the photo border is on the edge map too).
+   That rescued the borderless card in the binder page without a false positive.
 4. **Verification** — each surviving quad is warped to a small thumbnail and its pHash
    compared with the whole index (`matcher.nearest_hash_distance`, ~1 ms): a real card lands
    within `VERIFY_MAX_HAMMING` (8) bits of *some* indexed card, a piece of table does not
@@ -565,6 +571,7 @@ new knobs there with a comment and a sensible default rather than hardcoding thr
 | `BLUR_KERNELS`, `EDGE_CHANNELS`, `EDGE_CLAHE`, `MORPH_CLOSE_KERNEL`, `CONTOUR_MODE` | see `config.py` | The edge-sweep parameters. |
 | `MIN_AREA_RATIO` / `MAX_AREA_RATIO`, `MIN_SIDE_PX` | `0.01` / `0.98`, `40` | Candidate size bounds. |
 | `APPROX_EPSILONS`, `MIN_RECTANGULARITY`, `MAX_ANGLE_DEV_DEG`, `ASPECT_MIN`/`ASPECT_MAX`, `MIN_EDGE_SUPPORT`, `EDGE_SUPPORT_TOLERANCE` | see `config.py` | Quad extraction and the geometric filters. |
+| `MIN_RECTANGULARITY_SUPPORTED`, `SUPPORTED_MIN_EDGE_SUPPORT`, `SUPPORTED_MAX_ANGLE_DEV_DEG`, `SUPPORTED_MAX_FRAME_FRACTION` | 0.5, 0.95, 10, 0.9 | A quad under `MIN_RECTANGULARITY` still passes when its outline is on the edge map for ≥ 95 % of its perimeter with square corners (a thin outline traced as a partial ring); never for a quad spanning 90 % of the frame both ways. Such quads rank behind filled ones in NMS until a hash arbitrates. |
 | `NMS_IOU`, `NMS_CONTAINMENT`, `NMS_CONSENSUS_HITS`, `NMS_UNVERIFIED_ORDER`, `MAX_CARDS` | `0.5`, `0.9`, `6`, `area`, `20` | Non-maximum suppression. |
 | `VERIFY_MODE`, `VERIFY_MAX_HAMMING`, `VERIFY_AMBIGUOUS_HAMMING`, `VERIFY_MIN_INDEX_SIZE`, `VERIFY_THUMB_LONG_EDGE`, `VERIFY_MIN_INLIERS`, `VERIFY_ORB_GATE`, `MAX_AMBIGUOUS` | `auto`, `8`, `16`, `50000`, `180`, `8`, `all`, `6` | Index verification of candidates (hash zones, then the Stage-2 inlier gate). |
 | `BG_MODE`, `BG_BORDER_FRACTION`, `BG_DELTA_E`, `BG_MAX_SPREAD`, `BG_EMIT_EXPANDED` | `auto`, `0.04`, `12`, `14`, `true` | Colour-mask strategy. |

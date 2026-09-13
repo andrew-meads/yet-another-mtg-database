@@ -86,10 +86,59 @@ def test_filter_reason_aspect():
 
 
 def test_filter_reason_rect():
-    # A card-shaped quad whose source contour only filled half of it.
-    hollow = _cand(_CARD_QUAD, metrics={"contour_area": 0.5 * geometry.quad_area(_CARD_QUAD)})
+    # A card-shaped quad whose source contour filled well under half of it — below
+    # the floor at which full edge support can still rescue a partial-ring trace.
+    hollow = _cand(_CARD_QUAD, metrics={"contour_area": 0.4 * geometry.quad_area(_CARD_QUAD)})
     cm.filter_candidates([hollow], (750, 1000), _support_for(_CARD_QUAD))
     assert hollow.rejected == "rect"
+
+
+def test_filter_accepts_a_low_fill_quad_whose_outline_is_fully_supported():
+    """A partial-ring trace: half the fill, but the whole perimeter on the edge map."""
+    ring = _cand(_CARD_QUAD, metrics={"contour_area": 0.55 * geometry.quad_area(_CARD_QUAD)})
+    alive = cm.filter_candidates([ring], (750, 1000), _support_for(_CARD_QUAD))
+    assert alive == [ring] and ring.rejected is None
+    assert ring.metrics["rect_by_support"] is True
+    assert ring.metrics["edge_support"] >= config.SUPPORTED_MIN_EDGE_SUPPORT
+
+
+def test_filter_low_fill_still_needs_full_support_and_square_corners():
+    # Support along only ~70 % of the perimeter: the fill verdict stands.
+    partial = np.zeros((750, 1000), np.uint8)
+    q = np.rint(_CARD_QUAD).astype(np.int32)
+    cv2.polylines(partial, [q[:3].reshape(-1, 1, 2)], False, 255, 3)  # three sides of four
+    weak = _cand(_CARD_QUAD, metrics={"contour_area": 0.55 * geometry.quad_area(_CARD_QUAD)})
+    cm.filter_candidates([weak], (750, 1000), partial)
+    assert weak.rejected == "rect"
+    # Fill below the supported floor is rejected even with perfect support.
+    sliver = _cand(_CARD_QUAD, metrics={"contour_area": 0.3 * geometry.quad_area(_CARD_QUAD)})
+    cm.filter_candidates([sliver], (750, 1000), _support_for(_CARD_QUAD))
+    assert sliver.rejected == "rect"
+    # A 15°-sheared quad with the same fill and full support: corners disqualify it.
+    shear = 280 / np.tan(np.radians(75))
+    skew_q = np.float32([[300, 200], [500, 200], [500 + shear, 480], [300 + shear, 480]])
+    skewed = _cand(skew_q, metrics={"contour_area": 0.55 * geometry.quad_area(skew_q)})
+    cm.filter_candidates([skewed], (750, 1000), _support_for(geometry.order_points(skew_q)))
+    assert skewed.rejected == "rect"
+
+
+def test_filter_low_fill_rescue_never_applies_to_a_frame_hugging_quad():
+    """The photo border is on every edge map; a quad spanning the frame is not a card."""
+    frame = np.float32([[20, 15], [980, 15], [980, 735], [20, 735]])  # 96 % x 96 % of 1000x750
+    hug = _cand(frame, metrics={"contour_area": 0.55 * geometry.quad_area(frame)})
+    cm.filter_candidates([hug], (750, 1000), _support_for(frame))
+    assert hug.rejected == "rect" and "rect_by_support" not in hug.metrics
+
+
+def test_sort_key_ranks_a_rescued_quad_behind_ordinary_unverified_ones():
+    """Without a hash, a support-rescued quad loses to a smaller filled one (shadow rings)."""
+    ring = _cand(_CARD_QUAD * 1.1, metrics={"rect_by_support": True, "hits": 30})
+    plain = _cand(_CARD_QUAD, metrics={"hits": 30})
+    assert plain.sort_key() < ring.sort_key()
+    # Once the index has spoken, the hash distance decides as for any candidate.
+    ring.verify, ring.hash_distance = "accepted", 3
+    plain.verify, plain.hash_distance = "accepted", 6
+    assert ring.sort_key() < plain.sort_key()
 
 
 def test_filter_reason_edge_support():

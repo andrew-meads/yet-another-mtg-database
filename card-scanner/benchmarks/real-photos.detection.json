@@ -1,7 +1,7 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T04:43:27+00:00",
-  "git_sha": "f389a89",
+  "created": "2026-09-13T04:50:52+00:00",
+  "git_sha": "95b08dc",
   "versions": {
     "python": "3.14.2",
     "opencv": "5.0.0",
@@ -77,32 +77,32 @@
     "gt_with_quads": 68,
     "photos_with_quads": 17,
     "photos_fully_labelled": 17,
-    "detections": 65,
-    "det_tp": 60,
-    "det_fn": 8,
-    "det_fp": 5,
-    "det_recall": 0.8824,
-    "det_recall_visible": 0.9231,
+    "detections": 67,
+    "det_tp": 61,
+    "det_fn": 7,
+    "det_fp": 6,
+    "det_recall": 0.8971,
+    "det_recall_visible": 0.9385,
     "det_recall_occluded": 0.0,
     "det_partial": 0,
-    "det_precision": 0.9231,
-    "fp_per_photo": 0.2941,
+    "det_precision": 0.9104,
+    "fp_per_photo": 0.3529,
     "corner_err_px": {
-      "n": 60,
-      "mean": 10.11,
+      "n": 61,
+      "mean": 9.997,
       "median": 0.48,
-      "p95": 44.555,
+      "p95": 44.28,
       "max": 61.08
     },
     "corner_err_pct": {
-      "n": 60,
-      "mean": 1.047,
+      "n": 61,
+      "mean": 1.036,
       "median": 0.058,
       "p95": 5.345,
       "max": 7.513
     },
-    "count_ok": 11,
-    "count_ok_rate": 0.6471,
+    "count_ok": 12,
+    "count_ok_rate": 0.7059,
     "unresolved": 0,
     "fuzzy_resolutions": 0,
     "id_evaluated": 0,
@@ -129,10 +129,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 208.218,
-      "median": 180.8,
-      "p95": 419.82,
-      "max": 894.3
+      "mean": 209.353,
+      "median": 181.9,
+      "p95": 422.66,
+      "max": 845.7
     },
     "identify_ms": {
       "n": 0,
@@ -150,32 +150,32 @@
       "gt_with_quads": 9,
       "photos_with_quads": 1,
       "photos_fully_labelled": 1,
-      "detections": 8,
-      "det_tp": 8,
-      "det_fn": 1,
+      "detections": 9,
+      "det_tp": 9,
+      "det_fn": 0,
       "det_fp": 0,
-      "det_recall": 0.8889,
-      "det_recall_visible": 0.8889,
+      "det_recall": 1.0,
+      "det_recall_visible": 1.0,
       "det_recall_occluded": null,
       "det_partial": 0,
       "det_precision": 1.0,
       "fp_per_photo": 0.0,
       "corner_err_px": {
-        "n": 8,
-        "mean": 5.47,
-        "median": 0.365,
-        "p95": 27.041,
+        "n": 9,
+        "mean": 5.22,
+        "median": 0.39,
+        "p95": 26.11,
         "max": 41.37
       },
       "corner_err_pct": {
-        "n": 8,
-        "mean": 0.705,
-        "median": 0.045,
-        "p95": 3.494,
+        "n": 9,
+        "mean": 0.67,
+        "median": 0.048,
+        "p95": 3.361,
         "max": 5.345
       },
-      "count_ok": 0,
-      "count_ok_rate": 0.0,
+      "count_ok": 1,
+      "count_ok_rate": 1.0,
       "unresolved": 0,
       "fuzzy_resolutions": 0,
       "id_evaluated": 0,
@@ -202,10 +202,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 301.2,
-        "median": 301.2,
-        "p95": 301.2,
-        "max": 301.2
+        "mean": 316.9,
+        "median": 316.9,
+        "p95": 316.9,
+        "max": 316.9
       },
       "identify_ms": {
         "n": 0,
@@ -274,10 +274,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 190.9,
-        "median": 190.9,
-        "p95": 190.9,
-        "max": 190.9
+        "mean": 191.2,
+        "median": 191.2,
+        "p95": 191.2,
+        "max": 191.2
       },
       "identify_ms": {
         "n": 0,
@@ -346,10 +346,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 191.6,
-        "median": 191.6,
-        "p95": 191.6,
-        "max": 191.6
+        "mean": 197.3,
+        "median": 197.3,
+        "p95": 197.3,
+        "max": 197.3
       },
       "identify_ms": {
         "n": 0,
@@ -418,10 +418,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 214.9,
-        "median": 214.9,
-        "p95": 216.79,
-        "max": 217.0
+        "mean": 216.3,
+        "median": 216.3,
+        "p95": 218.28,
+        "max": 218.5
       },
       "identify_ms": {
         "n": 0,
@@ -438,16 +438,16 @@
       "gt_with_quads": 37,
       "photos_with_quads": 10,
       "photos_fully_labelled": 10,
-      "detections": 32,
+      "detections": 33,
       "det_tp": 32,
       "det_fn": 5,
-      "det_fp": 0,
+      "det_fp": 1,
       "det_recall": 0.8649,
       "det_recall_visible": 0.9412,
       "det_recall_occluded": 0.0,
       "det_partial": 0,
-      "det_precision": 1.0,
-      "fp_per_photo": 0.0,
+      "det_precision": 0.9697,
+      "fp_per_photo": 0.1,
       "corner_err_px": {
         "n": 32,
         "mean": 14.264,
@@ -490,10 +490,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 211.03,
-        "median": 110.95,
-        "p95": 604.05,
-        "max": 894.3
+        "mean": 210.9,
+        "median": 114.6,
+        "p95": 588.615,
+        "max": 845.7
       },
       "identify_ms": {
         "n": 0,
@@ -562,10 +562,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 148.4,
-        "median": 148.4,
-        "p95": 148.4,
-        "max": 148.4
+        "mean": 150.1,
+        "median": 150.1,
+        "p95": 150.1,
+        "max": 150.1
       },
       "identify_ms": {
         "n": 0,
@@ -634,10 +634,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 167.5,
-        "median": 167.5,
-        "p95": 167.5,
-        "max": 167.5
+        "mean": 161.9,
+        "median": 161.9,
+        "p95": 161.9,
+        "max": 161.9
       },
       "identify_ms": {
         "n": 0,
@@ -660,15 +660,14 @@
     "11-playmat-5cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
     "13-playmat-plain-4cards.jpg: detected 5 of 4 listed cards",
     "13-playmat-plain-4cards.jpg: false positive detection #4",
-    "15-tight-grid-9cards.jpg: detected 7 of 9 listed cards",
+    "15-tight-grid-9cards.jpg: detected 8 of 9 listed cards",
+    "15-tight-grid-9cards.jpg: false positive detection #6",
     "15-tight-grid-9cards.jpg: Amy Rose SLD:2083: not detected (no quad at IoU threshold)",
     "15-tight-grid-9cards.jpg: Light Up the Stage FCA:0039: not detected (no quad at IoU threshold)",
     "16-fanned-overlap-4cards.jpg: detected 1 of 4 listed cards",
     "16-fanned-overlap-4cards.jpg: Aang's Iceberg TLA:0005: not detected (occluded card)",
     "16-fanned-overlap-4cards.jpg: Abundance USG:229: not detected (occluded card)",
-    "16-fanned-overlap-4cards.jpg: Light Up the Stage FCA:0039: not detected (occluded card)",
-    "17-binder-page-9cards.jpg: detected 8 of 9 listed cards",
-    "17-binder-page-9cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)"
+    "16-fanned-overlap-4cards.jpg: Light Up the Stage FCA:0039: not detected (occluded card)"
   ],
   "photos": [
     {
@@ -691,7 +690,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 894.3,
+      "detect_ms": 845.7,
       "verify_mode": "filter",
       "gt": [
         {
@@ -961,7 +960,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 69.5,
+      "detect_ms": 69.7,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1069,7 +1068,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 87.1,
+      "detect_ms": 85.2,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1177,7 +1176,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 72.2,
+      "detect_ms": 74.4,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1285,7 +1284,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 114.1,
+      "detect_ms": 117.2,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1555,7 +1554,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 180.8,
+      "detect_ms": 181.9,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1987,7 +1986,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 243.1,
+      "detect_ms": 255.0,
       "verify_mode": "filter",
       "gt": [
         {
@@ -2662,7 +2661,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 167.5,
+      "detect_ms": 161.9,
       "verify_mode": "filter",
       "gt": [
         {
@@ -2958,7 +2957,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 148.4,
+      "detect_ms": 150.1,
       "verify_mode": "filter",
       "gt": [
         {
@@ -3228,7 +3227,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 191.6,
+      "detect_ms": 197.3,
       "verify_mode": "filter",
       "gt": [
         {
@@ -3605,7 +3604,7 @@
       "det_fp": 2,
       "det_partial": 0,
       "unmatched_detections": 2,
-      "detect_ms": 212.8,
+      "detect_ms": 214.1,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4037,7 +4036,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 190.9,
+      "detect_ms": 191.2,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4307,7 +4306,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 217.0,
+      "detect_ms": 218.5,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4684,7 +4683,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 107.8,
+      "detect_ms": 112.0,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4866,14 +4865,14 @@
       "n_gt": 9,
       "n_gt_quads": 9,
       "fully_labelled": true,
-      "n_detected": 7,
+      "n_detected": 8,
       "count_ok": false,
       "det_tp": 7,
       "det_fn": 2,
-      "det_fp": 0,
+      "det_fp": 1,
       "det_partial": 0,
-      "unmatched_detections": 0,
-      "detect_ms": 249.3,
+      "unmatched_detections": 1,
+      "detect_ms": 274.4,
       "verify_mode": "filter",
       "gt": [
         {
@@ -5352,7 +5351,7 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": 6,
+          "det_index": 7,
           "match_how": "iou",
           "iou": 0.9349,
           "corner_err_px": 34.41,
@@ -5533,6 +5532,32 @@
           "index": 6,
           "quad": [
             [
+              194,
+              1246
+            ],
+            [
+              1958,
+              1315
+            ],
+            [
+              2024,
+              2558
+            ],
+            [
+              136,
+              2539
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 7,
+          "quad": [
+            [
               2015,
               2593
             ],
@@ -5577,7 +5602,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 92.1,
+      "detect_ms": 93.5,
       "verify_mode": "filter",
       "gt": [
         {
@@ -5843,14 +5868,14 @@
       "n_gt": 9,
       "n_gt_quads": 9,
       "fully_labelled": true,
-      "n_detected": 8,
-      "count_ok": false,
-      "det_tp": 8,
-      "det_fn": 1,
+      "n_detected": 9,
+      "count_ok": true,
+      "det_tp": 9,
+      "det_fn": 0,
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 301.2,
+      "detect_ms": 316.9,
       "verify_mode": "filter",
       "gt": [
         {
@@ -6329,11 +6354,11 @@
           "quad_source": "verified",
           "occluded": false,
           "orientation": "upright",
-          "det_index": null,
-          "match_how": null,
-          "iou": null,
-          "corner_err_px": null,
-          "corner_err_pct": null,
+          "det_index": 8,
+          "match_how": "iou",
+          "iou": 0.9937,
+          "corner_err_px": 3.22,
+          "corner_err_pct": 0.386,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6553,6 +6578,32 @@
             ]
           ],
           "gt_index": 3,
+          "is_fp": false,
+          "partial_of": null,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 8,
+          "quad": [
+            [
+              1932,
+              2575
+            ],
+            [
+              2741,
+              2543
+            ],
+            [
+              2848,
+              3719
+            ],
+            [
+              2008,
+              3760
+            ]
+          ],
+          "gt_index": 8,
           "is_fp": false,
           "partial_of": null,
           "top1": null,

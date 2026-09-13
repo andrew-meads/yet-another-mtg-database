@@ -368,6 +368,17 @@ APPROX_EPSILONS = _env_floats("APPROX_EPSILONS", "0.02,0.03,0.05")
 # over the area of its minimum bounding box: a clean card scores ~1, a notched
 # blob or a triangle that happened to approximate to four points scores low.
 MIN_RECTANGULARITY = _env_float("MIN_RECTANGULARITY", 0.85)
+# Below MIN_RECTANGULARITY a quad still passes when its outline is almost fully on
+# the edge map with square corners (a thin outline traced as a partial ring —
+# borderless cards, black borders on dark tables): the fill floor that then applies,
+# the edge-support and corner-angle bars that unlock it.
+MIN_RECTANGULARITY_SUPPORTED = _env_float("MIN_RECTANGULARITY_SUPPORTED", 0.5)
+SUPPORTED_MIN_EDGE_SUPPORT = _env_float("SUPPORTED_MIN_EDGE_SUPPORT", 0.95)
+SUPPORTED_MAX_ANGLE_DEV_DEG = _env_float("SUPPORTED_MAX_ANGLE_DEV_DEG", 10.0)
+# ... and never for a quad spanning this fraction of the frame in both directions
+# (the frame border is on the edge map too; without an index such a quad would win NMS
+# by area and swallow every card in the photo).
+SUPPORTED_MAX_FRAME_FRACTION = _env_float("SUPPORTED_MAX_FRAME_FRACTION", 0.9)
 # Stricter fill required before the minAreaRect *fallback* in quad_from_contour is
 # trusted (it invents corners, so the hull must really be a box).
 MIN_RECTANGULARITY_BOX = _env_float("MIN_RECTANGULARITY_BOX", 0.90)

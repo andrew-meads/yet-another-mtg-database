@@ -149,6 +149,12 @@ class Candidate:
         # without a hash distance it ranks behind every ordinary candidate.
         if self.source == "color+" and self.hash_distance is None:
             tier += 0.5
+        # A quad rescued by edge support alone (a partial-ring trace, see
+        # filter_candidates) is weaker evidence than a filled outline: without
+        # a hash to arbitrate it ranks behind every ordinary candidate, so a
+        # ring traced around a card's *shadow* cannot out-size the card itself.
+        if self.metrics.get("rect_by_support") and self.hash_distance is None:
+            tier += 0.25
         if self.verify in ("accepted", "ambiguous"):
             return (tier, distance, 0, -self.score, -self.area)
         # Consensus first: a quad that several sweep passes re-found (a card
@@ -780,9 +786,12 @@ def filter_candidates(
     failure: ``area`` (outside the area band, or a side shorter than
     ``MIN_SIDE_PX``), ``concave``, ``angles`` (a corner further than
     ``MAX_ANGLE_DEV_DEG`` from 90°), ``aspect`` (outside ``ASPECT_MIN..MAX``),
-    ``rect`` (the source contour fills less than ``MIN_RECTANGULARITY`` of the quad),
-    ``edge_support`` (perimeter on fewer than ``MIN_EDGE_SUPPORT`` of the
-    support map). Metrics a strategy pre-set (``edge_support``,
+    ``rect`` (the source contour fills less than ``MIN_RECTANGULARITY`` of the quad —
+    unless it still fills ``MIN_RECTANGULARITY_SUPPORTED`` and the quad's outline
+    is on the edge map for ``SUPPORTED_MIN_EDGE_SUPPORT`` of its perimeter with
+    corners within ``SUPPORTED_MAX_ANGLE_DEV_DEG`` of 90°: a partial-ring trace of
+    a thin outline, noted as ``rect_by_support``), ``edge_support`` (perimeter on
+    fewer than ``MIN_EDGE_SUPPORT`` of the support map). Metrics a strategy pre-set (``edge_support``,
     ``rectangularity``) are used as-is; the rest are measured here.
 
     Score for survivors: ``0.4·aspect_fit + 0.3·rectangularity + 0.3·edge_support``
@@ -833,13 +842,40 @@ def filter_candidates(
                 m["rectangularity"] = min(m["contour_area"] / max(area, 1e-9), 1.0)
             else:
                 m["rectangularity"] = 1.0
-        if m["rectangularity"] < config.MIN_RECTANGULARITY:
-            cand.rejected = "rect"
-            continue
         if "edge_support" not in m:
             m["edge_support"] = (
                 edge_support(q, support, distance=distance) if support is not None else 1.0
             )
+        if m["rectangularity"] < config.MIN_RECTANGULARITY:
+            # A thin-line outline (a borderless card, or a black-bordered card
+            # whose border merged with a dark table) is often traced as a
+            # *partial* ring: the contour runs along most of the card's edge but
+            # its enclosed area is a sliver, so the fill says "not a card" while
+            # the outline says "card, and a perfect one". The ring flag above
+            # only catches the extreme case (area < 0.5 · hull); the rest lands
+            # here. When the quad's perimeter lies on the edge map almost
+            # everywhere and its corners are square, the fill is not evidence
+            # against it — that combination was the top reason true cards on
+            # white paper and in binder pages were lost.
+            # The photo's own border is on the edge map too, so a quad hugging
+            # the frame is "fully supported" as well: never rescue one that
+            # spans most of the frame in both directions (a card cannot).
+            span = q.max(axis=0) - q.min(axis=0)
+            frame_w, frame_h = float(work_shape[1]), float(work_shape[0])
+            hugs_frame = (
+                span[0] >= config.SUPPORTED_MAX_FRAME_FRACTION * frame_w
+                and span[1] >= config.SUPPORTED_MAX_FRAME_FRACTION * frame_h
+            )
+            supported = (
+                not hugs_frame
+                and m["rectangularity"] >= config.MIN_RECTANGULARITY_SUPPORTED
+                and m["edge_support"] >= config.SUPPORTED_MIN_EDGE_SUPPORT
+                and m["max_angle_dev"] <= config.SUPPORTED_MAX_ANGLE_DEV_DEG
+            )
+            if not supported:
+                cand.rejected = "rect"
+                continue
+            m["rect_by_support"] = True
         if m["edge_support"] < config.MIN_EDGE_SUPPORT:
             cand.rejected = "edge_support"
             continue
