@@ -6,6 +6,11 @@ Camera-based card recognition. The image work is done by a Python service that l
 building the index, its config knobs, and its gotchas. The Next.js side is a thin
 auth-guarded proxy plus the capture and results UI.
 
+[card-scanning-flow.pdf](card-scanning-flow.pdf) is a five-page illustrated walkthrough of a
+scan from upload to result (proxy, detection pipeline, identification stages, the ORB gate and
+response, current accuracy numbers, error paths) — the place to start before reading either
+README.
+
 ## The scanner backend (`card-scanner/`)
 
 - Runs as two compose services in both compose files: `card-scanner` (host port `8000`)

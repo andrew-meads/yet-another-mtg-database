@@ -27,6 +27,10 @@ This folder started life as a standalone prototype and still runs standalone (it
 `docker-compose.yml` and a small Vite harness), but in day-to-day use it is run by the main
 repo's compose files and driven by the main app's own camera UI.
 
+For an illustrated end-to-end walkthrough of one scan (proxy → detection → identification →
+gate → response, with flowcharts and current numbers) see
+[docs/card-scanning-flow.pdf](../docs/card-scanning-flow.pdf).
+
 ## Architecture
 
 | Part | Stack | Where |

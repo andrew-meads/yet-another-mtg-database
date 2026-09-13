@@ -79,7 +79,7 @@ Copy `.env.example` to `.env` first. The full variable list, with defaults, is i
 | Prices on cards, price sources, per-copy prices, currency | `src/lib/server/cardPrices.ts`, `src/lib/server/priceSources/`, `src/lib/pricing.ts`, `src/components/pricing/` | [docs/pricing.md](docs/pricing.md) |
 | Server-side user settings, AI provider, NL search, deck-advisor chat + tools | `src/lib/server/userSettings.ts`, `src/lib/ai/`, `src/app/api/ai/` | [docs/user-settings-and-ai.md](docs/user-settings-and-ai.md), `AI_ROADMAP.md` |
 | Deck export (txt/csv/xlsx/pdf) | `src/lib/deckExport.ts`, `src/lib/server/deckExport*.ts` | [docs/deck-export.md](docs/deck-export.md) |
-| Card scanning: proxy + camera/results UI, and the Python scanner backend itself | `src/app/api/scan/`, `src/app/scan/`, `src/components/scan/`, `card-scanner/` | [docs/card-scanning.md](docs/card-scanning.md), [card-scanner/README.md](card-scanner/README.md) |
+| Card scanning: proxy + camera/results UI, and the Python scanner backend itself | `src/app/api/scan/`, `src/app/scan/`, `src/components/scan/`, `card-scanner/` | [docs/card-scanning.md](docs/card-scanning.md), [docs/card-scanning-flow.pdf](docs/card-scanning-flow.pdf), [card-scanner/README.md](card-scanner/README.md) |
 | Bulk import, release-date backfill, whitelist script | `src/scripts/`, `src/lib/server/scryfallBulkStream.ts` | [docs/database-seeding.md](docs/database-seeding.md) |
 | Env vars, Scryfall etiquette, User-Agent instrumentation, set icons | `src/lib/scryfall.ts`, `src/instrumentation.ts` | [docs/external-apis.md](docs/external-apis.md) |
 | Test projects, E2E harness, scanner pytest suite | `vitest.config.ts`, `tests/`, `e2e/`, `card-scanner/backend/tests/` | [docs/testing.md](docs/testing.md) |
