@@ -375,12 +375,19 @@ def evaluate_entry(entry: dict, root: Path, maps: labels.IndexMaps | None, opts:
     # --- detection ------------------------------------------------------------
     t0 = time.perf_counter()
     dets: list = []
+    verify_mode: str | None = None
     if kind == "crop":
         h, w = image.shape[:2]
         crops = [_normalize_crop(image)]
         det_quads = [np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32)]
     else:
-        dets = detection.detect_and_deskew(image)
+        # The real pipeline entry point, not the legacy wrapper: the report must
+        # know which verification mode ran, because a run without the index
+        # (``rank``/``off``) and one with it (``filter``) are different detectors
+        # and their numbers must never be diffed against each other.
+        detected = detection.detect(image)
+        dets = detected.cards
+        verify_mode = detected.verify_mode
         crops = [d.image for d in dets]
         det_quads = [geometry.order_points(d.quad) for d in dets]
     detect_ms = (time.perf_counter() - t0) * 1000.0
@@ -526,6 +533,7 @@ def evaluate_entry(entry: dict, root: Path, maps: labels.IndexMaps | None, opts:
         "det_fp": sum(1 for d in det_rows if d["is_fp"]),
         "unmatched_detections": len(free_det),
         "detect_ms": round(detect_ms, 1),
+        "verify_mode": verify_mode,
         "gt": gt_rows,
         "detections": detections_out,
     }
@@ -576,6 +584,7 @@ def summarize(photos: list[dict]) -> dict:
 
     stage1_known = [g for g in evaluated if g["stage1_hit"] is not None]
     detect_ms = [p["detect_ms"] for p in photos if p["kind"] == "photo"]
+    modes = sorted({p["verify_mode"] for p in photos if p.get("verify_mode")})
     identify_ms = [
         d["identify_ms"] for p in photos for d in p["detections"] if d["identify_ms"] is not None
     ]
@@ -627,6 +636,9 @@ def summarize(photos: list[dict]) -> dict:
         "false_confident_rate": _rate(sum(1 for g in evaluated if g["false_confident"]), n_id),
         "detect_ms": _pctl(detect_ms),
         "identify_ms": _pctl(identify_ms),
+        # Which verification ran: ``filter`` needs the full index, ``rank``/``off``
+        # do not. Diffing across modes is meaningless (see diff_reports).
+        "verify_mode": modes[0] if len(modes) == 1 else ("mixed" if modes else None),
     }
 
 
@@ -726,7 +738,8 @@ def diff_reports(
 ) -> list[str]:
     """Compare two reports (or summaries); return regression messages (empty = OK).
 
-    Gates on detection recall / precision (may not drop by more than
+    A ``verify_mode`` recorded on both sides must agree (a single message is
+    returned otherwise and nothing else is compared). Gates on detection recall / precision (may not drop by more than
     ``tolerance``), false positives per photo (may not rise by more than
     ``0.1 + tolerance``), p95 corner error in percent (``0.3 + tolerance``) and
     in pixels (``corner_tol_px``). Identification metrics are only gated with
@@ -735,6 +748,18 @@ def diff_reports(
     summaries are both checked; a background missing from either side is
     skipped. A metric that is ``None`` on either side (no data) never fails.
     """
+    cur_mode = _summary_of(current).get("verify_mode")
+    base_mode = _summary_of(baseline).get("verify_mode")
+    if cur_mode is not None and base_mode is not None and cur_mode != base_mode:
+        # Different verification modes are different detectors: without the
+        # index nothing is hashed away and a card-shaped blob of nine cards wins
+        # NMS, with it that blob is rejected. Comparing the two says nothing
+        # about a code change, so refuse rather than report spurious numbers.
+        return [
+            f"verify_mode mismatch: baseline ran with {base_mode!r}, this run with "
+            f"{cur_mode!r} — use the baseline recorded for this mode "
+            "(real-photos.detection.json needs the index; the .noindex one is for VERIFY_MODE=off)"
+        ]
     gates = list(_DETECTION_GATES) + (list(_IDENTIFICATION_GATES) if gate_identification else [])
     scopes = [("overall", _summary_of(current), _summary_of(baseline))]
     cur_bg = current.get("by_background", {}) if "summary" in current else {}
@@ -761,7 +786,9 @@ def diff_reports(
 def describe_diff(current: dict, baseline: dict) -> list[str]:
     """One line per gated metric showing baseline → current (for the console)."""
     cur, base = _summary_of(current), _summary_of(baseline)
-    lines = []
+    lines = [
+        f"  {'verify_mode':22s} {_fmt(base.get('verify_mode')):>8} → {_fmt(cur.get('verify_mode')):>8}"
+    ]
     for path, _direction, _allow in (*_DETECTION_GATES, *_IDENTIFICATION_GATES):
         c, b = _dig(cur, path), _dig(base, path)
         if c is None and b is None:
@@ -1154,8 +1181,22 @@ def run(paths: list[str], opts: Options, *, overlay_dir: Path | None = None) -> 
         photos,
         opts,
         [str(labels.dataset_dir(p)) for p in paths],
-        None if maps is None else maps.size,
+        maps.size if maps is not None else _index_size_or_none(),
     )
+
+
+def _index_size_or_none() -> int | None:
+    """The live index size, or ``None`` when there is no reachable database.
+
+    Detection-only runs never load the index, but the report should still say
+    whether one was there: that is what decided ``verify_mode``.
+    """
+    from . import matcher
+
+    try:
+        return int(matcher.index_size())
+    except Exception:  # noqa: BLE001 — no database is a normal CI condition
+        return None
 
 
 def hash_histogram(paths: list[str], opts: Options, *, random_per_photo: int = 20) -> int:

@@ -1,6 +1,6 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T04:39:07+00:00",
+  "created": "2026-09-13T04:39:11+00:00",
   "git_sha": "b38f612",
   "versions": {
     "python": "3.14.2",
@@ -40,7 +40,7 @@
     "NMS_IOU": 0.5,
     "NMS_CONTAINMENT": 0.9,
     "NMS_CONSENSUS_HITS": 6,
-    "VERIFY_MODE": "auto",
+    "VERIFY_MODE": "off",
     "VERIFY_MAX_HAMMING": 8,
     "VERIFY_AMBIGUOUS_HAMMING": 16,
     "VERIFY_MIN_INDEX_SIZE": 50000,
@@ -77,29 +77,29 @@
     "gt_with_quads": 68,
     "photos_with_quads": 17,
     "photos_fully_labelled": 17,
-    "detections": 65,
-    "det_tp": 60,
-    "det_fn": 8,
-    "det_fp": 5,
-    "det_recall": 0.8824,
-    "det_precision": 0.9231,
-    "fp_per_photo": 0.2941,
+    "detections": 57,
+    "det_tp": 47,
+    "det_fn": 21,
+    "det_fp": 10,
+    "det_recall": 0.6912,
+    "det_precision": 0.8246,
+    "fp_per_photo": 0.5882,
     "corner_err_px": {
-      "n": 60,
-      "mean": 10.11,
-      "median": 0.48,
-      "p95": 44.555,
-      "max": 61.08
+      "n": 47,
+      "mean": 24.697,
+      "median": 13.3,
+      "p95": 95.635,
+      "max": 125.31
     },
     "corner_err_pct": {
-      "n": 60,
-      "mean": 1.047,
-      "median": 0.058,
-      "p95": 5.345,
-      "max": 7.513
+      "n": 47,
+      "mean": 2.806,
+      "median": 1.278,
+      "p95": 11.416,
+      "max": 16.085
     },
-    "count_ok": 11,
-    "count_ok_rate": 0.6471,
+    "count_ok": 9,
+    "count_ok_rate": 0.5294,
     "unresolved": 0,
     "fuzzy_resolutions": 0,
     "id_evaluated": 0,
@@ -126,10 +126,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 204.606,
-      "median": 177.1,
-      "p95": 404.7,
-      "max": 836.3
+      "mean": 150.212,
+      "median": 145.3,
+      "p95": 250.6,
+      "max": 268.6
     },
     "identify_ms": {
       "n": 0,
@@ -138,7 +138,7 @@
       "p95": null,
       "max": null
     },
-    "verify_mode": "filter"
+    "verify_mode": "off"
   },
   "by_background": {
     "binder-page": {
@@ -156,16 +156,16 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 8,
-        "mean": 5.47,
-        "median": 0.365,
-        "p95": 27.041,
+        "mean": 10.418,
+        "median": 0.375,
+        "p95": 40.88,
         "max": 41.37
       },
       "corner_err_pct": {
         "n": 8,
-        "mean": 0.705,
+        "mean": 1.318,
         "median": 0.045,
-        "p95": 3.494,
+        "p95": 5.206,
         "max": 5.345
       },
       "count_ok": 0,
@@ -196,10 +196,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 296.8,
-        "median": 296.8,
-        "p95": 296.8,
-        "max": 296.8
+        "mean": 268.6,
+        "median": 268.6,
+        "p95": 268.6,
+        "max": 268.6
       },
       "identify_ms": {
         "n": 0,
@@ -208,7 +208,7 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     },
     "carpet-dark": {
       "photos": 1,
@@ -225,17 +225,17 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 3,
-        "mean": 0.42,
-        "median": 0.42,
-        "p95": 0.474,
-        "max": 0.48
+        "mean": 30.723,
+        "median": 0.48,
+        "p95": 82.245,
+        "max": 91.33
       },
       "corner_err_pct": {
         "n": 3,
-        "mean": 0.048,
-        "median": 0.044,
-        "p95": 0.057,
-        "max": 0.058
+        "mean": 3.197,
+        "median": 0.058,
+        "p95": 8.55,
+        "max": 9.493
       },
       "count_ok": 1,
       "count_ok_rate": 1.0,
@@ -265,10 +265,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 192.8,
-        "median": 192.8,
-        "p95": 192.8,
-        "max": 192.8
+        "mean": 183.4,
+        "median": 183.4,
+        "p95": 183.4,
+        "max": 183.4
       },
       "identify_ms": {
         "n": 0,
@@ -277,7 +277,7 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     },
     "fabric-dark": {
       "photos": 1,
@@ -294,17 +294,17 @@
       "fp_per_photo": 1.0,
       "corner_err_px": {
         "n": 4,
-        "mean": 0.403,
-        "median": 0.395,
-        "p95": 0.468,
-        "max": 0.48
+        "mean": 73.293,
+        "median": 91.195,
+        "p95": 108.496,
+        "max": 110.44
       },
       "corner_err_pct": {
         "n": 4,
-        "mean": 0.05,
-        "median": 0.046,
-        "p95": 0.061,
-        "max": 0.064
+        "mean": 8.892,
+        "median": 11.38,
+        "p95": 12.572,
+        "max": 12.767
       },
       "count_ok": 0,
       "count_ok_rate": 0.0,
@@ -334,10 +334,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 194.8,
-        "median": 194.8,
-        "p95": 194.8,
-        "max": 194.8
+        "mean": 189.1,
+        "median": 189.1,
+        "p95": 189.1,
+        "max": 189.1
       },
       "identify_ms": {
         "n": 0,
@@ -346,7 +346,7 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     },
     "playmat": {
       "photos": 2,
@@ -355,28 +355,28 @@
       "photos_with_quads": 2,
       "photos_fully_labelled": 2,
       "detections": 10,
-      "det_tp": 7,
-      "det_fn": 2,
-      "det_fp": 3,
-      "det_recall": 0.7778,
-      "det_precision": 0.7,
-      "fp_per_photo": 1.5,
+      "det_tp": 5,
+      "det_fn": 4,
+      "det_fp": 5,
+      "det_recall": 0.5556,
+      "det_precision": 0.5,
+      "fp_per_photo": 2.5,
       "corner_err_px": {
-        "n": 7,
-        "mean": 14.449,
+        "n": 5,
+        "mean": 15.976,
         "median": 0.36,
-        "p95": 51.91,
+        "p95": 48.896,
         "max": 55.18
       },
       "corner_err_pct": {
-        "n": 7,
-        "mean": 1.712,
+        "n": 5,
+        "mean": 1.894,
         "median": 0.046,
-        "p95": 6.103,
+        "p95": 5.724,
         "max": 6.424
       },
-      "count_ok": 1,
-      "count_ok_rate": 0.5,
+      "count_ok": 0,
+      "count_ok_rate": 0.0,
       "unresolved": 0,
       "fuzzy_resolutions": 0,
       "id_evaluated": 0,
@@ -403,10 +403,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 215.4,
-        "median": 215.4,
-        "p95": 217.74,
-        "max": 218.0
+        "mean": 214.7,
+        "median": 214.7,
+        "p95": 242.96,
+        "max": 246.1
       },
       "identify_ms": {
         "n": 0,
@@ -415,7 +415,7 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     },
     "white-paper": {
       "photos": 10,
@@ -423,29 +423,29 @@
       "gt_with_quads": 37,
       "photos_with_quads": 10,
       "photos_fully_labelled": 10,
-      "detections": 32,
-      "det_tp": 32,
-      "det_fn": 5,
-      "det_fp": 0,
-      "det_recall": 0.8649,
-      "det_precision": 1.0,
-      "fp_per_photo": 0.0,
+      "detections": 24,
+      "det_tp": 21,
+      "det_fn": 16,
+      "det_fp": 3,
+      "det_recall": 0.5676,
+      "det_precision": 0.875,
+      "fp_per_photo": 0.3,
       "corner_err_px": {
-        "n": 32,
-        "mean": 14.264,
-        "median": 12.66,
-        "p95": 41.331,
+        "n": 21,
+        "mean": 17.606,
+        "median": 14.5,
+        "p95": 49.79,
         "max": 61.08
       },
       "corner_err_pct": {
-        "n": 32,
-        "mean": 1.392,
-        "median": 1.3,
-        "p95": 3.684,
+        "n": 21,
+        "mean": 1.677,
+        "median": 1.383,
+        "p95": 3.749,
         "max": 7.513
       },
-      "count_ok": 8,
-      "count_ok_rate": 0.8,
+      "count_ok": 7,
+      "count_ok_rate": 0.7,
       "unresolved": 0,
       "fuzzy_resolutions": 0,
       "id_evaluated": 0,
@@ -472,10 +472,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 205.05,
-        "median": 111.75,
-        "p95": 570.8,
-        "max": 836.3
+        "mean": 119.74,
+        "median": 103.6,
+        "p95": 186.71,
+        "max": 194.0
       },
       "identify_ms": {
         "n": 0,
@@ -484,7 +484,7 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     },
     "wood-dark": {
       "photos": 1,
@@ -501,17 +501,17 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 3,
-        "mean": 0.363,
-        "median": 0.38,
-        "p95": 0.425,
-        "max": 0.43
+        "mean": 58.653,
+        "median": 50.27,
+        "p95": 117.806,
+        "max": 125.31
       },
       "corner_err_pct": {
         "n": 3,
-        "mean": 0.046,
-        "median": 0.05,
-        "p95": 0.053,
-        "max": 0.053
+        "mean": 7.444,
+        "median": 6.198,
+        "p95": 15.096,
+        "max": 16.085
       },
       "count_ok": 1,
       "count_ok_rate": 1.0,
@@ -541,10 +541,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 151.4,
-        "median": 151.4,
-        "p95": 151.4,
-        "max": 151.4
+        "mean": 140.4,
+        "median": 140.4,
+        "p95": 140.4,
+        "max": 140.4
       },
       "identify_ms": {
         "n": 0,
@@ -553,7 +553,7 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     },
     "wood-light": {
       "photos": 1,
@@ -570,17 +570,17 @@
       "fp_per_photo": 1.0,
       "corner_err_px": {
         "n": 3,
-        "mean": 0.433,
+        "mean": 22.18,
         "median": 0.43,
-        "p95": 0.475,
-        "max": 0.48
+        "p95": 59.191,
+        "max": 65.72
       },
       "corner_err_pct": {
         "n": 3,
-        "mean": 0.059,
+        "mean": 3.05,
         "median": 0.058,
-        "p95": 0.064,
-        "max": 0.065
+        "p95": 8.141,
+        "max": 9.039
       },
       "count_ok": 0,
       "count_ok_rate": 0.0,
@@ -610,10 +610,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 161.2,
-        "median": 161.2,
-        "p95": 161.2,
-        "max": 161.2
+        "mean": 145.3,
+        "median": 145.3,
+        "p95": 145.3,
+        "max": 145.3
       },
       "identify_ms": {
         "n": 0,
@@ -622,23 +622,43 @@
         "p95": null,
         "max": null
       },
-      "verify_mode": "filter"
+      "verify_mode": "off"
     }
   },
   "failures": [
+    "07-8-sideways-cards.jpg: detected 6 of 8 listed cards",
+    "07-8-sideways-cards.jpg: false positive detection #0",
+    "07-8-sideways-cards.jpg: false positive detection #1",
+    "07-8-sideways-cards.jpg: Arcanis the Omnipotent DMR:280: not detected (no quad at IoU threshold)",
+    "07-8-sideways-cards.jpg: Mind Stone DMR:232: not detected (no quad at IoU threshold)",
+    "07-8-sideways-cards.jpg: White Lotus Hideout TLA:0281: not detected (no quad at IoU threshold)",
+    "07-8-sideways-cards.jpg: Wild Growth DMR:184: not detected (no quad at IoU threshold)",
     "08-wood-light-3cards.jpg: detected 4 of 3 listed cards",
     "08-wood-light-3cards.jpg: false positive detection #3",
     "10-fabric-dark-4cards.jpg: detected 5 of 4 listed cards",
-    "10-fabric-dark-4cards.jpg: false positive detection #4",
-    "11-playmat-5cards.jpg: false positive detection #2",
-    "11-playmat-5cards.jpg: false positive detection #4",
+    "10-fabric-dark-4cards.jpg: false positive detection #1",
+    "11-playmat-5cards.jpg: detected 4 of 5 listed cards",
+    "11-playmat-5cards.jpg: false positive detection #0",
+    "11-playmat-5cards.jpg: false positive detection #1",
     "11-playmat-5cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)",
     "11-playmat-5cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
-    "13-playmat-plain-4cards.jpg: detected 5 of 4 listed cards",
+    "11-playmat-5cards.jpg: Aang's Iceberg TLA:0005: not detected (no quad at IoU threshold)",
+    "13-playmat-plain-4cards.jpg: detected 6 of 4 listed cards",
+    "13-playmat-plain-4cards.jpg: false positive detection #3",
     "13-playmat-plain-4cards.jpg: false positive detection #4",
-    "15-tight-grid-9cards.jpg: detected 7 of 9 listed cards",
+    "13-playmat-plain-4cards.jpg: false positive detection #5",
+    "13-playmat-plain-4cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: detected 1 of 9 listed cards",
+    "15-tight-grid-9cards.jpg: false positive detection #0",
+    "15-tight-grid-9cards.jpg: Acornelia, Fashionable Filcher ULST:18: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: Abandon Attachments TLA:0205: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: Meteor Sword TLA:0258: not detected (no quad at IoU threshold)",
     "15-tight-grid-9cards.jpg: Amy Rose SLD:2083: not detected (no quad at IoU threshold)",
     "15-tight-grid-9cards.jpg: Light Up the Stage FCA:0039: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: Abundance USG:229: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: Abduction WTH:30: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: Aang's Iceberg TLA:0005: not detected (no quad at IoU threshold)",
+    "15-tight-grid-9cards.jpg: A Realm Reborn FIN:0344: not detected (no quad at IoU threshold)",
     "16-fanned-overlap-4cards.jpg: detected 1 of 4 listed cards",
     "16-fanned-overlap-4cards.jpg: Aang's Iceberg TLA:0005: not detected (no quad at IoU threshold)",
     "16-fanned-overlap-4cards.jpg: Abundance USG:229: not detected (no quad at IoU threshold)",
@@ -666,8 +686,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 836.3,
-      "verify_mode": "filter",
+      "detect_ms": 177.8,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -704,7 +724,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 0,
+          "det_index": 1,
           "match_how": "iou",
           "iou": 0.9769,
           "corner_err_px": 12.96,
@@ -758,7 +778,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 2,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9796,
           "corner_err_px": 10.95,
@@ -812,7 +832,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 1,
+          "det_index": 2,
           "match_how": "iou",
           "iou": 0.9674,
           "corner_err_px": 23.18,
@@ -837,6 +857,31 @@
           "index": 0,
           "quad": [
             [
+              1528,
+              740
+            ],
+            [
+              2492,
+              720
+            ],
+            [
+              2549,
+              2090
+            ],
+            [
+              1518,
+              2094
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
               279,
               772
             ],
@@ -859,7 +904,7 @@
           "identify_ms": null
         },
         {
-          "index": 1,
+          "index": 2,
           "quad": [
             [
               2722,
@@ -879,31 +924,6 @@
             ]
           ],
           "gt_index": 2,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 2,
-          "quad": [
-            [
-              1528,
-              740
-            ],
-            [
-              2492,
-              720
-            ],
-            [
-              2549,
-              2090
-            ],
-            [
-              1518,
-              2094
-            ]
-          ],
-          "gt_index": 1,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -929,8 +949,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 69.3,
-      "verify_mode": "filter",
+      "detect_ms": 66.4,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -1034,8 +1054,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 84.0,
-      "verify_mode": "filter",
+      "detect_ms": 88.8,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -1139,8 +1159,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 76.7,
-      "verify_mode": "filter",
+      "detect_ms": 70.2,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -1244,8 +1264,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 115.8,
-      "verify_mode": "filter",
+      "detect_ms": 103.8,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -1282,7 +1302,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 2,
+          "det_index": 1,
           "match_how": "iou",
           "iou": 0.9731,
           "corner_err_px": 14.37,
@@ -1336,7 +1356,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 0,
+          "det_index": 2,
           "match_how": "iou",
           "iou": 0.9757,
           "corner_err_px": 15.55,
@@ -1390,7 +1410,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 1,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9614,
           "corner_err_px": 22.52,
@@ -1415,31 +1435,6 @@
           "index": 0,
           "quad": [
             [
-              752,
-              1419
-            ],
-            [
-              2234,
-              1398
-            ],
-            [
-              2253,
-              2444
-            ],
-            [
-              773,
-              2510
-            ]
-          ],
-          "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
               778,
               2721
             ],
@@ -1462,7 +1457,7 @@
           "identify_ms": null
         },
         {
-          "index": 2,
+          "index": 1,
           "quad": [
             [
               780,
@@ -1482,6 +1477,31 @@
             ]
           ],
           "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              752,
+              1419
+            ],
+            [
+              2234,
+              1398
+            ],
+            [
+              2253,
+              2444
+            ],
+            [
+              773,
+              2510
+            ]
+          ],
+          "gt_index": 1,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -1507,8 +1527,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 177.1,
-      "verify_mode": "filter",
+      "detect_ms": 163.0,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -1545,7 +1565,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 4,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9707,
           "corner_err_px": 14.75,
@@ -1599,7 +1619,7 @@
           ],
           "quad_source": "verified",
           "orientation": "rot180",
-          "det_index": 0,
+          "det_index": 1,
           "match_how": "iou",
           "iou": 0.9669,
           "corner_err_px": 15.33,
@@ -1707,7 +1727,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 1,
+          "det_index": 4,
           "match_how": "iou",
           "iou": 0.9782,
           "corner_err_px": 8.91,
@@ -1786,6 +1806,31 @@
           "index": 0,
           "quad": [
             [
+              262,
+              473
+            ],
+            [
+              1248,
+              606
+            ],
+            [
+              1166,
+              1909
+            ],
+            [
+              173,
+              1842
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 1,
+          "quad": [
+            [
               265,
               2472
             ],
@@ -1803,31 +1848,6 @@
             ]
           ],
           "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
-              1685,
-              1577
-            ],
-            [
-              2849,
-              1860
-            ],
-            [
-              2678,
-              2719
-            ],
-            [
-              1488,
-              2479
-            ]
-          ],
-          "gt_index": 3,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -1886,23 +1906,23 @@
           "index": 4,
           "quad": [
             [
-              262,
-              473
+              1685,
+              1577
             ],
             [
-              1248,
-              606
+              2849,
+              1860
             ],
             [
-              1166,
-              1909
+              2678,
+              2719
             ],
             [
-              173,
-              1842
+              1488,
+              2479
             ]
           ],
-          "gt_index": 0,
+          "gt_index": 3,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -1922,14 +1942,14 @@
       "n_gt": 8,
       "n_gt_quads": 8,
       "fully_labelled": true,
-      "n_detected": 8,
-      "count_ok": true,
-      "det_tp": 8,
-      "det_fn": 0,
-      "det_fp": 0,
-      "unmatched_detections": 0,
-      "detect_ms": 244.5,
-      "verify_mode": "filter",
+      "n_detected": 6,
+      "count_ok": false,
+      "det_tp": 4,
+      "det_fn": 4,
+      "det_fp": 2,
+      "unmatched_detections": 2,
+      "detect_ms": 194.0,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -1966,7 +1986,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 6,
+          "det_index": 3,
           "match_how": "iou",
           "iou": 0.979,
           "corner_err_px": 13.3,
@@ -2020,7 +2040,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 7,
+          "det_index": 5,
           "match_how": "iou",
           "iou": 0.9737,
           "corner_err_px": 11.37,
@@ -2074,11 +2094,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 5,
-          "match_how": "iou",
-          "iou": 0.9732,
-          "corner_err_px": 11.17,
-          "corner_err_pct": 1.235,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2128,7 +2148,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 3,
+          "det_index": 4,
           "match_how": "iou",
           "iou": 0.9748,
           "corner_err_px": 11.45,
@@ -2182,11 +2202,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 1,
-          "match_how": "iou",
-          "iou": 0.9726,
-          "corner_err_px": 12.36,
-          "corner_err_pct": 1.355,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2236,11 +2256,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 4,
-          "match_how": "iou",
-          "iou": 0.9754,
-          "corner_err_px": 12.25,
-          "corner_err_pct": 1.326,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2344,11 +2364,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 0,
-          "match_how": "iou",
-          "iou": 0.9718,
-          "corner_err_px": 14.16,
-          "corner_err_pct": 1.533,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2369,24 +2389,24 @@
           "index": 0,
           "quad": [
             [
-              1576,
-              3004
+              1595,
+              2038
             ],
             [
-              2876,
-              3021
+              2875,
+              2052
             ],
             [
-              2870,
-              3949
+              2873,
+              3950
             ],
             [
-              1571,
-              3939
+              1567,
+              3938
             ]
           ],
-          "gt_index": 7,
-          "is_fp": false,
+          "gt_index": null,
+          "is_fp": true,
           "top1": null,
           "identify_ms": null
         },
@@ -2394,24 +2414,24 @@
           "index": 1,
           "quad": [
             [
-              158,
-              1993
+              138,
+              1056
             ],
             [
-              1436,
-              2000
+              1413,
+              1053
             ],
             [
-              1428,
+              1435,
               2925
             ],
             [
-              140,
+              152,
               2923
             ]
           ],
-          "gt_index": 4,
-          "is_fp": false,
+          "gt_index": null,
+          "is_fp": true,
           "top1": null,
           "identify_ms": null
         },
@@ -2444,81 +2464,6 @@
           "index": 3,
           "quad": [
             [
-              1529,
-              1055
-            ],
-            [
-              2801,
-              1034
-            ],
-            [
-              2823,
-              1949
-            ],
-            [
-              1544,
-              1965
-            ]
-          ],
-          "gt_index": 3,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 4,
-          "quad": [
-            [
-              1591,
-              2040
-            ],
-            [
-              2871,
-              2052
-            ],
-            [
-              2878,
-              2983
-            ],
-            [
-              1588,
-              2968
-            ]
-          ],
-          "gt_index": 5,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 5,
-          "quad": [
-            [
-              141,
-              1056
-            ],
-            [
-              1416,
-              1053
-            ],
-            [
-              1421,
-              1963
-            ],
-            [
-              141,
-              1974
-            ]
-          ],
-          "gt_index": 2,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 6,
-          "quad": [
-            [
               138,
               23
             ],
@@ -2541,7 +2486,32 @@
           "identify_ms": null
         },
         {
-          "index": 7,
+          "index": 4,
+          "quad": [
+            [
+              1529,
+              1055
+            ],
+            [
+              2801,
+              1034
+            ],
+            [
+              2823,
+              1949
+            ],
+            [
+              1544,
+              1965
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 5,
           "quad": [
             [
               1531,
@@ -2586,8 +2556,8 @@
       "det_fn": 0,
       "det_fp": 1,
       "unmatched_detections": 1,
-      "detect_ms": 161.2,
-      "verify_mode": "filter",
+      "detect_ms": 145.3,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -2624,7 +2594,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 1,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9992,
           "corner_err_px": 0.43,
@@ -2678,11 +2648,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 0,
+          "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9985,
-          "corner_err_px": 0.48,
-          "corner_err_pct": 0.065,
+          "iou": 0.8463,
+          "corner_err_px": 65.72,
+          "corner_err_pct": 9.039,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2732,7 +2702,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 2,
+          "det_index": 1,
           "match_how": "iou",
           "iou": 0.9992,
           "corner_err_px": 0.39,
@@ -2757,31 +2727,6 @@
           "index": 0,
           "quad": [
             [
-              1043,
-              532
-            ],
-            [
-              2045,
-              556
-            ],
-            [
-              2037,
-              1277
-            ],
-            [
-              1033,
-              1259
-            ]
-          ],
-          "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
               117,
               842
             ],
@@ -2804,7 +2749,7 @@
           "identify_ms": null
         },
         {
-          "index": 2,
+          "index": 1,
           "quad": [
             [
               1162,
@@ -2824,6 +2769,31 @@
             ]
           ],
           "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1043,
+              531
+            ],
+            [
+              2046,
+              557
+            ],
+            [
+              2037,
+              1295
+            ],
+            [
+              1030,
+              1502
+            ]
+          ],
+          "gt_index": 1,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -2874,8 +2844,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 151.4,
-      "verify_mode": "filter",
+      "detect_ms": 140.4,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -2966,11 +2936,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 1,
+          "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9996,
-          "corner_err_px": 0.28,
-          "corner_err_pct": 0.036,
+          "iou": 0.7553,
+          "corner_err_px": 125.31,
+          "corner_err_pct": 16.085,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3020,11 +2990,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 0,
+          "det_index": 1,
           "match_how": "iou",
-          "iou": 0.999,
-          "corner_err_px": 0.43,
-          "corner_err_pct": 0.053,
+          "iou": 0.8858,
+          "corner_err_px": 50.27,
+          "corner_err_pct": 6.198,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3045,23 +3015,23 @@
           "index": 0,
           "quad": [
             [
-              3157,
-              794
+              1487,
+              862
             ],
             [
-              3777,
-              1290
+              2279,
+              780
             ],
             [
-              3067,
-              2117
+              2476,
+              1917
             ],
             [
-              2458,
-              1582
+              1347,
+              1927
             ]
           ],
-          "gt_index": 2,
+          "gt_index": 1,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -3070,23 +3040,23 @@
           "index": 1,
           "quad": [
             [
-              1526,
-              847
+              3168,
+              786
             ],
             [
-              2305,
-              832
+              3860,
+              1425
             ],
             [
-              2267,
-              1934
+              3088,
+              2135
             ],
             [
-              1526,
-              1859
+              2457,
+              1582
             ]
           ],
-          "gt_index": 1,
+          "gt_index": 2,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -3137,8 +3107,8 @@
       "det_fn": 0,
       "det_fp": 1,
       "unmatched_detections": 1,
-      "detect_ms": 194.8,
-      "verify_mode": "filter",
+      "detect_ms": 189.1,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -3175,7 +3145,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 2,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9992,
           "corner_err_px": 0.34,
@@ -3229,11 +3199,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 3,
+          "det_index": 4,
           "match_how": "iou",
-          "iou": 0.9989,
-          "corner_err_px": 0.48,
-          "corner_err_pct": 0.064,
+          "iou": 0.8381,
+          "corner_err_px": 84.91,
+          "corner_err_pct": 11.291,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3283,11 +3253,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 0,
+          "det_index": 3,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.4,
-          "corner_err_pct": 0.047,
+          "iou": 0.8234,
+          "corner_err_px": 97.48,
+          "corner_err_pct": 11.469,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3337,11 +3307,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 1,
+          "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.39,
-          "corner_err_pct": 0.046,
+          "iou": 0.7769,
+          "corner_err_px": 110.44,
+          "corner_err_pct": 12.767,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3360,56 +3330,6 @@
       "detections": [
         {
           "index": 0,
-          "quad": [
-            [
-              440,
-              2000
-            ],
-            [
-              1286,
-              2079
-            ],
-            [
-              1043,
-              3248
-            ],
-            [
-              334,
-              3177
-            ]
-          ],
-          "gt_index": 2,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
-              1611,
-              2314
-            ],
-            [
-              2414,
-              2445
-            ],
-            [
-              2278,
-              3648
-            ],
-            [
-              1425,
-              3507
-            ]
-          ],
-          "gt_index": 3,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 2,
           "quad": [
             [
               603,
@@ -3434,32 +3354,7 @@
           "identify_ms": null
         },
         {
-          "index": 3,
-          "quad": [
-            [
-              1589,
-              947
-            ],
-            [
-              2301,
-              1070
-            ],
-            [
-              2379,
-              2057
-            ],
-            [
-              1627,
-              2069
-            ]
-          ],
-          "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 4,
+          "index": 1,
           "quad": [
             [
               32,
@@ -3482,6 +3377,81 @@
           "is_fp": true,
           "top1": null,
           "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              1542,
+              2271
+            ],
+            [
+              2472,
+              2314
+            ],
+            [
+              2472,
+              3681
+            ],
+            [
+              1405,
+              3503
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              459,
+              1975
+            ],
+            [
+              1262,
+              2083
+            ],
+            [
+              1103,
+              3507
+            ],
+            [
+              267,
+              3169
+            ]
+          ],
+          "gt_index": 2,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 4,
+          "quad": [
+            [
+              1609,
+              958
+            ],
+            [
+              2561,
+              1112
+            ],
+            [
+              2371,
+              2059
+            ],
+            [
+              1581,
+              2069
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
         }
       ]
     },
@@ -3498,14 +3468,14 @@
       "n_gt": 5,
       "n_gt_quads": 5,
       "fully_labelled": true,
-      "n_detected": 5,
-      "count_ok": true,
-      "det_tp": 3,
-      "det_fn": 2,
+      "n_detected": 4,
+      "count_ok": false,
+      "det_tp": 2,
+      "det_fn": 3,
       "det_fp": 2,
       "unmatched_detections": 2,
-      "detect_ms": 212.8,
-      "verify_mode": "filter",
+      "detect_ms": 183.3,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -3596,7 +3566,7 @@
           ],
           "quad_source": "verified",
           "orientation": "rot180",
-          "det_index": 1,
+          "det_index": 2,
           "match_how": "iou",
           "iou": 0.9991,
           "corner_err_px": 0.35,
@@ -3758,11 +3728,11 @@
           ],
           "quad_source": "verified",
           "orientation": "rot180",
-          "det_index": 0,
-          "match_how": "iou",
-          "iou": 0.9994,
-          "corner_err_px": 0.3,
-          "corner_err_pct": 0.035,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3783,29 +3753,54 @@
           "index": 0,
           "quad": [
             [
-              2570,
-              1639
+              1548,
+              1574
             ],
             [
               3413,
-              1624
+              1646
             ],
             [
-              3394,
-              2749
+              3388,
+              3109
             ],
             [
-              2574,
-              2759
+              1475,
+              2710
             ]
           ],
-          "gt_index": 4,
-          "is_fp": false,
+          "gt_index": null,
+          "is_fp": true,
           "top1": null,
           "identify_ms": null
         },
         {
           "index": 1,
+          "quad": [
+            [
+              41,
+              18
+            ],
+            [
+              1084,
+              9
+            ],
+            [
+              1004,
+              1020
+            ],
+            [
+              23,
+              751
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 2,
           "quad": [
             [
               2206,
@@ -3826,31 +3821,6 @@
           ],
           "gt_index": 1,
           "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 2,
-          "quad": [
-            [
-              1513,
-              2123
-            ],
-            [
-              2271,
-              2180
-            ],
-            [
-              2226,
-              2692
-            ],
-            [
-              1478,
-              2637
-            ]
-          ],
-          "gt_index": null,
-          "is_fp": true,
           "top1": null,
           "identify_ms": null
         },
@@ -3878,31 +3848,6 @@
           "is_fp": false,
           "top1": null,
           "identify_ms": null
-        },
-        {
-          "index": 4,
-          "quad": [
-            [
-              41,
-              18
-            ],
-            [
-              1084,
-              9
-            ],
-            [
-              1004,
-              1020
-            ],
-            [
-              23,
-              751
-            ]
-          ],
-          "gt_index": null,
-          "is_fp": true,
-          "top1": null,
-          "identify_ms": null
         }
       ]
     },
@@ -3925,8 +3870,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 192.8,
-      "verify_mode": "filter",
+      "detect_ms": 183.4,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -3963,7 +3908,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 0,
+          "det_index": 2,
           "match_how": "iou",
           "iou": 0.999,
           "corner_err_px": 0.48,
@@ -4017,11 +3962,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 1,
+          "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9992,
-          "corner_err_px": 0.42,
-          "corner_err_pct": 0.044,
+          "iou": 0.886,
+          "corner_err_px": 91.33,
+          "corner_err_pct": 9.493,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4071,7 +4016,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 2,
+          "det_index": 1,
           "match_how": "iou",
           "iou": 0.9991,
           "corner_err_px": 0.36,
@@ -4096,45 +4041,20 @@
           "index": 0,
           "quad": [
             [
-              886,
-              336
+              903,
+              1360
             ],
             [
-              2005,
-              248
+              2203,
+              1546
             ],
             [
-              2126,
-              1019
+              2207,
+              2351
             ],
             [
-              981,
-              1151
-            ]
-          ],
-          "gt_index": 0,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
-              970,
-              1522
-            ],
-            [
-              2245,
-              1392
-            ],
-            [
-              2189,
-              2352
-            ],
-            [
-              1038,
-              2400
+              1050,
+              2401
             ]
           ],
           "gt_index": 1,
@@ -4143,7 +4063,7 @@
           "identify_ms": null
         },
         {
-          "index": 2,
+          "index": 1,
           "quad": [
             [
               1031,
@@ -4166,6 +4086,31 @@
           "is_fp": false,
           "top1": null,
           "identify_ms": null
+        },
+        {
+          "index": 2,
+          "quad": [
+            [
+              886,
+              336
+            ],
+            [
+              2005,
+              248
+            ],
+            [
+              2126,
+              1019
+            ],
+            [
+              981,
+              1151
+            ]
+          ],
+          "gt_index": 0,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
         }
       ]
     },
@@ -4182,14 +4127,14 @@
       "n_gt": 4,
       "n_gt_quads": 4,
       "fully_labelled": true,
-      "n_detected": 5,
+      "n_detected": 6,
       "count_ok": false,
-      "det_tp": 4,
-      "det_fn": 0,
-      "det_fp": 1,
-      "unmatched_detections": 1,
-      "detect_ms": 218.0,
-      "verify_mode": "filter",
+      "det_tp": 3,
+      "det_fn": 1,
+      "det_fp": 3,
+      "unmatched_detections": 3,
+      "detect_ms": 246.1,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -4226,7 +4171,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 3,
+          "det_index": 1,
           "match_how": "iou",
           "iou": 0.8659,
           "corner_err_px": 55.18,
@@ -4280,11 +4225,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 1,
+          "det_index": 2,
           "match_how": "iou",
-          "iou": 0.999,
-          "corner_err_px": 0.44,
-          "corner_err_pct": 0.055,
+          "iou": 0.9616,
+          "corner_err_px": 23.76,
+          "corner_err_pct": 2.926,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4334,7 +4279,7 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 2,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9996,
           "corner_err_px": 0.23,
@@ -4388,11 +4333,11 @@
           ],
           "quad_source": "verified",
           "orientation": "cw90",
-          "det_index": 0,
-          "match_how": "iou",
-          "iou": 0.8836,
-          "corner_err_px": 44.28,
-          "corner_err_pct": 5.354,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4411,56 +4356,6 @@
       "detections": [
         {
           "index": 0,
-          "quad": [
-            [
-              1746,
-              2231
-            ],
-            [
-              2772,
-              2278
-            ],
-            [
-              2752,
-              3012
-            ],
-            [
-              1710,
-              2992
-            ]
-          ],
-          "gt_index": 3,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
-              1693,
-              1165
-            ],
-            [
-              2767,
-              1210
-            ],
-            [
-              2769,
-              1988
-            ],
-            [
-              1685,
-              1977
-            ]
-          ],
-          "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 2,
           "quad": [
             [
               195,
@@ -4485,7 +4380,7 @@
           "identify_ms": null
         },
         {
-          "index": 3,
+          "index": 1,
           "quad": [
             [
               170,
@@ -4510,7 +4405,82 @@
           "identify_ms": null
         },
         {
+          "index": 2,
+          "quad": [
+            [
+              1693,
+              1179
+            ],
+            [
+              2765,
+              1205
+            ],
+            [
+              2769,
+              1930
+            ],
+            [
+              1684,
+              1995
+            ]
+          ],
+          "gt_index": 1,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 3,
+          "quad": [
+            [
+              1586,
+              1540
+            ],
+            [
+              2771,
+              1135
+            ],
+            [
+              2764,
+              3343
+            ],
+            [
+              1545,
+              3243
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
           "index": 4,
+          "quad": [
+            [
+              1750,
+              2050
+            ],
+            [
+              2703,
+              2254
+            ],
+            [
+              2827,
+              3790
+            ],
+            [
+              1664,
+              4026
+            ]
+          ],
+          "gt_index": null,
+          "is_fp": true,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 5,
           "quad": [
             [
               1444,
@@ -4555,8 +4525,8 @@
       "det_fn": 0,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 107.7,
-      "verify_mode": "filter",
+      "detect_ms": 103.4,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -4733,14 +4703,14 @@
       "n_gt": 9,
       "n_gt_quads": 9,
       "fully_labelled": true,
-      "n_detected": 7,
+      "n_detected": 1,
       "count_ok": false,
-      "det_tp": 7,
-      "det_fn": 2,
-      "det_fp": 0,
-      "unmatched_detections": 0,
-      "detect_ms": 246.3,
-      "verify_mode": "filter",
+      "det_tp": 0,
+      "det_fn": 9,
+      "det_fp": 1,
+      "unmatched_detections": 1,
+      "detect_ms": 139.3,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -4777,11 +4747,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 5,
-          "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.39,
-          "corner_err_pct": 0.044,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4831,11 +4801,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 2,
-          "match_how": "iou",
-          "iou": 0.9992,
-          "corner_err_px": 0.42,
-          "corner_err_pct": 0.048,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4885,11 +4855,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 4,
-          "match_how": "iou",
-          "iou": 0.9994,
-          "corner_err_px": 0.31,
-          "corner_err_pct": 0.035,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5047,11 +5017,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 1,
-          "match_how": "iou",
-          "iou": 0.9991,
-          "corner_err_px": 0.4,
-          "corner_err_pct": 0.044,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5101,11 +5071,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 0,
-          "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.5,
-          "corner_err_pct": 0.053,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5155,11 +5125,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 3,
-          "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.35,
-          "corner_err_pct": 0.038,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5209,11 +5179,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 6,
-          "match_how": "iou",
-          "iou": 0.9349,
-          "corner_err_px": 34.41,
-          "corner_err_pct": 3.63,
+          "det_index": null,
+          "match_how": null,
+          "iou": null,
+          "corner_err_px": null,
+          "corner_err_pct": null,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5234,174 +5204,24 @@
           "index": 0,
           "quad": [
             [
-              123,
-              2574
+              223,
+              68
             ],
             [
-              1039,
-              2585
+              2987,
+              27
             ],
             [
-              1013,
-              3893
+              2891,
+              3980
             ],
             [
               70,
-              3895
+              3862
             ]
           ],
-          "gt_index": 6,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 1,
-          "quad": [
-            [
-              2001,
-              1327
-            ],
-            [
-              2903,
-              1329
-            ],
-            [
-              2920,
-              2591
-            ],
-            [
-              2014,
-              2592
-            ]
-          ],
-          "gt_index": 5,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 2,
-          "quad": [
-            [
-              1095,
-              62
-            ],
-            [
-              1973,
-              29
-            ],
-            [
-              1962,
-              1255
-            ],
-            [
-              1074,
-              1263
-            ]
-          ],
-          "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 3,
-          "quad": [
-            [
-              1047,
-              2596
-            ],
-            [
-              1953,
-              2606
-            ],
-            [
-              1955,
-              3926
-            ],
-            [
-              1022,
-              3904
-            ]
-          ],
-          "gt_index": 7,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 4,
-          "quad": [
-            [
-              2017,
-              64
-            ],
-            [
-              2889,
-              79
-            ],
-            [
-              2903,
-              1280
-            ],
-            [
-              2008,
-              1267
-            ]
-          ],
-          "gt_index": 2,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 5,
-          "quad": [
-            [
-              192,
-              48
-            ],
-            [
-              1069,
-              66
-            ],
-            [
-              1036,
-              1273
-            ],
-            [
-              144,
-              1250
-            ]
-          ],
-          "gt_index": 0,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 6,
-          "quad": [
-            [
-              2015,
-              2593
-            ],
-            [
-              2837,
-              2593
-            ],
-            [
-              2972,
-              3975
-            ],
-            [
-              2012,
-              3959
-            ]
-          ],
-          "gt_index": 8,
-          "is_fp": false,
+          "gt_index": null,
+          "is_fp": true,
           "top1": null,
           "identify_ms": null
         }
@@ -5426,8 +5246,8 @@
       "det_fn": 3,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 92.8,
-      "verify_mode": "filter",
+      "detect_ms": 90.7,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -5693,8 +5513,8 @@
       "det_fn": 1,
       "det_fp": 0,
       "unmatched_detections": 0,
-      "detect_ms": 296.8,
-      "verify_mode": "filter",
+      "detect_ms": 268.6,
+      "verify_mode": "off",
       "gt": [
         {
           "index": 0,
@@ -5731,7 +5551,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 3,
+          "det_index": 7,
           "match_how": "iou",
           "iou": 0.905,
           "corner_err_px": 41.37,
@@ -5785,7 +5605,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 6,
+          "det_index": 2,
           "match_how": "iou",
           "iou": 0.999,
           "corner_err_px": 0.43,
@@ -5893,7 +5713,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 7,
+          "det_index": 5,
           "match_how": "iou",
           "iou": 0.9994,
           "corner_err_px": 0.26,
@@ -5947,11 +5767,11 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 0,
+          "det_index": 4,
           "match_how": "iou",
-          "iou": 0.9991,
-          "corner_err_px": 0.39,
-          "corner_err_pct": 0.048,
+          "iou": 0.9094,
+          "corner_err_px": 39.97,
+          "corner_err_pct": 4.947,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6001,7 +5821,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 5,
+          "det_index": 6,
           "match_how": "iou",
           "iou": 0.9993,
           "corner_err_px": 0.34,
@@ -6055,7 +5875,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 2,
+          "det_index": 0,
           "match_how": "iou",
           "iou": 0.9994,
           "corner_err_px": 0.33,
@@ -6109,7 +5929,7 @@
           ],
           "quad_source": "verified",
           "orientation": "upright",
-          "det_index": 4,
+          "det_index": 3,
           "match_how": "iou",
           "iou": 0.9993,
           "corner_err_px": 0.41,
@@ -6188,23 +6008,23 @@
           "index": 0,
           "quad": [
             [
-              1016,
-              1379
+              159,
+              2653
             ],
             [
-              1796,
-              1388
+              971,
+              2629
             ],
             [
-              1852,
-              2467
+              981,
+              3874
             ],
             [
-              1045,
-              2511
+              152,
+              3859
             ]
           ],
-          "gt_index": 4,
+          "gt_index": 6,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
@@ -6238,54 +6058,29 @@
           "index": 2,
           "quad": [
             [
-              159,
-              2653
+              990,
+              238
             ],
             [
-              971,
-              2629
+              1735,
+              296
             ],
             [
-              981,
-              3874
+              1777,
+              1284
             ],
             [
-              152,
-              3859
+              1005,
+              1266
             ]
           ],
-          "gt_index": 6,
+          "gt_index": 1,
           "is_fp": false,
           "top1": null,
           "identify_ms": null
         },
         {
           "index": 3,
-          "quad": [
-            [
-              201,
-              334
-            ],
-            [
-              867,
-              264
-            ],
-            [
-              948,
-              1247
-            ],
-            [
-              158,
-              1346
-            ]
-          ],
-          "gt_index": 0,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
-          "index": 4,
           "quad": [
             [
               1050,
@@ -6310,7 +6105,57 @@
           "identify_ms": null
         },
         {
+          "index": 4,
+          "quad": [
+            [
+              993,
+              1378
+            ],
+            [
+              1796,
+              1388
+            ],
+            [
+              1851,
+              2445
+            ],
+            [
+              961,
+              2589
+            ]
+          ],
+          "gt_index": 4,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
           "index": 5,
+          "quad": [
+            [
+              143,
+              1427
+            ],
+            [
+              937,
+              1378
+            ],
+            [
+              960,
+              2517
+            ],
+            [
+              167,
+              2545
+            ]
+          ],
+          "gt_index": 3,
+          "is_fp": false,
+          "top1": null,
+          "identify_ms": null
+        },
+        {
+          "index": 6,
           "quad": [
             [
               1871,
@@ -6335,51 +6180,26 @@
           "identify_ms": null
         },
         {
-          "index": 6,
-          "quad": [
-            [
-              990,
-              238
-            ],
-            [
-              1735,
-              296
-            ],
-            [
-              1777,
-              1284
-            ],
-            [
-              1005,
-              1266
-            ]
-          ],
-          "gt_index": 1,
-          "is_fp": false,
-          "top1": null,
-          "identify_ms": null
-        },
-        {
           "index": 7,
           "quad": [
             [
-              143,
-              1427
+              201,
+              334
             ],
             [
-              937,
-              1378
+              867,
+              264
             ],
             [
-              960,
-              2517
+              948,
+              1247
             ],
             [
-              167,
-              2545
+              158,
+              1346
             ]
           ],
-          "gt_index": 3,
+          "gt_index": 0,
           "is_fp": false,
           "top1": null,
           "identify_ms": null

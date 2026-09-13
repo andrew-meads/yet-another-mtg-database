@@ -233,6 +233,25 @@ def test_diff_reports_gates(photos):
     assert ep.describe_diff(worse, base)
 
 
+def test_diff_reports_refuses_a_verify_mode_mismatch(photos):
+    """A with-index report is never diffed against a no-index baseline, and vice versa."""
+    base = {"summary": ep.summarize(photos), "by_background": ep.summarize_by_background(photos)}
+    base["summary"]["verify_mode"] = "filter"
+    other = json.loads(json.dumps(base))
+    other["summary"]["verify_mode"] = "off"
+    other["summary"]["det_recall"] = 0.0  # would be a regression, but the mode check comes first
+    problems = ep.diff_reports(other, base)
+    assert len(problems) == 1 and "verify_mode mismatch" in problems[0]
+    assert "'filter'" in problems[0] and "'off'" in problems[0]
+    # Same mode (or a legacy report without the field) compares normally.
+    same = json.loads(json.dumps(base))
+    assert ep.diff_reports(same, base) == []
+    legacy = json.loads(json.dumps(base))
+    del legacy["summary"]["verify_mode"]
+    assert ep.diff_reports(legacy, base) == []
+    assert any("verify_mode" in line for line in ep.describe_diff(other, base))
+
+
 def test_write_csv(tmp_path: Path, photos):
     out = tmp_path / "r.csv"
     ep.write_csv(out, photos)
@@ -280,8 +299,11 @@ def test_evaluate_entry_detection_only(tmp_path: Path):
     assert gt["corner_err_px"] < 8.0 and gt["orientation"] == "upright"
     assert gt["resolved"]["how"] == "not-resolved" and not gt["id_evaluated"]
     assert result["detections"][0]["gt_index"] == 0
+    # No database in the suite → ``auto`` resolves to ``rank``; the report says so.
+    assert result["verify_mode"] == "rank"
     s = ep.summarize([result])
     assert s["det_recall"] == 1.0 and s["unresolved"] == 0 and s["id_evaluated"] == 0
+    assert s["verify_mode"] == "rank"
     assert ep.failures([result]) == []
 
 
@@ -309,7 +331,10 @@ def test_run_and_report_detection_only(tmp_path: Path):
     root, _entry = _synthetic_dataset(tmp_path)
     overlay_dir = tmp_path / "ov"
     report = ep.run([str(root)], ep.Options(detection_only=True), overlay_dir=overlay_dir)
-    assert report["schema"] == ep.SCHEMA and report["index_size"] is None
+    # No database in the suite: the report records an empty index (0), and the
+    # summary says which verification mode that produced.
+    assert report["schema"] == ep.SCHEMA and report["index_size"] == 0
+    assert report["summary"]["verify_mode"] == "rank"
     assert report["summary"]["det_recall"] == 1.0
     assert report["by_background"]["white-paper"]["photos"] == 1
     assert "WORK_LONG_EDGE" in report["config"] and "DATABASE_URL" not in report["config"]

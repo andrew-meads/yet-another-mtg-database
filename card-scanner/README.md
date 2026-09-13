@@ -442,6 +442,16 @@ collector accuracy, false-confident, latency, all per background; `--baseline` d
 saved report and exits 2 on regression (the CI gate). Overlays draw ground truth, matches,
 false positives and misses.
 
+**Two real-photo baselines.** Every report records the verification mode that ran
+(`summary.verify_mode`) and the index size, and `--baseline` refuses to compare reports whose
+modes differ — with the index, pHash verification (`filter`) throws away card-shaped
+non-cards such as the blob a whole 3×3 grid makes; without it (`rank`/`off`) that blob wins
+NMS and suppresses the nine real cards, so the two are different detectors.
+`benchmarks/real-photos.detection.json` is recorded with the live index (the numbers quoted
+in this README); `benchmarks/real-photos.detection.noindex.json` is recorded with
+`VERIFY_MODE=off` and is what CI, which has no Postgres, diffs against. `make baseline`
+regenerates both; commit them together.
+
 **Labelling photos.** `python -m app.label_photos --import photo.jpg --slug wood-dark-3cards
 --background wood-dark` copies a new photo in (EXIF-baked, 3000 px long edge, JPEG q85),
 continues the `NN-slug.jpg` naming and appends a manifest entry for you to fill in the same
@@ -517,7 +527,8 @@ and the Docker `test` stage) — triggered manually from the Actions tab or with
 **Regression workflow.** After a change: `make test`, then `make eval-photos` and the
 synthetic set (`make synth` + `evaluate_photos ../data/synth-regression --detection-only
 --baseline ../benchmarks/synth-regression.detection.json`); accept new numbers with
-`make baseline` (commit the JSON with the change). Config knobs are env vars, so A/B runs need
+`make baseline` (regenerates both real-photo baselines; commit the JSON with the change, never
+to make a red run green). Config knobs are env vars, so A/B runs need
 no code edits (`CANNY_MODE=fixed python -m app.evaluate_photos …`).
 
 ## Versions

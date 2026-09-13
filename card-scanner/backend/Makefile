@@ -38,9 +38,12 @@ models:
 eval-photos:
 	$(PY) -m app.evaluate_photos ../test-images --overlay-dir ../test-images/_overlays $(ARGS)
 
-## baseline: regenerate the committed detection baseline from test-images
+## baseline: regenerate BOTH committed real-photo detection baselines from test-images —
+## with the live index (VERIFY_MODE resolves to filter; the numbers the README quotes) and
+## without it (VERIFY_MODE=off; what CI, which has no Postgres, can reproduce)
 baseline:
 	$(PY) -m app.evaluate_photos ../test-images --detection-only --json ../benchmarks/real-photos.detection.json
+	VERIFY_MODE=off $(PY) -m app.evaluate_photos ../test-images --detection-only --json ../benchmarks/real-photos.detection.noindex.json
 
 ## synth: generate the fixed-seed synthetic regression set
 synth:

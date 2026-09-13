@@ -34,11 +34,16 @@ jobs:
         run: pytest
       - name: Validate test-image manifest
         run: python -m app.label_photos --validate ../test-images
-      - name: Detection harness (real photos vs baseline)
+      # No Postgres here, so pHash verification cannot run: pin VERIFY_MODE=off and
+      # diff against the baseline recorded in that mode (the harness refuses to
+      # compare reports whose verify_mode differs).
+      - name: Detection harness (real photos vs no-index baseline)
+        env:
+          VERIFY_MODE: "off"
         run: >
           python -m app.evaluate_photos ../test-images --detection-only
           --json /tmp/real.json --overlay-dir /tmp/overlays
-          --baseline ../benchmarks/real-photos.detection.json
+          --baseline ../benchmarks/real-photos.detection.noindex.json
       - name: Detection harness (synthetic regression set vs baseline)
         run: >
           python -m app.synth --preset regression --out /tmp/synth &&

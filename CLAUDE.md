@@ -123,7 +123,9 @@ These bite across features. The docs explain the why.
   identification change must be measured with `app.evaluate_photos` against the labelled
   `card-scanner/test-images/test-images.json` (the user-authored manifest is the source of
   truth; tooling only appends machine fields) and the committed baselines in
-  `card-scanner/benchmarks/`. It ships as the `ghcr.io/andrew-meads/card-scanner-backend`
+  `card-scanner/benchmarks/` — two for the real photos, one recorded with the live index
+  and one with `VERIFY_MODE=off` for CI; a report is only ever diffed against the baseline of
+  its own verification mode, and `make baseline` regenerates both. It ships as the `ghcr.io/andrew-meads/card-scanner-backend`
   image the compose files pull (build with `docker build --target runtime`), and scans
   return no matches until its Postgres image index has been built.
 - **`POST /api/scan` trusts only `scryfallId` from the scanner** and re-hydrates matches

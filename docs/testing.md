@@ -58,7 +58,10 @@ The Python scanner in `card-scanner/` is outside the Vitest projects, ESLint and
 - **Accuracy harnesses**: `app.evaluate` (synthetic self-retrieval of identification),
   `app.evaluate_photos` (the labelled real photos in `card-scanner/test-images/` and any
   directory holding a `test-images.json` manifest, e.g. `app.synth` output), with committed
-  detection baselines in `card-scanner/benchmarks/` that gate CI.
+  detection baselines in `card-scanner/benchmarks/` that gate CI. The real photos have two:
+  one recorded with the live index and one with `VERIFY_MODE=off` (the only one CI, which has
+  no Postgres, can reproduce); reports record their verification mode and refuse to diff
+  across modes.
 
 Run on the host with `npm run scanner:venv` once, then `npm run scanner:test`,
 `npm run scanner:lint`, `npm run scanner:eval`; or inside the exact runtime image with
