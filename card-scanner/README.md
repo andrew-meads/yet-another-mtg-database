@@ -374,14 +374,16 @@ The result also carries the crop's **orientation** (the winner's validated homog
 the OCR line classifier's vote second), which the API uses to save the crop upright.
 
 **Measured on the labelled real photos** (`test-images/`, 17 photos / 68 cards, every quad
-verified): detection recall 88.2 % (60/68) at 100 % precision and 0 false positives per photo,
-~215 ms per photo; of the 60 crops, 100 % identified at card level, 85 % to the exact printing
-(the rest are inherent twins: The List Acornelia printed with UND's collector line, a prerelease
-promo, a World Championship gold-border reprint, a German MIR/TSB pair); Stage-1 recall 100 %
-(pHash alone 83 %); no false "confident" calls; ~360 ms per crop with OCR (≈ 120 ms without),
-of which OCR is ~200 ms. The eight detection misses are the hard cases the last five photos were
-shot for: borderless cards packed against neighbours (tight grid, binder page) and cards
-overlapped by other cards (fanned hand).
+verified against the card's Scryfall image): detection recall 95.6 % (65/68) — 98.5 % of
+cards not covered by another card, one of three covered ones — at 100 % precision after
+identification's ORB gate (94.2 % detection-only), ~330 ms per photo; of the 65 crops,
+100 % identified at card level, 86 % to the exact printing (the rest are inherent twins: The
+List Acornelia printed with UND's collector line, a prerelease promo, a World Championship
+gold-border reprint, a German MIR/TSB pair); Stage-1 recall 100 %; no false "confident"
+calls; ~370 ms per crop with OCR. The three misses are a borderless card on a busy playmat
+(no closed outline) and two cards in a fanned hand with fewer than three visible corners.
+Corner error median 5 px, p95 6.7 % of card width, the tail being black borders on
+same-darkness wood and glare-bright foil borders (see Known limitations).
 
 **pHash identifies artwork, not printing.** Same-art reprints across sets are
 indistinguishable by appearance, which is why the API returns the top-N (default 5) for a
@@ -520,7 +522,10 @@ of the true edges, fixes the printed order and completes hidden corners; a fit i
 (and the quad left alone) when too few features agree or a corner would move more than 15 % of
 the card's short side, the signature of locking onto a neighbouring card with the same frame.
 Refined quads come back as drafts (`<stem>.refine.jpg` shows old in red, new in green) for the
-usual `--verify`. Photos are stored
+usual `--verify`. The same command with `--force` on a *copy* of the dataset is the label
+audit: any verified quad the fit moves by more than 0.5 % of card width on average (or 1 % at
+a corner) deserves a look at the overlay, and the fit is usually right — the first audit
+found 35 of 68 detector-drafted quads inset by 1–8 %. Photos are stored
 at 3000 px (~1.5 MB each); labels always in git; no Git LFS.
 
 ### Synthetic composites (`backend/app/synth.py`)
