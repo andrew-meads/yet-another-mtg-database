@@ -352,6 +352,17 @@ def detect(image_bgr: np.ndarray, *, verify: bool = True) -> DetectionResult:
                 band_in_ratio=config.REFINE_BAND_IN,
                 band_out_ratio=config.REFINE_BAND_OUT,
                 samples=config.REFINE_SAMPLES,
+                search_in_ratio=config.REFINE_SEARCH_IN,
+                min_gradient=config.REFINE_MIN_GRADIENT,
+                min_sharpness=config.REFINE_MIN_SHARPNESS,
+                noise_factor=config.REFINE_NOISE_FACTOR,
+                border_tolerance=config.REFINE_BORDER_TOLERANCE,
+                min_side_fraction=config.REFINE_MIN_SIDE_FRACTION,
+                max_area_change=config.REFINE_MAX_AREA_CHANGE,
+                border_step=config.REFINE_BORDER_STEP,
+                max_border_ratio=config.REFINE_MAX_BORDER_RATIO,
+                step_min_sharpness=config.REFINE_STEP_MIN_SHARPNESS,
+                inside_tolerance=config.REFINE_INSIDE_TOLERANCE,
             )
             c.metrics["refine_px"] = float(np.linalg.norm(refined - quad_full, axis=1).max())
             quad_full = refined

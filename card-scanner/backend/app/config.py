@@ -496,6 +496,30 @@ REFINE_CORNERS = _env_bool("REFINE_CORNERS", True)
 REFINE_BAND_IN = _env_float("REFINE_BAND_IN", 0.015)
 REFINE_BAND_OUT = _env_float("REFINE_BAND_OUT", 0.06)
 REFINE_SAMPLES = _env_int("REFINE_SAMPLES", 64)
+# How far inside the coarse line profiles start; the absolute gradient floor (grey
+# levels over a 0.5 % span) and the sharpness ratio a run needs; the noise factor
+# (multiple of the median outward gradient) that raises the floor on texture; how
+# flat the border stretch must be (grey levels); the fraction of a side's profiles
+# that must vote before its line moves; the largest area change accepted (a full
+# black-border inset is 0.186); whether the opt-in mean-profile border step runs on
+# sides where fewer than half the profiles found an edge (measured neutral overall on
+# the labelled photos: it rescues a black border on a textured mat but is fooled by
+# binder-pocket texture), how far out it may look (fraction of the long edge), its
+# sharpness bar and the share of the outward contrast its step must rise by.
+REFINE_SEARCH_IN = _env_float("REFINE_SEARCH_IN", 0.04)
+REFINE_MIN_GRADIENT = _env_float("REFINE_MIN_GRADIENT", 5.0)
+REFINE_MIN_SHARPNESS = _env_float("REFINE_MIN_SHARPNESS", 0.6)
+REFINE_NOISE_FACTOR = _env_float("REFINE_NOISE_FACTOR", 2.5)
+REFINE_BORDER_TOLERANCE = _env_float("REFINE_BORDER_TOLERANCE", 20.0)
+REFINE_MIN_SIDE_FRACTION = _env_float("REFINE_MIN_SIDE_FRACTION", 0.4)
+REFINE_MAX_AREA_CHANGE = _env_float("REFINE_MAX_AREA_CHANGE", 0.35)
+REFINE_BORDER_STEP = _env_bool("REFINE_BORDER_STEP", False)
+REFINE_MAX_BORDER_RATIO = _env_float("REFINE_MAX_BORDER_RATIO", 0.06)
+REFINE_STEP_MIN_SHARPNESS = _env_float("REFINE_STEP_MIN_SHARPNESS", 0.6)
+# A border plateau may be this much brighter than the 10th percentile of what lies
+# inside the coarse line and still count (a glare-washed foil border); a drop shadow on
+# a light table is brighter still.
+REFINE_INSIDE_TOLERANCE = _env_float("REFINE_INSIDE_TOLERANCE", 40.0)
 
 # Debug output. The overlay draws accepted quads in green and, when
 # DEBUG_OVERLAY_REJECTED, the best DEBUG_MAX_REJECTED rejected candidates coloured

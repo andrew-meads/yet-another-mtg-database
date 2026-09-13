@@ -265,9 +265,22 @@ refinement → warp. Modules: `candidates.py` (strategies, filters, NMS), `verif
    a glare-cut half of a card hashes about as well as the card (half a card is still that
    card) and used to suppress it. Without hashes nothing swaps: a 2×1 pair blob scores as
    well as a card it contains.
-6. **Refinement + warp** — corners are refined at full resolution (intensity profiles along
-   each side's outward normal, outermost strong gradient, Huber `fitLine`, guarded), then a
-   single-resample warp produces the 487×680 portrait crop (63:88, Scryfall "normal" size)
+6. **Refinement + warp** — corners are refined at full resolution: 64 intensity profiles
+   along each side's outward normal, and in each one a gradient run counts as *this card's*
+   edge only if it is dark→bright by a share of the outward contrast (the border ends where
+   something brighter begins; the frame→border drop beside an inset line is bright→dark and
+   never counts), the stretch between the line and the run is one flat level entered within
+   a few spans and never after rising above what lies just inside the line (a paper gap to a
+   neighbour), and that level is no brighter than the 10th percentile inside the line plus
+   `REFINE_INSIDE_TOLERANCE` (a drop shadow is brighter than the border it borders; a
+   glare-washed foil border is not). A run at the line wins, else the *nearest* qualifying
+   run outward; outliers are dropped before the Huber `fitLine`, and moves beyond 1.5 bands
+   or a `REFINE_MAX_AREA_CHANGE` area change are refused. Known limits: a black border on
+   wood of the same darkness has no edge to find, and a card brighter than its surroundings
+   (a borderless card in a binder pocket, a glare-bright border on a dark mat) is outside
+   the dark-border model — the reference-image homography that identification computes is
+   the tool for those. Then a single-resample warp produces the 487×680 portrait crop
+   (63:88, Scryfall "normal" size)
    and keeps the 2× warp for the OCR band passes. The crop is rotated to upright once
    identification confirms the orientation.
 
@@ -593,6 +606,8 @@ new knobs there with a comment and a sensible default rather than hardcoding thr
 | `BG_MODE`, `BG_BORDER_FRACTION`, `BG_DELTA_E`, `BG_MAX_SPREAD`, `BG_EMIT_EXPANDED` | `auto`, `0.04`, `12`, `14`, `true` | Colour-mask strategy. |
 | `SPLIT_TOUCHING` | `false` | Grid split of merged touching cards (opt-in). |
 | `REFINE_CORNERS`, `REFINE_BAND_IN`, `REFINE_BAND_OUT`, `REFINE_SAMPLES` | `true`, `0.015`, `0.06`, `64` | Full-resolution corner refinement. |
+| `REFINE_SEARCH_IN`, `REFINE_MIN_GRADIENT`, `REFINE_MIN_SHARPNESS`, `REFINE_NOISE_FACTOR`, `REFINE_BORDER_TOLERANCE`, `REFINE_INSIDE_TOLERANCE`, `REFINE_MIN_SIDE_FRACTION`, `REFINE_MAX_AREA_CHANGE` | 0.04, 5, 0.6, 2.5, 20, 40, 0.4, 0.35 | Refinement rules: inward search depth, absolute gradient floor, sharpness ratio, texture noise factor, border flatness, how much brighter than the inside a border may be, votes a side needs, largest area change. |
+| `REFINE_BORDER_STEP`, `REFINE_MAX_BORDER_RATIO`, `REFINE_STEP_MIN_SHARPNESS`, `REFINE_STEP_RISE_FRACTION` | off, 0.06, 0.6, 0.35 | Opt-in mean-profile border step for sides where fewer than half the profiles found an edge (rescues a black border on a textured mat; measured neutral overall, fooled by binder-pocket texture). |
 | `OUTPUT_HEIGHT` | `680` | Crop height in px; width follows the 63:88 card ratio (→ 487). |
 | `SAVE_DEBUG_OVERLAY`, `DEBUG_OVERLAY_REJECTED`, `DEBUG_MAX_REJECTED`, `DEBUG_SAVE_INTERMEDIATE`, `DEBUG_JSON` | `true`, `true`, `40`, `false`, `false` | Debug outputs. |
 | `SCAN_WORKERS` | `2` | Crops of one photo identified in parallel. |

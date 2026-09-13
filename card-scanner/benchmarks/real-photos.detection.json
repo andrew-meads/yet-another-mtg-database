@@ -1,7 +1,7 @@
 {
   "schema": "card-scanner.evaluate-photos/1",
-  "created": "2026-09-13T05:16:06+00:00",
-  "git_sha": "26d19bb",
+  "created": "2026-09-13T05:44:43+00:00",
+  "git_sha": "a4717ac",
   "versions": {
     "python": "3.14.2",
     "opencv": "5.0.0",
@@ -45,7 +45,13 @@
     "VERIFY_AMBIGUOUS_HAMMING": 16,
     "VERIFY_MIN_INDEX_SIZE": 50000,
     "SPLIT_TOUCHING": true,
+    "CONTAINER_MIN_COVERAGE": 0.92,
+    "MIN_RECTANGULARITY_SUPPORTED": 0.5,
+    "NMS_NESTED_SWAP_RATIO": 0.6,
     "REFINE_CORNERS": true,
+    "REFINE_BORDER_STEP": false,
+    "REFINE_BORDER_TOLERANCE": 20.0,
+    "REFINE_MAX_AREA_CHANGE": 0.35,
     "OCR_ENABLED": true,
     "OCR_MAX_LINES": 6,
     "OCR_MIN_CONF": 0.7,
@@ -89,17 +95,17 @@
     "fp_per_photo": 0.2353,
     "corner_err_px": {
       "n": 64,
-      "mean": 15.325,
-      "median": 4.36,
-      "p95": 55.571,
-      "max": 114.86
+      "mean": 16.63,
+      "median": 5.185,
+      "p95": 58.34,
+      "max": 112.63
     },
     "corner_err_pct": {
       "n": 64,
-      "mean": 1.709,
-      "median": 0.461,
-      "p95": 6.418,
-      "max": 13.157
+      "mean": 1.813,
+      "median": 0.559,
+      "p95": 6.772,
+      "max": 12.619
     },
     "count_ok": 13,
     "count_ok_rate": 0.7647,
@@ -129,10 +135,10 @@
     "false_confident_rate": null,
     "detect_ms": {
       "n": 17,
-      "mean": 267.112,
-      "median": 262.0,
-      "p95": 545.28,
-      "max": 908.0
+      "mean": 331.8,
+      "median": 317.1,
+      "p95": 696.92,
+      "max": 991.0
     },
     "identify_ms": {
       "n": 0,
@@ -162,17 +168,17 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 9,
-        "mean": 5.22,
-        "median": 0.39,
-        "p95": 26.11,
-        "max": 41.37
+        "mean": 7.332,
+        "median": 2.96,
+        "p95": 29.042,
+        "max": 40.75
       },
       "corner_err_pct": {
         "n": 9,
-        "mean": 0.67,
-        "median": 0.048,
-        "p95": 3.361,
-        "max": 5.345
+        "mean": 0.926,
+        "median": 0.357,
+        "p95": 3.709,
+        "max": 5.265
       },
       "count_ok": 1,
       "count_ok_rate": 1.0,
@@ -202,10 +208,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 454.6,
-        "median": 454.6,
-        "p95": 454.6,
-        "max": 454.6
+        "mean": 623.4,
+        "median": 623.4,
+        "p95": 623.4,
+        "max": 623.4
       },
       "identify_ms": {
         "n": 0,
@@ -234,17 +240,17 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 3,
-        "mean": 43.263,
-        "median": 55.64,
-        "p95": 66.8,
-        "max": 68.04
+        "mean": 44.693,
+        "median": 59.39,
+        "p95": 67.265,
+        "max": 68.14
       },
       "corner_err_pct": {
         "n": 3,
-        "mean": 4.815,
-        "median": 6.447,
-        "p95": 7.166,
-        "max": 7.246
+        "mean": 4.981,
+        "median": 6.882,
+        "p95": 7.219,
+        "max": 7.256
       },
       "count_ok": 1,
       "count_ok_rate": 1.0,
@@ -274,10 +280,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 272.4,
-        "median": 272.4,
-        "p95": 272.4,
-        "max": 272.4
+        "mean": 338.1,
+        "median": 338.1,
+        "p95": 338.1,
+        "max": 338.1
       },
       "identify_ms": {
         "n": 0,
@@ -306,17 +312,17 @@
       "fp_per_photo": 1.0,
       "corner_err_px": {
         "n": 4,
-        "mean": 26.74,
-        "median": 29.02,
-        "p95": 47.478,
-        "max": 48.53
+        "mean": 22.927,
+        "median": 20.635,
+        "p95": 47.073,
+        "max": 50.06
       },
       "corner_err_pct": {
         "n": 4,
-        "mean": 3.282,
-        "median": 3.689,
-        "p95": 5.639,
-        "max": 5.703
+        "mean": 2.793,
+        "median": 2.623,
+        "p95": 5.574,
+        "max": 5.882
       },
       "count_ok": 0,
       "count_ok_rate": 0.0,
@@ -346,10 +352,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 272.8,
-        "median": 272.8,
-        "p95": 272.8,
-        "max": 272.8
+        "mean": 346.7,
+        "median": 346.7,
+        "p95": 346.7,
+        "max": 346.7
       },
       "identify_ms": {
         "n": 0,
@@ -378,17 +384,17 @@
       "fp_per_photo": 1.0,
       "corner_err_px": {
         "n": 8,
-        "mean": 39.806,
-        "median": 43.315,
-        "p95": 94.192,
-        "max": 114.86
+        "mean": 31.769,
+        "median": 25.505,
+        "p95": 87.021,
+        "max": 110.17
       },
       "corner_err_pct": {
         "n": 8,
-        "mean": 4.641,
-        "median": 5.222,
-        "p95": 10.8,
-        "max": 13.157
+        "mean": 3.709,
+        "median": 2.934,
+        "p95": 10.066,
+        "max": 12.619
       },
       "count_ok": 1,
       "count_ok_rate": 0.5,
@@ -418,10 +424,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 2,
-        "mean": 278.4,
-        "median": 278.4,
-        "p95": 285.51,
-        "max": 286.3
+        "mean": 388.65,
+        "median": 388.65,
+        "p95": 390.045,
+        "max": 390.2
       },
       "identify_ms": {
         "n": 0,
@@ -450,17 +456,17 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 34,
-        "mean": 8.01,
-        "median": 4.255,
-        "p95": 35.589,
-        "max": 49.79
+        "mean": 11.639,
+        "median": 4.325,
+        "p95": 44.655,
+        "max": 112.63
       },
       "corner_err_pct": {
         "n": 34,
-        "mean": 0.753,
-        "median": 0.433,
-        "p95": 3.544,
-        "max": 3.749
+        "mean": 1.084,
+        "median": 0.459,
+        "p95": 3.818,
+        "max": 10.257
       },
       "count_ok": 9,
       "count_ok_rate": 0.9,
@@ -490,10 +496,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 10,
-        "mean": 253.07,
-        "median": 157.6,
-        "p95": 669.545,
-        "max": 908.0
+        "mean": 300.71,
+        "median": 190.35,
+        "p95": 772.66,
+        "max": 991.0
       },
       "identify_ms": {
         "n": 0,
@@ -522,17 +528,17 @@
       "fp_per_photo": 0.0,
       "corner_err_px": {
         "n": 3,
-        "mean": 34.983,
-        "median": 37.39,
-        "p95": 46.12,
-        "max": 47.09
+        "mean": 38.61,
+        "median": 34.61,
+        "p95": 48.164,
+        "max": 49.67
       },
       "corner_err_pct": {
         "n": 3,
-        "mean": 4.286,
-        "median": 4.604,
-        "p95": 5.706,
-        "max": 5.828
+        "mean": 4.711,
+        "median": 4.101,
+        "p95": 5.943,
+        "max": 6.148
       },
       "count_ok": 1,
       "count_ok_rate": 1.0,
@@ -562,10 +568,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 191.6,
-        "median": 191.6,
-        "p95": 191.6,
-        "max": 191.6
+        "mean": 230.9,
+        "median": 230.9,
+        "p95": 230.9,
+        "max": 230.9
       },
       "identify_ms": {
         "n": 0,
@@ -594,17 +600,17 @@
       "fp_per_photo": 1.0,
       "corner_err_px": {
         "n": 3,
-        "mean": 0.433,
-        "median": 0.43,
-        "p95": 0.475,
-        "max": 0.48
+        "mean": 2.27,
+        "median": 0.46,
+        "p95": 5.41,
+        "max": 5.96
       },
       "corner_err_pct": {
         "n": 3,
-        "mean": 0.059,
-        "median": 0.058,
-        "p95": 0.064,
-        "max": 0.065
+        "mean": 0.312,
+        "median": 0.063,
+        "p95": 0.744,
+        "max": 0.82
       },
       "count_ok": 0,
       "count_ok_rate": 0.0,
@@ -634,10 +640,10 @@
       "false_confident_rate": null,
       "detect_ms": {
         "n": 1,
-        "mean": 262.0,
-        "median": 262.0,
-        "p95": 262.0,
-        "max": 262.0
+        "mean": 317.1,
+        "median": 317.1,
+        "p95": 317.1,
+        "max": 317.1
       },
       "identify_ms": {
         "n": 0,
@@ -684,7 +690,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 908.0,
+      "detect_ms": 991.0,
       "verify_mode": "filter",
       "gt": [
         {
@@ -835,9 +841,9 @@
           "orientation": "upright",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9338,
-          "corner_err_px": 37.78,
-          "corner_err_pct": 3.498,
+          "iou": 0.9333,
+          "corner_err_px": 40.49,
+          "corner_err_pct": 3.749,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -884,20 +890,20 @@
           "index": 1,
           "quad": [
             [
-              2722,
-              623
+              2718,
+              621
             ],
             [
               3728,
-              636
+              637
             ],
             [
-              3863,
-              2023
+              3864,
+              2029
             ],
             [
-              2863,
-              1897
+              2865,
+              1898
             ]
           ],
           "gt_index": 2,
@@ -954,7 +960,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 78.2,
+      "detect_ms": 93.7,
       "verify_mode": "filter",
       "gt": [
         {
@@ -995,9 +1001,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9887,
+          "iou": 0.9886,
           "corner_err_px": 8.26,
-          "corner_err_pct": 0.58,
+          "corner_err_pct": 0.579,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -1062,7 +1068,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 96.0,
+      "detect_ms": 112.5,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1103,9 +1109,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9873,
-          "corner_err_px": 9.81,
-          "corner_err_pct": 0.619,
+          "iou": 0.9884,
+          "corner_err_px": 9.22,
+          "corner_err_pct": 0.582,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -1130,12 +1136,12 @@
               754
             ],
             [
-              2511,
+              2510,
               1280
             ],
             [
-              1772,
-              3296
+              1776,
+              3298
             ],
             [
               327,
@@ -1170,7 +1176,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 95.1,
+      "detect_ms": 109.0,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1278,7 +1284,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 146.6,
+      "detect_ms": 172.6,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1430,8 +1436,8 @@
           "det_index": 1,
           "match_how": "iou",
           "iou": 0.9821,
-          "corner_err_px": 9.27,
-          "corner_err_pct": 0.83,
+          "corner_err_px": 9.34,
+          "corner_err_pct": 0.837,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -1479,7 +1485,7 @@
           "quad": [
             [
               778,
-              2721
+              2722
             ],
             [
               2257,
@@ -1548,7 +1554,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 231.7,
+      "detect_ms": 287.2,
       "verify_mode": "filter",
       "gt": [
         {
@@ -1645,8 +1651,8 @@
           "det_index": 0,
           "match_how": "iou",
           "iou": 0.9874,
-          "corner_err_px": 5.78,
-          "corner_err_pct": 0.589,
+          "corner_err_px": 5.79,
+          "corner_err_pct": 0.59,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -1810,8 +1816,8 @@
           "det_index": 3,
           "match_how": "iou",
           "iou": 0.9864,
-          "corner_err_px": 5.19,
-          "corner_err_pct": 0.555,
+          "corner_err_px": 5.16,
+          "corner_err_pct": 0.552,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -1833,7 +1839,7 @@
           "quad": [
             [
               265,
-              2472
+              2471
             ],
             [
               1251,
@@ -1919,7 +1925,7 @@
             ],
             [
               2781,
-              3821
+              3822
             ],
             [
               1568,
@@ -1980,7 +1986,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 321.2,
+      "detect_ms": 396.6,
       "verify_mode": "filter",
       "gt": [
         {
@@ -2076,9 +2082,9 @@
           "orientation": "cw90",
           "det_index": 7,
           "match_how": "iou",
-          "iou": 0.993,
-          "corner_err_px": 3.05,
-          "corner_err_pct": 0.335,
+          "iou": 0.9932,
+          "corner_err_px": 2.99,
+          "corner_err_pct": 0.327,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2241,9 +2247,9 @@
           "orientation": "cw90",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9904,
-          "corner_err_px": 4.41,
-          "corner_err_pct": 0.476,
+          "iou": 0.9905,
+          "corner_err_px": 4.34,
+          "corner_err_pct": 0.469,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2351,9 +2357,9 @@
           "orientation": "cw90",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9708,
-          "corner_err_px": 12.95,
-          "corner_err_pct": 1.388,
+          "iou": 0.9694,
+          "corner_err_px": 13.55,
+          "corner_err_pct": 1.452,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2406,9 +2412,9 @@
           "orientation": "cw90",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9889,
-          "corner_err_px": 5.98,
-          "corner_err_pct": 0.643,
+          "iou": 0.989,
+          "corner_err_px": 5.9,
+          "corner_err_pct": 0.634,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2434,7 +2440,7 @@
             ],
             [
               2876,
-              3021
+              3022
             ],
             [
               2870,
@@ -2482,7 +2488,7 @@
           "quad": [
             [
               151,
-              3011
+              3008
             ],
             [
               1439,
@@ -2655,7 +2661,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 262.0,
+      "detect_ms": 317.1,
       "verify_mode": "filter",
       "gt": [
         {
@@ -2696,9 +2702,9 @@
           "orientation": "upright",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9992,
-          "corner_err_px": 0.43,
-          "corner_err_pct": 0.058,
+          "iou": 0.9989,
+          "corner_err_px": 0.46,
+          "corner_err_pct": 0.063,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2751,9 +2757,9 @@
           "orientation": "cw90",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9985,
-          "corner_err_px": 0.48,
-          "corner_err_pct": 0.065,
+          "iou": 0.9885,
+          "corner_err_px": 5.96,
+          "corner_err_pct": 0.82,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2806,9 +2812,9 @@
           "orientation": "cw90",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9992,
+          "iou": 0.9991,
           "corner_err_px": 0.39,
-          "corner_err_pct": 0.054,
+          "corner_err_pct": 0.053,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -2830,19 +2836,19 @@
           "quad": [
             [
               1043,
-              532
+              531
             ],
             [
-              2045,
-              556
+              2046,
+              552
             ],
             [
               2037,
-              1277
+              1290
             ],
             [
               1033,
-              1259
+              1253
             ]
           ],
           "gt_index": 1,
@@ -2908,11 +2914,11 @@
           "quad": [
             [
               1426,
-              1271
+              1264
             ],
             [
               1823,
-              1282
+              1270
             ],
             [
               1820,
@@ -2920,7 +2926,7 @@
             ],
             [
               1410,
-              1544
+              1543
             ]
           ],
           "gt_index": null,
@@ -2951,7 +2957,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 191.6,
+      "detect_ms": 230.9,
       "verify_mode": "filter",
       "gt": [
         {
@@ -2992,9 +2998,9 @@
           "orientation": "upright",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9016,
-          "corner_err_px": 47.09,
-          "corner_err_pct": 5.828,
+          "iou": 0.8924,
+          "corner_err_px": 49.67,
+          "corner_err_pct": 6.148,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3047,9 +3053,9 @@
           "orientation": "upright",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9369,
-          "corner_err_px": 37.39,
-          "corner_err_pct": 4.604,
+          "iou": 0.9485,
+          "corner_err_px": 31.55,
+          "corner_err_pct": 3.885,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3102,9 +3108,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9478,
-          "corner_err_px": 20.47,
-          "corner_err_pct": 2.426,
+          "iou": 0.9238,
+          "corner_err_px": 34.61,
+          "corner_err_pct": 4.101,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3125,20 +3131,20 @@
           "index": 0,
           "quad": [
             [
-              3157,
-              794
+              3159,
+              795
             ],
             [
-              3777,
-              1290
+              3779,
+              1291
             ],
             [
-              3067,
-              2117
+              3094,
+              2063
             ],
             [
-              2458,
-              1582
+              2443,
+              1597
             ]
           ],
           "gt_index": 2,
@@ -3151,20 +3157,20 @@
           "index": 1,
           "quad": [
             [
-              1526,
+              1527,
               847
             ],
             [
-              2305,
+              2302,
               832
             ],
             [
-              2267,
+              2287,
               1934
             ],
             [
-              1526,
-              1859
+              1523,
+              1860
             ]
           ],
           "gt_index": 1,
@@ -3177,20 +3183,20 @@
           "index": 2,
           "quad": [
             [
-              484,
-              949
+              475,
+              940
             ],
             [
-              1226,
-              875
+              1225,
+              886
             ],
             [
-              1206,
-              1975
+              1208,
+              1918
             ],
             [
-              508,
-              1984
+              497,
+              1989
             ]
           ],
           "gt_index": 0,
@@ -3221,7 +3227,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 272.8,
+      "detect_ms": 346.7,
       "verify_mode": "filter",
       "gt": [
         {
@@ -3262,9 +3268,9 @@
           "orientation": "upright",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.959,
-          "corner_err_px": 16.52,
-          "corner_err_pct": 2.102,
+          "iou": 0.9644,
+          "corner_err_px": 11.12,
+          "corner_err_pct": 1.415,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3317,9 +3323,9 @@
           "orientation": "upright",
           "det_index": 3,
           "match_how": "iou",
-          "iou": 0.9162,
-          "corner_err_px": 41.52,
-          "corner_err_pct": 5.276,
+          "iou": 0.9331,
+          "corner_err_px": 30.15,
+          "corner_err_pct": 3.831,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3372,9 +3378,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.929,
-          "corner_err_px": 48.53,
-          "corner_err_pct": 5.703,
+          "iou": 0.9271,
+          "corner_err_px": 50.06,
+          "corner_err_pct": 5.882,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3428,8 +3434,8 @@
           "det_index": 1,
           "match_how": "iou",
           "iou": 0.9993,
-          "corner_err_px": 0.39,
-          "corner_err_pct": 0.046,
+          "corner_err_px": 0.38,
+          "corner_err_pct": 0.044,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3450,8 +3456,8 @@
           "index": 0,
           "quad": [
             [
-              440,
-              2000
+              437,
+              1999
             ],
             [
               1286,
@@ -3462,7 +3468,7 @@
               3248
             ],
             [
-              334,
+              338,
               3177
             ]
           ],
@@ -3481,7 +3487,7 @@
             ],
             [
               2414,
-              2445
+              2446
             ],
             [
               2278,
@@ -3502,20 +3508,20 @@
           "index": 2,
           "quad": [
             [
-              603,
-              887
+              609,
+              888
             ],
             [
-              1339,
-              862
+              1344,
+              863
             ],
             [
-              1356,
-              1865
+              1353,
+              1862
             ],
             [
-              565,
-              1857
+              547,
+              1867
             ]
           ],
           "gt_index": 0,
@@ -3528,20 +3534,20 @@
           "index": 3,
           "quad": [
             [
-              1589,
-              947
+              1590,
+              996
             ],
             [
-              2301,
+              2293,
               1070
             ],
             [
-              2379,
-              2057
+              2384,
+              2059
             ],
             [
               1627,
-              2069
+              2070
             ]
           ],
           "gt_index": 1,
@@ -3554,20 +3560,20 @@
           "index": 4,
           "quad": [
             [
-              32,
-              34
+              116,
+              26
             ],
             [
-              2993,
-              5
+              2979,
+              25
             ],
             [
-              2967,
-              1635
+              2966,
+              1613
             ],
             [
-              48,
-              1772
+              13,
+              1778
             ]
           ],
           "gt_index": null,
@@ -3598,7 +3604,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 286.3,
+      "detect_ms": 390.2,
       "verify_mode": "filter",
       "gt": [
         {
@@ -3639,9 +3645,9 @@
           "orientation": "rot180",
           "det_index": 3,
           "match_how": "iou",
-          "iou": 0.717,
-          "corner_err_px": 114.86,
-          "corner_err_pct": 13.157,
+          "iou": 0.7277,
+          "corner_err_px": 110.17,
+          "corner_err_pct": 12.619,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3694,9 +3700,9 @@
           "orientation": "rot180",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.855,
-          "corner_err_px": 55.81,
-          "corner_err_pct": 6.386,
+          "iou": 0.9274,
+          "corner_err_px": 35.05,
+          "corner_err_pct": 4.01,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3804,9 +3810,9 @@
           "orientation": "rot180",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.8887,
-          "corner_err_px": 42.35,
-          "corner_err_pct": 5.09,
+          "iou": 0.8956,
+          "corner_err_px": 38.93,
+          "corner_err_pct": 4.679,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3859,9 +3865,9 @@
           "orientation": "rot180",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9868,
-          "corner_err_px": 5.3,
-          "corner_err_pct": 0.633,
+          "iou": 0.987,
+          "corner_err_px": 5.21,
+          "corner_err_pct": 0.622,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -3908,20 +3914,20 @@
           "index": 1,
           "quad": [
             [
-              2206,
-              291
+              2224,
+              289
             ],
             [
-              2988,
-              261
+              3037,
+              258
             ],
             [
-              2982,
-              1424
+              3032,
+              1427
             ],
             [
-              2228,
-              1441
+              2176,
+              1443
             ]
           ],
           "gt_index": 1,
@@ -3943,11 +3949,11 @@
             ],
             [
               2220,
-              2754
+              2765
             ],
             [
-              1475,
-              2699
+              1474,
+              2705
             ]
           ],
           "gt_index": 3,
@@ -3960,19 +3966,19 @@
           "index": 3,
           "quad": [
             [
-              1026,
-              266
+              1016,
+              255
             ],
             [
               1682,
-              265
+              254
             ],
             [
               1818,
               1302
             ],
             [
-              1033,
+              1036,
               1304
             ]
           ],
@@ -3986,20 +3992,20 @@
           "index": 4,
           "quad": [
             [
-              41,
-              18
+              50,
+              10
             ],
             [
-              1084,
-              9
+              1081,
+              8
             ],
             [
-              1004,
-              1020
+              1010,
+              1021
             ],
             [
-              23,
-              751
+              18,
+              747
             ]
           ],
           "gt_index": null,
@@ -4030,7 +4036,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 272.4,
+      "detect_ms": 338.1,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4071,9 +4077,9 @@
           "orientation": "cw90",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9866,
-          "corner_err_px": 6.11,
-          "corner_err_pct": 0.752,
+          "iou": 0.984,
+          "corner_err_px": 6.55,
+          "corner_err_pct": 0.805,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4126,9 +4132,9 @@
           "orientation": "cw90",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.8878,
-          "corner_err_px": 55.64,
-          "corner_err_pct": 6.447,
+          "iou": 0.8746,
+          "corner_err_px": 59.39,
+          "corner_err_pct": 6.882,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4181,9 +4187,9 @@
           "orientation": "cw90",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.8468,
-          "corner_err_px": 68.04,
-          "corner_err_pct": 7.246,
+          "iou": 0.8542,
+          "corner_err_px": 68.14,
+          "corner_err_pct": 7.256,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4204,20 +4210,20 @@
           "index": 0,
           "quad": [
             [
-              886,
+              883,
               336
             ],
             [
               2005,
-              248
+              249
             ],
             [
-              2126,
-              1019
+              2125,
+              1015
             ],
             [
-              981,
-              1151
+              983,
+              1145
             ]
           ],
           "gt_index": 0,
@@ -4230,20 +4236,20 @@
           "index": 1,
           "quad": [
             [
-              970,
-              1522
+              967,
+              1518
             ],
             [
-              2245,
-              1392
+              2251,
+              1377
             ],
             [
-              2189,
+              2196,
               2352
             ],
             [
-              1038,
-              2400
+              1039,
+              2402
             ]
           ],
           "gt_index": 1,
@@ -4256,19 +4262,19 @@
           "index": 2,
           "quad": [
             [
-              1031,
-              2856
+              1041,
+              2855
             ],
             [
-              2138,
-              2816
+              2124,
+              2818
             ],
             [
-              2140,
+              2176,
               3697
             ],
             [
-              990,
+              983,
               3677
             ]
           ],
@@ -4300,7 +4306,7 @@
       "det_fp": 1,
       "det_partial": 0,
       "unmatched_detections": 1,
-      "detect_ms": 270.5,
+      "detect_ms": 387.1,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4341,9 +4347,9 @@
           "orientation": "cw90",
           "det_index": 3,
           "match_how": "iou",
-          "iou": 0.8659,
-          "corner_err_px": 55.18,
-          "corner_err_pct": 6.424,
+          "iou": 0.973,
+          "corner_err_px": 15.96,
+          "corner_err_pct": 1.858,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4396,9 +4402,9 @@
           "orientation": "cw90",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.999,
-          "corner_err_px": 0.44,
-          "corner_err_pct": 0.055,
+          "iou": 0.9982,
+          "corner_err_px": 0.65,
+          "corner_err_pct": 0.08,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4451,9 +4457,9 @@
           "orientation": "cw90",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9996,
-          "corner_err_px": 0.23,
-          "corner_err_pct": 0.027,
+          "iou": 0.9943,
+          "corner_err_px": 4.15,
+          "corner_err_pct": 0.478,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4506,9 +4512,9 @@
           "orientation": "cw90",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.8836,
-          "corner_err_px": 44.28,
-          "corner_err_pct": 5.354,
+          "iou": 0.884,
+          "corner_err_px": 44.03,
+          "corner_err_pct": 5.325,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4533,11 +4539,11 @@
               2231
             ],
             [
-              2772,
+              2774,
               2278
             ],
             [
-              2752,
+              2751,
               3012
             ],
             [
@@ -4564,10 +4570,10 @@
             ],
             [
               2769,
-              1988
+              1987
             ],
             [
-              1685,
+              1686,
               1977
             ]
           ],
@@ -4582,19 +4588,19 @@
           "quad": [
             [
               195,
-              2259
+              2263
             ],
             [
-              1401,
-              2218
+              1399,
+              2214
             ],
             [
-              1424,
-              3049
+              1430,
+              3048
             ],
             [
-              213,
-              3129
+              215,
+              3130
             ]
           ],
           "gt_index": 2,
@@ -4607,20 +4613,20 @@
           "index": 3,
           "quad": [
             [
-              170,
-              1198
+              168,
+              1135
             ],
             [
-              1339,
-              1175
+              1376,
+              1154
             ],
             [
-              1353,
-              1953
+              1382,
+              1985
             ],
             [
-              176,
-              1915
+              177,
+              1945
             ]
           ],
           "gt_index": 0,
@@ -4633,20 +4639,20 @@
           "index": 4,
           "quad": [
             [
-              1444,
+              1442,
               2361
             ],
             [
               1732,
-              2516
+              2517
             ],
             [
               1710,
-              2975
+              2972
             ],
             [
-              1421,
-              2813
+              1420,
+              2820
             ]
           ],
           "gt_index": null,
@@ -4677,7 +4683,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 168.6,
+      "detect_ms": 208.1,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4718,9 +4724,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.43,
-          "corner_err_pct": 0.033,
+          "iou": 0.9981,
+          "corner_err_px": 1.37,
+          "corner_err_pct": 0.106,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4773,9 +4779,9 @@
           "orientation": "upright",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9141,
-          "corner_err_px": 49.79,
-          "corner_err_pct": 3.749,
+          "iou": 0.9133,
+          "corner_err_px": 52.39,
+          "corner_err_pct": 3.945,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -4800,7 +4806,7 @@
               504
             ],
             [
-              1945,
+              1949,
               675
             ],
             [
@@ -4822,20 +4828,20 @@
           "index": 1,
           "quad": [
             [
-              2136,
+              2131,
               591
             ],
             [
-              3228,
-              772
+              3233,
+              773
             ],
             [
-              3113,
-              2487
+              3117,
+              2488
             ],
             [
-              1832,
-              2260
+              1846,
+              2262
             ]
           ],
           "gt_index": 1,
@@ -4866,7 +4872,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 378.1,
+      "detect_ms": 505.8,
       "verify_mode": "filter",
       "gt": [
         {
@@ -4907,9 +4913,9 @@
           "orientation": "upright",
           "det_index": 5,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.39,
-          "corner_err_pct": 0.044,
+          "iou": 0.9975,
+          "corner_err_px": 1.56,
+          "corner_err_pct": 0.175,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5017,9 +5023,9 @@
           "orientation": "upright",
           "det_index": 4,
           "match_how": "iou",
-          "iou": 0.9994,
-          "corner_err_px": 0.31,
-          "corner_err_pct": 0.035,
+          "iou": 0.9992,
+          "corner_err_px": 0.44,
+          "corner_err_pct": 0.049,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5072,9 +5078,9 @@
           "orientation": "upright",
           "det_index": 7,
           "match_how": "iou",
-          "iou": 0.9622,
-          "corner_err_px": 24.22,
-          "corner_err_pct": 2.644,
+          "iou": 0.961,
+          "corner_err_px": 24.92,
+          "corner_err_pct": 2.72,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5127,9 +5133,9 @@
           "orientation": "upright",
           "det_index": 6,
           "match_how": "iou",
-          "iou": 0.9975,
-          "corner_err_px": 1.91,
-          "corner_err_pct": 0.211,
+          "iou": 0.9972,
+          "corner_err_px": 1.95,
+          "corner_err_pct": 0.215,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5182,9 +5188,9 @@
           "orientation": "upright",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9991,
-          "corner_err_px": 0.4,
-          "corner_err_pct": 0.044,
+          "iou": 0.9989,
+          "corner_err_px": 0.53,
+          "corner_err_pct": 0.059,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5237,9 +5243,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.5,
-          "corner_err_pct": 0.053,
+          "iou": 0.9943,
+          "corner_err_px": 2.65,
+          "corner_err_pct": 0.281,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5292,9 +5298,9 @@
           "orientation": "upright",
           "det_index": 3,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.35,
-          "corner_err_pct": 0.038,
+          "iou": 0.9989,
+          "corner_err_px": 0.45,
+          "corner_err_pct": 0.048,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5347,9 +5353,9 @@
           "orientation": "upright",
           "det_index": 8,
           "match_how": "iou",
-          "iou": 0.9349,
-          "corner_err_px": 34.41,
-          "corner_err_pct": 3.63,
+          "iou": 0.9352,
+          "corner_err_px": 35.05,
+          "corner_err_pct": 3.697,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5370,15 +5376,15 @@
           "index": 0,
           "quad": [
             [
-              123,
+              122,
               2574
             ],
             [
-              1039,
-              2585
+              1033,
+              2584
             ],
             [
-              1013,
+              1010,
               3893
             ],
             [
@@ -5396,7 +5402,7 @@
           "index": 1,
           "quad": [
             [
-              2001,
+              2002,
               1327
             ],
             [
@@ -5460,7 +5466,7 @@
               3926
             ],
             [
-              1022,
+              1023,
               3904
             ]
           ],
@@ -5474,7 +5480,7 @@
           "index": 4,
           "quad": [
             [
-              2017,
+              2018,
               64
             ],
             [
@@ -5504,11 +5510,11 @@
               48
             ],
             [
-              1069,
+              1066,
               66
             ],
             [
-              1036,
+              1038,
               1273
             ],
             [
@@ -5526,7 +5532,7 @@
           "index": 6,
           "quad": [
             [
-              1072,
+              1073,
               1298
             ],
             [
@@ -5534,11 +5540,11 @@
               1300
             ],
             [
-              1966,
+              1965,
               2558
             ],
             [
-              1060,
+              1059,
               2547
             ]
           ],
@@ -5560,7 +5566,7 @@
               1274
             ],
             [
-              1054,
+              1057,
               2552
             ],
             [
@@ -5579,15 +5585,15 @@
           "quad": [
             [
               2015,
-              2593
+              2592
             ],
             [
-              2837,
-              2593
+              2838,
+              2592
             ],
             [
-              2972,
-              3975
+              2974,
+              3976
             ],
             [
               2012,
@@ -5622,7 +5628,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 107.2,
+      "detect_ms": 130.6,
       "verify_mode": "filter",
       "gt": [
         {
@@ -5697,20 +5703,20 @@
           "has_quad": true,
           "quad": [
             [
-              2233,
-              1042
+              2279,
+              996
             ],
             [
-              2389,
-              1954
+              2443,
+              2003
             ],
             [
-              1061,
-              2012
+              1038,
+              2259
             ],
             [
-              946,
-              1277
+              848,
+              1178
             ]
           ],
           "quad_source": "verified",
@@ -5718,9 +5724,9 @@
           "orientation": "cw90",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9991,
-          "corner_err_px": 0.4,
-          "corner_err_pct": 0.044,
+          "iou": 0.7608,
+          "corner_err_px": 112.63,
+          "corner_err_pct": 10.257,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5851,20 +5857,20 @@
           "index": 0,
           "quad": [
             [
-              946,
-              1277
+              938,
+              1296
             ],
             [
-              2233,
-              1042
+              2277,
+              1012
             ],
             [
-              2389,
-              1954
+              2432,
+              1944
             ],
             [
-              1061,
-              2012
+              1068,
+              2035
             ]
           ],
           "gt_index": 1,
@@ -5895,7 +5901,7 @@
       "det_fp": 0,
       "det_partial": 0,
       "unmatched_detections": 0,
-      "detect_ms": 454.6,
+      "detect_ms": 623.4,
       "verify_mode": "filter",
       "gt": [
         {
@@ -5936,9 +5942,9 @@
           "orientation": "upright",
           "det_index": 3,
           "match_how": "iou",
-          "iou": 0.905,
-          "corner_err_px": 41.37,
-          "corner_err_pct": 5.345,
+          "iou": 0.9051,
+          "corner_err_px": 40.75,
+          "corner_err_pct": 5.265,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -5991,9 +5997,9 @@
           "orientation": "upright",
           "det_index": 6,
           "match_how": "iou",
-          "iou": 0.999,
-          "corner_err_px": 0.43,
-          "corner_err_pct": 0.056,
+          "iou": 0.9986,
+          "corner_err_px": 0.7,
+          "corner_err_pct": 0.091,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6046,9 +6052,9 @@
           "orientation": "upright",
           "det_index": 1,
           "match_how": "iou",
-          "iou": 0.9995,
-          "corner_err_px": 0.23,
-          "corner_err_pct": 0.03,
+          "iou": 0.9993,
+          "corner_err_px": 0.36,
+          "corner_err_pct": 0.047,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6101,9 +6107,9 @@
           "orientation": "upright",
           "det_index": 7,
           "match_how": "iou",
-          "iou": 0.9994,
-          "corner_err_px": 0.26,
-          "corner_err_pct": 0.033,
+          "iou": 0.9913,
+          "corner_err_px": 3.66,
+          "corner_err_pct": 0.46,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6156,9 +6162,9 @@
           "orientation": "upright",
           "det_index": 0,
           "match_how": "iou",
-          "iou": 0.9991,
-          "corner_err_px": 0.39,
-          "corner_err_pct": 0.048,
+          "iou": 0.9931,
+          "corner_err_px": 3.21,
+          "corner_err_pct": 0.397,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6211,9 +6217,9 @@
           "orientation": "upright",
           "det_index": 5,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.34,
-          "corner_err_pct": 0.042,
+          "iou": 0.9978,
+          "corner_err_px": 1.27,
+          "corner_err_pct": 0.158,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6266,9 +6272,9 @@
           "orientation": "upright",
           "det_index": 2,
           "match_how": "iou",
-          "iou": 0.9994,
-          "corner_err_px": 0.33,
-          "corner_err_pct": 0.04,
+          "iou": 0.9928,
+          "corner_err_px": 2.96,
+          "corner_err_pct": 0.357,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6321,9 +6327,9 @@
           "orientation": "upright",
           "det_index": 4,
           "match_how": "iou",
-          "iou": 0.9993,
-          "corner_err_px": 0.41,
-          "corner_err_pct": 0.048,
+          "iou": 0.9982,
+          "corner_err_px": 1.6,
+          "corner_err_pct": 0.187,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6376,9 +6382,9 @@
           "orientation": "upright",
           "det_index": 8,
           "match_how": "iou",
-          "iou": 0.9937,
-          "corner_err_px": 3.22,
-          "corner_err_pct": 0.386,
+          "iou": 0.9854,
+          "corner_err_px": 11.48,
+          "corner_err_pct": 1.375,
           "top1": null,
           "strict_rank": null,
           "family_rank": null,
@@ -6404,15 +6410,15 @@
             ],
             [
               1796,
-              1388
+              1389
             ],
             [
               1852,
-              2467
+              2461
             ],
             [
-              1045,
-              2511
+              1047,
+              2505
             ]
           ],
           "gt_index": 4,
@@ -6426,7 +6432,7 @@
           "quad": [
             [
               1795,
-              288
+              287
             ],
             [
               2542,
@@ -6452,14 +6458,14 @@
           "quad": [
             [
               159,
-              2653
+              2654
             ],
             [
-              971,
-              2629
+              963,
+              2635
             ],
             [
-              981,
+              982,
               3874
             ],
             [
@@ -6477,20 +6483,20 @@
           "index": 3,
           "quad": [
             [
-              201,
+              202,
               334
             ],
             [
-              867,
-              264
+              869,
+              262
             ],
             [
-              948,
-              1247
+              949,
+              1252
             ],
             [
               158,
-              1346
+              1347
             ]
           ],
           "gt_index": 0,
@@ -6512,11 +6518,11 @@
             ],
             [
               1921,
-              3769
+              3772
             ],
             [
               1074,
-              3869
+              3866
             ]
           ],
           "gt_index": 7,
@@ -6533,11 +6539,11 @@
               1389
             ],
             [
-              2640,
+              2643,
               1345
             ],
             [
-              2739,
+              2738,
               2431
             ],
             [
@@ -6556,7 +6562,7 @@
           "quad": [
             [
               990,
-              238
+              239
             ],
             [
               1735,
@@ -6568,7 +6574,7 @@
             ],
             [
               1005,
-              1266
+              1265
             ]
           ],
           "gt_index": 1,
@@ -6581,20 +6587,20 @@
           "index": 7,
           "quad": [
             [
-              143,
+              145,
               1427
             ],
             [
-              937,
-              1378
+              939,
+              1377
             ],
             [
-              960,
-              2517
+              958,
+              2512
             ],
             [
-              167,
-              2545
+              170,
+              2540
             ]
           ],
           "gt_index": 3,
@@ -6607,20 +6613,20 @@
           "index": 8,
           "quad": [
             [
-              1932,
-              2575
+              1931,
+              2576
             ],
             [
               2741,
               2543
             ],
             [
-              2848,
-              3719
+              2849,
+              3730
             ],
             [
               2008,
-              3760
+              3735
             ]
           ],
           "gt_index": 8,

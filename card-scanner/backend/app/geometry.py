@@ -544,29 +544,118 @@ def warp_to_card(
 
 
 def _edge_run_qualifies(
-    prof: np.ndarray, steps: np.ndarray, span: int, zero: int, run_pos: float, tolerance: float
+    prof: np.ndarray,
+    steps: np.ndarray,
+    span: int,
+    zero: int,
+    run_pos: float,
+    tolerance: float,
+    min_gradient: float = 5.0,
+    inside_level: float | None = None,
+    inside_tolerance: float | None = None,
+    rise_fraction: float = 0.2,
+    contrast: float | None = None,
 ) -> bool:
     """Whether a gradient run looks like *this card's* border→surface edge.
 
     See :func:`refine_corners` step 2b. ``prof`` is one intensity profile along
     the outward normal (index 0 at the inward limit), ``steps`` its positions,
-    ``zero`` the index of the coarse line, ``span`` the differencing span.
+    ``zero`` the index of the coarse line, ``span`` the differencing span,
+    ``inside_level`` the 10th percentile of the profile up to the coarse line
+    (computed here when not given).
+
+    Two rules, by where the run lies:
+
+    * **Outward** (past the coarse line). The border is the plateau just
+      inside the run — the median of the last few samples before it. Walking
+      out from the coarse line, the profile may first *enter* that plateau
+      (a coarse line that hugged the printed frame still has the whole
+      border ahead of it) but must never leave it again before the run: a run
+      reached by crossing the bright paper gap belongs to a neighbouring
+      card, and before entering it the profile may descend (frame → border)
+      but never rise above the level just inside the line (that rise is the
+      paper gap). The plateau must be no brighter than ``inside_level`` plus
+      ``tolerance`` — a card's drop shadow is a flat dark→bright stretch too,
+      but brighter than the border it borders; the percentile (not the
+      minimum) means one foil sparkle cannot set the level while a thin
+      borderless-card edge still does. And the run must be dark→bright by at
+      least ``min_gradient``: leaving the border for the surface.
+    * **At or inward** (the coarse line is on the edge, or overshot): the
+      plateau just inside the run must be the darkest level between the inward
+      limit and the run — the border is the darkest thing inside a
+      black-bordered card.
+
+    In every position the run must be dark→bright by a share of the contrast
+    seen from the coarse line outward: the border ends where something
+    brighter begins, and the frame→border drop beside an inset line, being
+    bright→dark, is never the edge.
     """
-    at = int(np.clip(round(run_pos - steps[0]), 0, len(prof) - 1))
-    inner = int(np.clip(round(run_pos - steps[0] - span), 0, len(prof) - 1))
-    # The border colour is the darkest sample from the inward limit up to the
-    # run itself, so an estimate that hugged the printed frame still sees its
-    # own border, which lies *outside* it.
-    border_level = float(prof[: at + 1].min())
-    if abs(float(prof[inner]) - border_level) > tolerance:
-        return False  # what lies inside this run is not the border
+    n = len(prof)
+    at = int(np.clip(round(run_pos - steps[0]), 0, n - 1))
+    inner = int(np.clip(round(run_pos - steps[0] - span), 0, n - 1))
+    # The border is the plateau just inside the run; the edge leaves it for
+    # something brighter, by a meaningful share of the contrast seen from the
+    # coarse line outward (on a smooth surface the absolute floor is tiny and
+    # an 11-level ripple would otherwise pass). This polarity holds wherever
+    # the run lies: the frame→border drop beside an inset line is bright→dark
+    # and can never be the edge.
+    tail = prof[max(0, inner - span) : inner + 1]
+    plateau = float(np.median(tail))
+    outer = prof[min(at + span, n - 1) : min(at + 2 * span, n)]
+    if outer.size == 0:
+        return False
+    if contrast is None:
+        lo, hi = np.percentile(prof[zero:], [5, 95])
+        contrast = float(hi - lo)
+    rise = max(min_gradient, rise_fraction * contrast)
+    if float(np.median(outer)) < plateau + rise:
+        return False
     if run_pos > 0 and inner >= zero:
-        # No bright gap between the coarse line and the run: a run reached only
-        # by crossing paper belongs to a neighbouring card.
         stretch = prof[zero : inner + 1]
-        if np.abs(stretch - border_level).max() > tolerance:
+        within = np.abs(stretch - plateau) <= tolerance
+        if not within.any():
             return False
-    return True
+        entry = int(np.argmax(within))
+        if not within[entry:].all():
+            return False  # left the border again before the run: crossed a gap
+        # Before entering the plateau the profile may descend into it (a coarse
+        # line that hugged the frame: frame → border, a sharp drop that is over
+        # within a few spans) but never slowly — a ramp that takes longer is a
+        # shadow falling across whatever lies beyond the card — and never rise
+        # above the level just inside the coarse line first: that rise is the paper gap
+        # between this card and a neighbour whose border the run belongs to.
+        if entry > 3 * span:
+            return False
+        just_inside = float(prof[max(0, zero - span) : max(zero, 1)].max())
+        if entry and float(stretch[:entry].max()) > just_inside + tolerance:
+            return False
+        if inside_level is None:
+            inside_level = float(np.percentile(prof[: zero + 1], 10))
+        return plateau <= inside_level + (
+            tolerance if inside_tolerance is None else inside_tolerance
+        )
+    # At or inside the coarse line: the plateau must be the darkest thing
+    # between the inward limit and the run — the border of a black-bordered card.
+    border_level = float(prof[: at + 1].min())
+    return abs(plateau - border_level) <= tolerance
+
+
+def _strong_runs(
+    g: np.ndarray, wide: np.ndarray, positions: np.ndarray, floor: float, min_sharpness: float
+) -> list[tuple[float, float]]:
+    """Contiguous runs of strong, sharp gradients as ``(centroid position, peak)``."""
+    strong = (g >= floor) & (g >= min_sharpness * wide)
+    if not strong.any():
+        return []
+    idx = np.flatnonzero(strong)
+    breaks = np.flatnonzero(np.diff(idx) > 1) + 1
+    runs = []
+    for run_idx in np.split(idx, breaks):
+        weights = g[run_idx]
+        runs.append(
+            (float(np.dot(positions[run_idx], weights) / weights.sum()), float(weights.max()))
+        )
+    return runs
 
 
 def refine_corners(
@@ -582,7 +671,13 @@ def refine_corners(
     noise_factor: float = 2.5,
     border_tolerance: float = 20.0,
     min_side_fraction: float = 0.4,
-    max_area_change: float = 0.2,
+    max_area_change: float = 0.35,
+    border_step: bool = False,
+    max_border_ratio: float = 0.06,
+    step_min_sharpness: float = 0.6,
+    step_rise_fraction: float = 0.35,
+    inside_tolerance: float = 40.0,
+    debug: dict | None = None,
 ) -> np.ndarray:
     """Snap a coarse quad onto the card's true edges at full resolution.
 
@@ -750,7 +845,13 @@ def refine_corners(
         wide = np.abs(padded[:, 3 * span :] - padded[:, : -3 * span])
 
         zero_g = int(np.count_nonzero(positions < 0))  # first gradient index outside the line
+        zero = int(np.count_nonzero(steps < 0))  # index of the coarse position
+        inside_levels = np.percentile(profiles[:, : zero + 1], 10, axis=1)
+        lo_hi = np.percentile(profiles[:, zero:], [5, 95], axis=1)
+        contrasts = lo_hi[1] - lo_hi[0]
         edge_points = []
+        chosen: list[float] = []
+        evidence = 0  # samples where a run *qualified* as this card's edge
         for i in range(samples):
             g = grad[i]
             # Noise floor from the *outward* half only: the inward half reaches
@@ -759,28 +860,57 @@ def refine_corners(
             # step (~13 grey levels on a dark surface).
             outer = g[zero_g:] if zero_g < len(g) else g
             floor = max(min_gradient, noise_factor * float(np.median(outer)))
-            strong = (g >= floor) & (g >= min_sharpness * wide[i])
-            if not strong.any():
+            runs = _strong_runs(g, wide[i], positions, floor, min_sharpness)
+            if not runs:
                 continue
-            # Contiguous runs of strong values -> (position, strength) each.
-            idx = np.flatnonzero(strong)
-            breaks = np.flatnonzero(np.diff(idx) > 1) + 1
-            runs = []
-            for run_idx in np.split(idx, breaks):
-                weights = g[run_idx]
-                run_pos = float(np.dot(positions[run_idx], weights) / weights.sum())
-                runs.append((run_pos, float(weights.max())))
             prof = profiles[i]
-            zero = int(np.count_nonzero(steps < 0))  # index of the coarse position
             candidates = [
                 r
                 for r in runs
                 if -band_in <= r[0] <= band_out
-                and _edge_run_qualifies(prof, steps, span, zero, r[0], border_tolerance)
+                and _edge_run_qualifies(
+                    prof,
+                    steps,
+                    span,
+                    zero,
+                    r[0],
+                    border_tolerance,
+                    min_gradient,
+                    float(inside_levels[i]),
+                    inside_tolerance,
+                    0.2,
+                    float(contrasts[i]),
+                )
             ]
             near = [r for r in runs if -band_in <= r[0] <= 2.0 * band_in]
+            if debug is not None and i % 16 == 0:
+                debug.setdefault("trace", []).append(
+                    (
+                        k,
+                        i,
+                        [(round(r[0]), round(r[1])) for r in runs],
+                        [round(r[0]) for r in candidates],
+                        round(float(inside_levels[i])),
+                    )
+                )
             if candidates:
-                pos = max(candidates, key=lambda r: r[0])[0]
+                evidence += 1
+                # A qualifying run must also be a real step: at least half as
+                # strong as the strongest one that qualified, so an 11-level
+                # ripple beside the line cannot outrank a 40-level border edge
+                # one border-width further out.
+                strongest = max(r[1] for r in candidates)
+                candidates = [r for r in candidates if r[1] >= 0.5 * strongest]
+            at_line = [r for r in candidates if abs(r[0]) <= band_in]
+            outward = [r for r in candidates if r[0] > band_in]
+            if at_line:
+                pos = max(at_line, key=lambda r: r[1])[0]  # the line is on the edge
+            elif outward:
+                # The *nearest* qualifying step beyond the line: the coarse line
+                # sat inside the card (on the frame, or inside a washed-out
+                # border) and the first border→surface step out is its edge;
+                # anything further is texture or a neighbouring card.
+                pos = min(outward, key=lambda r: r[0])[0]
             elif near:
                 pos = max(near, key=lambda r: r[1])[0]
             else:
@@ -790,13 +920,74 @@ def refine_corners(
                 # outside (something else) — taking either would be worse than
                 # keeping the coarse line, so this sample contributes nothing.
                 continue
+            chosen.append(pos)
             edge_points.append(base[i] + pos * normal)
+
+        # 3. Border step on a textured surface. On a playmat or wood grain the
+        #    per-profile noise floor (2.5 x the median outward gradient) sits
+        #    above the border→surface step itself (39-59 grey levels for a
+        #    black border on a mid-tone mat), so most samples find no
+        #    qualifying edge at all and fall back to whatever lies nearest the
+        #    coarse line — typically the *inner* edge of the border. Only then
+        #    (fewer than half the samples had evidence) the mean of all the
+        #    side's profiles, which averages the texture away while the
+        #    straight edge common to all of them survives, is searched for the
+        #    outermost qualifying dark→bright run within ``max_border_ratio``
+        #    of the long edge, and the whole side shifts there. Moving a whole
+        #    side on averaged evidence needs a big step — ``step_rise_fraction``
+        #    of the outward contrast, three times the absolute floor — so a
+        #    ripple in a binder pocket's texture never drags a side away.
+        if border_step and evidence < 0.5 * samples:
+            mean_prof = profiles.mean(axis=0)
+            # A border→mat step is soft (defocus, rounded corners, the mat's
+            # nap: ~15 px wide on a 1200 px card), so it is differenced over
+            # twice the span: a real step still completes within that, and
+            # keeps the same sharpness bar, while a shadow ramp several times
+            # longer does not.
+            span2 = 2 * span
+            mg = np.abs(mean_prof[span2:] - mean_prof[:-span2])
+            mpos = steps[:-span2] + span2 / 2.0
+            mpad = np.pad(mean_prof, (span2, span2), mode="edge")
+            mwide = np.abs(mpad[3 * span2 :] - mpad[: -3 * span2])
+            limit = min(band_out, max_border_ratio * long_edge)
+            step_runs = [
+                r
+                for r in _strong_runs(mg, mwide, mpos, min_gradient, step_min_sharpness)
+                if band_in < r[0] <= limit
+                and _edge_run_qualifies(
+                    mean_prof,
+                    steps,
+                    span,
+                    zero,
+                    r[0],
+                    border_tolerance,
+                    3.0 * min_gradient,
+                    None,
+                    inside_tolerance,
+                    step_rise_fraction,
+                )
+            ]
+            if step_runs:
+                pos = max(step_runs, key=lambda r: r[0])[0]
+                edge_points = [base[i] + pos * normal for i in range(samples)]
+                if debug is not None:
+                    debug.setdefault("step", {})[k] = pos
+        if debug is not None:
+            debug.setdefault("chosen", {})[k] = list(chosen)
 
         if len(edge_points) < max(2, int(min_side_fraction * samples)):
             lines.append((a, b))
             continue
         pts_arr = np.asarray(edge_points, dtype=np.float32)
         vx, vy, px, py = cv2.fitLine(pts_arr, cv2.DIST_HUBER, 0, 0.01, 0.01).ravel()
+        # Second pass: a third of the votes can sit on texture a border-width
+        # further out; a Huber fit bends towards them. Drop what lies more than
+        # two spans off the first line and refit on the rest.
+        line_n = np.array([vy, -vx], dtype=np.float64)
+        resid = np.abs((pts_arr.astype(np.float64) - [px, py]) @ line_n)
+        keep = resid <= max(2.0 * span, 0.01 * long_edge)
+        if keep.sum() >= max(2, int(min_side_fraction * samples)) and not keep.all():
+            vx, vy, px, py = cv2.fitLine(pts_arr[keep], cv2.DIST_HUBER, 0, 0.01, 0.01).ravel()
         p0 = np.array([px, py], dtype=np.float64)
         lines.append((p0, p0 + np.array([vx, vy], dtype=np.float64) * length))
 
