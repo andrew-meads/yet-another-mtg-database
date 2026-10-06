@@ -63,9 +63,7 @@ export async function POST(request: NextRequest) {
 
     let modelMessages;
     try {
-      modelMessages = await convertToModelMessages(
-        parsed.data.messages as unknown as UIMessage[]
-      );
+      modelMessages = await convertToModelMessages(parsed.data.messages as unknown as UIMessage[]);
     } catch (error) {
       const detail = error instanceof Error ? error.message : "malformed messages";
       return Response.json({ error: `Invalid messages: ${detail}` }, { status: 400 });

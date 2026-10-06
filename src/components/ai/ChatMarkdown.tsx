@@ -12,8 +12,12 @@ import remarkGfm from "remark-gfm";
  */
 
 const components: Components = {
-  h1: ({ children }) => <h3 className="mt-3 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>,
-  h2: ({ children }) => <h4 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h4>,
+  h1: ({ children }) => (
+    <h3 className="mt-3 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
+  ),
+  h2: ({ children }) => (
+    <h4 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h4>
+  ),
   h3: ({ children }) => <h5 className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</h5>,
   h4: ({ children }) => <h6 className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</h6>,
   p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0">{children}</p>,

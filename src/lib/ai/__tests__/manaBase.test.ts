@@ -28,9 +28,9 @@ describe("producedColors", () => {
 
   it("falls back to oracle-text Add clauses", () => {
     expect(producedColors(card({ oracle_text: "{T}: Add {G}." }))).toEqual(["G"]);
-    expect(
-      producedColors(card({ oracle_text: "{T}: Add {C}{C}. Some other line." }))
-    ).toEqual(["C"]);
+    expect(producedColors(card({ oracle_text: "{T}: Add {C}{C}. Some other line." }))).toEqual([
+      "C"
+    ]);
   });
 
   it("treats 'any color' as all five colors", () => {
@@ -45,7 +45,9 @@ describe("producedColors", () => {
 
   it("scans card faces when the root has no text", () => {
     expect(
-      producedColors(card({ card_faces: [{ oracle_text: "Draw a card." }, { oracle_text: "{T}: Add {U}." }] }))
+      producedColors(
+        card({ card_faces: [{ oracle_text: "Draw a card." }, { oracle_text: "{T}: Add {U}." }] })
+      )
     ).toEqual(["U"]);
   });
 

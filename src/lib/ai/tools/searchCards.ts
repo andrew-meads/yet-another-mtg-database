@@ -9,7 +9,7 @@ const inputSchema = z.object({
     .string()
     .min(1)
     .describe(
-      'Scryfall-style search query, e.g. \'t:creature c:g mv<=2 o:"add {g}"\'. Same syntax as the app search bar.'
+      "Scryfall-style search query, e.g. 't:creature c:g mv<=2 o:\"add {g}\"'. Same syntax as the app search bar."
     ),
   page: z
     .number()

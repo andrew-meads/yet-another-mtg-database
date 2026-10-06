@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isRulesCacheFresh, keywordToRuleNumber, RULES_CACHE_STALENESS_MS } from "@/lib/server/rulesLookup";
+import {
+  isRulesCacheFresh,
+  keywordToRuleNumber,
+  RULES_CACHE_STALENESS_MS
+} from "@/lib/server/rulesLookup";
 import { extractRulings, isRulingFresh, RULING_STALENESS_MS } from "@/lib/server/cardRulings";
 
 describe("keywordToRuleNumber", () => {

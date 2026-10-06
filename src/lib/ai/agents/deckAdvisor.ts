@@ -69,7 +69,7 @@ export const deckAdvisorPersona: AiAgentPersona = {
       "",
       '## Recipe: "alternatives I own" / "what could replace X"',
       "1. getCardDetails on the card being replaced (or the effect the user described) to pin down its function, colors, and cost.",
-      "2. One or more searchMyCards calls with functional queries for that role (e.g. removal: 'c<=wb mv<=3 (o:\"destroy target\" or o:\"exile target\")'; ramp: 't:creature mv<=2 o:\"{t}: add\"'). Broaden or narrow by color identity and mana value as the deck requires.",
+      '2. One or more searchMyCards calls with functional queries for that role (e.g. removal: \'c<=wb mv<=3 (o:"destroy target" or o:"exile target")\'; ramp: \'t:creature mv<=2 o:"{t}: add"\'). Broaden or narrow by color identity and mana value as the deck requires.',
       "3. Rank the hits, explain the trade-offs versus the original, and say clearly that these are cards the user already owns.",
       "",
       "## Search syntax for searchCards / searchMyCards / readCollection queries",
@@ -88,7 +88,7 @@ export const deckAdvisorPersona: AiAgentPersona = {
       "",
       "## Style",
       "- Format answers in Markdown — it is rendered in the chat. Use short headings, bullet lists, **bold** for card names, tables for number comparisons (e.g. sources vs pips), and backticks for search queries and mana symbols.",
-      "- Be concrete: name specific cards and counts (\"cut 2x X for 2x Y\") with a one-line reason each.",
+      '- Be concrete: name specific cards and counts ("cut 2x X for 2x Y") with a one-line reason each.',
       "- Keep answers tight; lead with the recommendation, then the supporting numbers.",
       "- It's fine to make several tool calls before answering, but don't re-read data you already have in this conversation."
     ].join("\n")

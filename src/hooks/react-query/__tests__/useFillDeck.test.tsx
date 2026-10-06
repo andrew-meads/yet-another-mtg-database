@@ -56,8 +56,8 @@ describe("useFillDeck", () => {
     const client = new QueryClient();
     const { result } = renderHook(() => useFillDeck(), { wrapper: wrapper(client) });
 
-    await expect(
-      result.current.mutateAsync({ deckId: "deck-1", swaps: [] })
-    ).rejects.toThrow("Invalid swaps");
+    await expect(result.current.mutateAsync({ deckId: "deck-1", swaps: [] })).rejects.toThrow(
+      "Invalid swaps"
+    );
   });
 });

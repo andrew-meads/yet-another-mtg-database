@@ -17,8 +17,11 @@ describe("buildSearchSyntaxCheatSheet", () => {
     // aliases — otherwise the LLM prompt has drifted from the real engine.
     for (const [name, config] of Object.entries(searchOperators)) {
       const documented = config.aliases.some(
-        (alias) => sheet.includes(`\`${alias}\``) || sheet.includes(`aliases: ${alias}`) ||
-          sheet.includes(`${alias},`) || sheet.includes(`, ${alias}`)
+        (alias) =>
+          sheet.includes(`\`${alias}\``) ||
+          sheet.includes(`aliases: ${alias}`) ||
+          sheet.includes(`${alias},`) ||
+          sheet.includes(`, ${alias}`)
       );
       expect(documented, `operator "${name}" (${config.aliases.join(", ")}) missing`).toBe(true);
     }

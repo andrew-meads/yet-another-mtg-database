@@ -33,7 +33,11 @@ const ourWrappers = new WeakSet<object>();
 
 /** True if a `User-Agent` header is already present on the given fetch arguments. */
 function hasUserAgent(input: RequestInfo | URL, init?: RequestInit): boolean {
-  if (typeof Request !== "undefined" && input instanceof Request && input.headers.has("user-agent")) {
+  if (
+    typeof Request !== "undefined" &&
+    input instanceof Request &&
+    input.headers.has("user-agent")
+  ) {
     return true;
   }
   const headers = init?.headers;

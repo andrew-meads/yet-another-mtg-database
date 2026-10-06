@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  slimComboResponse,
-  INCLUDED_COMBO_CAP,
-  ALMOST_COMBO_CAP
-} from "@/lib/server/comboSearch";
+import { slimComboResponse, INCLUDED_COMBO_CAP, ALMOST_COMBO_CAP } from "@/lib/server/comboSearch";
 
 function variant(id: string, cards: string[], produces: string[], description?: string) {
   return {
@@ -24,7 +20,12 @@ describe("slimComboResponse", () => {
       {
         results: {
           included: [
-            variant("4131-4235", ["Basalt Monolith", "Rings of Brighthearth"], ["Infinite colorless mana"], "Tap it. Untap it. Repeat.")
+            variant(
+              "4131-4235",
+              ["Basalt Monolith", "Rings of Brighthearth"],
+              ["Infinite colorless mana"],
+              "Tap it. Untap it. Repeat."
+            )
           ],
           almostIncluded: []
         }
@@ -58,7 +59,9 @@ describe("slimComboResponse", () => {
       {
         results: {
           included: [],
-          almostIncluded: [variant("2", ["Basalt Monolith", "Forsaken Monument"], ["Infinite mana"])]
+          almostIncluded: [
+            variant("2", ["Basalt Monolith", "Forsaken Monument"], ["Infinite mana"])
+          ]
         }
       },
       ["basalt monolith", "Sol Ring"]
@@ -69,7 +72,8 @@ describe("slimComboResponse", () => {
   });
 
   it("caps both lists but reports true totals", () => {
-    const many = (n: number) => Array.from({ length: n }, (_, i) => variant(String(i), ["A"], ["B"]));
+    const many = (n: number) =>
+      Array.from({ length: n }, (_, i) => variant(String(i), ["A"], ["B"]));
     const result = slimComboResponse(
       { results: { included: many(30), almostIncluded: many(15) } },
       ["A"]

@@ -65,14 +65,17 @@ function changeLabel(change: Change): string {
 }
 
 function ActionIcon({ action }: { action: Change["action"] }) {
-  if (action === "add") return <Plus className="size-3 shrink-0 text-green-600 dark:text-green-500" />;
-  if (action === "remove") return <Minus className="size-3 shrink-0 text-red-600 dark:text-red-500" />;
+  if (action === "add")
+    return <Plus className="size-3 shrink-0 text-green-600 dark:text-green-500" />;
+  if (action === "remove")
+    return <Minus className="size-3 shrink-0 text-red-600 dark:text-red-500" />;
   return <ArrowRight className="size-3 shrink-0 text-blue-600 dark:text-blue-500" />;
 }
 
 function StatusIcon({ status }: { status: ChangeStatus }) {
   if (status === "applying") return <Loader2 className="size-3.5 animate-spin" />;
-  if (status === "applied") return <Check className="size-3.5 text-green-600 dark:text-green-500" />;
+  if (status === "applied")
+    return <Check className="size-3.5 text-green-600 dark:text-green-500" />;
   if (status === "failed") return <CircleAlert className="text-destructive size-3.5" />;
   if (status === "skipped") return <CircleSlash className="text-muted-foreground size-3.5" />;
   return null;
@@ -183,9 +186,9 @@ export default function ProposalCard({ proposal, onResolve, resolvedSummary }: P
       }
 
       // Place real unassigned copies — no new documents.
-      const candidates = (
-        unassignedByName.get(normalizeCardName(change.cardName)) ?? []
-      ).filter((id) => !usedIds.has(id));
+      const candidates = (unassignedByName.get(normalizeCardName(change.cardName)) ?? []).filter(
+        (id) => !usedIds.has(id)
+      );
       if (candidates.length === 0) {
         throw new Error(
           `No unassigned copies of ${change.cardName} in ${activeCollection?.name ?? "your active collection"}.`
@@ -201,7 +204,11 @@ export default function ProposalCard({ proposal, onResolve, resolvedSummary }: P
           sectionId: change.sectionId
         });
       }
-      setRow(index, "applied", `added ${take.length}x ${change.cardName} (real copies from ${activeCollection?.name ?? "collection"})`);
+      setRow(
+        index,
+        "applied",
+        `added ${take.length}x ${change.cardName} (real copies from ${activeCollection?.name ?? "collection"})`
+      );
       if (take.length < change.count) {
         toast.info(`Placed ${take.length} of ${change.count} copies of ${change.cardName}.`);
       }

@@ -63,9 +63,7 @@ beforeEach(() => {
 describe("AiSettingsSection", () => {
   it("shows the not-configured state for a fresh user", async () => {
     renderSection();
-    expect(await screen.findByTestId("ai-configured-status")).toHaveTextContent(
-      "Not configured"
-    );
+    expect(await screen.findByTestId("ai-configured-status")).toHaveTextContent("Not configured");
     expect(screen.getByRole("button", { name: /test connection/i })).toBeDisabled();
   });
 

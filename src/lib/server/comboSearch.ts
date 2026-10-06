@@ -74,7 +74,9 @@ export function slimComboResponse(body: unknown, deckNames: string[]): SlimCombo
   const results = ((body ?? {}) as { results?: Record<string, unknown> }).results ?? {};
   const inDeck = new Set(deckNames.map((n) => n.toLowerCase()));
 
-  const rawIncluded = Array.isArray(results.included) ? (results.included as RawComboVariant[]) : [];
+  const rawIncluded = Array.isArray(results.included)
+    ? (results.included as RawComboVariant[])
+    : [];
   const rawAlmost = Array.isArray(results.almostIncluded)
     ? (results.almostIncluded as RawComboVariant[])
     : [];

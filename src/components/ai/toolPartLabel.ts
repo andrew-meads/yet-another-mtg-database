@@ -53,7 +53,8 @@ export function describeToolPart(part: ToolPartLike): string {
     case "searchMyCards": {
       const scope = name === "searchMyCards" ? "your cards" : "all cards";
       const total = num(output.total);
-      const suffix = done && total !== undefined ? ` (${total} ${total === 1 ? "match" : "matches"})` : "";
+      const suffix =
+        done && total !== undefined ? ` (${total} ${total === 1 ? "match" : "matches"})` : "";
       return `searched ${scope}: ${str(input.q) ?? "…"}${suffix}`;
     }
     case "readDeck": {
@@ -71,7 +72,9 @@ export function describeToolPart(part: ToolPartLike): string {
         : "reading collection…";
     }
     case "getCardDetails": {
-      const names = Array.isArray(input.names) ? input.names.filter((n) => typeof n === "string") : [];
+      const names = Array.isArray(input.names)
+        ? input.names.filter((n) => typeof n === "string")
+        : [];
       return `looked up ${names.length > 0 ? names.join(", ") : "card details"}`;
     }
     case "manaBaseStats": {

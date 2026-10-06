@@ -73,7 +73,9 @@ describe("GET /api/exchange-rate", () => {
   });
 
   it("returns 502 when the rate service fails", async () => {
-    fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("boom", { status: 500 }));
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("boom", { status: 500 }));
     expect((await GET(rateRequest("NZD"))).status).toBe(502);
   });
 

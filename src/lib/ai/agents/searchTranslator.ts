@@ -30,7 +30,7 @@ export const SEARCH_TRANSLATOR_EXAMPLES: { request: string; query: string }[] = 
   { request: "blue counterspells", query: 'c:u o:"counter target"' },
   { request: "artifacts that make treasure tokens", query: "t:artifact o:create o:treasure" },
   { request: "big green creatures with trample", query: "c:g t:creature pow>=4 kw:trample" },
-  { request: "black card draw under three mana", query: 'c:b o:/draw . card/ mv<=3' },
+  { request: "black card draw under three mana", query: "c:b o:/draw . card/ mv<=3" },
   {
     request: "mythic planeswalkers with high starting loyalty",
     query: "t:planeswalker r:mythic loy>=4"
@@ -45,7 +45,10 @@ export const SEARCH_TRANSLATOR_EXAMPLES: { request: string; query: string }[] = 
     query: "t:creature o:/enters, .* deals? .* damage/"
   },
   { request: "lands that produce blue mana", query: "t:land produces:u" },
-  { request: "artifacts that make colorless mana, printed since 2020", query: "t:artifact produces:c year>=2020" },
+  {
+    request: "artifacts that make colorless mana, printed since 2020",
+    query: "t:artifact produces:c year>=2020"
+  },
   { request: "modal double-faced lands", query: "is:mdfc t:land" }
 ];
 

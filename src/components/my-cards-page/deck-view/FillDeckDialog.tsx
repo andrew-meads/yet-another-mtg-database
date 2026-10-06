@@ -70,9 +70,7 @@ export default function FillDeckDialog({ deck, open, onOpenChange }: FillDeckDia
     const swaps = groups.flatMap((group) =>
       assignSwaps(
         group,
-        group.candidates
-          .map((c) => c.physicalCard._id)
-          .filter((cardId) => selected.has(cardId))
+        group.candidates.map((c) => c.physicalCard._id).filter((cardId) => selected.has(cardId))
       )
     );
     if (swaps.length === 0) return;

@@ -90,7 +90,7 @@ export default function AddBasicLandButton({ deckId, sectionId }: AddBasicLandBu
               const qty = quantities[land.id] ?? 0;
               return (
                 <div key={land.id} className="flex items-center gap-2">
-                  <div className="h-14 w-10 shrink-0 overflow-hidden rounded-sm bg-muted">
+                  <div className="bg-muted h-14 w-10 shrink-0 overflow-hidden rounded-sm">
                     <SimpleCardArtView card={land} variant="small" width="100%" height="100%" />
                   </div>
                   <span className="flex-1 text-sm font-medium">{land.name}</span>

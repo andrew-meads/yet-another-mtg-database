@@ -23,7 +23,9 @@ describe("SearchDocsContent", () => {
 
   it("renders alternate section data (the regex primer)", () => {
     const onInsertExample = vi.fn();
-    render(<SearchDocsContent sections={REGEX_PRIMER_SECTIONS} onInsertExample={onInsertExample} />);
+    render(
+      <SearchDocsContent sections={REGEX_PRIMER_SECTIONS} onInsertExample={onInsertExample} />
+    );
 
     expect(screen.getByText("Anchors & alternatives")).toBeInTheDocument();
     const chip = screen.getByRole("button", { name: "t:/^legendary creature/" });

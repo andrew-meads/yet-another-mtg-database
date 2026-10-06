@@ -166,7 +166,8 @@ export function analyzeManaBase(cards: ManaBaseCard[]): ManaBaseStats {
     landSources,
     pips,
     curve,
-    averageManaValue: nonlandCount > 0 ? Math.round((totalManaValue / nonlandCount) * 100) / 100 : 0,
+    averageManaValue:
+      nonlandCount > 0 ? Math.round((totalManaValue / nonlandCount) * 100) / 100 : 0,
     sourcesVsPips
   };
 }

@@ -5,8 +5,6 @@ import { PhysicalCardModel, DeckModel } from "@/db/schema";
 import { seedUser, seedCard, seedCollection, seedDeck, seedPhysicalCard } from "./helpers";
 import "./setup";
 
- 
-
 beforeAll(() => {
   process.env.COMMANDER_SPELLBOOK_API_BASE_URL = "https://spellbook.test";
 });
@@ -42,7 +40,11 @@ async function seedProposalDeck() {
     ]
   });
   const bolt = await seedCard({ id: "prop-bolt", name: "Lightning Bolt" });
-  const forest = await seedCard({ id: "prop-forest", name: "Forest", type_line: "Basic Land — Forest" });
+  const forest = await seedCard({
+    id: "prop-forest",
+    name: "Forest",
+    type_line: "Basic Land — Forest"
+  });
   const ids = [
     await seedPhysicalCard(userId, bolt.id, collectionId, { deckId: String(deck._id) }),
     await seedPhysicalCard(userId, bolt.id, collectionId, { deckId: String(deck._id) }),
@@ -130,8 +132,18 @@ describe("proposeDeckChanges tool", () => {
   it("resolves added cards to the newest native-language printing", async () => {
     const { deck } = await seedProposalDeck();
     // A newer Japanese printing must NOT win over the native (English) one.
-    await seedCard({ id: "growth-en", name: "Giant Growth", lang: "en", released_at: "2020-01-01" });
-    await seedCard({ id: "growth-ja", name: "Giant Growth", lang: "ja", released_at: "2025-01-01" });
+    await seedCard({
+      id: "growth-en",
+      name: "Giant Growth",
+      lang: "en",
+      released_at: "2020-01-01"
+    });
+    await seedCard({
+      id: "growth-ja",
+      name: "Giant Growth",
+      lang: "ja",
+      released_at: "2025-01-01"
+    });
     // A card with no native printing still resolves (fallback to any language).
     await seedCard({ id: "nihongo-ja", name: "Nihongo Only", lang: "ja" });
 

@@ -55,9 +55,7 @@ export function isRulesCacheFresh(updatedAt: Date | undefined, now = Date.now())
  */
 export function keywordToRuleNumber(term: string, lists: KeywordLists): string | null {
   const needle = term.trim().toLowerCase();
-  const abilityIndex = (lists.keywordAbilities ?? []).findIndex(
-    (k) => k.toLowerCase() === needle
-  );
+  const abilityIndex = (lists.keywordAbilities ?? []).findIndex((k) => k.toLowerCase() === needle);
   if (abilityIndex >= 0) return `702.${abilityIndex + 2}`;
   const actionIndex = (lists.keywordActions ?? []).findIndex((k) => k.toLowerCase() === needle);
   if (actionIndex >= 0) return `701.${actionIndex + 2}`;
@@ -157,7 +155,10 @@ async function fetchGlossaryTerm(term: string): Promise<RulesLookupResult> {
  *
  * @throws only on network/timeout/server errors with no cached fallback.
  */
-export async function lookupRules(kind: RulesLookupKind, query: string): Promise<RulesLookupResult> {
+export async function lookupRules(
+  kind: RulesLookupKind,
+  query: string
+): Promise<RulesLookupResult> {
   const normalizedQuery = query.trim().toLowerCase();
   const key = `${kind}:${normalizedQuery}`;
 

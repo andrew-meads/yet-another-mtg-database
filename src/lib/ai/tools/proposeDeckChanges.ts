@@ -75,11 +75,17 @@ export function makeProposeDeckChangesTool({ userId }: ToolContext) {
         if (!deck) return { error: "Deck not found" };
 
         const sectionsByName = new Map<string, { _id: string; name: string }>(
-          (deck.sections as any[]).map((s) => [s.name.toLowerCase(), { _id: String(s._id), name: s.name }])
+          (deck.sections as any[]).map((s) => [
+            s.name.toLowerCase(),
+            { _id: String(s._id), name: s.name }
+          ])
         );
 
         // What the deck currently holds, by card name.
-        const physical = await PhysicalCardModel.find({ deckId, owner: userId }, { cardId: 1 }).lean();
+        const physical = await PhysicalCardModel.find(
+          { deckId, owner: userId },
+          { cardId: 1 }
+        ).lean();
         const deckCards = await CardData.find(
           { id: { $in: [...new Set(physical.map((pc) => pc.cardId))] } },
           { _id: 0, id: 1, name: 1 }
@@ -148,8 +154,7 @@ export function makeProposeDeckChangesTool({ userId }: ToolContext) {
           }
           // Canonical name (with its real punctuation) from the deck's own card data.
           const canonical =
-            [...nameById.values()].find((n) => normalizeCardName(n) === nameKey) ??
-            change.cardName;
+            [...nameById.values()].find((n) => normalizeCardName(n) === nameKey) ?? change.cardName;
           const cardId =
             [...nameById.entries()].find(([, n]) => normalizeCardName(n) === nameKey)?.[0] ?? "";
           normalized.push({

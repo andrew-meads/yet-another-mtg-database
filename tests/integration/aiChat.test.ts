@@ -35,7 +35,12 @@ async function configureAi() {
   );
 }
 
-const CHUNK_BASE = { id: "chatcmpl-1", object: "chat.completion.chunk", created: 1, model: "test-model" };
+const CHUNK_BASE = {
+  id: "chatcmpl-1",
+  object: "chat.completion.chunk",
+  created: 1,
+  model: "test-model"
+};
 
 function sseResponse(chunks: unknown[]) {
   const body =
@@ -47,7 +52,10 @@ function sseResponse(chunks: unknown[]) {
 
 function textChunks(text: string) {
   return [
-    { ...CHUNK_BASE, choices: [{ index: 0, delta: { role: "assistant", content: text }, finish_reason: null }] },
+    {
+      ...CHUNK_BASE,
+      choices: [{ index: 0, delta: { role: "assistant", content: text }, finish_reason: null }]
+    },
     { ...CHUNK_BASE, choices: [{ index: 0, delta: {}, finish_reason: "stop" }] }
   ];
 }
@@ -88,9 +96,7 @@ function chatRequest(body: unknown) {
 
 describe("POST /api/ai/chat", () => {
   it("returns 409 ai_not_configured when the user has no AI settings", async () => {
-    const res = await chat(
-      chatRequest({ messages: [userMessage("hi")], agentId: "deck-advisor" })
-    );
+    const res = await chat(chatRequest({ messages: [userMessage("hi")], agentId: "deck-advisor" }));
     expect(res.status).toBe(409);
     expect((await res.json()).error).toBe("ai_not_configured");
   });
@@ -163,9 +169,7 @@ describe("POST /api/ai/chat", () => {
       )
     );
 
-    const res = await chat(
-      chatRequest({ messages: [userMessage("hi")], agentId: "deck-advisor" })
-    );
+    const res = await chat(chatRequest({ messages: [userMessage("hi")], agentId: "deck-advisor" }));
     // Streaming has already begun, so failures arrive as error parts.
     expect(res.status).toBe(200);
     const stream = await res.text();

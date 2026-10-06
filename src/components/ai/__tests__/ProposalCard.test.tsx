@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProposalCard, { DeckChangeProposal } from "@/components/ai/ProposalCard";
 
 const h = {
-  activeCollection: { _id: "coll-1", name: "Main Collection" } as { _id: string; name: string } | null
+  activeCollection: { _id: "coll-1", name: "Main Collection" } as {
+    _id: string;
+    name: string;
+  } | null
 };
 
 vi.mock("@/context/OpenEntitiesContext", () => ({
@@ -186,7 +189,14 @@ describe("ProposalCard", () => {
     // Bolt has no unassigned copies in the collection fixture.
     renderCard(
       makeProposal([
-        { action: "add", cardName: "Lightning Bolt", cardId: "c-bolt", count: 1, sectionName: "Main", sectionId: "sec-main" }
+        {
+          action: "add",
+          cardName: "Lightning Bolt",
+          cardId: "c-bolt",
+          count: 1,
+          sectionName: "Main",
+          sectionId: "sec-main"
+        }
       ])
     );
 

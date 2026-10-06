@@ -137,4 +137,3 @@ describe("filtersToQueryString — produces / year / is / flavor text", () => {
     );
   });
 });
-

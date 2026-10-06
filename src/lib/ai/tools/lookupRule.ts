@@ -24,7 +24,9 @@ export function makeLookupRuleTool(_ctx: ToolContext) {
     execute: safeExecute("lookupRule", async ({ kind, query }: z.infer<typeof inputSchema>) => {
       const result = await lookupRules(kind, query);
       if (result.notFound) {
-        return { error: `No ${kind === "rule" ? "rule" : "keyword or glossary entry"} found for "${query}"` };
+        return {
+          error: `No ${kind === "rule" ? "rule" : "keyword or glossary entry"} found for "${query}"`
+        };
       }
       return result;
     })

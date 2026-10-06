@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { Brain, ChevronDown, ChevronRight, CircleAlert, Loader2, Send, Square, Wrench, X } from "lucide-react";
+import {
+  Brain,
+  ChevronDown,
+  ChevronRight,
+  CircleAlert,
+  Loader2,
+  Send,
+  Square,
+  Wrench,
+  X
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -333,14 +343,16 @@ function ToolChip({ part }: { part: ToolPartLike }) {
           data-testid="tool-chip-details"
         >
           <div className="text-muted-foreground font-semibold">Input</div>
-          <pre className="max-h-48 overflow-auto font-mono whitespace-pre-wrap break-all">
+          <pre className="max-h-48 overflow-auto font-mono break-all whitespace-pre-wrap">
             {pretty(part.input)}
           </pre>
           <div className="text-muted-foreground font-semibold">
             {part.state === "output-error" ? "Error" : "Result"}
           </div>
-          <pre className="max-h-48 overflow-auto font-mono whitespace-pre-wrap break-all">
-            {part.state === "output-error" ? (part.errorText ?? "(unknown error)") : pretty(part.output)}
+          <pre className="max-h-48 overflow-auto font-mono break-all whitespace-pre-wrap">
+            {part.state === "output-error"
+              ? (part.errorText ?? "(unknown error)")
+              : pretty(part.output)}
           </pre>
         </div>
       )}

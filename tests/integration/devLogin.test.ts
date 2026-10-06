@@ -32,9 +32,9 @@ describe("dev-login provisioning", () => {
     await provisionDevUser();
 
     expect(await UserModel.countDocuments({ _id: DEV_USER_ID })).toBe(1);
-    expect(
-      await CollectionModel.countDocuments({ owner: new Types.ObjectId(DEV_USER_ID) })
-    ).toBe(1);
+    expect(await CollectionModel.countDocuments({ owner: new Types.ObjectId(DEV_USER_ID) })).toBe(
+      1
+    );
   });
 
   it("scopes routes to the dev user once signed in", async () => {

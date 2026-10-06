@@ -101,9 +101,9 @@ describe("describeToolPart", () => {
         output: { proposal: {} }
       })
     ).toBe("proposed 3 changes");
-    expect(
-      describeToolPart({ type: "tool-proposeDeckChanges", state: "input-streaming" })
-    ).toBe("drafting a proposal…");
+    expect(describeToolPart({ type: "tool-proposeDeckChanges", state: "input-streaming" })).toBe(
+      "drafting a proposal…"
+    );
   });
 
   it("describes failures with the in-band reason", () => {

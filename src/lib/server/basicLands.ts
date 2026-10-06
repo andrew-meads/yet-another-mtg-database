@@ -31,8 +31,8 @@ export async function getBasicLands(): Promise<MtgCard[]> {
     }
   }
 
-  const lands = BASIC_LAND_NAMES.map((name) => byName.get(name)).filter(
-    (c): c is MtgCard => Boolean(c)
+  const lands = BASIC_LAND_NAMES.map((name) => byName.get(name)).filter((c): c is MtgCard =>
+    Boolean(c)
   );
 
   // Only memoize once all five are present, so a partially-seeded DB can recover.

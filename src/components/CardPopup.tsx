@@ -16,7 +16,10 @@ export interface CardPopupProps {
  * Per-size container height (px) and matching Scryfall image variant.
  * "normal" preserves the original 400px / "normal" behaviour.
  */
-const SIZE_CONFIG: Record<CardPreviewSize, { height: number; variant: "small" | "normal" | "large" }> = {
+const SIZE_CONFIG: Record<
+  CardPreviewSize,
+  { height: number; variant: "small" | "normal" | "large" }
+> = {
   small: { height: 260, variant: "small" },
   normal: { height: 400, variant: "normal" },
   large: { height: 540, variant: "large" }

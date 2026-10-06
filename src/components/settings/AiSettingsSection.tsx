@@ -4,13 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, PlugZap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUserSettings } from "@/hooks/react-query/useUserSettings";
@@ -84,9 +78,9 @@ export default function AiSettingsSection() {
       <CardHeader>
         <CardTitle>AI Assistant</CardTitle>
         <CardDescription>
-          Connect an OpenAI-compatible endpoint (OpenAI, OpenRouter, a local server, …) to enable
-          AI features like natural-language card search. Your API key is stored server-side and
-          never shown again.
+          Connect an OpenAI-compatible endpoint (OpenAI, OpenRouter, a local server, …) to enable AI
+          features like natural-language card search. Your API key is stored server-side and never
+          shown again.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -121,14 +115,16 @@ export default function AiSettingsSection() {
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder={ai?.hasApiKey ? `Saved (${ai.apiKeyHint ?? "hidden"}) — type to replace` : "sk-…"}
+            placeholder={
+              ai?.hasApiKey ? `Saved (${ai.apiKeyHint ?? "hidden"}) — type to replace` : "sk-…"
+            }
             autoComplete="off"
           />
           {ai?.hasApiKey && (
             <div className="flex items-center gap-2">
               <p className="text-muted-foreground text-sm">
-                A key is saved{ai.apiKeyHint ? ` (${ai.apiKeyHint})` : ""}. Leave the field empty
-                to keep it.
+                A key is saved{ai.apiKeyHint ? ` (${ai.apiKeyHint})` : ""}. Leave the field empty to
+                keep it.
               </p>
               <Button
                 type="button"

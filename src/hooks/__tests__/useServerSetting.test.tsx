@@ -58,9 +58,7 @@ describe("useServerSetting", () => {
     window.localStorage.setItem("legacy-key", JSON.stringify({ enabled: true }));
     setServerSettings({ cardPreview: { enabled: false, size: "small", delayMs: 500 } });
 
-    renderHook(() =>
-      useServerSetting("cardPreview", DEFAULTS, { legacyStorageKey: "legacy-key" })
-    );
+    renderHook(() => useServerSetting("cardPreview", DEFAULTS, { legacyStorageKey: "legacy-key" }));
     expect(window.localStorage.getItem("legacy-key")).toBeNull();
   });
 
@@ -85,9 +83,7 @@ describe("useServerSetting", () => {
     window.localStorage.setItem("legacy-key", JSON.stringify(legacy));
     setServerSettings({});
 
-    renderHook(() =>
-      useServerSetting("cardPreview", DEFAULTS, { legacyStorageKey: "legacy-key" })
-    );
+    renderHook(() => useServerSetting("cardPreview", DEFAULTS, { legacyStorageKey: "legacy-key" }));
     expect(window.localStorage.getItem("legacy-key")).not.toBeNull();
   });
 
