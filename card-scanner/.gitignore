@@ -17,3 +17,14 @@ data/cards/*
 # --- Env / editor ---
 .env
 .DS_Store
+
+# --- Scryfall image cache (standalone mode), harness overlays, tooling caches ---
+data/scryfall-cache/
+test-images/_overlays/
+backend/.ruff_cache/
+backend/htmlcov/
+backend/.coverage
+# OCR models downloaded for host runs (`make models`); the Docker image fetches its own.
+backend/models/
+# Generated synthetic datasets (standalone-mode paths; the root .gitignore covers data/synth*/ at the repo root only)
+data/synth*/
