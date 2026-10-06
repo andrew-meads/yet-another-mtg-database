@@ -71,6 +71,7 @@ export async function loadDeckWithCards(
     sections: deck.sections.map((s: any) => ({
       _id: String(s._id),
       name: s.name,
+      ...(s.kind && s.kind !== "normal" ? { kind: s.kind } : {}),
       columns: s.columns.map((col: any) => ({
         _id: String(col._id),
         cards: col.cards

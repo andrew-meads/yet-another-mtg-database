@@ -110,7 +110,10 @@ query is owner-scoped), wrapping server helpers directly — never HTTP self-cal
 
 - **`readDeck`** — compact sectioned decklist via `serializeDeck`
   (`src/lib/ai/prompts/deckSerialize.ts` — "4x Forest [neo]" lines; unarranged back-ref
-  copies appear under "(unsorted)").
+  copies appear under "(unsorted)"). Sideboard and scratch-area sections are flagged
+  `[SIDEBOARD …]` / `[SCRATCH AREA …]` in their headers and excluded from the headline
+  count and `totalCards` (reported as `sideboardCards` / `scratchCards`); the deck-advisor
+  system prompt explains the three section kinds.
 - **`readCollection`** — counts + a q-scoped, 20-distinct-card-capped slice — never dumps
   a collection.
 - **`searchCards`** / **`searchMyCards`** — shared `runCardSearch` core; 20/page;
@@ -120,7 +123,8 @@ query is owner-scoped), wrapping server helpers directly — never HTTP self-cal
 - **`manaBaseStats`** — deterministic analysis via pure `src/lib/ai/manaBase.ts` — lands,
   per-color sources incl. oracle-text "Add {G}" fallback, pips (hybrids count both
   halves), curve, sources-vs-pips; **the LLM interprets numbers, it never counts**;
-  optional `sectionName` scope.
+  optional `sectionName` scope; without one it analyzes the **main deck** (back-ref copies
+  minus those placed in sideboard/scratch sections).
 - **`getRulings`** — Scryfall rulings, 7-day cache in `cardrulings` via
   `src/lib/server/cardRulings.ts`.
 - **`lookupRule`** — Academy Ruins CR/keyword lookups, 24h cache in `rulescaches` via

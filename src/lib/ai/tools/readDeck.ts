@@ -1,10 +1,23 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { DeckModel, PhysicalCardModel, CardData } from "@/db/schema";
-import { serializeDeck, SerializableCard, SerializableSection } from "@/lib/ai/prompts/deckSerialize";
+import {
+  serializeDeck,
+  SerializableCard,
+  SerializableSection
+} from "@/lib/ai/prompts/deckSerialize";
+import { effectiveSectionKind } from "@/lib/deckUtils";
 import { ToolContext, isValidObjectId, safeExecute } from "./shared";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+/** Number of copies across the sections of one kind, or undefined when there are none. */
+function countKind(sections: SerializableSection[], kind: "sideboard" | "scratch") {
+  const count = sections
+    .filter((s) => s.kind === kind)
+    .reduce((total, s) => total + s.cardIds.length, 0);
+  return count > 0 ? count : undefined;
+}
 
 const inputSchema = z.object({
   deckId: z.string().describe("The id of the deck to read")
@@ -14,11 +27,12 @@ const inputSchema = z.object({
  * Read one of the user's decks as a compact, section-by-section decklist
  * ("4x Forest [neo]" lines). Membership comes from the PhysicalCard back-refs;
  * copies not yet placed in the arrangement arrays appear under "(unsorted)".
+ * Sideboard and scratch-area sections are flagged and kept out of `totalCards`.
  */
 export function makeReadDeckTool({ userId }: ToolContext) {
   return tool({
     description:
-      "Read one of the user's decks: its name, description, and full decklist grouped by section with copy counts, mana costs, and type lines. Use this before answering any question about a specific deck.",
+      "Read one of the user's decks: its name, description, and full decklist grouped by section with copy counts, mana costs, and type lines. Sections flagged SIDEBOARD are the sideboard and sections flagged SCRATCH AREA are the user's scratch space (candidates/ideas) — neither is part of the main deck or its card count. Use this before answering any question about a specific deck.",
     inputSchema,
     execute: safeExecute("readDeck", async ({ deckId }: z.infer<typeof inputSchema>) => {
       if (!isValidObjectId(deckId)) return { error: "Invalid deck id" };
@@ -42,7 +56,8 @@ export function makeReadDeckTool({ userId }: ToolContext) {
             cardIds.push(pc.cardId);
           }
         }
-        return { name: s.name, cardIds };
+        const kind = effectiveSectionKind(s.kind);
+        return { name: s.name, ...(kind !== "normal" ? { kind } : {}), cardIds };
       });
 
       const unsorted = physical.filter((pc) => !arranged.has(String(pc._id)));
@@ -64,7 +79,12 @@ export function makeReadDeckTool({ userId }: ToolContext) {
         deckId,
         name: deck.name,
         description: deck.description || undefined,
-        totalCards: physical.length,
+        // Main deck only: unsorted copies count, sideboard/scratch ones don't.
+        totalCards: sections
+          .filter((s) => !s.kind)
+          .reduce((total, s) => total + s.cardIds.length, 0),
+        sideboardCards: countKind(sections, "sideboard"),
+        scratchCards: countKind(sections, "scratch"),
         ephemeralPlaceholders: ephemeralCount > 0 ? ephemeralCount : undefined,
         decklist: serializeDeck(deck.name, sections, cardData)
       };

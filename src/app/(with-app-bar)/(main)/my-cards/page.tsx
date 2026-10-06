@@ -19,22 +19,27 @@ import { useCreateDeck } from "@/hooks/react-query/useCreateDeck";
 import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveCollectionSummaries";
 import { useRetrieveDeckSummaries } from "@/hooks/react-query/useRetrieveDeckSummaries";
 import { getEntityIcon } from "@/lib/collectionUtils";
-import { formatCardCount } from "@/lib/deckUtils";
+import { formatDeckCardCount } from "@/lib/deckUtils";
 import { HomeIcon } from "lucide-react";
 
 type CreateKind = "collection" | "deck";
 
-/** One collection/deck list entry: name + card count, with the description underneath. */
+/**
+ * One collection/deck list entry: name + card count (plus a deck's sideboard
+ * count), with the description underneath.
+ */
 function EntityRow({
   href,
   name,
   description,
-  cardCount
+  cardCount,
+  sideboardCount = 0
 }: {
   href: string;
   name: string;
   description: string;
   cardCount: number;
+  sideboardCount?: number;
 }) {
   return (
     <li>
@@ -44,7 +49,7 @@ function EntityRow({
             <span className="flex w-full items-baseline justify-between gap-2">
               <span className="truncate">{name}</span>
               <span className="text-muted-foreground shrink-0 text-xs font-normal tabular-nums">
-                {formatCardCount(cardCount)}
+                {formatDeckCardCount(cardCount, sideboardCount)}
               </span>
             </span>
             {description && (
@@ -158,6 +163,7 @@ export default function Page() {
                     name={d.name}
                     description={d.description}
                     cardCount={d.cardCount}
+                    sideboardCount={d.sideboardCount}
                   />
                 ))}
               </ul>

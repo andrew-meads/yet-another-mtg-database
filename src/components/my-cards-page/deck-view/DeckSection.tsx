@@ -11,7 +11,21 @@ import AddBasicLandButton from "./AddBasicLandButton";
 import { useUpdateSection, useDeleteSection } from "@/hooks/react-query/useDeckSections";
 import { useAddColumn } from "@/hooks/react-query/useDeckColumns";
 import { useDeckNewColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
-import { countSectionCards, formatCardCount } from "@/lib/deckUtils";
+import {
+  DECK_SECTION_KIND_LABELS,
+  countSectionCards,
+  effectiveSectionKind,
+  formatCardCount,
+  isDeckSectionKind
+} from "@/lib/deckUtils";
+import { DECK_SECTION_KINDS } from "@/types/Deck";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { CARD_WIDTH, CARD_HEIGHT } from "./card-dimensions";
 
 interface DeckSectionProps {
@@ -48,6 +62,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
 
   const cardCount = countSectionCards(section);
   const isEmpty = cardCount === 0;
+  const kind = effectiveSectionKind(section.kind);
 
   const commitName = () => {
     if (name.trim() && name !== section.name) {
@@ -69,11 +84,37 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
           }}
           className="h-8 w-auto max-w-80 min-w-40 font-semibold"
         />
+        <Select
+          value={kind}
+          onValueChange={(v) =>
+            isDeckSectionKind(v) &&
+            v !== kind &&
+            updateSection.mutate({ deckId, sectionId: section._id, kind: v })
+          }
+        >
+          <SelectTrigger
+            size="sm"
+            aria-label="Section type"
+            title="Normal sections count toward the deck, sideboards toward the sideboard, scratch areas not at all"
+            data-testid={`section-kind-select-${section._id}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DECK_SECTION_KINDS.map((k) => (
+              <SelectItem key={k} value={k}>
+                {DECK_SECTION_KIND_LABELS[k]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <span
           className="text-muted-foreground shrink-0 text-sm tabular-nums"
           data-testid={`section-card-count-${section._id}`}
         >
           {formatCardCount(cardCount)}
+          {kind === "sideboard" && " in sideboard"}
+          {kind === "scratch" && " (not counted)"}
         </span>
         <Button
           variant="ghost"
@@ -105,6 +146,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
             deckName={deckName}
             sectionId={section._id}
             column={column}
+            muted={kind === "scratch"}
           />
         ))}
         <NewColumnDropZone deckId={deckId} sectionId={section._id} />

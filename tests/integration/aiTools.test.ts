@@ -43,6 +43,27 @@ async function arrangeInDeck(deck: any, physicalIds: string[]) {
   await deck.save();
 }
 
+/**
+ * Give a deck doc a sideboard and a scratch section after its Main section,
+ * holding the given physical cards.
+ */
+async function addSpecialSections(deck: any, sideboardIds: string[], scratchIds: string[]) {
+  deck.sections.push(
+    {
+      name: "Side",
+      kind: "sideboard",
+      columns: [{ cards: sideboardIds.map((id) => new Types.ObjectId(id)) }]
+    },
+    {
+      name: "Maybe",
+      kind: "scratch",
+      columns: [{ cards: scratchIds.map((id) => new Types.ObjectId(id)) }]
+    }
+  );
+  deck.markModified("sections");
+  await deck.save();
+}
+
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
@@ -66,6 +87,27 @@ describe("readDeck tool", () => {
     expect(result.totalCards).toBe(3);
     expect(result.decklist).toContain("## Main (3 cards)");
     expect(result.decklist).toContain("3x Forest [neo]");
+  });
+
+  it("flags sideboard and scratch sections and keeps them out of the main total", async () => {
+    const collectionId = await seedCollection(userId);
+    const deck = await seedDeck(userId, "Flagged");
+    const forest = await seedCard({ id: "flag-forest", name: "Forest", set: "neo" });
+    const deckId = String(deck._id);
+    const seed = () => seedPhysicalCard(userId, forest.id, collectionId, { deckId });
+    const main = [await seed(), await seed()];
+    const side = [await seed()];
+    const maybe = [await seed(), await seed(), await seed()];
+    await arrangeInDeck(deck, main);
+    await addSpecialSections(deck, side, maybe);
+
+    const result = await run(buildAiTools({ userId }).readDeck, { deckId });
+    expect(result.totalCards).toBe(2);
+    expect(result.sideboardCards).toBe(1);
+    expect(result.scratchCards).toBe(3);
+    expect(result.decklist).toContain("Deck: Flagged (2 cards, +1 sideboard, +3 in scratch areas)");
+    expect(result.decklist).toContain("## Side (1 cards) [SIDEBOARD");
+    expect(result.decklist).toContain("## Maybe (3 cards) [SCRATCH AREA");
   });
 
   it("lists back-ref copies missing from the arrangement as unsorted", async () => {
@@ -226,6 +268,32 @@ describe("manaBaseStats tool", () => {
     expect(result.stats.nonlandCount).toBe(1);
     expect(result.stats.sources.G).toBe(3);
     expect(result.stats.pips.G).toBe(1);
+  });
+
+  it("leaves sideboard and scratch sections out of the main-deck stats", async () => {
+    const collectionId = await seedCollection(userId);
+    const deck = await seedDeck(userId, "With Side");
+    const forest = await seedCard({
+      id: "side-forest",
+      name: "Forest",
+      type_line: "Basic Land — Forest",
+      cmc: 0,
+      produced_mana: ["G"]
+    });
+    const deckId = String(deck._id);
+    const seed = () => seedPhysicalCard(userId, forest.id, collectionId, { deckId });
+    const main = [await seed()];
+    await arrangeInDeck(deck, main);
+    await addSpecialSections(deck, [await seed()], [await seed(), await seed()]);
+
+    const tools = buildAiTools({ userId });
+    const result = await run(tools.manaBaseStats, { deckId });
+    expect(result.scope).toBe("main deck");
+    expect(result.stats.landCount).toBe(1);
+
+    // A sideboard can still be analyzed on its own by name.
+    const side = await run(tools.manaBaseStats, { deckId, sectionName: "side" });
+    expect(side.stats.landCount).toBe(1);
   });
 
   it("scopes to a named section and rejects unknown sections", async () => {

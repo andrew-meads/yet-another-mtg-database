@@ -32,6 +32,8 @@ interface DeckColumnProps {
   deckName?: string;
   sectionId: string;
   column: DeckColumnData;
+  /** Render the cards partly desaturated (a scratch-area section's cards don't count). */
+  muted?: boolean;
 }
 
 /** A single physical-card image within a column's overlapping stack. */
@@ -47,7 +49,8 @@ function DeckCardImage({
   cardIndex,
   isBeingDragged,
   onDragChange,
-  altRef
+  altRef,
+  muted
 }: {
   deckId: string;
   deckName?: string;
@@ -64,6 +67,7 @@ function DeckCardImage({
   /** Called when drag starts/ends; `single` reflects whether Alt was held at drag start. */
   onDragChange: (index: number | null, single: boolean) => void;
   altRef: React.RefObject<boolean>;
+  muted?: boolean;
 }) {
   const { setSelectedCard } = useCardSelection();
   const deckCardOp = useDeckCardOp();
@@ -109,9 +113,12 @@ function DeckCardImage({
           ref={dragRef as unknown as React.Ref<HTMLDivElement>}
           data-testid={`deck-card-${card._id}`}
           data-ephemeral={card.isEphemeral ? "true" : undefined}
+          data-muted={muted ? "true" : undefined}
           className={cn(
             "relative shrink-0 cursor-grab transition-all duration-200 select-none active:cursor-grabbing",
-            isBeingDragged ? "blur-[1px] grayscale" : "hover:brightness-125"
+            isBeingDragged
+              ? "blur-[1px] grayscale"
+              : cn("hover:brightness-125", muted && "grayscale-50")
           )}
           style={{
             width: `${CARD_WIDTH}px`,
@@ -225,7 +232,13 @@ function DeckCardImage({
   );
 }
 
-export default function DeckColumn({ deckId, deckName, sectionId, column }: DeckColumnProps) {
+export default function DeckColumn({
+  deckId,
+  deckName,
+  sectionId,
+  column,
+  muted
+}: DeckColumnProps) {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const deleteColumn = useDeleteColumn();
   const altRef = useAltKeyRef();
@@ -331,6 +344,7 @@ export default function DeckColumn({ deckId, deckName, sectionId, column }: Deck
             }
             onDragChange={onDragChange}
             altRef={altRef}
+            muted={muted}
           />
         ))
       )}

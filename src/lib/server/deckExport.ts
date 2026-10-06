@@ -5,7 +5,9 @@ import {
   DeckExportModel,
   deckExportColumns,
   deckExportFileName,
+  hasSpecialSections,
   renderDeckCsv,
+  SECTION_BOARD_LABELS,
   renderDeckTxt
 } from "@/lib/deckExport";
 import { renderDeckPdf } from "./deckExportPdf";
@@ -71,6 +73,7 @@ export async function fetchDeckImages(
 /**
  * XLSX: one "Decklist" sheet (the same columns as the CSV export, via
  * deckExportColumns) with a frozen bold header, plus a "Summary" sheet.
+ * Scratch-area rows are greyed and italic so they read as "not in the deck".
  */
 export async function renderDeckXlsx(model: DeckExportModel): Promise<Uint8Array> {
   const { options } = model;
@@ -79,9 +82,10 @@ export async function renderDeckXlsx(model: DeckExportModel): Promise<Uint8Array
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet("Decklist", { views: [{ state: "frozen", ySplit: 1 }] });
-  const columns = deckExportColumns(options);
+  const columns = deckExportColumns(options, hasSpecialSections(model));
   const widths: Record<string, number> = {
     section: 20,
+    board: 11,
     count: 8,
     name: 36,
     set: 8,
@@ -98,7 +102,10 @@ export async function renderDeckXlsx(model: DeckExportModel): Promise<Uint8Array
 
   for (const section of model.sections) {
     for (const row of section.rows) {
-      sheet.addRow(Object.fromEntries(columns.map((c) => [c.key, c.value(row, section)])));
+      const added = sheet.addRow(
+        Object.fromEntries(columns.map((c) => [c.key, c.value(row, section)]))
+      );
+      if (section.kind === "scratch") added.font = { italic: true, color: { argb: "FF808080" } };
     }
   }
 
@@ -109,8 +116,15 @@ export async function renderDeckXlsx(model: DeckExportModel): Promise<Uint8Array
   ];
   summary.getRow(1).font = { bold: true };
   summary.addRow({ k: "Description", v: model.description });
-  summary.addRow({ k: "Total cards", v: model.totalCards });
-  for (const section of model.sections) summary.addRow({ k: section.name, v: section.count });
+  summary.addRow({ k: "Main deck cards", v: model.totalCards });
+  if (model.sideboardCards > 0) summary.addRow({ k: "Sideboard cards", v: model.sideboardCards });
+  if (model.scratchCards > 0) {
+    summary.addRow({ k: "Scratch area cards (not counted)", v: model.scratchCards });
+  }
+  for (const section of model.sections) {
+    const suffix = section.kind === "normal" ? "" : ` (${SECTION_BOARD_LABELS[section.kind]})`;
+    summary.addRow({ k: `${section.name}${suffix}`, v: section.count });
+  }
   summary.addRow({ k: "Exported", v: model.exportedAt });
 
   const buffer = await workbook.xlsx.writeBuffer();

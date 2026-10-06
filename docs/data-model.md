@@ -108,18 +108,45 @@ client-side.
 
 ### `Deck` (`src/types/Deck.ts`)
 
-`{ owner, name, description, isActive?, sections: [{ name, columns: [{ cards: ObjectId[] }] }] }`.
+`{ owner, name, description, isActive?, sections: [{ name, kind?, columns: [{ cards: ObjectId[] }] }] }`.
 A deck is an *arrangement* layered over physical cards that still live in their
 collections: named sections, each with any number of unnamed columns, each an ordered list
 of `PhysicalCard` ids. Sections/columns get auto `_id`s used by the UI/API.
 
+#### Section kinds
+
+Every section is one of `DECK_SECTION_KINDS` (`src/types/Deck.ts`):
+
+- **`normal`** — the main deck (the default).
+- **`sideboard`** — counts toward a separate sideboard total instead of the main count.
+- **`scratch`** — a scratch area: counts toward nothing, and its cards render ~50%
+  greyscale in the deck view (`DeckColumn`'s `muted` → `grayscale-50`).
+
+Like a copy's finish/condition, **`kind` is sparse: absent means `normal`** and only the
+other two are stored (setting `normal` unsets the field; no backfill). Read it through
+`effectiveSectionKind` and validate input with `isDeckSectionKind` (both in
+`src/lib/deckUtils.ts`); `loadDeckWithCards` passes it through only when non-normal.
+The kind is chosen from a "Section type" `Select` beside each section's name
+(`DeckSection.tsx`) and saved with `PATCH /api/decks/[id]/sections`
+`{ sectionId, kind }` (also accepted on `POST` and alongside `name`; 400 on an unknown
+value). Sections stay in the user's order in the deck view; exports reorder them (see
+[deck-export.md](deck-export.md)), and the AI tools flag them (see
+[user-settings-and-ai.md](user-settings-and-ai.md)).
+
+#### Card counts
+
 Card totals are derived client-side from the loaded `DeckWithCards` by
-`src/lib/deckUtils.ts` (`countSectionCards` / `countDeckCards` / `formatCardCount`) and
-shown next to the deck name (deck detail page) and each section name (`DeckSection.tsx`) —
-nothing is stored. The summary-list routes additionally return each entity's `description`
-and a server-computed `cardCount` from the `PhysicalCard` back-refs: `GET /api/decks`
-counts by `deckId` (typed `DeckListSummary`) and `GET /api/collections/summaries` counts by
-`collectionId` (typed `CollectionListSummary`); both are shown on the My Cards landing
+`src/lib/deckUtils.ts` — `countSectionCards`, `countDeckCardsByKind`
+(`{ normal, sideboard, scratch }`), `countDeckCards` (**main deck only**),
+`formatCardCount`, and `formatDeckCardCount` (`"60 cards"` / `"60 cards + 15 sideboard"`).
+The deck name shows the main count plus any sideboard count; each section name shows its
+own count, suffixed "in sideboard" or "(not counted)" by kind — nothing is stored. The
+summary-list routes additionally return each entity's `description` and server-computed
+counts from the `PhysicalCard` back-refs: `GET /api/decks` counts by `deckId` (typed
+`DeckListSummary`), using the arrangement arrays only to bucket copies — `cardCount` is
+the main deck (copies placed in sideboard/scratch sections excluded; unplaced copies count
+as main) and `sideboardCount` the sideboard; `GET /api/collections/summaries` counts by
+`collectionId` (typed `CollectionListSummary`). Both are shown on the My Cards landing
 page's lists.
 
 ### Active collection / active deck

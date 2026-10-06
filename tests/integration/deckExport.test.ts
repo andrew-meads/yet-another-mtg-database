@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll, vi } 
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import ExcelJS from "exceljs";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFRawStream } from "pdf-lib";
+import { inflateSync } from "zlib";
 import { Types } from "mongoose";
 import { DeckModel } from "@/db/schema";
 import { GET as exportDeck } from "@/app/api/decks/[id]/export/route";
@@ -43,6 +44,27 @@ async function exportAs(query: string, id = deckId) {
 
 async function bodyBytes(res: Response) {
   return new Uint8Array(await res.arrayBuffer());
+}
+
+/**
+ * The text drawn in a pdf-lib PDF, one entry per `Tj` (pdf-lib writes each
+ * line as a hex string into a Flate-compressed content stream), in drawing order.
+ */
+function pdfTextLines(pdf: PDFDocument): string[] {
+  const lines: string[] = [];
+  for (const [, obj] of pdf.context.enumerateIndirectObjects()) {
+    if (!(obj instanceof PDFRawStream)) continue;
+    let content = Buffer.from(obj.contents);
+    try {
+      content = inflateSync(content);
+    } catch {
+      // Not compressed.
+    }
+    for (const m of content.toString("latin1").matchAll(/<([0-9A-Fa-f]*)>\s*Tj/g)) {
+      lines.push(Buffer.from(m[1], "hex").toString("latin1"));
+    }
+  }
+  return lines;
 }
 
 beforeEach(async () => {
@@ -265,6 +287,114 @@ describe("GET /api/decks/[id]/export", () => {
     setTestUser(otherUserId);
     const res = await exportAs("format=txt");
     expect(res.status).toBe(404);
+  });
+
+  describe("with sideboard and scratch sections", () => {
+    beforeEach(async () => {
+      // Make the existing "Sideboard" a real sideboard and put a scratch area
+      // FIRST in deck order — exports must still list it last.
+      const maybe = await seedPhysicalCard(userId, "sol-c21", collectionId, { deckId });
+      const deck = await DeckModel.findById(deckId);
+      deck!.sections[1].kind = "sideboard";
+      deck!.sections.unshift({
+        name: "Maybe",
+        kind: "scratch",
+        columns: [{ cards: [new Types.ObjectId(maybe)] }]
+      } as any);
+      deck!.markModified("sections");
+      await deck!.save();
+    });
+
+    it("lists the sideboard then the scratch area after the main deck in the TXT", async () => {
+      expect(await (await exportAs("format=txt")).text()).toBe(
+        [
+          "Orzhov Taxes",
+          "Lifegain and taxes",
+          "4 cards + 1 sideboard (+1 in scratch area)",
+          "",
+          "// Main (4)",
+          "2x Godless Shrine",
+          "2x Sol Ring",
+          "",
+          "// ===== Sideboard: 1 card =====",
+          "",
+          "// Sideboard (1)",
+          "1x Godless Shrine",
+          "",
+          "// ===== Scratch area (not part of the deck): 1 card =====",
+          "",
+          "// Maybe (1)",
+          "1x Sol Ring",
+          ""
+        ].join("\n")
+      );
+    });
+
+    it("adds a Board column to the CSV", async () => {
+      expect(await (await exportAs("format=csv")).text()).toBe(
+        [
+          "Section,Board,Count,Name",
+          "Main,Main,2,Godless Shrine",
+          "Main,Main,2,Sol Ring",
+          "Sideboard,Sideboard,1,Godless Shrine",
+          "Maybe,Scratch,1,Sol Ring",
+          ""
+        ].join("\r\n")
+      );
+    });
+
+    it("adds a Board column, greys scratch rows, and splits the XLSX summary", async () => {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(
+        Buffer.from(await bodyBytes(await exportAs("format=xlsx"))) as never
+      );
+      const sheet = workbook.getWorksheet("Decklist")!;
+      const rows: unknown[][] = [];
+      sheet.eachRow((row) => rows.push((row.values as unknown[]).slice(1)));
+      expect(rows).toEqual([
+        ["Section", "Board", "Count", "Name"],
+        ["Main", "Main", 2, "Godless Shrine"],
+        ["Main", "Main", 2, "Sol Ring"],
+        ["Sideboard", "Sideboard", 1, "Godless Shrine"],
+        ["Maybe", "Scratch", 1, "Sol Ring"]
+      ]);
+      expect(sheet.getRow(5).font?.italic).toBe(true);
+      expect(sheet.getRow(2).font?.italic).toBeFalsy();
+
+      const summary = workbook.getWorksheet("Summary")!;
+      const pairs: unknown[][] = [];
+      summary.eachRow((row) => pairs.push((row.values as unknown[]).slice(1)));
+      expect(pairs).toEqual(
+        expect.arrayContaining([
+          ["Main deck cards", 4],
+          ["Sideboard cards", 1],
+          ["Scratch area cards (not counted)", 1],
+          ["Main", 4],
+          ["Sideboard (Sideboard)", 1],
+          ["Maybe (Scratch)", 1]
+        ])
+      );
+    });
+
+    for (const query of ["format=pdf", "format=pdf&images=true"]) {
+      it(`draws sideboard and scratch headings after the main deck in the PDF (${query})`, async () => {
+        mswServer.use(
+          http.get(`${IMAGE_HOST}/*`, () =>
+            HttpResponse.arrayBuffer(PNG_1X1, { headers: { "content-type": "image/png" } })
+          )
+        );
+        const text = pdfTextLines(await PDFDocument.load(await bodyBytes(await exportAs(query))));
+        const main = text.indexOf("Main (4)");
+        const sideboard = text.indexOf("Sideboard: 1 card");
+        const scratch = text.indexOf("Scratch area (not part of the deck): 1 card");
+        const maybe = text.indexOf("Maybe (1)");
+        expect(text[2]).toMatch(/^4 cards \+ 1 sideboard \(\+1 in scratch area\) · exported /);
+        expect(main).toBeGreaterThan(-1);
+        expect(sideboard).toBeGreaterThan(main);
+        expect(scratch).toBeGreaterThan(sideboard);
+        expect(maybe).toBeGreaterThan(scratch);
+      });
+    }
   });
 
   it("includes cards that point at the deck but are missing from its arrangement", async () => {

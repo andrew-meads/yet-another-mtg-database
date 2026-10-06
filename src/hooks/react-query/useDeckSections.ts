@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { DeckSectionKind } from "@/types/Deck";
 
 async function request(deckId: string, method: string, body: unknown) {
   const res = await fetch(`/api/decks/${deckId}/sections`, {
@@ -31,13 +32,15 @@ export function useUpdateSection() {
       deckId,
       sectionId,
       name,
+      kind,
       order
     }: {
       deckId: string;
       sectionId?: string;
       name?: string;
+      kind?: DeckSectionKind;
       order?: string[];
-    }) => request(deckId, "PATCH", { sectionId, name, order }),
+    }) => request(deckId, "PATCH", { sectionId, name, kind, order }),
     onSuccess: (_d, v) => queryClient.invalidateQueries({ queryKey: ["deck-details", v.deckId] })
   });
 }

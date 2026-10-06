@@ -3,6 +3,8 @@ import { GET as getDeck, DELETE as deleteDeck } from "@/app/api/decks/[id]/route
 import { GET as listDecks } from "@/app/api/decks/route";
 import { POST as deckCardsOp } from "@/app/api/decks/[id]/cards/route";
 import { PATCH as setDeckActive } from "@/app/api/decks/[id]/isActive/route";
+import { POST as addSection, PATCH as updateSection } from "@/app/api/decks/[id]/sections/route";
+import { Types } from "mongoose";
 import { CollectionModel, DeckModel, PhysicalCardModel } from "@/db/schema";
 import {
   ctx,
@@ -324,5 +326,129 @@ describe("GET /api/decks", () => {
     expect(counted.cardCount).toBe(3);
     expect(emptyDeck.description).toBe("");
     expect(emptyDeck.cardCount).toBe(0);
+    expect(counted.sideboardCount).toBe(0);
+  });
+
+  it("counts sideboard copies separately and leaves scratch copies out", async () => {
+    const deck = await seedDeck(owner, "Split Deck");
+    const deckId = deck._id.toString();
+    const main = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    const side1 = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    const side2 = await seedEphemeralCard(owner, cardId, deckId);
+    const scratch = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    // Back-ref'd but not yet arranged: counts toward the main deck.
+    await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    const oid = (id: string) => new Types.ObjectId(id);
+    await DeckModel.updateOne(
+      { _id: deckId },
+      {
+        $set: {
+          sections: [
+            { name: "Main", columns: [{ cards: [oid(main)] }] },
+            { name: "Side", kind: "sideboard", columns: [{ cards: [oid(side1), oid(side2)] }] },
+            { name: "Maybe", kind: "scratch", columns: [{ cards: [oid(scratch)] }] }
+          ]
+        }
+      }
+    );
+
+    const { decks } = await (await listDecks(jsonRequest("/api/decks", "GET"))).json();
+    const split = decks.find((d: any) => d.name === "Split Deck");
+    expect(split.cardCount).toBe(2);
+    expect(split.sideboardCount).toBe(2);
+    expect(split.sections).toBeUndefined();
+  });
+});
+
+describe("/api/decks/[id]/sections kind", () => {
+  async function details(deckId: string) {
+    const res = await getDeck(
+      jsonRequest(`/api/decks/${deckId}?details=true`, "GET"),
+      ctx({ id: deckId })
+    );
+    return (await res.json()).deck;
+  }
+
+  it("sets, returns, and clears a section's kind (normal is stored as absent)", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const sectionId = String(deck.sections[0]._id);
+
+    const res = await updateSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "PATCH", { sectionId, kind: "sideboard" }),
+      ctx({ id: deckId })
+    );
+    expect(res.status).toBe(200);
+    expect((await details(deckId)).sections[0].kind).toBe("sideboard");
+
+    await updateSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "PATCH", { sectionId, kind: "normal" }),
+      ctx({ id: deckId })
+    );
+    const raw = await DeckModel.findById(deckId).lean();
+    expect(raw!.sections[0]).not.toHaveProperty("kind");
+    expect((await details(deckId)).sections[0]).not.toHaveProperty("kind");
+  });
+
+  it("renames and sets the kind in one request", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const sectionId = String(deck.sections[0]._id);
+    await updateSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "PATCH", {
+        sectionId,
+        name: "Maybeboard",
+        kind: "scratch"
+      }),
+      ctx({ id: deckId })
+    );
+    const section = (await details(deckId)).sections[0];
+    expect(section.name).toBe("Maybeboard");
+    expect(section.kind).toBe("scratch");
+  });
+
+  it("creates a section with a kind", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const res = await addSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "POST", { name: "Side", kind: "sideboard" }),
+      ctx({ id: deckId })
+    );
+    expect(res.status).toBe(201);
+    const { sectionId } = await res.json();
+    const section = (await details(deckId)).sections.find((s: any) => s._id === sectionId);
+    expect(section).toMatchObject({ name: "Side", kind: "sideboard" });
+  });
+
+  it("400s on an unknown kind without changing the section", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const sectionId = String(deck.sections[0]._id);
+    const patch = await updateSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "PATCH", { sectionId, kind: "maybeboard" }),
+      ctx({ id: deckId })
+    );
+    expect(patch.status).toBe(400);
+    const post = await addSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "POST", { name: "X", kind: "maybeboard" }),
+      ctx({ id: deckId })
+    );
+    expect(post.status).toBe(400);
+    expect((await details(deckId)).sections).toHaveLength(1);
+    expect((await details(deckId)).sections[0]).not.toHaveProperty("kind");
+  });
+
+  it("404s when setting the kind on another user's deck", async () => {
+    const other = await seedUser("other@example.com");
+    const deck = await seedDeck(other);
+    const deckId = deck._id.toString();
+    const res = await updateSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "PATCH", {
+        sectionId: String(deck.sections[0]._id),
+        kind: "scratch"
+      }),
+      ctx({ id: deckId })
+    );
+    expect(res.status).toBe(404);
   });
 });

@@ -1,11 +1,20 @@
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { DeckExportModel, DeckExportRow, formatOwnership, formatRowLine } from "@/lib/deckExport";
+import {
+  DeckExportModel,
+  DeckExportRow,
+  deckExportSectionGroups,
+  formatModelCardCount,
+  formatOwnership,
+  formatRowLine
+} from "@/lib/deckExport";
+import { formatCardCount } from "@/lib/deckUtils";
 
 /**
  * PDF decklist renderer (pdf-lib, A4 portrait).
  *
  * Without images: a title block then, per section, a header and one text line
- * per row. With images: per section, cards are laid out two per row, each as a
+ * per row. Sideboard sections and scratch areas come after the main deck, each
+ * group under its own ruled heading; scratch-area text is drawn in grey. With images: per section, cards are laid out two per row, each as a
  * small card image with its written details beside it (count and name, then
  * printing and ownership when those options are on); cards whose image is
  * missing get a labelled placeholder box.
@@ -21,6 +30,7 @@ const MARGIN = 40;
 const CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN;
 
 const TITLE_SIZE = 18;
+const GROUP_SIZE = 15;
 const BODY_SIZE = 10;
 const SECTION_SIZE = 13;
 const SMALL_SIZE = 8.5;
@@ -177,7 +187,13 @@ function measureImageCell(
  * Draws one measured cell with its top-left corner at (x, top): the image (or a
  * placeholder box) on the left and the headline plus detail lines beside it.
  */
-function drawImageCell(w: PdfWriter, cell: MeasuredImageCell, x: number, top: number) {
+function drawImageCell(
+  w: PdfWriter,
+  cell: MeasuredImageCell,
+  x: number,
+  top: number,
+  textColor = BLACK
+) {
   const imageY = top - IMAGE_HEIGHT;
   if (cell.image) {
     w.page.drawImage(cell.image, { x, y: imageY, width: IMAGE_WIDTH, height: IMAGE_HEIGHT });
@@ -210,7 +226,7 @@ function drawImageCell(w: PdfWriter, cell: MeasuredImageCell, x: number, top: nu
       y: y - BODY_SIZE,
       size: BODY_SIZE,
       font: w.bold,
-      color: BLACK
+      color: textColor
     });
     y -= BODY_SIZE * LINE_GAP;
   }
@@ -230,12 +246,12 @@ function drawImageCell(w: PdfWriter, cell: MeasuredImageCell, x: number, top: nu
  * Draws up to IMAGE_COLUMNS cells side by side at the writer's cursor (breaking
  * the page first if the tallest doesn't fit) and advances past the row.
  */
-function drawImageRow(w: PdfWriter, cells: MeasuredImageCell[]) {
+function drawImageRow(w: PdfWriter, cells: MeasuredImageCell[], textColor = BLACK) {
   const rowHeight = Math.max(...cells.map((c) => c.height));
   w.ensure(rowHeight + ROW_GAP);
   const top = w.y;
   cells.forEach((cell, i) =>
-    drawImageCell(w, cell, MARGIN + i * (IMAGE_CELL_WIDTH + IMAGE_COLUMN_GAP), top)
+    drawImageCell(w, cell, MARGIN + i * (IMAGE_CELL_WIDTH + IMAGE_COLUMN_GAP), top, textColor)
   );
   w.y = top - rowHeight - ROW_GAP;
 }
@@ -261,7 +277,7 @@ export async function renderDeckPdf(
   w.paragraph(model.name, TITLE_SIZE, bold, BLACK, 2);
   if (model.description.trim()) w.paragraph(model.description.trim(), BODY_SIZE, regular, GRAY, 2);
   w.paragraph(
-    `${model.totalCards} ${model.totalCards === 1 ? "card" : "cards"} · exported ${model.exportedAt}`,
+    `${formatModelCardCount(model)} · exported ${model.exportedAt}`,
     SMALL_SIZE,
     regular,
     GRAY,
@@ -277,31 +293,54 @@ export async function renderDeckPdf(
     }
   }
 
-  for (const section of model.sections) {
-    const header = `${section.name} (${section.count})`;
-    const headerHeight = SECTION_SIZE * LINE_GAP + 4;
+  const headerHeight = SECTION_SIZE * LINE_GAP + 4;
+  const firstRowHeight = options.includeImages ? IMAGE_HEIGHT + ROW_GAP : BODY_SIZE * LINE_GAP;
 
-    if (!options.includeImages) {
-      // Keep the header with at least one row.
-      w.ensure(headerHeight + BODY_SIZE * LINE_GAP);
-      w.paragraph(header, SECTION_SIZE, bold, BLACK, 4);
+  for (const group of deckExportSectionGroups(model)) {
+    // Sideboard / scratch groups get a ruled heading; scratch text is grey.
+    const color = group.kind === "scratch" ? GRAY : BLACK;
+    if (group.kind !== "normal") {
+      const groupHeight = GROUP_SIZE * LINE_GAP + 10;
+      // Keep the group heading with its first section header and row.
+      w.ensure(groupHeight + headerHeight + firstRowHeight);
+      w.space(4);
+      w.page.drawLine({
+        start: { x: MARGIN, y: w.y },
+        end: { x: PAGE_WIDTH - MARGIN, y: w.y },
+        thickness: 1,
+        color: GRAY
+      });
+      w.space(6);
+      w.paragraph(`${group.title}: ${formatCardCount(group.count)}`, GROUP_SIZE, bold, color, 6);
+    }
+
+    for (const section of group.sections) {
+      const header = `${section.name} (${section.count})`;
+
+      if (!options.includeImages) {
+        // Keep the header with at least one row.
+        w.ensure(headerHeight + firstRowHeight);
+        w.paragraph(header, SECTION_SIZE, bold, color, 4);
+        if (section.rows.length === 0) w.paragraph("(empty)", BODY_SIZE, regular, GRAY);
+        for (const row of section.rows) {
+          w.paragraph(formatRowLine(row, options), BODY_SIZE, regular, color);
+        }
+        w.space(10);
+        continue;
+      }
+
+      // Keep the header with the first image row.
+      w.ensure(headerHeight + firstRowHeight);
+      w.paragraph(header, SECTION_SIZE, bold, color, 6);
       if (section.rows.length === 0) w.paragraph("(empty)", BODY_SIZE, regular, GRAY);
-      for (const row of section.rows) w.paragraph(formatRowLine(row, options), BODY_SIZE);
-      w.space(10);
-      continue;
+      const cells = section.rows.map((row) =>
+        measureImageCell(w, row, row.imageUrl ? embedded.get(row.imageUrl) : undefined, model)
+      );
+      for (let i = 0; i < cells.length; i += IMAGE_COLUMNS) {
+        drawImageRow(w, cells.slice(i, i + IMAGE_COLUMNS), color);
+      }
+      w.space(6);
     }
-
-    // Keep the header with the first image row.
-    w.ensure(headerHeight + IMAGE_HEIGHT + ROW_GAP);
-    w.paragraph(header, SECTION_SIZE, bold, BLACK, 6);
-    if (section.rows.length === 0) w.paragraph("(empty)", BODY_SIZE, regular, GRAY);
-    const cells = section.rows.map((row) =>
-      measureImageCell(w, row, row.imageUrl ? embedded.get(row.imageUrl) : undefined, model)
-    );
-    for (let i = 0; i < cells.length; i += IMAGE_COLUMNS) {
-      drawImageRow(w, cells.slice(i, i + IMAGE_COLUMNS));
-    }
-    w.space(6);
   }
 
   return doc.save();

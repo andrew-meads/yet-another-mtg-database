@@ -2,6 +2,7 @@ import connectDB from "@/db/mongoose";
 import { DeckModel } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
+import { isDeckSectionKind } from "@/lib/deckUtils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -9,9 +10,14 @@ async function loadDeck(id: string, userId: string) {
   return DeckModel.findOne({ _id: id, owner: userId });
 }
 
+/** Section kinds are stored sparsely: "normal" is the absent default. */
+function storedKind(kind: string) {
+  return kind === "normal" ? undefined : kind;
+}
+
 /**
  * POST /api/decks/[id]/sections
- * Adds a new (empty) section. Body: { name }. Returns the new section id.
+ * Adds a new (empty) section. Body: { name, kind? }. Returns the new section id.
  */
 export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[id]/sections">) {
   try {
@@ -19,12 +25,19 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[
     const session = await getAuthSession();
     const userId = session!.user._id;
     const { id } = await ctx.params;
-    const { name } = await request.json();
+    const { name, kind } = await request.json();
+    if (kind !== undefined && !isDeckSectionKind(kind)) {
+      return Response.json({ error: "Invalid section kind" }, { status: 400 });
+    }
 
     const deck = await loadDeck(id, userId);
     if (!deck) return Response.json({ error: "Deck not found" }, { status: 404 });
 
-    deck.sections.push({ name: name || "New Section", columns: [{ cards: [] }] } as any);
+    deck.sections.push({
+      name: name || "New Section",
+      ...(kind && storedKind(kind) ? { kind } : {}),
+      columns: [{ cards: [] }]
+    } as any);
     await deck.save();
     const section = deck.sections[deck.sections.length - 1] as any;
 
@@ -37,7 +50,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[
 
 /**
  * PATCH /api/decks/[id]/sections
- * Renames a section ({ sectionId, name }) or reorders sections ({ order: id[] }).
+ * Renames a section and/or sets its kind ({ sectionId, name?, kind? }), or
+ * reorders sections ({ order: id[] }). `kind` is "normal" | "sideboard" | "scratch".
  */
 export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/[id]/sections">) {
   try {
@@ -45,7 +59,10 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
     const session = await getAuthSession();
     const userId = session!.user._id;
     const { id } = await ctx.params;
-    const { sectionId, name, order } = await request.json();
+    const { sectionId, name, kind, order } = await request.json();
+    if (kind !== undefined && !isDeckSectionKind(kind)) {
+      return Response.json({ error: "Invalid section kind" }, { status: 400 });
+    }
 
     const deck = await loadDeck(id, userId);
     if (!deck) return Response.json({ error: "Deck not found" }, { status: 404 });
@@ -55,12 +72,16 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
         (a: any, b: any) => order.indexOf(String(a._id)) - order.indexOf(String(b._id))
       );
       deck.markModified("sections");
-    } else if (sectionId && typeof name === "string") {
+    } else if (sectionId && (typeof name === "string" || kind !== undefined)) {
       const section = deck.sections.find((s: any) => String(s._id) === sectionId) as any;
       if (!section) return Response.json({ error: "Section not found" }, { status: 404 });
-      section.name = name;
+      if (typeof name === "string") section.name = name;
+      if (kind !== undefined) section.kind = storedKind(kind);
     } else {
-      return Response.json({ error: "Provide { sectionId, name } or { order }" }, { status: 400 });
+      return Response.json(
+        { error: "Provide { sectionId, name?, kind? } or { order }" },
+        { status: 400 }
+      );
     }
 
     await deck.save();

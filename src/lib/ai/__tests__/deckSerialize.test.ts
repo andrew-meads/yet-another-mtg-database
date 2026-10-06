@@ -48,6 +48,25 @@ describe("serializeDeck", () => {
     );
   });
 
+  it("flags sideboard and scratch sections and keeps them out of the main total", () => {
+    const text = serializeDeck(
+      "Flagged",
+      [
+        { name: "Main", cardIds: ["forest", "forest", "elf"] },
+        { name: "Side", kind: "sideboard", cardIds: ["elf", "elf"] },
+        { name: "Maybe", kind: "scratch", cardIds: ["forest"] }
+      ],
+      cardData
+    );
+    const lines = text.split("\n");
+    expect(lines[0]).toBe("Deck: Flagged (3 cards, +2 sideboard, +1 in scratch areas)");
+    expect(lines).toContain("## Main (3 cards)");
+    expect(lines).toContain("## Side (2 cards) [SIDEBOARD — not in the main deck]");
+    expect(lines).toContain(
+      "## Maybe (1 cards) [SCRATCH AREA — not part of the deck; ideas/candidates only]"
+    );
+  });
+
   it("marks empty sections and unknown cards", () => {
     const text = serializeDeck(
       "Sparse",

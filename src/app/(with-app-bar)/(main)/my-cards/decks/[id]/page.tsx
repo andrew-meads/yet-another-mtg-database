@@ -9,7 +9,7 @@ import { useDeleteDeck } from "@/hooks/react-query/useDeleteEntity";
 import { useUpdateDeck } from "@/hooks/react-query/useUpdateDeck";
 import { useArchiveDeck } from "@/hooks/react-query/useArchiveDeck";
 import { getEntityIcon } from "@/lib/collectionUtils";
-import { countDeckCards, formatCardCount } from "@/lib/deckUtils";
+import { countDeckCardsByKind, formatDeckCardCount } from "@/lib/deckUtils";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
 import FillDeckDialog from "@/components/my-cards-page/deck-view/FillDeckDialog";
 import ExportDeckDialog from "@/components/my-cards-page/deck-view/ExportDeckDialog";
@@ -66,6 +66,7 @@ export default function DeckPage({ params }: PageProps) {
   }
 
   const { deck } = data;
+  const counts = countDeckCardsByKind(deck);
 
   const handleDelete = () => {
     if (!confirm(`Delete deck "${deck.name}"? Its cards stay in their collections.`)) return;
@@ -105,7 +106,7 @@ export default function DeckPage({ params }: PageProps) {
               className="text-muted-foreground text-base font-normal tabular-nums"
               data-testid="deck-card-count"
             >
-              {formatCardCount(countDeckCards(deck))}
+              {formatDeckCardCount(counts.normal, counts.sideboard)}
             </span>
           </h2>
           <p className="text-muted-foreground">{deck.description || "No description provided"}</p>

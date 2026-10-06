@@ -95,6 +95,9 @@ These bite across features. The docs explain the why.
   leaves. "Quantity" is display-only grouping; no document stores a count.
 - **No multi-document transactions.** Write the `PhysicalCard` back-ref first, then fix up
   the deck's ordered arrays; `GET /api/decks/[id]?details=true` reconciles the two.
+- **Deck section `kind` is sparse too** (absent = `normal`; `sideboard` / `scratch`). Read
+  through `effectiveSectionKind`; "deck card count" means the main deck only
+  (`countDeckCards`), and anything listing or counting a deck's cards must respect it.
 - **Finish/condition are optional and absent means the default** (`nonfoil` / `NM`). Read
   through `effectiveFinish` / `effectiveCondition`, persist through `sparseAttributes`.
 - **Detail responses are slim and deduplicated** (`{ entries, cardData }`). When a component

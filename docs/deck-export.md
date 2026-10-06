@@ -14,13 +14,30 @@ reconciling loader shared with `GET /api/decks/[id]?details=true`) and joined vi
   aggregates per section by card name (or by Scryfall id with `separateByPrinting`), each
   row keeping its first-seen position/printing and carrying `owned`/`placeholder` counts
   (ephemeral copies are placeholders). Not finish-aware.
+- **Section kinds** (see [data-model.md](data-model.md#section-kinds)): each
+  `DeckExportSection` carries its `kind`, and the model's sections are stably reordered
+  **normal → sideboard → scratch** (`sortSectionsByKind`; deck order within a kind).
+  `totalCards` is the main deck only; `sideboardCards` / `scratchCards` hold the rest.
+  `deckExportSectionGroups` splits the sections into per-kind groups with their titles
+  (`SECTION_GROUP_TITLES`: "Main deck" / "Sideboard" / "Scratch area (not part of the
+  deck)"), `formatModelCardCount` gives the header count (`60 cards + 15 sideboard (+3 in
+  scratch area)`), and `hasSpecialSections` says whether any non-normal section exists.
+  Per format:
+  - **TXT** — each sideboard/scratch group is introduced by a
+    `// ===== Sideboard: 15 cards =====` banner before its sections.
+  - **CSV / XLSX** — a **Board** column (`Main` / `Sideboard` / `Scratch`) is added after
+    Section, only when the deck has a sideboard or scratch section (plain decks keep the
+    original columns). XLSX scratch rows are grey italic, and the Summary sheet lists
+    main / sideboard / scratch totals and tags each non-normal section's name.
+  - **PDF** — each sideboard/scratch group gets a ruled heading; scratch-area text is
+    drawn in grey (with and without images).
 - `formatRowLine` is the canonical `3x Name (SET) 123 [2 owned, 1 placeholder]` line used
   by TXT and the PDF text lines; `formatOwnership(row, true)` gives the capitalized
   `Owned`/`Placeholder` form used where the label stands alone (the CSV/XLSX `Ownership`
   cell and the PDF image-row detail line).
 - `renderDeckTxt`, `renderDeckCsv` (RFC 4180 quoting, CRLF) over the shared
-  `deckExportColumns(options)` column set — Section/Count/Name, plus printing and
-  ownership columns when chosen — that the XLSX renderer also consumes.
+  `deckExportColumns(options, withBoard)` column set — Section/Count/Name, plus Board,
+  printing, and ownership columns when applicable — that the XLSX renderer also consumes.
 - `deckExportFileName`, `formatExportTimestamp` (**dayjs** + utc/timezone/advancedFormat
   plugins; `"h:mm A, MMMM Do, YYYY"` → `11:32 AM, September 4th, 2026`, rendered in the
   request's `tz` zone — the hook sends the browser's `Intl` zone so a UTC server still
@@ -59,4 +76,7 @@ object URL — no query invalidation).
 Unit `src/lib/__tests__/deckExport.test.ts`; integration
 `tests/integration/deckExport.test.ts` (parses the XLSX back with exceljs and the PDF with
 pdf-lib, MSW-mocks `cards.scryfall.io`); jsdom `ExportDeckDialog` + `useExportDeck`; e2e
-`e2e/exportDeck.spec.ts` (Playwright downloads of the TXT and CSV).
+`e2e/exportDeck.spec.ts` (Playwright downloads of the TXT and CSV). Section-kind output is
+covered by the unit tests, a "with sideboard and scratch sections" block in the
+integration test (the PDF's drawn text is checked by inflating its content streams), and
+`e2e/sectionKinds.spec.ts`.

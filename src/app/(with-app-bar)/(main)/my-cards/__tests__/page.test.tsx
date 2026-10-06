@@ -29,6 +29,7 @@ function deck(fields: Partial<DeckListSummary> & { _id: string; name: string }):
     owner: "owner-1",
     description: "",
     cardCount: 0,
+    sideboardCount: 0,
     ...fields
   };
 }
@@ -56,6 +57,17 @@ describe("My Cards page", () => {
     const sketchpad = screen.getByRole("link", { name: /Sketchpad/ });
     expect(sketchpad).toHaveTextContent("1 card");
     expect(sketchpad).not.toHaveTextContent("Aggro brew");
+    expect(sketchpad).not.toHaveTextContent("sideboard");
+  });
+
+  it("shows a deck's sideboard count beside its main-deck count", () => {
+    mocks.decks = [deck({ _id: "d1", name: "Modern Burn", cardCount: 60, sideboardCount: 15 })];
+
+    render(<MyCardsPage />);
+
+    expect(screen.getByRole("link", { name: /Modern Burn/ })).toHaveTextContent(
+      "60 cards + 15 sideboard"
+    );
   });
 
   it("lists each collection with its description, card count, and detail-page link", () => {

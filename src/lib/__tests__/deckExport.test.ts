@@ -11,10 +11,13 @@ import {
   formatRowLine,
   parseDeckExportOptions,
   deckExportColumns,
+  deckExportSectionGroups,
+  formatModelCardCount,
+  hasSpecialSections,
   renderDeckCsv,
   renderDeckTxt
 } from "@/lib/deckExport";
-import type { DeckWithCards } from "@/types/Deck";
+import type { DeckSectionKind, DeckWithCards } from "@/types/Deck";
 import type { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import type { SlimMtgCard } from "@/types/MtgCard";
 
@@ -67,7 +70,9 @@ function copy(c: SlimMtgCard, ephemeral = false): DetailedPhysicalCard {
   };
 }
 
-function deck(sections: { name: string; columns: DetailedPhysicalCard[][] }[]): DeckWithCards {
+function deck(
+  sections: { name: string; kind?: DeckSectionKind; columns: DetailedPhysicalCard[][] }[]
+): DeckWithCards {
   return {
     _id: "deck-1",
     name: "My Deck",
@@ -77,6 +82,7 @@ function deck(sections: { name: string; columns: DetailedPhysicalCard[][] }[]): 
     sections: sections.map((s, i) => ({
       _id: `sec-${i}`,
       name: s.name,
+      ...(s.kind ? { kind: s.kind } : {}),
       columns: s.columns.map((cards, j) => ({ _id: `sec-${i}-col-${j}`, cards }))
     }))
   };
@@ -143,7 +149,41 @@ describe("buildDeckExportModel", () => {
     const d = deck([{ name: "Empty", columns: [[], []] }]);
     const model = buildDeckExportModel(d, opts());
     expect(model.totalCards).toBe(0);
-    expect(model.sections).toEqual([{ name: "Empty", count: 0, rows: [] }]);
+    expect(model.sections).toEqual([{ name: "Empty", kind: "normal", count: 0, rows: [] }]);
+  });
+
+  it("orders sections normal → sideboard → scratch and counts only normal ones", () => {
+    const d = deck([
+      { name: "Maybe", kind: "scratch", columns: [[copy(solRing), copy(solRing)]] },
+      { name: "Side", kind: "sideboard", columns: [[copy(shrine)]] },
+      { name: "Main", columns: [[copy(shrine), copy(shrine), copy(solRing)]] },
+      { name: "Lands", kind: "normal", columns: [[copy(shrine)]] }
+    ]);
+    const model = buildDeckExportModel(d, opts());
+    expect(model.sections.map((s) => [s.name, s.kind, s.count])).toEqual([
+      ["Main", "normal", 3],
+      ["Lands", "normal", 1],
+      ["Side", "sideboard", 1],
+      ["Maybe", "scratch", 2]
+    ]);
+    expect(model.totalCards).toBe(4);
+    expect(model.sideboardCards).toBe(1);
+    expect(model.scratchCards).toBe(2);
+    expect(hasSpecialSections(model)).toBe(true);
+    expect(
+      deckExportSectionGroups(model).map((g) => [g.kind, g.title, g.count, g.sections.length])
+    ).toEqual([
+      ["normal", "Main deck", 4, 2],
+      ["sideboard", "Sideboard", 1, 1],
+      ["scratch", "Scratch area (not part of the deck)", 2, 1]
+    ]);
+    expect(formatModelCardCount(model)).toBe("4 cards + 1 sideboard (+2 in scratch area)");
+  });
+
+  it("reports no special sections for a plain deck", () => {
+    const model = buildDeckExportModel(deck([{ name: "Main", columns: [[copy(shrine)]] }]), opts());
+    expect(hasSpecialSections(model)).toBe(false);
+    expect(formatModelCardCount(model)).toBe("1 card");
   });
 
   it("uses the front face image for cards without a top-level image", () => {
@@ -218,6 +258,36 @@ describe("renderDeckTxt", () => {
     );
   });
 
+  it("lists sideboard and scratch sections after the main deck under banners", () => {
+    const d = deck([
+      { name: "Ideas", kind: "scratch", columns: [[copy(solRing)]] },
+      { name: "Main", columns: [[copy(shrine), copy(shrine)]] },
+      { name: "Side", kind: "sideboard", columns: [[copy(solRing), copy(shrine)]] }
+    ]);
+    expect(renderDeckTxt(buildDeckExportModel(d, opts()))).toBe(
+      [
+        "My Deck",
+        "A test deck",
+        "2 cards + 2 sideboard (+1 in scratch area)",
+        "",
+        "// Main (2)",
+        "2x Godless Shrine",
+        "",
+        "// ===== Sideboard: 2 cards =====",
+        "",
+        "// Side (2)",
+        "1x Sol Ring",
+        "1x Godless Shrine",
+        "",
+        "// ===== Scratch area (not part of the deck): 1 card =====",
+        "",
+        "// Ideas (1)",
+        "1x Sol Ring",
+        ""
+      ].join("\n")
+    );
+  });
+
   it("omits an empty description and singularizes one card", () => {
     const d = { ...deck([{ name: "Main", columns: [[copy(solRing)]] }]), description: "  " };
     expect(renderDeckTxt(buildDeckExportModel(d, opts()))).toBe(
@@ -245,6 +315,29 @@ describe("renderDeckCsv", () => {
         "Section,Count,Name",
         '"Main, side",1,"Thalia, ""Guardian"" of Thraben"',
         '"Main, side",2,Godless Shrine',
+        ""
+      ].join("\r\n")
+    );
+  });
+
+  it("adds a Board column when the deck has sideboard or scratch sections", () => {
+    const d = deck([
+      { name: "Maybe", kind: "scratch", columns: [[copy(solRing)]] },
+      { name: "Main", columns: [[copy(shrine)]] },
+      { name: "Side", kind: "sideboard", columns: [[copy(shrine)]] }
+    ]);
+    expect(deckExportColumns(opts(), true).map((c) => c.header)).toEqual([
+      "Section",
+      "Board",
+      "Count",
+      "Name"
+    ]);
+    expect(renderDeckCsv(buildDeckExportModel(d, opts()))).toBe(
+      [
+        "Section,Board,Count,Name",
+        "Main,Main,1,Godless Shrine",
+        "Side,Sideboard,1,Godless Shrine",
+        "Maybe,Scratch,1,Sol Ring",
         ""
       ].join("\r\n")
     );

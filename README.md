@@ -77,6 +77,12 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 - **Deck card counts** — the deck view shows a running total of cards next to the deck's
   name, and next to each section's name. The My Cards landing page also lists each
   collection and deck with its description and total card count.
+- **Sideboards & scratch areas** — each deck section has a type, picked from a dropdown
+  beside its name: **Normal** (the main deck), **Sideboard** (counted as the deck's
+  sideboard, e.g. "60 cards + 15 sideboard"), or **Scratch area** (not counted at all; its
+  cards are shown partly greyed out — handy for candidates and ideas). Every export lists
+  sideboard sections after the main deck and scratch areas last, clearly marked, and the
+  AI advisor knows neither belongs to the main deck.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from
@@ -96,8 +102,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   copies are real cards you own versus deck-only placeholders), and, for PDF only, **include
   card images** (two cards per row, each a small Scryfall image beside its count, name, printing,
   and ownership details, with a placeholder box for any image that can't be fetched). CSV and XLSX share the same columns
-  (Section / Count / Name, plus printing and ownership columns when chosen); the XLSX adds a
-  `Summary` sheet.
+  (Section / Count / Name, plus printing and ownership columns when chosen, and a Board
+  column when the deck has a sideboard or scratch area); the XLSX adds a `Summary` sheet.
 - **Camera card scanning** — capture one or more physical cards (or upload an image)
   and get de-skewed crops plus ranked candidate Scryfall printings to add with one tap.
 - **Set-symbol rendering** — Scryfall set-symbol SVGs are lazily cached and served from

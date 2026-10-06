@@ -268,3 +268,34 @@ describe("DeckColumn attribute badges", () => {
     expect(badges[0]).toHaveTextContent("HP");
   });
 });
+
+describe("DeckColumn muted (scratch area)", () => {
+  it("renders its cards partly greyscale when muted", () => {
+    const { getByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeColumn(["a", "b"]),
+        muted: true
+      })
+    );
+    for (const id of ["a", "b"]) {
+      const card = getByTestId(`deck-card-${id}`);
+      expect(card).toHaveAttribute("data-muted", "true");
+      expect(card.className).toContain("grayscale-50");
+    }
+  });
+
+  it("renders its cards in full colour otherwise", () => {
+    const { getByTestId } = render(
+      React.createElement(DeckColumn, {
+        deckId: "deck-1",
+        sectionId: "sec-1",
+        column: makeColumn(["a"])
+      })
+    );
+    const card = getByTestId("deck-card-a");
+    expect(card).not.toHaveAttribute("data-muted");
+    expect(card.className).not.toContain("grayscale");
+  });
+});

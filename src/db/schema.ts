@@ -4,6 +4,7 @@ import { Tag } from "@/types/Tag";
 import { User } from "@/types/User";
 import { SetSvg } from "@/types/SetSvg";
 import { CARD_CONDITIONS, CARD_FINISHES, CardCondition, CardFinish } from "@/lib/cardAttributes";
+import { DECK_SECTION_KINDS, DeckSectionKind } from "@/types/Deck";
 
 // ---------------------------------------------------------------------------
 // Mongoose document shapes (ObjectId-typed; the plain TS interfaces in
@@ -48,6 +49,8 @@ interface DeckColumnDoc {
 interface DeckSectionDoc {
   _id?: Types.ObjectId;
   name: string;
+  /** "sideboard" | "scratch"; absent means a normal (main-deck) section. */
+  kind?: DeckSectionKind;
   columns: DeckColumnDoc[];
 }
 
@@ -291,8 +294,11 @@ const deckColumnSchema = new Schema<DeckColumnDoc>({
   cards: [{ type: Schema.Types.ObjectId, ref: "PhysicalCard" }]
 });
 
+// `kind` is sparse like a copy's finish/condition: only non-normal kinds are
+// stored, so existing sections need no backfill.
 const deckSectionSchema = new Schema<DeckSectionDoc>({
   name: { type: String, required: true },
+  kind: { type: String, enum: DECK_SECTION_KINDS, required: false },
   columns: [deckColumnSchema]
 });
 

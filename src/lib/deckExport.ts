@@ -2,7 +2,13 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import advancedFormat from "dayjs/plugin/advancedFormat";
-import { DeckWithCards } from "@/types/Deck";
+import { DeckSectionKind, DeckWithCards } from "@/types/Deck";
+import {
+  effectiveSectionKind,
+  formatCardCount,
+  formatDeckCardCount,
+  sortSectionsByKind
+} from "@/lib/deckUtils";
 import { DetailedPhysicalCard } from "@/types/PhysicalCard";
 import { SlimMtgCard } from "@/types/MtgCard";
 
@@ -64,6 +70,8 @@ export interface DeckExportRow {
 
 export interface DeckExportSection {
   name: string;
+  /** Normal (main deck), sideboard, or scratch area (not part of the deck). */
+  kind: DeckSectionKind;
   /** Total physical cards in the section (sum of row counts). */
   count: number;
   rows: DeckExportRow[];
@@ -72,7 +80,13 @@ export interface DeckExportSection {
 export interface DeckExportModel {
   name: string;
   description: string;
+  /** Cards in the main deck (normal sections only). */
   totalCards: number;
+  /** Cards in sideboard sections. */
+  sideboardCards: number;
+  /** Cards in scratch areas (not part of the deck). */
+  scratchCards: number;
+  /** Normal sections first, then sideboard sections, then scratch areas. */
   sections: DeckExportSection[];
   options: DeckExportOptions;
   /** Human-readable export timestamp, e.g. "11:32 AM, September 4th, 2026". */
@@ -108,6 +122,10 @@ export function cardImageUrl(card: SlimMtgCard): string | undefined {
  * sections in deck order — and aggregated per section by name (or by printing
  * when `separateByPrinting` is set). A row keeps the position of its first
  * occurrence, so the list reads in the same order as the deck view.
+ *
+ * Sections are then ordered by kind — normal sections, then sideboard
+ * sections, then scratch areas (deck order within each) — and only normal
+ * sections count toward `totalCards`.
  */
 export function buildDeckExportModel(
   deck: DeckWithCards,
@@ -131,14 +149,23 @@ export function buildDeckExportModel(
         else row.owned++;
       }
     }
-    return { name: section.name, count, rows: [...rowsByKey.values()] };
+    return {
+      name: section.name,
+      kind: effectiveSectionKind(section.kind),
+      count,
+      rows: [...rowsByKey.values()]
+    };
   });
+  const countOf = (kind: DeckSectionKind) =>
+    sections.filter((s) => s.kind === kind).reduce((total, s) => total + s.count, 0);
 
   return {
     name: deck.name,
     description: deck.description ?? "",
-    totalCards: sections.reduce((total, s) => total + s.count, 0),
-    sections,
+    totalCards: countOf("normal"),
+    sideboardCards: countOf("sideboard"),
+    scratchCards: countOf("scratch"),
+    sections: sortSectionsByKind(sections),
     options,
     exportedAt: formatExportTimestamp(now, options.timeZone)
   };
@@ -190,6 +217,60 @@ export function formatRowLine(row: DeckExportRow, options: DeckExportOptions): s
   return line;
 }
 
+/** Heading of each section group in the exports ("Main deck" is never printed as a banner). */
+export const SECTION_GROUP_TITLES: Record<DeckSectionKind, string> = {
+  normal: "Main deck",
+  sideboard: "Sideboard",
+  scratch: "Scratch area (not part of the deck)"
+};
+
+/** Short per-row label for the tabular exports' "Board" column. */
+export const SECTION_BOARD_LABELS: Record<DeckSectionKind, string> = {
+  normal: "Main",
+  sideboard: "Sideboard",
+  scratch: "Scratch"
+};
+
+/** True when any section is a sideboard or scratch area. */
+export function hasSpecialSections(model: DeckExportModel): boolean {
+  return model.sections.some((s) => s.kind !== "normal");
+}
+
+/** A run of consecutive same-kind sections (the model keeps them grouped). */
+export interface DeckExportSectionGroup {
+  kind: DeckSectionKind;
+  title: string;
+  /** Total cards across the group's sections. */
+  count: number;
+  sections: DeckExportSection[];
+}
+
+/** The model's sections grouped by kind, in export order, omitting empty kinds. */
+export function deckExportSectionGroups(model: DeckExportModel): DeckExportSectionGroup[] {
+  const groups: DeckExportSectionGroup[] = [];
+  for (const section of model.sections) {
+    let group = groups[groups.length - 1];
+    if (!group || group.kind !== section.kind) {
+      group = {
+        kind: section.kind,
+        title: SECTION_GROUP_TITLES[section.kind],
+        count: 0,
+        sections: []
+      };
+      groups.push(group);
+    }
+    group.count += section.count;
+    group.sections.push(section);
+  }
+  return groups;
+}
+
+/** "60 cards" / "60 cards + 15 sideboard", plus "(+3 in scratch area)" when any. */
+export function formatModelCardCount(model: DeckExportModel): string {
+  const base = formatDeckCardCount(model.totalCards, model.sideboardCards);
+  return model.scratchCards > 0 ? `${base} (+${model.scratchCards} in scratch area)` : base;
+}
+
 /** One column of the tabular (CSV / XLSX) exports. */
 export interface DeckExportColumn {
   key: string;
@@ -198,16 +279,30 @@ export interface DeckExportColumn {
 }
 
 /**
- * Columns of the tabular exports: Section / Count / Name always, printing
- * columns when grouping by printing, ownership columns when requested. Shared
- * by the CSV and XLSX renderers so the two never drift.
+ * Columns of the tabular exports: Section / Count / Name always, a Board
+ * column (Main / Sideboard / Scratch) when `withBoard` (the deck has sideboard
+ * or scratch sections), printing columns when grouping by printing, ownership
+ * columns when requested. Shared by the CSV and XLSX renderers so the two
+ * never drift.
  */
-export function deckExportColumns(options: DeckExportOptions): DeckExportColumn[] {
+export function deckExportColumns(
+  options: DeckExportOptions,
+  withBoard = false
+): DeckExportColumn[] {
   const columns: DeckExportColumn[] = [
-    { key: "section", header: "Section", value: (_row, section) => section.name },
+    { key: "section", header: "Section", value: (_row, section) => section.name }
+  ];
+  if (withBoard) {
+    columns.push({
+      key: "board",
+      header: "Board",
+      value: (_row, section) => SECTION_BOARD_LABELS[section.kind]
+    });
+  }
+  columns.push(
     { key: "count", header: "Count", value: (row) => row.count },
     { key: "name", header: "Name", value: (row) => row.name }
-  ];
+  );
   if (options.separateByPrinting) {
     columns.push(
       { key: "set", header: "Set", value: (row) => row.set.toUpperCase() },
@@ -233,7 +328,7 @@ function csvField(value: string | number): string {
 
 /** CSV decklist: a header row then one row per aggregated card (CRLF line ends). */
 export function renderDeckCsv(model: DeckExportModel): string {
-  const columns = deckExportColumns(model.options);
+  const columns = deckExportColumns(model.options, hasSpecialSections(model));
   const lines = [columns.map((c) => csvField(c.header)).join(",")];
   for (const section of model.sections) {
     for (const row of section.rows) {
@@ -243,15 +338,24 @@ export function renderDeckCsv(model: DeckExportModel): string {
   return lines.join("\r\n") + "\r\n";
 }
 
-/** Plain-text decklist: a header block, then one block per section. */
+/**
+ * Plain-text decklist: a header block, then one block per section. Sideboard
+ * sections and scratch areas follow the main deck, each group introduced by a
+ * `// ===== Sideboard (15 cards) =====` banner.
+ */
 export function renderDeckTxt(model: DeckExportModel): string {
   const lines: string[] = [model.name];
   if (model.description.trim()) lines.push(model.description.trim());
-  lines.push(`${model.totalCards} ${model.totalCards === 1 ? "card" : "cards"}`);
+  lines.push(formatModelCardCount(model));
 
-  for (const section of model.sections) {
-    lines.push("", `// ${section.name} (${section.count})`);
-    for (const row of section.rows) lines.push(formatRowLine(row, model.options));
+  for (const group of deckExportSectionGroups(model)) {
+    if (group.kind !== "normal") {
+      lines.push("", `// ===== ${group.title}: ${formatCardCount(group.count)} =====`);
+    }
+    for (const section of group.sections) {
+      lines.push("", `// ${section.name} (${section.count})`);
+      for (const row of section.rows) lines.push(formatRowLine(row, model.options));
+    }
   }
   return lines.join("\n") + "\n";
 }

@@ -4,6 +4,8 @@
  * a few hundred tokens instead of shipping card objects per copy.
  */
 
+import { DeckSectionKind } from "@/types/Deck";
+
 /** The card fields the serializer needs (any card map value satisfies this). */
 export interface SerializableCard {
   name: string;
@@ -14,6 +16,8 @@ export interface SerializableCard {
 
 export interface SerializableSection {
   name: string;
+  /** Absent means a normal (main-deck) section. */
+  kind?: DeckSectionKind;
   /** One element per physical copy, in deck order. */
   cardIds: string[];
   /** Card ids (same list) that are ephemeral placeholders, if any. */
@@ -34,6 +38,13 @@ function cardLine(count: number, card: SerializableCard | undefined, cardId: str
   return `${count}x ${card.name} [${card.set}]${cost}${type}`;
 }
 
+/** Header suffix marking a section whose cards don't count toward the main deck. */
+const KIND_NOTES: Record<DeckSectionKind, string> = {
+  normal: "",
+  sideboard: " [SIDEBOARD — not in the main deck]",
+  scratch: " [SCRATCH AREA — not part of the deck; ideas/candidates only]"
+};
+
 /**
  * Serialize a deck section-by-section:
  *
@@ -41,6 +52,9 @@ function cardLine(count: number, card: SerializableCard | undefined, cardId: str
  * ## Lands (24 cards)
  * 4x Forest [neo]
  * ```
+ *
+ * Sideboard and scratch-area sections are flagged in their header and excluded
+ * from the headline main-deck total (listed beside it instead).
  */
 export function serializeDeck(
   deckName: string,
@@ -48,11 +62,12 @@ export function serializeDeck(
   cardData: Record<string, SerializableCard>
 ): string {
   const lines: string[] = [];
-  let total = 0;
+  const totals: Record<DeckSectionKind, number> = { normal: 0, sideboard: 0, scratch: 0 };
 
   for (const section of sections) {
-    total += section.cardIds.length;
-    lines.push(`## ${section.name} (${section.cardIds.length} cards)`);
+    const kind = section.kind ?? "normal";
+    totals[kind] += section.cardIds.length;
+    lines.push(`## ${section.name} (${section.cardIds.length} cards)${KIND_NOTES[kind]}`);
     if (section.cardIds.length === 0) {
       lines.push("(empty)");
       continue;
@@ -62,7 +77,10 @@ export function serializeDeck(
     }
   }
 
-  return [`Deck: ${deckName} (${total} cards)`, ...lines].join("\n");
+  let headline = `Deck: ${deckName} (${totals.normal} cards`;
+  if (totals.sideboard > 0) headline += `, +${totals.sideboard} sideboard`;
+  if (totals.scratch > 0) headline += `, +${totals.scratch} in scratch areas`;
+  return [`${headline})`, ...lines].join("\n");
 }
 
 /**

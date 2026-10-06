@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { DeckModel, PhysicalCardModel, CardData } from "@/db/schema";
 import { analyzeManaBase, ManaBaseCard } from "@/lib/ai/manaBase";
+import { effectiveSectionKind } from "@/lib/deckUtils";
 import { ToolContext, isValidObjectId, safeExecute } from "./shared";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -12,7 +13,7 @@ const inputSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Analyze only this deck section (case-insensitive name match), e.g. to exclude a sideboard. Omit to analyze the whole deck."
+      "Analyze only this deck section (case-insensitive name match). Omit to analyze the main deck (every section except sideboard and scratch-area sections)."
     )
 });
 
@@ -65,8 +66,15 @@ export function makeManaBaseStatsTool({ userId }: ToolContext) {
             { cardId: 1 }
           ).lean();
         } else {
-          // Whole deck: the deckId back-ref is the membership source of truth.
-          physical = await PhysicalCardModel.find({ deckId, owner: userId }, { cardId: 1 }).lean();
+          // Main deck: the deckId back-ref is the membership source of truth,
+          // minus copies placed in sideboard / scratch-area sections.
+          const excludedIds = (deck.sections as any[])
+            .filter((s) => effectiveSectionKind(s.kind) !== "normal")
+            .flatMap((s) => (s.columns ?? []).flatMap((col: any) => col.cards ?? []));
+          physical = await PhysicalCardModel.find(
+            { deckId, owner: userId, _id: { $nin: excludedIds } },
+            { cardId: 1 }
+          ).lean();
         }
 
         if (physical.length === 0) {
@@ -84,7 +92,7 @@ export function makeManaBaseStatsTool({ userId }: ToolContext) {
 
         return {
           deckName: deck.name,
-          scope: sectionName ?? "whole deck",
+          scope: sectionName ?? "main deck",
           stats: analyzeManaBase(copies)
         };
       }

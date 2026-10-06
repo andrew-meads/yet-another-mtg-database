@@ -386,6 +386,42 @@ async function globalSetup() {
     updatedAt: new Date()
   });
 
+  // Dedicated deck for sectionKinds.spec.ts: three normal sections of ephemeral
+  // (deck-only) cards, so flipping section kinds can't perturb other specs.
+  // Main = 2x Shivan Dragon, Side = 1x Llanowar Elves, Maybe = 1x Llanowar Elves.
+  const skDeckId = new Types.ObjectId();
+  const skSideSectionId = new Types.ObjectId();
+  const skMaybeSectionId = new Types.ObjectId();
+  const skCards = [
+    { _id: new Types.ObjectId(), cardId: "e2e-shivan" },
+    { _id: new Types.ObjectId(), cardId: "e2e-shivan" },
+    { _id: new Types.ObjectId(), cardId: "e2e-llanowar" },
+    { _id: new Types.ObjectId(), cardId: "e2e-llanowar" }
+  ];
+  await db.collection("physicalcards").insertMany(
+    skCards.map((c) => ({
+      ...c,
+      owner: userId,
+      collectionId: null,
+      deckId: skDeckId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })) as never
+  );
+  await db.collection("decks").insertOne({
+    _id: skDeckId,
+    name: "Section Kinds Deck",
+    description: "",
+    owner: userId,
+    sections: [
+      { name: "Main", columns: [{ cards: [skCards[0]._id, skCards[1]._id] }] },
+      { _id: skSideSectionId, name: "Side", columns: [{ cards: [skCards[2]._id] }] },
+      { _id: skMaybeSectionId, name: "Maybe", columns: [{ cards: [skCards[3]._id] }] }
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
   await mongoose.disconnect();
 
   mkdirSync(dirname(FIXTURES), { recursive: true });
@@ -415,7 +451,12 @@ async function globalSetup() {
         afDeckId: afDeckId.toString(),
         afRealCardId: afRealCardId.toString(),
         // Active-deck spec fixture.
-        activeDeckId: activeDeckId.toString()
+        activeDeckId: activeDeckId.toString(),
+        // Section-kinds spec fixtures.
+        skDeckId: skDeckId.toString(),
+        skSideSectionId: skSideSectionId.toString(),
+        skMaybeSectionId: skMaybeSectionId.toString(),
+        skMaybeCardId: skCards[3]._id.toString()
       },
       null,
       2
