@@ -139,12 +139,13 @@ describe("ProposalCard", () => {
 
     fireEvent.click(await findEnabledButton("My copies (2)"));
 
-    await waitFor(() => expect(posts).toHaveLength(2));
-    expect(posts.every((p) => p.url === `/api/decks/${DECK_ID}/cards`)).toBe(true);
-    expect(posts.map((p) => p.body)).toEqual([
-      { op: "place", physicalCardId: "p-shock-1", sectionId: "sec-main" },
-      { op: "place", physicalCardId: "p-shock-2", sectionId: "sec-main" }
-    ]);
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0].url).toBe(`/api/decks/${DECK_ID}/cards`);
+    expect(posts[0].body).toEqual({
+      op: "place",
+      physicalCardIds: ["p-shock-1", "p-shock-2"],
+      sectionId: "sec-main"
+    });
     // Single-change proposal: deciding it resolves the card with a summary.
     await waitFor(() => expect(onResolve).toHaveBeenCalledTimes(1));
     expect(onResolve.mock.calls[0][0]).toBe(
@@ -204,14 +205,17 @@ describe("ProposalCard", () => {
     expect(screen.getByRole("button", { name: "My copies (0)" })).toBeDisabled();
   });
 
-  it("applies removes per row via the deck's physical copies", async () => {
+  it("applies a row's removes in one request via the deck's physical copies", async () => {
     const { onResolve } = renderCard(makeProposal([removeBolt(2)]));
 
     fireEvent.click(await findEnabledButton("Apply"));
 
-    await waitFor(() => expect(posts).toHaveLength(2));
-    expect(posts.map((p) => p.body.physicalCardId).sort()).toEqual(["p-bolt-1", "p-bolt-2"]);
-    expect(posts.every((p) => p.body.op === "remove")).toBe(true);
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0].body.op).toBe("remove");
+    expect([...(posts[0].body.physicalCardIds as string[])].sort()).toEqual([
+      "p-bolt-1",
+      "p-bolt-2"
+    ]);
     await waitFor(() =>
       expect(onResolve).toHaveBeenCalledWith(
         '[Proposal outcome for "Prop Deck"] removed 2x Lightning Bolt'

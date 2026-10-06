@@ -6,7 +6,8 @@ import { invalidateCardMembership } from "./invalidate";
 export interface DeckCardOpRequest {
   deckId: string;
   op: "place" | "move" | "remove";
-  physicalCardId: string;
+  /** The copies to act on; placed in this order. One request covers them all. */
+  physicalCardIds: string[];
   sectionId?: string;
   columnId?: string;
   index?: number;
@@ -26,7 +27,8 @@ async function deckCardOp({ deckId, ...body }: DeckCardOpRequest) {
 }
 
 /**
- * Place, move, or remove a physical card within a deck's arrangement.
+ * Place, move, or remove a batch of physical cards within a deck's arrangement, in a
+ * single request (so the membership queries are invalidated once per batch).
  */
 export function useDeckCardOp() {
   const queryClient = useQueryClient();

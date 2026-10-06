@@ -56,6 +56,14 @@ test("dragging a middle card moves it plus every card on top of it", async ({ pa
   });
   await expect(page.locator(`${colA} [data-testid="deck-card-${pA2}"]`)).toBeVisible();
 
+  // Count the deck card-op requests the drop sends: the whole stack moves in one.
+  const cardOps: string[] = [];
+  page.on("request", (req) => {
+    if (req.method() === "POST" && /\/api\/decks\/[^/]+\/cards$/.test(req.url())) {
+      cardOps.push(req.postData() ?? "");
+    }
+  });
+
   // Grab the MIDDLE card and drop it into column B. It should carry the card
   // after it (pA2) along too, while pA0 (above it) stays put.
   await html5DragAndDrop(page, `deck-card-${pA1}`, `deck-column-${fixtures.columnB}`);
@@ -76,4 +84,8 @@ test("dragging a middle card moves it plus every card on top of it", async ({ pa
   await expect(page.locator(`${colA} [data-testid="deck-card-${pA0}"]`)).toBeVisible();
   await expect(page.locator(`${colA} [data-testid="deck-card-${pA1}"]`)).toHaveCount(0);
   await expect(page.locator(`${colA} [data-testid="deck-card-${pA2}"]`)).toHaveCount(0);
+
+  // The two-card stack went over in a single request carrying both ids, in order.
+  expect(cardOps).toHaveLength(1);
+  expect(JSON.parse(cardOps[0]).physicalCardIds).toEqual([pA1, pA2]);
 });

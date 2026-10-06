@@ -196,14 +196,12 @@ export default function ProposalCard({ proposal, onResolve, resolvedSummary }: P
       }
       const take = candidates.slice(0, change.count);
       setUsedIds((prev) => new Set([...prev, ...take]));
-      for (const physicalCardId of take) {
-        await deckCardOp.mutateAsync({
-          deckId: proposal.deckId,
-          op: "place",
-          physicalCardId,
-          sectionId: change.sectionId
-        });
-      }
+      await deckCardOp.mutateAsync({
+        deckId: proposal.deckId,
+        op: "place",
+        physicalCardIds: take,
+        sectionId: change.sectionId
+      });
       setRow(
         index,
         "applied",
@@ -242,18 +240,12 @@ export default function ProposalCard({ proposal, onResolve, resolvedSummary }: P
       }
       const taken = candidates.slice(0, change.count);
       setUsedIds((prev) => new Set([...prev, ...taken.map((e) => e._id)]));
-      for (const entry of taken) {
-        await deckCardOp.mutateAsync(
-          change.action === "remove"
-            ? { deckId: proposal.deckId, op: "remove", physicalCardId: entry._id }
-            : {
-                deckId: proposal.deckId,
-                op: "move",
-                physicalCardId: entry._id,
-                sectionId: change.sectionId
-              }
-        );
-      }
+      const physicalCardIds = taken.map((e) => e._id);
+      await deckCardOp.mutateAsync(
+        change.action === "remove"
+          ? { deckId: proposal.deckId, op: "remove", physicalCardIds }
+          : { deckId: proposal.deckId, op: "move", physicalCardIds, sectionId: change.sectionId }
+      );
       setRow(
         index,
         "applied",

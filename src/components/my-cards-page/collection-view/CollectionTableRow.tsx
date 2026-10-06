@@ -185,11 +185,7 @@ export default function CollectionTableRow({
     useCollectionRowActions(collectionId);
 
   const removeFromDeck = () => {
-    Promise.all(
-      row.physicalCardIds.map((id) =>
-        deckOp.mutateAsync({ deckId: row.deckId!, op: "remove", physicalCardId: id })
-      )
-    );
+    deckOp.mutate({ deckId: row.deckId!, op: "remove", physicalCardIds: row.physicalCardIds });
   };
 
   const commitQuantity = () => {

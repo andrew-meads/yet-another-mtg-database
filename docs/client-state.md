@@ -148,7 +148,9 @@ dispatcher, **`useDropDispatch`**, which implements the six drag scenarios:
 search→collection (create), search→deck (create in active collection, then place — errors
 via toast if no active collection), collection↔collection (change `collectionId`),
 collection/deck→deck (place, clearing any prior deck), deck→collection (clear `deckId`,
-optionally change collection). Ephemeral cards may only be reordered within their own deck
+optionally change collection). A multi-copy drag is batched: at most one
+`POST /api/decks/[id]/cards` plus one bulk `PATCH /api/physical-cards`, never one request
+per copy. Ephemeral cards may only be reordered within their own deck
 (`PhysicalCardDragItem.isEphemeral`). The collection table shows each card's deck badge;
 the deck view shows each card's collection badge. The collection table is **virtualized**
 with `@tanstack/react-virtual` (no pagination, no manual row reorder).

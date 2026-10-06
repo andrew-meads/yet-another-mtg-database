@@ -11,6 +11,7 @@ const m = vi.hoisted(() => ({
   getItem: undefined as undefined | (() => PhysicalCardDragItem),
   create: vi.fn(),
   remove: vi.fn(),
+  deckOp: vi.fn(),
   moveOneToCollection: vi.fn(),
   addOneToDeck: vi.fn(),
   removeOneFromDeck: vi.fn(),
@@ -32,6 +33,9 @@ vi.mock("@/hooks/react-query/useCreatePhysicalCard", () => ({
 }));
 vi.mock("@/hooks/react-query/useRemoveCardGroup", () => ({
   useRemoveCardGroup: () => ({ mutate: m.remove })
+}));
+vi.mock("@/hooks/react-query/useDeckCardOp", () => ({
+  useDeckCardOp: () => ({ mutate: m.deckOp })
 }));
 vi.mock("@/context/OpenEntitiesContext", () => ({
   useOpenEntitiesContext: () => ({
@@ -325,5 +329,17 @@ describe("CollectionTableRow price column", () => {
     expect(tag).toHaveAttribute("data-price-kind", "proxy");
     expect(tag.querySelector("[data-age-level]")).toBeNull();
     expect(screen.queryByRole("button", { name: "Refresh price" })).not.toBeInTheDocument();
+  });
+});
+
+describe("CollectionTableRow remove from deck", () => {
+  it("removes every copy of a deck-assigned row in one request", () => {
+    renderRow(makeRow({ deckId: "deck-1", deckName: "Burn" }));
+    fireEvent.click(screen.getByLabelText("Remove from deck"));
+    expect(m.deckOp).toHaveBeenCalledExactlyOnceWith({
+      deckId: "deck-1",
+      op: "remove",
+      physicalCardIds: ["p1", "p2", "p3", "p4"]
+    });
   });
 });

@@ -310,7 +310,7 @@ describe("DeckColumn muted (scratch area)", () => {
 describe("DeckColumn zoom", () => {
   function renderAtZoom(zoom: number | null, column: DeckColumnData) {
     const el = React.createElement(DeckColumn, { deckId: "deck-1", sectionId: "sec-1", column });
-    return render(zoom === null ? el : React.createElement(DeckZoomProvider, { zoom }, el));
+    return render(zoom === null ? el : <DeckZoomProvider zoom={zoom}>{el}</DeckZoomProvider>);
   }
 
   it("uses the 100% card size outside a zoom provider", () => {

@@ -84,7 +84,7 @@ describe("POST /api/decks/[id]/cards", () => {
     const pcId = await seedPhysicalCard(owner, cardId, collectionId);
 
     const res = await deckCardsOp(
-      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "place", physicalCardId: pcId }),
+      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "place", physicalCardIds: [pcId] }),
       ctx({ id: deckId })
     );
     expect(res.status).toBe(200);
@@ -101,11 +101,17 @@ describe("POST /api/decks/[id]/cards", () => {
     const pcId = await seedPhysicalCard(owner, cardId, collectionId);
 
     await deckCardsOp(
-      jsonRequest(`/api/decks/${deckA._id}/cards`, "POST", { op: "place", physicalCardId: pcId }),
+      jsonRequest(`/api/decks/${deckA._id}/cards`, "POST", {
+        op: "place",
+        physicalCardIds: [pcId]
+      }),
       ctx({ id: deckA._id.toString() })
     );
     await deckCardsOp(
-      jsonRequest(`/api/decks/${deckB._id}/cards`, "POST", { op: "place", physicalCardId: pcId }),
+      jsonRequest(`/api/decks/${deckB._id}/cards`, "POST", {
+        op: "place",
+        physicalCardIds: [pcId]
+      }),
       ctx({ id: deckB._id.toString() })
     );
 
@@ -126,7 +132,7 @@ describe("POST /api/decks/[id]/cards", () => {
     await deck.save();
 
     const res = await deckCardsOp(
-      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "remove", physicalCardId: pcId }),
+      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "remove", physicalCardIds: [pcId] }),
       ctx({ id: deckId })
     );
     expect(res.status).toBe(200);
@@ -147,7 +153,7 @@ describe("POST /api/decks/[id]/cards", () => {
     await deck.save();
 
     const res = await deckCardsOp(
-      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "remove", physicalCardId: pcId }),
+      jsonRequest(`/api/decks/${deckId}/cards`, "POST", { op: "remove", physicalCardIds: [pcId] }),
       ctx({ id: deckId })
     );
     expect(res.status).toBe(200);
@@ -162,11 +168,174 @@ describe("POST /api/decks/[id]/cards", () => {
     const res = await deckCardsOp(
       jsonRequest(`/api/decks/${deck._id}/cards`, "POST", {
         op: "place",
-        physicalCardId: "000000000000000000000000"
+        physicalCardIds: ["000000000000000000000000"]
       }),
       ctx({ id: deck._id.toString() })
     );
     expect(res.status).toBe(404);
+  });
+  // --- Batches ---
+
+  /** POST a deck card op and return the response. */
+  function cardsOp(deckId: string, body: Record<string, unknown>) {
+    return deckCardsOp(
+      jsonRequest(`/api/decks/${deckId}/cards`, "POST", body),
+      ctx({ id: deckId })
+    );
+  }
+
+  async function firstColumn(deckId: string) {
+    const fresh = await DeckModel.findById(deckId).lean();
+    return fresh!.sections[0].columns[0].cards.map(String);
+  }
+
+  /** Seed `n` copies already placed, in order, in the deck's first column. */
+  async function seedPlaced(deck: Awaited<ReturnType<typeof seedDeck>>, n: number) {
+    const deckId = deck._id.toString();
+    const ids: string[] = [];
+    for (let i = 0; i < n; i++) {
+      ids.push(await seedPhysicalCard(owner, cardId, collectionId, { deckId }));
+    }
+    deck.sections[0].columns[0].cards.push(...(ids as never[]));
+    deck.markModified("sections");
+    await deck.save();
+    return ids;
+  }
+
+  it("places a batch in one request, in order, starting at the index", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const [a, b] = await seedPlaced(deck, 2);
+    const p1 = await seedPhysicalCard(owner, cardId, collectionId);
+    const p2 = await seedPhysicalCard(owner, cardId, collectionId);
+    const p3 = await seedPhysicalCard(owner, cardId, collectionId);
+
+    const res = await cardsOp(deckId, { op: "place", physicalCardIds: [p1, p2, p3], index: 1 });
+    expect(res.status).toBe(200);
+
+    expect(await firstColumn(deckId)).toEqual([a, p1, p2, p3, b]);
+    const placed = await PhysicalCardModel.find({ _id: { $in: [p1, p2, p3] } }).lean();
+    expect(placed.map((pc) => String(pc.deckId))).toEqual([deckId, deckId, deckId]);
+  });
+
+  it("appends a batch when no index is given", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const [a] = await seedPlaced(deck, 1);
+    const p1 = await seedPhysicalCard(owner, cardId, collectionId);
+    const p2 = await seedPhysicalCard(owner, cardId, collectionId);
+
+    await cardsOp(deckId, { op: "place", physicalCardIds: [p1, p2] });
+    expect(await firstColumn(deckId)).toEqual([a, p1, p2]);
+  });
+
+  it("moving a stack down its own column lands it at the drop position", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const [a, b, c, d, e] = await seedPlaced(deck, 5);
+
+    // Drag [b, c] and drop before e (index 4 in the column as displayed).
+    await cardsOp(deckId, { op: "place", physicalCardIds: [b, c], index: 4 });
+    expect(await firstColumn(deckId)).toEqual([a, d, b, c, e]);
+  });
+
+  it("moving a stack up its own column lands it at the drop position", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const [a, b, c, d, e] = await seedPlaced(deck, 5);
+
+    await cardsOp(deckId, { op: "place", physicalCardIds: [d, e], index: 1 });
+    expect(await firstColumn(deckId)).toEqual([a, d, e, b, c]);
+  });
+
+  it("moves a batch to another deck, clearing it from the source deck", async () => {
+    const deckA = await seedDeck(owner, "A");
+    const deckB = await seedDeck(owner, "B");
+    const [p1, p2, p3] = await seedPlaced(deckA, 3);
+
+    await cardsOp(deckB._id.toString(), { op: "place", physicalCardIds: [p1, p3] });
+
+    expect(await firstColumn(deckA._id.toString())).toEqual([p2]);
+    expect(await firstColumn(deckB._id.toString())).toEqual([p1, p3]);
+  });
+
+  it("dedupes repeated ids", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const pcId = await seedPhysicalCard(owner, cardId, collectionId);
+
+    const res = await cardsOp(deckId, { op: "place", physicalCardIds: [pcId, pcId] });
+    expect(res.status).toBe(200);
+    expect(await firstColumn(deckId)).toEqual([pcId]);
+  });
+
+  it("removes a mixed batch: ephemeral copies are deleted, collection copies kept", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const [kept] = await seedPlaced(deck, 1);
+    const eph = await seedEphemeralCard(owner, cardId, deckId);
+    deck.sections[0].columns[0].cards.push(eph as never);
+    deck.markModified("sections");
+    await deck.save();
+
+    const res = await cardsOp(deckId, { op: "remove", physicalCardIds: [kept, eph] });
+    expect(res.status).toBe(200);
+
+    expect(await firstColumn(deckId)).toEqual([]);
+    expect(await PhysicalCardModel.findById(eph)).toBeNull();
+    const pc = await PhysicalCardModel.findById(kept).lean();
+    expect(pc!.deckId).toBeNull();
+    expect(String(pc!.collectionId)).toBe(collectionId);
+  });
+
+  it("404s the whole batch, writing nothing, when one card is not the user's", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const mine = await seedPhysicalCard(owner, cardId, collectionId);
+    const other = await seedUser("other@example.com");
+    const theirs = await seedPhysicalCard(other, cardId, await seedCollection(other));
+
+    const res = await cardsOp(deckId, { op: "place", physicalCardIds: [mine, theirs] });
+    expect(res.status).toBe(404);
+
+    expect(await firstColumn(deckId)).toEqual([]);
+    expect((await PhysicalCardModel.findById(mine).lean())!.deckId).toBeNull();
+  });
+
+  it("404s a placement into a deck the user does not own, writing nothing", async () => {
+    const other = await seedUser("other@example.com");
+    const theirDeck = await seedDeck(other);
+    const pcId = await seedPhysicalCard(owner, cardId, collectionId);
+
+    const res = await cardsOp(theirDeck._id.toString(), { op: "place", physicalCardIds: [pcId] });
+    expect(res.status).toBe(404);
+    expect((await PhysicalCardModel.findById(pcId).lean())!.deckId).toBeNull();
+  });
+
+  it("404s a placement into a malformed deck id", async () => {
+    const pcId = await seedPhysicalCard(owner, cardId, collectionId);
+    const res = await cardsOp("not-an-id", { op: "place", physicalCardIds: [pcId] });
+    expect(res.status).toBe(404);
+  });
+
+  it("400s on an empty, oversized, or malformed batch, or an unknown op", async () => {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const pcId = await seedPhysicalCard(owner, cardId, collectionId);
+    const tooMany = Array.from({ length: 501 }, () => new Types.ObjectId().toString());
+
+    for (const body of [
+      { op: "place", physicalCardIds: [] },
+      { op: "place", physicalCardIds: tooMany },
+      { op: "place", physicalCardIds: ["nope"] },
+      { op: "place", physicalCardId: pcId },
+      { op: "shuffle", physicalCardIds: [pcId] },
+      { op: "place", physicalCardIds: [pcId], index: -1 }
+    ]) {
+      const res = await cardsOp(deckId, body);
+      expect(res.status, JSON.stringify(body).slice(0, 80)).toBe(400);
+    }
+    expect(await firstColumn(deckId)).toEqual([]);
   });
 });
 

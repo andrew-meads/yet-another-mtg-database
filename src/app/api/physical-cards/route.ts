@@ -2,6 +2,10 @@ import connectDB from "@/db/mongoose";
 import { PhysicalCardModel, CollectionModel, DeckModel } from "@/db/schema";
 import { upsertTags } from "@/lib/server/cardDetails";
 import { findOrCreateColumn } from "@/lib/server/deckArrange";
+import {
+  movePhysicalCardsSchema,
+  movePhysicalCardsToCollection
+} from "@/lib/server/physicalCardMoves";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
 import { CardCondition, CardFinish, isCardCondition, isCardFinish } from "@/lib/cardAttributes";
@@ -120,6 +124,42 @@ export async function POST(request: NextRequest) {
     return Response.json({ physicalCardIds: createdIds.map(String) }, { status: 201 });
   } catch (error) {
     console.error("Error creating physical card(s):", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/physical-cards
+ * Bulk-moves physical cards to another collection (deck assignments are kept).
+ * Body: { physicalCardIds: string[], collectionId }. All-or-nothing: an unknown
+ * target collection 400s and any unknown card id 404s before anything is written.
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    await connectDB();
+
+    const session = await getAuthSession();
+    const userId = session!.user._id;
+
+    const parsed = movePhysicalCardsSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return Response.json(
+        { error: `Invalid request: ${parsed.error.issues[0]?.message ?? "bad request"}` },
+        { status: 400 }
+      );
+    }
+    const { physicalCardIds, collectionId } = parsed.data;
+
+    const result = await movePhysicalCardsToCollection(userId, physicalCardIds, collectionId);
+    if (result === "collection-not-found") {
+      return Response.json({ error: "Target collection not found" }, { status: 400 });
+    }
+    if (result === "card-not-found") {
+      return Response.json({ error: "Physical card not found" }, { status: 404 });
+    }
+    return Response.json({ ok: true });
+  } catch (error) {
+    console.error("Error moving physical cards:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

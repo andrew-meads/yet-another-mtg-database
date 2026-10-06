@@ -59,7 +59,7 @@ export function useCollectionRowActions(collectionId: string) {
         toast.error("Set an active deck before adding cards to a deck.");
         return;
       }
-      deckOp.mutate({ deckId: target, op: "place", physicalCardId: row.physicalCardIds[0] });
+      deckOp.mutate({ deckId: target, op: "place", physicalCardIds: [row.physicalCardIds[0]] });
     },
     [activeDeck, deckOp]
   );
@@ -68,7 +68,11 @@ export function useCollectionRowActions(collectionId: string) {
   const removeOneFromDeck = useCallback(
     (row: CollectionGroupRow) => {
       if (!row.deckId) return;
-      deckOp.mutate({ deckId: row.deckId, op: "remove", physicalCardId: row.physicalCardIds[0] });
+      deckOp.mutate({
+        deckId: row.deckId,
+        op: "remove",
+        physicalCardIds: [row.physicalCardIds[0]]
+      });
     },
     [deckOp]
   );

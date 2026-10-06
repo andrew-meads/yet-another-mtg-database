@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Types } from "mongoose";
 import { detailPhysicalCards, upsertTags } from "@/lib/server/cardDetails";
 import { PhysicalCardModel } from "@/db/schema";
-import { findOrCreateColumn, pullCardFromAllDecks } from "@/lib/server/deckArrange";
+import { findOrCreateColumn, pullCardsFromAllDecks } from "@/lib/server/deckArrange";
 import { DeckModel, TagModel } from "@/db/schema";
 import { seedCard, seedCollection, seedDeck, seedPhysicalCard, seedUser } from "./helpers";
 
@@ -163,20 +163,29 @@ describe("findOrCreateColumn", () => {
   });
 });
 
-describe("pullCardFromAllDecks", () => {
-  it("removes the card id from every deck arrangement owned by the user", async () => {
+describe("pullCardsFromAllDecks", () => {
+  it("removes the card ids from every deck arrangement owned by the user", async () => {
     const owner = await seedUser();
-    const pcId = new Types.ObjectId();
-    const deck = await DeckModel.create({
-      name: "D",
+    const [p1, p2, keep] = [new Types.ObjectId(), new Types.ObjectId(), new Types.ObjectId()];
+    const deckA = await DeckModel.create({
+      name: "A",
       description: "",
       owner: new Types.ObjectId(owner),
-      sections: [{ name: "Main", columns: [{ cards: [pcId] }] }]
+      sections: [{ name: "Main", columns: [{ cards: [p1, keep] }, { cards: [p2] }] }]
+    });
+    const deckB = await DeckModel.create({
+      name: "B",
+      description: "",
+      owner: new Types.ObjectId(owner),
+      sections: [{ name: "Main", columns: [{ cards: [p2] }] }]
     });
 
-    await pullCardFromAllDecks(owner, pcId.toString());
+    await pullCardsFromAllDecks(owner, [p1.toString(), p2.toString()]);
 
-    const fresh = await DeckModel.findById(deck._id).lean();
-    expect(fresh!.sections[0].columns[0].cards).toHaveLength(0);
+    const freshA = await DeckModel.findById(deckA._id).lean();
+    expect(freshA!.sections[0].columns[0].cards.map(String)).toEqual([keep.toString()]);
+    expect(freshA!.sections[0].columns[1].cards).toHaveLength(0);
+    const freshB = await DeckModel.findById(deckB._id).lean();
+    expect(freshB!.sections[0].columns[0].cards).toHaveLength(0);
   });
 });

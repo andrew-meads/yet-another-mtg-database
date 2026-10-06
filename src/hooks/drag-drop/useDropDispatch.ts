@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AnyDragItem, DropTarget, PhysicalCardDragItem } from "./Types";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useCreatePhysicalCard } from "@/hooks/react-query/useCreatePhysicalCard";
-import { useUpdatePhysicalCard } from "@/hooks/react-query/useUpdatePhysicalCard";
+import { useMovePhysicalCards } from "@/hooks/react-query/useMovePhysicalCards";
 import { useDeckCardOp } from "@/hooks/react-query/useDeckCardOp";
 import { useAddColumn } from "@/hooks/react-query/useDeckColumns";
 import { useAddSection } from "@/hooks/react-query/useDeckSections";
@@ -22,11 +22,12 @@ type ConcreteTarget =
  *  - collection → collection: move the card's collection
  *  - collection/deck → deck: place into the deck (clearing any prior deck)
  *  - deck → collection: remove from the deck, then move collection if different
+ * A multi-copy drag is batched: at most one deck request plus one collection move.
  */
 export function useDropDispatch() {
   const { activeCollection } = useOpenEntitiesContext();
   const createCard = useCreatePhysicalCard();
-  const updateCard = useUpdatePhysicalCard();
+  const moveCards = useMovePhysicalCards();
   const deckCardOp = useDeckCardOp();
   const addColumn = useAddColumn();
   const addSection = useAddSection();
@@ -76,41 +77,39 @@ export function useDropDispatch() {
 
       // --- Existing physical card(s) ---
       if (concrete.kind === "deck") {
-        // collection→deck, deck→deck, or intra-deck reorder: place each copy.
-        let i = 0;
-        for (const physicalCardId of item.physicalCardIds) {
-          await deckCardOp.mutateAsync({
-            deckId: concrete.deckId,
-            op: "place",
-            physicalCardId,
-            sectionId: concrete.sectionId,
-            columnId: concrete.columnId,
-            index: concrete.index === undefined ? undefined : concrete.index + i
-          });
-          i++;
-        }
+        // collection→deck, deck→deck, or intra-deck reorder: one request places every
+        // copy, in order, starting at the drop index.
+        await deckCardOp.mutateAsync({
+          deckId: concrete.deckId,
+          op: "place",
+          physicalCardIds: item.physicalCardIds,
+          sectionId: concrete.sectionId,
+          columnId: concrete.columnId,
+          index: concrete.index
+        });
         return;
       }
 
       // Target is a collection.
       const targetCollectionId = concrete.collectionId;
-      for (const physicalCardId of item.physicalCardIds) {
-        // deck → collection: drop the deck assignment. Dragging from a collection
-        // row never changes deck membership, even if the row is deck-assigned.
-        if (item.origin.type === "deck" && item.sourceDeckId) {
-          await deckCardOp.mutateAsync({
-            deckId: item.sourceDeckId,
-            op: "remove",
-            physicalCardId
-          });
-        }
-        // Change collection if it actually differs.
-        if (targetCollectionId !== item.sourceCollectionId) {
-          await updateCard.mutateAsync({ physicalCardId, collectionId: targetCollectionId });
-        }
+      // deck → collection: drop the deck assignment. Dragging from a collection
+      // row never changes deck membership, even if the row is deck-assigned.
+      if (item.origin.type === "deck" && item.sourceDeckId) {
+        await deckCardOp.mutateAsync({
+          deckId: item.sourceDeckId,
+          op: "remove",
+          physicalCardIds: item.physicalCardIds
+        });
+      }
+      // Change collection if it actually differs.
+      if (targetCollectionId !== item.sourceCollectionId) {
+        await moveCards.mutateAsync({
+          physicalCardIds: item.physicalCardIds,
+          collectionId: targetCollectionId
+        });
       }
     },
-    [activeCollection, createCard, updateCard, deckCardOp, addColumn, addSection]
+    [activeCollection, createCard, moveCards, deckCardOp, addColumn, addSection]
   );
 }
 

@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { POST as createPhysicalCards } from "@/app/api/physical-cards/route";
+import {
+  POST as createPhysicalCards,
+  PATCH as movePhysicalCards
+} from "@/app/api/physical-cards/route";
 import {
   PATCH as patchPhysicalCard,
   DELETE as deletePhysicalCard
@@ -220,6 +223,58 @@ describe("PATCH /api/physical-cards/[id]", () => {
       ctx({ id })
     );
     expect(res.status).toBe(400);
+  });
+});
+
+describe("PATCH /api/physical-cards (bulk collection move)", () => {
+  const move = (body: Record<string, unknown>) =>
+    movePhysicalCards(jsonRequest("/api/physical-cards", "PATCH", body));
+
+  it("moves every copy in one request, keeping deck assignments", async () => {
+    const deckId = (await seedDeck(owner))._id.toString();
+    const a = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    const b = await seedPhysicalCard(owner, cardId, collectionId);
+    const dest = await seedCollection(owner, { name: "Binder" });
+
+    const res = await move({ physicalCardIds: [a, b], collectionId: dest });
+    expect(res.status).toBe(200);
+
+    const pcA = await PhysicalCardModel.findById(a).lean();
+    const pcB = await PhysicalCardModel.findById(b).lean();
+    expect(String(pcA!.collectionId)).toBe(dest);
+    expect(String(pcB!.collectionId)).toBe(dest);
+    expect(String(pcA!.deckId)).toBe(deckId);
+  });
+
+  it("400s when the target collection is not owned, changing nothing", async () => {
+    const id = await seedPhysicalCard(owner, cardId, collectionId);
+    const other = await seedUser("other@example.com");
+    const res = await move({ physicalCardIds: [id], collectionId: await seedCollection(other) });
+    expect(res.status).toBe(400);
+    expect(String((await PhysicalCardModel.findById(id).lean())!.collectionId)).toBe(collectionId);
+  });
+
+  it("404s the whole batch, changing nothing, when one card is not the user's", async () => {
+    const mine = await seedPhysicalCard(owner, cardId, collectionId);
+    const other = await seedUser("other@example.com");
+    const theirs = await seedPhysicalCard(other, cardId, await seedCollection(other));
+    const dest = await seedCollection(owner, { name: "Binder" });
+
+    const res = await move({ physicalCardIds: [mine, theirs], collectionId: dest });
+    expect(res.status).toBe(404);
+    expect(String((await PhysicalCardModel.findById(mine).lean())!.collectionId)).toBe(
+      collectionId
+    );
+  });
+
+  it("400s on an empty or malformed batch", async () => {
+    for (const body of [
+      { physicalCardIds: [], collectionId },
+      { physicalCardIds: ["nope"], collectionId },
+      { physicalCardIds: [await seedPhysicalCard(owner, cardId, collectionId)] }
+    ]) {
+      expect((await move(body)).status).toBe(400);
+    }
   });
 });
 

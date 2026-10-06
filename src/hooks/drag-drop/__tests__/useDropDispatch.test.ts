@@ -4,7 +4,7 @@ import { renderHook } from "@testing-library/react";
 // Shared spies + mutable context state (hoisted so the mock factories can close over them).
 const m = vi.hoisted(() => ({
   create: vi.fn(),
-  update: vi.fn(),
+  move: vi.fn(),
   deck: vi.fn(),
   addCol: vi.fn(),
   addSec: vi.fn(),
@@ -19,8 +19,8 @@ vi.mock("@/context/OpenEntitiesContext", () => ({
 vi.mock("@/hooks/react-query/useCreatePhysicalCard", () => ({
   useCreatePhysicalCard: () => ({ mutateAsync: m.create })
 }));
-vi.mock("@/hooks/react-query/useUpdatePhysicalCard", () => ({
-  useUpdatePhysicalCard: () => ({ mutateAsync: m.update })
+vi.mock("@/hooks/react-query/useMovePhysicalCards", () => ({
+  useMovePhysicalCards: () => ({ mutateAsync: m.move })
 }));
 vi.mock("@/hooks/react-query/useDeckCardOp", () => ({
   useDeckCardOp: () => ({ mutateAsync: m.deck })
@@ -97,8 +97,20 @@ describe("useDropDispatch", () => {
       kind: "collection",
       collectionId: "c2"
     } as never);
-    expect(m.update).toHaveBeenCalledWith({ physicalCardId: "p1", collectionId: "c2" });
+    expect(m.move).toHaveBeenCalledWith({ physicalCardIds: ["p1"], collectionId: "c2" });
     expect(m.deck).not.toHaveBeenCalled();
+  });
+
+  it("collection → collection moves a multi-copy drag in one request", async () => {
+    await dispatcher()(physical({ physicalCardIds: ["p1", "p2", "p3"] }), {
+      kind: "collection",
+      collectionId: "c2"
+    } as never);
+    expect(m.move).toHaveBeenCalledOnce();
+    expect(m.move).toHaveBeenCalledWith({
+      physicalCardIds: ["p1", "p2", "p3"],
+      collectionId: "c2"
+    });
   });
 
   it("dropping onto the same collection is a no-op", async () => {
@@ -106,10 +118,10 @@ describe("useDropDispatch", () => {
       kind: "collection",
       collectionId: "c1"
     } as never);
-    expect(m.update).not.toHaveBeenCalled();
+    expect(m.move).not.toHaveBeenCalled();
   });
 
-  it("collection → deck places each copy with an incrementing index", async () => {
+  it("collection → deck places every copy in one request at the drop index", async () => {
     await dispatcher()(physical({ physicalCardIds: ["p1", "p2"] }), {
       kind: "deck-column",
       deckId: "d1",
@@ -117,19 +129,21 @@ describe("useDropDispatch", () => {
       columnId: "col1",
       index: 3
     } as never);
-    expect(m.deck).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ physicalCardId: "p1", index: 3 })
-    );
-    expect(m.deck).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ physicalCardId: "p2", index: 4 })
-    );
+    expect(m.deck).toHaveBeenCalledOnce();
+    expect(m.deck).toHaveBeenCalledWith({
+      deckId: "d1",
+      op: "place",
+      physicalCardIds: ["p1", "p2"],
+      sectionId: "s1",
+      columnId: "col1",
+      index: 3
+    });
   });
 
   it("deck → collection removes from the deck then moves collection", async () => {
     await dispatcher()(
       physical({
+        physicalCardIds: ["p1", "p2"],
         sourceDeckId: "d1",
         sourceCollectionId: "c1",
         origin: { type: "deck", sectionId: "s1", columnId: "col1" }
@@ -139,8 +153,14 @@ describe("useDropDispatch", () => {
         collectionId: "c2"
       } as never
     );
-    expect(m.deck).toHaveBeenCalledWith({ deckId: "d1", op: "remove", physicalCardId: "p1" });
-    expect(m.update).toHaveBeenCalledWith({ physicalCardId: "p1", collectionId: "c2" });
+    expect(m.deck).toHaveBeenCalledOnce();
+    expect(m.deck).toHaveBeenCalledWith({
+      deckId: "d1",
+      op: "remove",
+      physicalCardIds: ["p1", "p2"]
+    });
+    expect(m.move).toHaveBeenCalledOnce();
+    expect(m.move).toHaveBeenCalledWith({ physicalCardIds: ["p1", "p2"], collectionId: "c2" });
   });
 
   it("deck-assigned collection row dropped onto its own collection is a no-op", async () => {
@@ -149,7 +169,7 @@ describe("useDropDispatch", () => {
       collectionId: "c1"
     } as never);
     expect(m.deck).not.toHaveBeenCalled();
-    expect(m.update).not.toHaveBeenCalled();
+    expect(m.move).not.toHaveBeenCalled();
   });
 
   it("deck-assigned collection row moved to another collection keeps its deck", async () => {
@@ -158,7 +178,7 @@ describe("useDropDispatch", () => {
       collectionId: "c2"
     } as never);
     expect(m.deck).not.toHaveBeenCalled();
-    expect(m.update).toHaveBeenCalledWith({ physicalCardId: "p1", collectionId: "c2" });
+    expect(m.move).toHaveBeenCalledWith({ physicalCardIds: ["p1"], collectionId: "c2" });
   });
 
   it("search → collection passes notes and tags from the drag item", async () => {
@@ -225,7 +245,7 @@ describe("useDropDispatch", () => {
 
   it("ephemeral → collection is a no-op", async () => {
     await dispatcher()(ephemeral(), { kind: "collection", collectionId: "c2" } as never);
-    expect(m.update).not.toHaveBeenCalled();
+    expect(m.move).not.toHaveBeenCalled();
     expect(m.deck).not.toHaveBeenCalled();
   });
 
@@ -248,7 +268,7 @@ describe("useDropDispatch", () => {
       index: 2
     } as never);
     expect(m.deck).toHaveBeenCalledWith(
-      expect.objectContaining({ deckId: "d1", op: "place", physicalCardId: "p1", index: 2 })
+      expect.objectContaining({ deckId: "d1", op: "place", physicalCardIds: ["p1"], index: 2 })
     );
   });
 

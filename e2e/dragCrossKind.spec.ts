@@ -131,14 +131,15 @@ test("deck → collection: a deck card dropped on a pinned collection leaves the
   await page.goto(`/my-cards/decks/${ckSourceDeckId}`);
   await expect(page.getByTestId(`deck-card-${ckDeckCardId}`)).toBeVisible({ timeout: 15_000 });
 
-  // deck→collection fires a remove (POST) then a collection-change (PATCH); await
-  // the PATCH — the final mutation — so navigation doesn't cancel it.
+  // deck→collection fires one batched remove (POST) then one bulk collection move
+  // (PATCH /api/physical-cards); await the PATCH — the final mutation — so
+  // navigation doesn't cancel it.
   await dragAndAwaitResponse(
     page,
     `deck-card-${ckDeckCardId}`,
     `drop-zone-${ckTargetCollId}`,
     "PATCH",
-    `/api/physical-cards/${ckDeckCardId}`
+    "/api/physical-cards"
   );
 
   // The card leaves the deck…

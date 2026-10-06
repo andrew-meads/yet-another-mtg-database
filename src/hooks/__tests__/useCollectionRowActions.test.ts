@@ -105,7 +105,7 @@ describe("addOneToDeck", () => {
     expect(m.deckOp).toHaveBeenCalledExactlyOnceWith({
       deckId: "active-deck",
       op: "place",
-      physicalCardId: "p1"
+      physicalCardIds: ["p1"]
     });
     expect(m.toastError).not.toHaveBeenCalled();
   });
@@ -150,7 +150,7 @@ describe("removeOneFromDeck", () => {
     expect(m.deckOp).toHaveBeenCalledExactlyOnceWith({
       deckId: "d1",
       op: "remove",
-      physicalCardId: "p1"
+      physicalCardIds: ["p1"]
     });
   });
 

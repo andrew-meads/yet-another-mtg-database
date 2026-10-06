@@ -222,10 +222,16 @@ details payload from ~16 MB to ~5 MB raw.
   accepts an optional `q` Scryfall search param scoped to that collection (see
   [search-engine.md](search-engine.md)).
 - `/api/decks` — CRUD + `[id]/isActive` + `/sections`, `/columns`, `/cards` placement ops
-  `place|move|remove`, `/archive`, `/fill`, `/export`.
+  `place|move|remove`, `/archive`, `/fill`, `/export`. `/cards` is batched: the body is
+  `{ op, physicalCardIds: string[] (≤ 500), sectionId?, columnId?, index? }`, validated by
+  `deckCardOpSchema` in `src/lib/server/deckArrange.ts`. Every id is ownership-checked before
+  any write (one unknown id 404s the batch). Placed copies keep their order, and `index` is a
+  position in the column as displayed (copies being moved within that column are still
+  counted), so a drag lands where the drop indicator showed.
 - `/api/physical-cards` — POST create-N (`collectionId` optional, omit for ephemeral) /
-  PATCH notes·tags·collection·finish·condition / DELETE / `remove-group` decrement /
-  `prices/refresh`.
+  bulk PATCH `{ physicalCardIds, collectionId }` (collection move, deck kept, all-or-nothing;
+  `src/lib/server/physicalCardMoves.ts`) / `[id]` PATCH notes·tags·collection·finish·condition
+  / `[id]` DELETE / `remove-group` decrement / `prices/refresh`.
 - `/api/cards/basic-lands` — the five Unhinged basic lands for the deck-view land picker.
 - `/api/cards/locations` — every copy of a card name across the user's collections/decks.
 

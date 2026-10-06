@@ -1,7 +1,7 @@
 import connectDB from "@/db/mongoose";
 import { PhysicalCardModel, CollectionModel } from "@/db/schema";
 import { upsertTags } from "@/lib/server/cardDetails";
-import { pullCardFromAllDecks } from "@/lib/server/deckArrange";
+import { pullCardsFromAllDecks } from "@/lib/server/deckArrange";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
 import { CardCondition, CardFinish, isCardCondition, isCardFinish } from "@/lib/cardAttributes";
@@ -96,7 +96,7 @@ export async function DELETE(_request: NextRequest, ctx: RouteContext<"/api/phys
     }
 
     if (card.deckId) {
-      await pullCardFromAllDecks(userId, id);
+      await pullCardsFromAllDecks(userId, [id]);
     }
     await PhysicalCardModel.deleteOne({ _id: id, owner: userId });
 

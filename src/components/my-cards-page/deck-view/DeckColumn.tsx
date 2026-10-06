@@ -227,7 +227,7 @@ function DeckCardImage({
         {/* Removing an ephemeral card deletes it entirely (it has no collection
             to fall back to), so a single action serves both purposes. */}
         <ContextMenuItem
-          onClick={() => deckCardOp.mutate({ deckId, op: "remove", physicalCardId: card._id })}
+          onClick={() => deckCardOp.mutate({ deckId, op: "remove", physicalCardIds: [card._id] })}
         >
           <Layers className="mr-2 size-4" />
           Remove from deck
