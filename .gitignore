@@ -55,6 +55,7 @@ data/cards/*
 /playwright-report
 /e2e/.auth
 /.next-e2e
+/.next-devlogin
 
 # Backup database files
 backup

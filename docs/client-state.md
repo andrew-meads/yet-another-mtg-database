@@ -50,7 +50,7 @@ Provider in `src/context/QueryProvider.tsx`; all providers composed in
 ## Device-local state (localStorage via `useLocalStorage`)
 
 Deliberately **not** server-synced: panel layout, per-page search strings, the selected
-card, the collection price toggle, and the selected-card panel's tab.
+card, the collection price toggle, the selected-card panel's tab, and the deck-editor zoom.
 
 - **Search-string persistence**: the Card Search page persists its full
   `SearchControlsValues` under `"search-panel-params"`, and each collection's search string
@@ -59,6 +59,9 @@ card, the collection price toggle, and the selected-card panel's tab.
   holds the keyed body in a `key={id}` child so the hook re-reads the right key per
   collection.
 - **Collection price toggle**: `useLocalStorage("collection-show-prices")`.
+- **Deck-editor zoom**: one value for every deck under `"deck-view-zoom"`
+  (`DECK_ZOOM_STORAGE_KEY`), read through `clampZoom` so a bad stored value falls back to
+  100%. See [Deck-editor zoom](#deck-editor-zoom).
 - **Panel layout**: `react-resizable-panels` `autoSaveId`s `layout/main-panels` and
   `layout/card-panel`; the selected-card tab under `layout/card-panel-tab`.
 
@@ -149,6 +152,35 @@ optionally change collection). Ephemeral cards may only be reordered within thei
 (`PhysicalCardDragItem.isEphemeral`). The collection table shows each card's deck badge;
 the deck view shows each card's collection badge. The collection table is **virtualized**
 with `@tanstack/react-virtual` (no pagination, no manual row reorder).
+
+## Deck-editor zoom
+
+The deck page header's **`DeckZoomSlider`** sets a zoom percent (20–200, default 100) that
+the page passes to `DeckView`, which publishes it through **`DeckZoomProvider`**
+(`deck-view/DeckZoomContext.tsx`). `DeckSection` and `DeckColumn` read the scaled
+`cardWidth` / `cardHeight` / `overlapOffset` / `columnGap` from
+**`useDeckCardDimensions()`** (100% outside a provider) instead of fixed constants. All the
+math is pure and unit-tested in **`src/lib/deckZoom.ts`**, which also holds the 100% card
+constants (`CARD_WIDTH`, `CARD_HEIGHT`, `OVERLAP_OFFSET`, `CONTAINER_OFFSET`).
+
+- **Slider mapping:** the Radix slider runs over positions `0..200` and is piecewise
+  linear (`sliderToZoom` / `zoomToSlider`): the left half is 20–100% and the right half
+  100–200%, so 100% is exactly in the middle (marked with a tick).
+- **Snapping:** pointer drags go through `sliderToSnappedZoom`, which pulls positions
+  within `ZOOM_SNAP_DISTANCE` of the middle (≈91–111%) to exactly 100%. Keyboard input
+  skips the snap, since an arrow-key step off 100% would land inside the zone and be
+  pulled straight back. The percentage button resets to 100%.
+- **Drop targeting** scales too: `DeckColumn`'s `computeIndex` and drop indicator use the
+  zoomed `overlapOffset` (the column's 5px `CONTAINER_OFFSET` chrome is not scaled).
+- **Small sizes:** the per-card overlay badges shrink with the card via CSS `zoom` (never
+  enlarged past 100%) and are hidden below `OVERLAY_MIN_ZOOM` (40%); the empty-column
+  placeholders drop their "Drop here" / "New column" labels below 50%. Above 125% the
+  cards load Scryfall's `large` image instead of `normal`.
+- The **drag preview** (`DeckColumnDragLayer`) is global and always drawn at 100%.
+
+Tests: unit `src/lib/__tests__/deckZoom.test.ts`; jsdom
+`deck-view/__tests__/DeckZoomSlider.test.tsx` and the zoom block in `DeckColumn.test.tsx`;
+e2e `e2e/deckZoom.spec.ts` (keyboard ends, pointer snap, persistence across reload, reset).
 
 ## UI toolkit
 

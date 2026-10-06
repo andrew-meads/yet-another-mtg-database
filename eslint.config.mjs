@@ -26,6 +26,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     // E2E test build output (distDir set via E2E_DIST_DIR env var):
     ".next-e2e/**",
+    // Second dev server's build output (the dev-devlogin-3001 launch config):
+    ".next-devlogin/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

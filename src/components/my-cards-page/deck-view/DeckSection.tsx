@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { CARD_WIDTH, CARD_HEIGHT } from "./card-dimensions";
+import { useDeckCardDimensions } from "./DeckZoomContext";
+import { PLACEHOLDER_LABEL_MIN_ZOOM } from "@/lib/deckZoom";
 
 interface DeckSectionProps {
   deckId: string;
@@ -36,16 +37,17 @@ interface DeckSectionProps {
 
 function NewColumnDropZone({ deckId, sectionId }: { deckId: string; sectionId: string }) {
   const { dropRef, isOver } = useDeckNewColumnDropTarget(deckId, sectionId);
+  const { scale, cardWidth, cardHeight } = useDeckCardDimensions();
   return (
     <div ref={dropRef} className="shrink-0 rounded-[5px] border border-transparent p-1">
       <div
         className={cn(
-          "text-muted-foreground flex items-center justify-center rounded-md border-2 border-dashed text-xs transition-colors",
+          "text-muted-foreground flex items-center justify-center overflow-hidden rounded-md border-2 border-dashed text-center text-xs transition-colors",
           isOver ? "border-primary bg-primary/10" : "border-muted-foreground/30"
         )}
-        style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
+        style={{ width: `${cardWidth}px`, height: `${cardHeight}px` }}
       >
-        New column
+        {scale * 100 >= PLACEHOLDER_LABEL_MIN_ZOOM && "New column"}
       </div>
     </div>
   );
@@ -55,6 +57,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
   const updateSection = useUpdateSection();
   const deleteSection = useDeleteSection();
   const addColumn = useAddColumn();
+  const { columnGap } = useDeckCardDimensions();
 
   const [name, setName] = useState(section.name);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -138,7 +141,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
         </Button>
       </div>
 
-      <div className="flex flex-row flex-wrap items-start gap-3">
+      <div className="flex flex-row flex-wrap items-start" style={{ gap: `${columnGap}px` }}>
         {section.columns.map((column) => (
           <DeckColumn
             key={column._id}

@@ -77,6 +77,9 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
 - **Deck card counts** — the deck view shows a running total of cards next to the deck's
   name, and next to each section's name. The My Cards landing page also lists each
   collection and deck with its description and total card count.
+- **Deck zoom** — a **Zoom** slider in the deck editor's header shrinks or enlarges the
+  cards from 20% to 200%. 100% sits in the middle of the slider and the thumb snaps to it
+  when dragged nearby; click the percentage to reset. The zoom is remembered per device.
 - **Sideboards & scratch areas** — each deck section has a type, picked from a dropdown
   beside its name: **Normal** (the main deck), **Sideboard** (counted as the deck's
   sideboard, e.g. "60 cards + 15 sideboard"), or **Scratch area** (not counted at all; its

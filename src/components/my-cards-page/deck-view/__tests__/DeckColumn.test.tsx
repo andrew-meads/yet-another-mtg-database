@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
     cards: MtgCard[] | undefined;
     getItem?: () => PhysicalCardDragItem;
   }>,
+  computeIndex: null as ((offset: { x: number; y: number } | null) => number) | null,
   select: vi.fn()
 }));
 
@@ -34,7 +35,12 @@ vi.mock("@/hooks/drag-drop/usePhysicalCardDragSource", () => ({
 }));
 
 vi.mock("@/hooks/drag-drop/useDeckDropTargets", () => ({
-  useDeckColumnDropTarget: () => ({ dropRef: vi.fn(), isOver: false })
+  useDeckColumnDropTarget: (props: {
+    computeIndex: (offset: { x: number; y: number } | null) => number;
+  }) => {
+    h.computeIndex = props.computeIndex;
+    return { dropRef: vi.fn(), isOver: false };
+  }
 }));
 
 vi.mock("react-dnd", () => ({
@@ -57,6 +63,7 @@ vi.mock("@/components/CardArtView", () => ({
 }));
 
 import DeckColumn from "@/components/my-cards-page/deck-view/DeckColumn";
+import { DeckZoomProvider } from "@/components/my-cards-page/deck-view/DeckZoomContext";
 import type { DeckColumn as DeckColumnData } from "@/types/Deck";
 import type { DetailedPhysicalCard } from "@/types/PhysicalCard";
 
@@ -297,5 +304,52 @@ describe("DeckColumn muted (scratch area)", () => {
     const card = getByTestId("deck-card-a");
     expect(card).not.toHaveAttribute("data-muted");
     expect(card.className).not.toContain("grayscale");
+  });
+});
+
+describe("DeckColumn zoom", () => {
+  function renderAtZoom(zoom: number | null, column: DeckColumnData) {
+    const el = React.createElement(DeckColumn, { deckId: "deck-1", sectionId: "sec-1", column });
+    return render(zoom === null ? el : React.createElement(DeckZoomProvider, { zoom }, el));
+  }
+
+  it("uses the 100% card size outside a zoom provider", () => {
+    const { getByTestId } = renderAtZoom(null, makeColumn(["a", "b"]));
+    expect(getByTestId("deck-card-a")).toHaveStyle({ width: "146px", height: "204px" });
+    expect(getByTestId("deck-card-b")).toHaveStyle({ marginTop: "-174px" });
+  });
+
+  it("scales the cards and their overlap", () => {
+    const { getByTestId } = renderAtZoom(50, makeColumn(["a", "b"]));
+    expect(getByTestId("deck-card-a")).toHaveStyle({ width: "73px", height: "102px" });
+    // 102px card, 15px of it showing above the next one.
+    expect(getByTestId("deck-card-b")).toHaveStyle({ marginTop: "-87px" });
+  });
+
+  it("scales an empty column's placeholder", () => {
+    const { getByText } = renderAtZoom(150, { _id: "col-1", cards: [] });
+    expect(getByText("Drop here")).toHaveStyle({ width: "219px", height: "306px" });
+  });
+
+  it("computes the drop index from the zoomed overlap", () => {
+    renderAtZoom(50, makeColumn(["a", "b", "c", "d"]));
+    // jsdom puts the column at y=0; 5px of column chrome, then 15px per card.
+    expect(h.computeIndex?.({ x: 0, y: 5 + 15 * 2 + 1 })).toBe(2);
+    expect(h.computeIndex?.({ x: 0, y: 5 + 15 * 2 - 1 })).toBe(1);
+  });
+
+  it("hides the overlay badges when zoomed too far out", () => {
+    const column: DeckColumnData = {
+      _id: "col-1",
+      cards: [{ ...makeCard("e0", true), finish: "foil" }]
+    };
+    const zoomedOut = renderAtZoom(30, column);
+    expect(zoomedOut.queryByTestId("ephemeral-badge-e0")).toBeNull();
+    expect(zoomedOut.queryByTestId("card-attribute-badges")).toBeNull();
+    zoomedOut.unmount();
+
+    const zoomedIn = renderAtZoom(60, column);
+    expect(zoomedIn.queryByTestId("ephemeral-badge-e0")).not.toBeNull();
+    expect(zoomedIn.queryByTestId("card-attribute-badges")).not.toBeNull();
   });
 });

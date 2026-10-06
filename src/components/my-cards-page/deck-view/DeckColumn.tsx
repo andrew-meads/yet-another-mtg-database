@@ -7,7 +7,8 @@ import { DeckColumn as DeckColumnData } from "@/types/Deck";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCardSelection } from "@/context/CardSelectionContext";
-import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET, CONTAINER_OFFSET } from "./card-dimensions";
+import { CONTAINER_OFFSET, OVERLAY_MIN_ZOOM, PLACEHOLDER_LABEL_MIN_ZOOM } from "@/lib/deckZoom";
+import { useDeckCardDimensions } from "./DeckZoomContext";
 import { usePhysicalCardDragSource } from "@/hooks/drag-drop/usePhysicalCardDragSource";
 import { PhysicalCardDragItem } from "@/hooks/drag-drop/Types";
 import { useAltKeyRef } from "@/hooks/drag-drop/useAltKeyRef";
@@ -70,6 +71,10 @@ function DeckCardImage({
   muted?: boolean;
 }) {
   const { setSelectedCard } = useCardSelection();
+  const { scale, cardWidth, cardHeight, overlapOffset } = useDeckCardDimensions();
+  // The overlay badges shrink with the cards (never grow), and vanish once too small.
+  const showOverlays = scale * 100 >= OVERLAY_MIN_ZOOM;
+  const overlayStyle = scale < 1 ? { zoom: scale } : undefined;
   const deckCardOp = useDeckCardOp();
   const deleteCard = useDeletePhysicalCard();
 
@@ -121,9 +126,9 @@ function DeckCardImage({
               : cn("hover:brightness-125", muted && "grayscale-50")
           )}
           style={{
-            width: `${CARD_WIDTH}px`,
-            height: `${CARD_HEIGHT}px`,
-            marginTop: isFirst ? undefined : `-${CARD_HEIGHT - OVERLAP_OFFSET}px`
+            width: `${cardWidth}px`,
+            height: `${cardHeight}px`,
+            marginTop: isFirst ? undefined : `-${cardHeight - overlapOffset}px`
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -138,14 +143,18 @@ function DeckCardImage({
         >
           <SimpleCardArtView
             card={card.card}
-            variant="normal"
-            width={CARD_WIDTH}
-            height={CARD_HEIGHT}
+            variant={scale > 1.25 ? "large" : "normal"}
+            width={cardWidth}
+            height={cardHeight}
           />
 
           {/* Ephemeral badge: this card exists only in this deck (no collection). */}
-          {card.isEphemeral && (
-            <div className="absolute top-1 right-1" data-testid={`ephemeral-badge-${card._id}`}>
+          {showOverlays && card.isEphemeral && (
+            <div
+              className="absolute top-1 right-1"
+              style={overlayStyle}
+              data-testid={`ephemeral-badge-${card._id}`}
+            >
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1 rounded bg-black/70 px-1 py-0.5">
@@ -158,8 +167,8 @@ function DeckCardImage({
           )}
 
           {/* Collection badge (which collection this physical card belongs to) */}
-          {card.collectionName && (
-            <div className="absolute top-1 left-1">
+          {showOverlays && card.collectionName && (
+            <div className="absolute top-1 left-1" style={overlayStyle}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex max-w-[120px] items-center gap-1 rounded bg-black/70 px-1 py-0.5">
@@ -173,17 +182,19 @@ function DeckCardImage({
           )}
 
           {/* Finish / condition (only shown when not non-foil / NM) */}
-          <div className="absolute right-1 bottom-1">
-            <CardAttributeBadges
-              finish={card.finish}
-              condition={card.condition}
-              variant="overlay"
-            />
-          </div>
+          {showOverlays && (
+            <div className="absolute right-1 bottom-1" style={overlayStyle}>
+              <CardAttributeBadges
+                finish={card.finish}
+                condition={card.condition}
+                variant="overlay"
+              />
+            </div>
+          )}
 
           {/* Notes/tags */}
-          {(card.notes || (card.tags && card.tags.length > 0)) && (
-            <div className="absolute bottom-1 left-1 flex items-center gap-1">
+          {showOverlays && (card.notes || (card.tags && card.tags.length > 0)) && (
+            <div className="absolute bottom-1 left-1 flex items-center gap-1" style={overlayStyle}>
               {card.notes && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -241,6 +252,7 @@ export default function DeckColumn({
 }: DeckColumnProps) {
   const columnRef = useRef<HTMLDivElement | null>(null);
   const deleteColumn = useDeleteColumn();
+  const { scale, cardWidth, cardHeight, overlapOffset } = useDeckCardDimensions();
   const altRef = useAltKeyRef();
   const [dragOriginIndex, setDragOriginIndex] = useState<number | null>(null);
   const [isSingleDrag, setIsSingleDrag] = useState(false);
@@ -257,10 +269,10 @@ export default function DeckColumn({
       if (!el || !offset) return column.cards.length;
       const rect = el.getBoundingClientRect();
       const relativeY = offset.y - rect.top - CONTAINER_OFFSET;
-      const idx = Math.floor(relativeY / OVERLAP_OFFSET);
+      const idx = Math.floor(relativeY / overlapOffset);
       return Math.max(0, Math.min(idx, column.cards.length));
     },
-    [column.cards.length]
+    [column.cards.length, overlapOffset]
   );
 
   const { dropRef, isOver } = useDeckColumnDropTarget({
@@ -306,8 +318,8 @@ export default function DeckColumn({
     >
       {isEmpty ? (
         <div
-          className="border-muted-foreground/30 text-muted-foreground flex items-center justify-center rounded-md border-2 border-dashed text-xs"
-          style={{ width: `${CARD_WIDTH}px`, height: `${CARD_HEIGHT}px` }}
+          className="border-muted-foreground/30 text-muted-foreground flex items-center justify-center overflow-hidden rounded-md border-2 border-dashed text-center text-xs"
+          style={{ width: `${cardWidth}px`, height: `${cardHeight}px` }}
         >
           {isHovered && !isDragging ? (
             <Tooltip>
@@ -322,7 +334,7 @@ export default function DeckColumn({
               <TooltipContent>Delete column</TooltipContent>
             </Tooltip>
           ) : (
-            "Drop here"
+            scale * 100 >= PLACEHOLDER_LABEL_MIN_ZOOM && "Drop here"
           )}
         </div>
       ) : (
@@ -351,7 +363,7 @@ export default function DeckColumn({
       {dropIndex !== null && (
         <div
           className="pointer-events-none absolute -inset-x-2 z-10 flex items-center"
-          style={{ top: `${CONTAINER_OFFSET + dropIndex * OVERLAP_OFFSET - 5}px` }}
+          style={{ top: `${CONTAINER_OFFSET + dropIndex * overlapOffset - 5}px` }}
         >
           {/* Left arrow: ▶ pointing into the column */}
           <div className="border-l-primary size-0 shrink-0 border-y-[5px] border-l-[8px] border-y-transparent" />

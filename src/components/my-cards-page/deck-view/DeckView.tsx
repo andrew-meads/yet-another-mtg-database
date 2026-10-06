@@ -7,9 +7,13 @@ import { cn } from "@/lib/utils";
 import DeckSection from "./DeckSection";
 import { useAddSection } from "@/hooks/react-query/useDeckSections";
 import { useDeckNewSectionDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
+import { ZOOM_DEFAULT } from "@/lib/deckZoom";
+import { DeckZoomProvider } from "./DeckZoomContext";
 
 interface DeckViewProps {
   deck: DeckWithCards;
+  /** Card zoom percent (20–200); defaults to 100. */
+  zoom?: number;
 }
 
 function NewSectionDropZone({ deckId }: { deckId: string }) {
@@ -27,26 +31,28 @@ function NewSectionDropZone({ deckId }: { deckId: string }) {
   );
 }
 
-export default function DeckView({ deck }: DeckViewProps) {
+export default function DeckView({ deck, zoom = ZOOM_DEFAULT }: DeckViewProps) {
   const addSection = useAddSection();
 
   return (
-    <div className="h-full space-y-8 overflow-auto rounded-md border p-4">
-      {deck.sections.map((section) => (
-        <DeckSection key={section._id} deckId={deck._id} deckName={deck.name} section={section} />
-      ))}
+    <DeckZoomProvider zoom={zoom}>
+      <div className="h-full space-y-8 overflow-auto rounded-md border p-4">
+        {deck.sections.map((section) => (
+          <DeckSection key={section._id} deckId={deck._id} deckName={deck.name} section={section} />
+        ))}
 
-      <div className="flex items-center gap-3 pt-2">
-        <Button
-          variant="outline"
-          className="shrink-0 gap-2"
-          onClick={() => addSection.mutate({ deckId: deck._id, name: "New Section" })}
-        >
-          <Plus className="size-4" />
-          Add section
-        </Button>
-        <NewSectionDropZone deckId={deck._id} />
+        <div className="flex items-center gap-3 pt-2">
+          <Button
+            variant="outline"
+            className="shrink-0 gap-2"
+            onClick={() => addSection.mutate({ deckId: deck._id, name: "New Section" })}
+          >
+            <Plus className="size-4" />
+            Add section
+          </Button>
+          <NewSectionDropZone deckId={deck._id} />
+        </div>
       </div>
-    </div>
+    </DeckZoomProvider>
   );
 }

@@ -5,11 +5,7 @@ import { Library, Layers, Sparkles } from "lucide-react";
 import { SimpleCardArtView } from "@/components/CardArtView";
 import { AnyDragItem, PHYSICAL_CARD } from "@/hooks/drag-drop/Types";
 import { SlimMtgCard } from "@/types/MtgCard";
-import {
-  CARD_WIDTH,
-  CARD_HEIGHT,
-  OVERLAP_OFFSET
-} from "@/components/my-cards-page/deck-view/card-dimensions";
+import { CARD_WIDTH, CARD_HEIGHT, OVERLAP_OFFSET } from "@/lib/deckZoom";
 
 const MAX_VISIBLE = 6;
 

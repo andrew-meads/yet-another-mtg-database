@@ -13,12 +13,15 @@ import { countDeckCardsByKind, formatDeckCardCount } from "@/lib/deckUtils";
 import DeckView from "@/components/my-cards-page/deck-view/DeckView";
 import FillDeckDialog from "@/components/my-cards-page/deck-view/FillDeckDialog";
 import ExportDeckDialog from "@/components/my-cards-page/deck-view/ExportDeckDialog";
+import DeckZoomSlider from "@/components/my-cards-page/deck-view/DeckZoomSlider";
 import { NewCollectionDialog } from "@/components/my-cards-page/NewCollectionDialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Archive, Download, PackagePlus, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { notFound, useRouter } from "next/navigation";
 import { isNotFoundError } from "@/lib/apiError";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { DECK_ZOOM_STORAGE_KEY, ZOOM_DEFAULT, clampZoom } from "@/lib/deckZoom";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -35,6 +38,9 @@ export default function DeckPage({ params }: PageProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  // Device-local (one zoom for every deck): the right size depends on the screen.
+  const [storedZoom, setZoom] = useLocalStorage<number>(DECK_ZOOM_STORAGE_KEY, ZOOM_DEFAULT);
+  const zoom = clampZoom(storedZoom);
   const { toggle: toggleAiChat, setChatContext } = useAiChat();
 
   useEffect(() => {
@@ -112,6 +118,7 @@ export default function DeckPage({ params }: PageProps) {
           <p className="text-muted-foreground">{deck.description || "No description provided"}</p>
         </div>
         <div className="flex items-center gap-2 lg:mr-3">
+          <DeckZoomSlider zoom={zoom} onZoomChange={setZoom} className="mr-2" />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -200,7 +207,7 @@ export default function DeckPage({ params }: PageProps) {
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <DeckView deck={deck} />
+        <DeckView deck={deck} zoom={zoom} />
       </div>
       <FillDeckDialog deck={deck} open={fillOpen} onOpenChange={setFillOpen} />
       <ExportDeckDialog deck={deck} open={exportOpen} onOpenChange={setExportOpen} />
