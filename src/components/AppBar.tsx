@@ -154,7 +154,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
 
 /**
  * Mobile Navigation Component
- * Displays icon-only navigation buttons with tooltips and a drawer for open collections
+ * Displays icon-only navigation buttons with tooltips and a drawer for collections and decks
  */
 function MobileNav({ pathname }: { pathname: string }) {
   const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
@@ -219,11 +219,11 @@ function MobileNav({ pathname }: { pathname: string }) {
               </Button>
             </SheetTrigger>
           </TooltipTrigger>
-          <TooltipContent>Open Collections</TooltipContent>
+          <TooltipContent>Collections &amp; decks</TooltipContent>
         </Tooltip>
         <SheetContent side="right">
           <SheetHeader>
-            <SheetTitle>Open Collections</SheetTitle>
+            <SheetTitle>Collections &amp; decks</SheetTitle>
           </SheetHeader>
           <div className="mt-4 w-full">
             <OpenCollectionsList />

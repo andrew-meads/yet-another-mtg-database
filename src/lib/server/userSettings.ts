@@ -7,7 +7,8 @@ import {
   CARD_PREVIEW_MAX_DELAY,
   CARD_PREVIEW_MIN_DELAY,
   CardPreviewSettings,
-  OpenEntityRef,
+  LegacyOpenEntityRef,
+  PinnedEntityRef,
   PricingSettings,
   UserSettingsPayload
 } from "@/types/UserSettings";
@@ -27,12 +28,11 @@ export const cardPreviewSchema = z.strictObject({
   delayMs: z.number().int().min(CARD_PREVIEW_MIN_DELAY).max(CARD_PREVIEW_MAX_DELAY)
 });
 
-export const openEntitiesSchema = z
+export const pinnedEntitiesSchema = z
   .array(
     z.strictObject({
       id: z.string().regex(/^[0-9a-f]{24}$/i, "must be an ObjectId string"),
-      kind: z.enum(["collection", "deck"]),
-      pinned: z.boolean().optional()
+      kind: z.enum(["collection", "deck"])
     })
   )
   .max(200);
@@ -54,13 +54,13 @@ export const pricingSchema = z.strictObject({
 export const settingsPatchSchema = z
   .strictObject({
     cardPreview: cardPreviewSchema.optional(),
-    openEntities: openEntitiesSchema.optional(),
+    pinnedEntities: pinnedEntitiesSchema.optional(),
     pricing: pricingSchema.optional()
   })
   .refine(
     (value) =>
       value.cardPreview !== undefined ||
-      value.openEntities !== undefined ||
+      value.pinnedEntities !== undefined ||
       value.pricing !== undefined,
     { message: "Provide at least one settings section" }
   );
@@ -101,7 +101,8 @@ export function toClientSettings(doc: LeanUserSettings | null): UserSettingsPayl
   if (!doc) return {};
   return {
     cardPreview: doc.cardPreview as CardPreviewSettings | undefined,
-    openEntities: doc.openEntities as OpenEntityRef[] | undefined,
+    pinnedEntities: doc.pinnedEntities as PinnedEntityRef[] | undefined,
+    openEntities: doc.openEntities as LegacyOpenEntityRef[] | undefined,
     pricing: doc.pricing as PricingSettings | undefined,
     ai: maskAi(doc.ai)
   };
@@ -112,13 +113,19 @@ export async function patchUserSettings(
   patch: z.infer<typeof settingsPatchSchema>
 ): Promise<LeanUserSettings> {
   const $set: Record<string, unknown> = {};
+  const $unset: Record<string, unknown> = {};
   if (patch.cardPreview !== undefined) $set.cardPreview = patch.cardPreview;
-  if (patch.openEntities !== undefined) $set.openEntities = patch.openEntities;
+  if (patch.pinnedEntities !== undefined) {
+    $set.pinnedEntities = patch.pinnedEntities;
+    // The client migrates the legacy open list into the first pinned write, so
+    // the legacy section is dead from here on.
+    $unset.openEntities = "";
+  }
   if (patch.pricing !== undefined) $set.pricing = patch.pricing;
 
   return UserSettingsModel.findOneAndUpdate(
     { owner: new Types.ObjectId(userId) },
-    { $set },
+    Object.keys($unset).length > 0 ? { $set, $unset } : { $set },
     { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
   ).lean() as Promise<LeanUserSettings>;
 }

@@ -249,7 +249,7 @@ server-filtered cards; not persisted).
 Collection rows also have a **right-click context menu + keyboard shortcuts** mirroring the
 search page but acting on **existing copies, one per invocation** (never creating any):
 `+`/`=` moves one copy to the active collection, `d` places one loose copy into the active
-deck, and the menu adds submenus over the open entities plus "Remove copy from deck", "Add
+deck, and the menu adds submenus over the pinned entities plus "Remove copy from deck", "Add
 another copy", and a destructive "Delete a copy". Shared action logic (with error toasts
 for every disallowed case — deck-assigned rows can't be deck-placed, same-collection moves
 refuse) lives in `src/hooks/useCollectionRowActions.ts`; menu items for disallowed deck

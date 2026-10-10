@@ -103,7 +103,7 @@ describe("useServerSetting", () => {
 
   it("reconciles edits made before hydration with the server value and persists the merge", () => {
     const { result, rerender } = renderHook(() =>
-      useServerSetting<{ id: string }[]>("openEntities", [], {
+      useServerSetting<{ id: string }[]>("pinnedEntities", [], {
         reconcile: (server, local) => [
           ...server,
           ...local.filter((l) => !server.some((s) => s.id === l.id))
@@ -114,19 +114,70 @@ describe("useServerSetting", () => {
     // Edit while the settings request is still in flight.
     act(() => result.current[1]([{ id: "local-1" }]));
 
-    setServerSettings({ openEntities: [{ id: "server-1" }] });
+    setServerSettings({ pinnedEntities: [{ id: "server-1" }] });
     rerender();
 
     expect(result.current[0]).toEqual([{ id: "server-1" }, { id: "local-1" }]);
     expect(h.mutate).toHaveBeenCalledWith(
-      { openEntities: [{ id: "server-1" }, { id: "local-1" }] },
+      { pinnedEntities: [{ id: "server-1" }, { id: "local-1" }] },
       {}
+    );
+  });
+
+  it("migrates from another settings section when this one is absent", () => {
+    setServerSettings({ oldSection: [{ id: "a", keep: true }, { id: "b" }] });
+
+    const { result } = renderHook(() =>
+      useServerSetting<{ id: string }[]>("pinnedEntities", [], {
+        migrate: (settings) =>
+          (settings as { oldSection?: { id: string; keep?: boolean }[] }).oldSection
+            ?.filter((x) => x.keep)
+            .map(({ id }) => ({ id }))
+      })
+    );
+
+    expect(result.current[0]).toEqual([{ id: "a" }]);
+    expect(h.mutate).toHaveBeenCalledWith({ pinnedEntities: [{ id: "a" }] }, expect.anything());
+  });
+
+  it("does not migrate when the section already has a server value", () => {
+    setServerSettings({ pinnedEntities: [{ id: "server" }], oldSection: [{ id: "old" }] });
+    const migrate = vi.fn(() => [{ id: "old" }]);
+
+    const { result } = renderHook(() =>
+      useServerSetting<{ id: string }[]>("pinnedEntities", [], { migrate })
+    );
+
+    expect(result.current[0]).toEqual([{ id: "server" }]);
+    expect(migrate).not.toHaveBeenCalled();
+    expect(h.mutate).not.toHaveBeenCalled();
+  });
+
+  it("reconciles edits made before hydration with a migrated value", () => {
+    const { result, rerender } = renderHook(() =>
+      useServerSetting<{ id: string }[]>("pinnedEntities", [], {
+        migrate: () => [{ id: "migrated" }],
+        reconcile: (server, local) => [
+          ...server,
+          ...local.filter((l) => !server.some((s) => s.id === l.id))
+        ]
+      })
+    );
+
+    act(() => result.current[1]([{ id: "local" }]));
+    setServerSettings({});
+    rerender();
+
+    expect(result.current[0]).toEqual([{ id: "migrated" }, { id: "local" }]);
+    expect(h.mutate).toHaveBeenCalledWith(
+      { pinnedEntities: [{ id: "migrated" }, { id: "local" }] },
+      expect.anything()
     );
   });
 
   it("supports functional updates", () => {
     setServerSettings({});
-    const { result } = renderHook(() => useServerSetting<number[]>("openEntities" as never, []));
+    const { result } = renderHook(() => useServerSetting<number[]>("pinnedEntities" as never, []));
 
     act(() => result.current[1]((prev) => [...prev, 1]));
     act(() => result.current[1]((prev) => [...prev, 2]));

@@ -3,14 +3,14 @@
 import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
 import {
   CardPreviewSettings,
-  OpenEntityRef,
+  PinnedEntityRef,
   PricingSettings,
   UserSettingsResponse
 } from "@/types/UserSettings";
 
 export interface UpdateUserSettingsRequest {
   cardPreview?: CardPreviewSettings;
-  openEntities?: OpenEntityRef[];
+  pinnedEntities?: PinnedEntityRef[];
   pricing?: PricingSettings;
 }
 

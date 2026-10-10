@@ -27,12 +27,11 @@ The suite (Vitest 4 + Playwright) lives in three Vitest projects plus E2E. Confi
   "Main Collection" + cards (every seeded card is stamped with fresh prices so the price
   routes never call Scryfall; the two Grizzly Bears copies carry a per-copy price record),
   and mints a NextAuth session cookie. No production auth changes are involved.
-- Specs that need particular entities open/pinned in the app bar seed them with
-  `seedOpenEntities(page, refs)` from `e2e/openEntities.ts`, which writes the
-  `openEntities` settings section through the real `PATCH /api/settings` route using the
-  test's session cookie — **never** via the legacy `open-entity-ids` localStorage key,
-  which the app migrates only once (the first spec to persist open entities would
-  otherwise make every later localStorage seed a no-op).
+- Specs that need particular entities pinned in the app bar seed them with
+  `seedPinnedEntities(page, refs)` from `e2e/pinnedEntities.ts`, which writes the
+  `pinnedEntities` settings section through the real `PATCH /api/settings` route using the
+  test's session cookie (replacing whatever earlier specs left). The active collection/deck
+  needn't be listed — they are always pinned.
 - Specs that would hit external services intercept the route with `page.route`
   (e.g. `pricing.spec.ts` intercepts the price refresh route).
 

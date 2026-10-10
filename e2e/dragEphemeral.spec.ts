@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { seedOpenEntities } from "./openEntities";
+import { seedPinnedEntities } from "./pinnedEntities";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -68,7 +68,7 @@ test("ephemeral card reorders within its own deck", async ({ page }) => {
 
 test("dragging an ephemeral card onto another deck is a no-op", async ({ page }) => {
   const { ephDeckId, ephemeralCardId, otherDeckId } = fixtures;
-  await seedOpenEntities(page, [{ id: otherDeckId, kind: "deck", pinned: true }]);
+  await seedPinnedEntities(page, [{ id: otherDeckId, kind: "deck" }]);
 
   await page.goto(`/my-cards/decks/${ephDeckId}`);
   await expect(page.getByTestId(`deck-card-${ephemeralCardId}`)).toBeVisible({ timeout: 15_000 });
@@ -85,7 +85,7 @@ test("dragging an ephemeral card onto another deck is a no-op", async ({ page })
 
 test("dragging an ephemeral card onto a collection is a no-op", async ({ page }) => {
   const { ephDeckId, ephemeralCardId, sideCollectionId } = fixtures;
-  await seedOpenEntities(page, [{ id: sideCollectionId, kind: "collection", pinned: true }]);
+  await seedPinnedEntities(page, [{ id: sideCollectionId, kind: "collection" }]);
 
   await page.goto(`/my-cards/decks/${ephDeckId}`);
   await expect(page.getByTestId(`deck-card-${ephemeralCardId}`)).toBeVisible({ timeout: 15_000 });

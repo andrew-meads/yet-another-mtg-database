@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 import { useAiChat } from "@/context/AiChatContext";
 import { useRetrieveDeckDetails } from "@/hooks/react-query/useRetrieveDeckDetails";
 import { useDeleteDeck } from "@/hooks/react-query/useDeleteEntity";
@@ -30,7 +29,6 @@ interface PageProps {
 export default function DeckPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { addOpenEntity } = useOpenEntitiesContext();
   const { data, isLoading, error } = useRetrieveDeckDetails(id);
   const deleteDeck = useDeleteDeck();
   const updateDeck = useUpdateDeck();
@@ -42,11 +40,6 @@ export default function DeckPage({ params }: PageProps) {
   const [storedZoom, setZoom] = useLocalStorage<number>(DECK_ZOOM_STORAGE_KEY, ZOOM_DEFAULT);
   const zoom = clampZoom(storedZoom);
   const { toggle: toggleAiChat, setChatContext } = useAiChat();
-
-  useEffect(() => {
-    if (data?.deck) addOpenEntity(data.deck);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.deck?._id]);
 
   // Keep the AI chat pointed at the deck currently in view.
   useEffect(() => {

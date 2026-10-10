@@ -6,26 +6,23 @@ import { useRetrieveCollectionSummaries } from "@/hooks/react-query/useRetrieveC
 import { useRetrieveDeckSummaries } from "@/hooks/react-query/useRetrieveDeckSummaries";
 import { CollectionSummary } from "@/types/Collection";
 import { DeckSummary, OpenEntitySummary } from "@/types/Deck";
-import { OpenEntityRef } from "@/types/UserSettings";
-import { createContext, useContext, useMemo, useRef } from "react";
+import { PinnedEntityRef, UserSettingsPayload } from "@/types/UserSettings";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useServerSetting } from "@/hooks/useServerSetting";
-import { collectionSearchStorageKey } from "@/lib/collectionUtils";
 
 interface OpenEntitiesContextType {
-  addOpenEntity: (entity: OpenEntitySummary) => void;
-  removeOpenEntity: (id: string) => void;
-  openEntities: OpenEntitySummary[];
   /**
-   * Open entities the user has pinned to the main bar (the active collection and
-   * active deck are always treated as pinned). These render inline as drop targets.
+   * Collections and decks pinned to the app bar, where they render inline as drop
+   * targets. The active collection and active deck are always included (first).
    */
   pinnedEntities: OpenEntitySummary[];
-  /** Open entities that are not pinned. These live behind the "More" menu. */
+  /** Every other collection and deck. These live behind the "More" menu. */
   unpinnedEntities: OpenEntitySummary[];
-  /** Whether an open entity is effectively pinned (explicit pin or active entity). */
+  /** Whether an entity is pinned (explicitly, or because it is active). */
   isPinned: (id: string) => boolean;
-  /** Toggle the pin flag for an open entity. No-op for the active collection/deck. */
-  togglePin: (id: string) => void;
+  pinEntity: (entity: OpenEntitySummary) => void;
+  /** Unpin an entity. No-op for the active collection/deck. */
+  unpinEntity: (id: string) => void;
   /**
    * The user's active collection, or null. Independent of the active deck — a
    * collection and a deck can be active at the same time.
@@ -50,29 +47,48 @@ export function useOpenEntitiesContext(): OpenEntitiesContextType {
 }
 
 /** Stable empty list so the pre-hydration fallback doesn't churn identities. */
-const NO_OPEN_REFS: OpenEntityRef[] = [];
+const NO_PINNED_REFS: PinnedEntityRef[] = [];
+
+const toRef = (entity: OpenEntitySummary): PinnedEntityRef => ({
+  id: entity._id,
+  kind: entity.kind
+});
 
 /**
- * Merge the server's open list with entities opened locally while the settings
- * request was still in flight (e.g. landing directly on a collection page).
- * Server order first, then local additions.
+ * Merge the server's pinned list with entities pinned locally while the settings
+ * request was still in flight. Server order first, then local additions.
  */
-function reconcileOpenRefs(server: OpenEntityRef[], local: OpenEntityRef[]): OpenEntityRef[] {
+function reconcilePinnedRefs(
+  server: PinnedEntityRef[],
+  local: PinnedEntityRef[]
+): PinnedEntityRef[] {
   const seen = new Set(server.map((ref) => ref.id));
   return [...server, ...local.filter((ref) => !seen.has(ref.id))];
 }
 
 /**
- * Tracks which collections and decks are open in the workspace. Stores only
- * { id, kind, pinned? } refs — synced to the user's server-side settings (with
- * a one-time migration from the old "open-entity-ids" localStorage key) — and
- * derives the full summaries from the cached collection + deck summary queries.
+ * Seed the pinned list from the legacy `openEntities` section: only the entries
+ * that were pinned survive (merely "open" entities no longer exist as a state).
+ */
+function migrateLegacyOpenEntities(settings: UserSettingsPayload): PinnedEntityRef[] | undefined {
+  return settings.openEntities
+    ?.filter((ref) => ref.pinned === true)
+    .map(({ id, kind }) => ({ id, kind }));
+}
+
+/**
+ * Tracks which collections and decks are pinned to the app bar. Stores only
+ * { id, kind } refs — synced to the user's server-side settings — and derives
+ * the full summaries from the cached collection + deck summary queries. The
+ * active collection and active deck are pinned automatically and persistently,
+ * so they stay pinned after something else becomes active.
  */
 export function OpenEntitiesProvider({ children }: { children: React.ReactNode }) {
-  const [openRefs, setOpenRefs] = useServerSetting<OpenEntityRef[]>("openEntities", NO_OPEN_REFS, {
-    legacyStorageKey: "open-entity-ids",
-    reconcile: reconcileOpenRefs
-  });
+  const [pinnedRefs, setPinnedRefs, { hydrated }] = useServerSetting<PinnedEntityRef[]>(
+    "pinnedEntities",
+    NO_PINNED_REFS,
+    { migrate: migrateLegacyOpenEntities, reconcile: reconcilePinnedRefs }
+  );
   const { mutateAsync: mutateActiveCollection } = useUpdateActiveCollection();
   const { mutateAsync: mutateActiveDeck } = useUpdateActiveDeck();
 
@@ -81,69 +97,58 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
   const collections = useMemo(() => collectionsData?.collections ?? [], [collectionsData]);
   const decks = useMemo(() => decksData?.decks ?? [], [decksData]);
 
-  const justRemovedRef = useRef<string | null>(null);
-
-  const openEntities = useMemo(() => {
-    return openRefs
-      .map((ref) =>
-        ref.kind === "collection"
-          ? collections.find((c) => c._id === ref.id)
-          : decks.find((d) => d._id === ref.id)
-      )
-      .filter((e): e is NonNullable<typeof e> => e !== undefined);
-  }, [openRefs, collections, decks]);
-
   const activeCollection = collections.find((c) => c.isActive) ?? null;
   const activeDeck = decks.find((d) => d.isActive) ?? null;
 
-  /** An entity is effectively pinned if explicitly pinned or it is an active entity. */
-  const isPinned = (id: string) => {
-    if (activeCollection?._id === id || activeDeck?._id === id) return true;
-    return openRefs.some((ref) => ref.id === id && ref.pinned === true);
-  };
+  // Persist a pin for each active entity, so it stays pinned once it stops being
+  // active. Until the write lands (or before hydration) it is pinned implicitly.
+  useEffect(() => {
+    if (!hydrated) return;
+    const missing = [activeCollection, activeDeck].filter(
+      (e): e is NonNullable<typeof e> => e !== null && !pinnedRefs.some((ref) => ref.id === e._id)
+    );
+    if (missing.length === 0) return;
+    setPinnedRefs((prev) => [
+      ...prev,
+      ...missing.filter((e) => !prev.some((ref) => ref.id === e._id)).map(toRef)
+    ]);
+  }, [hydrated, activeCollection, activeDeck, pinnedRefs, setPinnedRefs]);
+
+  const isActiveId = (id: string) => activeCollection?._id === id || activeDeck?._id === id;
+
+  const isPinned = (id: string) => isActiveId(id) || pinnedRefs.some((ref) => ref.id === id);
 
   const { pinnedEntities, unpinnedEntities } = useMemo(() => {
-    const pinned: OpenEntitySummary[] = [];
-    const unpinned: OpenEntitySummary[] = [];
-    for (const entity of openEntities) {
-      const ref = openRefs.find((r) => r.id === entity._id);
-      const effectivelyPinned = ref?.pinned === true || entity.isActive === true;
-      if (effectivelyPinned) pinned.push(entity);
-      else unpinned.push(entity);
-    }
-    // Active entities sort first within the pinned strip (active collection, then
-    // active deck, then everything else).
-    const activeRank = (e: OpenEntitySummary) => {
-      if (!e.isActive) return 2;
-      return e.kind === "collection" ? 0 : 1;
+    const pinnedIds = new Set(pinnedRefs.map((ref) => ref.id));
+    const all: OpenEntitySummary[] = [...collections, ...decks];
+    const effectivelyPinned = (e: OpenEntitySummary) => e.isActive === true || pinnedIds.has(e._id);
+
+    // Pinned strip: active collection, then active deck, then pin order. Refs to
+    // deleted entities simply don't resolve.
+    const byId = new Map(all.map((e) => [e._id, e]));
+    const explicit = pinnedRefs
+      .map((ref) => byId.get(ref.id))
+      .filter((e): e is OpenEntitySummary => e !== undefined && e.isActive !== true);
+    const active = [collections.find((c) => c.isActive), decks.find((d) => d.isActive)].filter(
+      (e): e is NonNullable<typeof e> => e !== undefined
+    );
+
+    return {
+      pinnedEntities: [...active, ...explicit],
+      unpinnedEntities: all.filter((e) => !effectivelyPinned(e))
     };
-    pinned.sort((a, b) => activeRank(a) - activeRank(b));
-    return { pinnedEntities: pinned, unpinnedEntities: unpinned };
-  }, [openEntities, openRefs]);
+  }, [pinnedRefs, collections, decks]);
 
-  const addOpenEntity = (entity: OpenEntitySummary) => {
-    if (justRemovedRef.current === entity._id) return;
-    if (openRefs.some((ref) => ref.id === entity._id)) return;
-    setOpenRefs([...openRefs, { id: entity._id, kind: entity.kind }]);
+  const pinEntity = (entity: OpenEntitySummary) => {
+    setPinnedRefs((prev) =>
+      prev.some((ref) => ref.id === entity._id) ? prev : [...prev, toRef(entity)]
+    );
   };
 
-  const togglePin = (id: string) => {
-    // Active entities are always pinned; pinning is a no-op there.
-    if (activeCollection?._id === id || activeDeck?._id === id) return;
-    setOpenRefs(openRefs.map((ref) => (ref.id === id ? { ...ref, pinned: !ref.pinned } : ref)));
-  };
-
-  const removeOpenEntity = (id: string) => {
-    setOpenRefs(openRefs.filter((ref) => ref.id !== id));
-    // Forget the closed collection's persisted search string. No-op for deck ids
-    // (the key never existed).
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(collectionSearchStorageKey(id));
-    }
-    justRemovedRef.current = id;
-    setTimeout(() => {
-      if (justRemovedRef.current === id) justRemovedRef.current = null;
-    }, 100);
+  const unpinEntity = (id: string) => {
+    // Active entities are always pinned.
+    if (isActiveId(id)) return;
+    setPinnedRefs((prev) => prev.filter((ref) => ref.id !== id));
   };
 
   const setActiveCollection = async (collection: CollectionSummary) => {
@@ -162,13 +167,11 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
   return (
     <OpenEntitiesContext.Provider
       value={{
-        addOpenEntity,
-        removeOpenEntity,
-        openEntities,
         pinnedEntities,
         unpinnedEntities,
         isPinned,
-        togglePin,
+        pinEntity,
+        unpinEntity,
         activeCollection,
         setActiveCollection,
         activeDeck,

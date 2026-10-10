@@ -8,26 +8,30 @@ plumbing, NL search, the deck-advisor chat, proposals/combos) are shipped.
 
 Per-user settings live server-side in the **`usersettings`** collection
 (`UserSettingsModel`, one doc per user, unique on `owner`) with optional sections:
-`cardPreview`, `openEntities`, `pricing` (`{ currency, sources }` — see
+`cardPreview`, `pinnedEntities`, `pricing` (`{ currency, sources }` — see
 [pricing.md](pricing.md)), and `ai` (`{ baseUrl?, model?, apiKeySealed?, apiKeyHint? }`).
+A legacy `openEntities` section (pre-pinning-only) is still returned by `GET` so the client
+can migrate it, rejected by `PATCH`, and `$unset` by the first `pinnedEntities` write.
 Absent section = "never customized"; clients fall back to defaults. This is the app's only
 server-side user-preference store — everything else stays localStorage (panel layout,
 per-page search strings, selected card) as deliberate device-local UI state.
 
 - **Routes**: `GET /api/settings` (all sections, AI masked to
   `{ baseUrl, model, hasApiKey, apiKeyHint }` — the key never leaves the server),
-  `PATCH /api/settings` (zod-validated partial update of `cardPreview`/`openEntities`/`pricing`),
+  `PATCH /api/settings` (zod-validated partial update of `cardPreview`/`pinnedEntities`/`pricing`),
   `PUT /api/settings/ai` (key semantics: omitted = keep, `""` = clear, else replace —
   sealed via **`src/lib/server/secretBox.ts`**, AES-256-GCM when `SETTINGS_ENCRYPTION_KEY`
   is set, `plain.`-prefixed otherwise; the display hint is computed at write time so reads
   never decrypt), `GET /api/ai/status` (`{ configured, model?, baseUrlHost? }`),
   `POST /api/ai/status/test` (1-token smoke completion, `maxRetries: 0`). zod request
   schemas live next to the persistence helpers in `userSettings.ts`.
-- **Client sync**: **`useServerSetting(section, initial, { legacyStorageKey?, reconcile? })`**
+- **Client sync**: **`useServerSetting(section, initial, { legacyStorageKey?, migrate?, reconcile? })`**
   (`src/hooks/useServerSetting.ts`) is the useState-like seam both `SettingsContext` and
   `OpenEntitiesContext` sit on: hydrates once from `["user-settings"]`, debounces PATCHes
   (600ms), migrates the legacy localStorage key (removed only after the seed write
-  succeeds), and reconciles pre-hydration edits (open-entities uses a union merge).
+  succeeds) or, failing that, a value `migrate` derives from other sections (pinned entities
+  read the legacy `openEntities`), and reconciles pre-hydration edits (pinned entities use a
+  union merge).
   Mutation hooks write the PATCH/PUT response straight into the `["user-settings"]` cache.
 - **Settings UI**: the `/settings` page (see [routing.md](routing.md)) —
   `PricingSettingsSection` and the card-preview controls live-save;

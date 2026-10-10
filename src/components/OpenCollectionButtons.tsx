@@ -12,7 +12,10 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
@@ -25,112 +28,103 @@ import clsx from "clsx";
 import { Separator } from "./ui/separator";
 
 /**
- * Mobile drawer version of the open-entities display: a vertical list of the
- * user's open collections and decks.
+ * Mobile drawer version of the app-bar entities: the pinned collections and
+ * decks, then everything else, each row with make-active and pin/unpin buttons.
  */
 export function OpenCollectionsList() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { openEntities, removeOpenEntity, setActiveEntity, isPinned, togglePin } =
-    useOpenEntitiesContext();
+  const { pinnedEntities, unpinnedEntities } = useOpenEntitiesContext();
 
-  const handleCloseButton = (entity: OpenEntitySummary) => {
-    removeOpenEntity(entity._id);
-    if (pathname === entityHref(entity)) router.push("/my-cards");
-  };
-
-  if (!openEntities || openEntities.length === 0) return null;
+  if (pinnedEntities.length === 0 && unpinnedEntities.length === 0) return null;
 
   return (
     <div className="w-full space-y-1">
-      {openEntities.map((entity, index) => {
-        const href = entityHref(entity);
-        const isCurrentPage = pathname === href;
-        const isActiveEntity = entity.isActive === true;
-        const pinned = isPinned(entity._id);
-        return (
-          <div key={entity._id}>
-            <div
-              className={clsx(
-                "hover:bg-accent flex cursor-pointer items-center justify-between gap-2 rounded-md p-2 transition-colors",
-                isCurrentPage && "bg-accent"
-              )}
-              onClick={() => router.push(href)}
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span>{getEntityIcon(entity.kind)}</span>
-                <span className="truncate">{entity.name}</span>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                {isActiveEntity ? (
-                  <div className="rounded-sm p-1">
-                    <Star className="size-3 fill-current" />
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setActiveEntity(entity);
-                    }}
-                    className="hover:bg-accent rounded-sm p-1 transition-colors"
-                    aria-label={`Make ${entity.name} active`}
-                  >
-                    <Star className="size-3" />
-                  </button>
-                )}
-                {!isActiveEntity && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      togglePin(entity._id);
-                    }}
-                    className="hover:bg-accent rounded-sm p-1 transition-colors"
-                    aria-label={pinned ? `Unpin ${entity.name}` : `Pin ${entity.name}`}
-                  >
-                    {pinned ? <PinOff className="size-3" /> : <Pin className="size-3" />}
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleCloseButton(entity);
-                  }}
-                  className="hover:bg-accent rounded-sm p-1 transition-colors"
-                  aria-label={`Close ${entity.name}`}
-                >
-                  <X className="size-3" />
-                </button>
-              </div>
-            </div>
-            {index < openEntities.length - 1 && <Separator className="my-1" />}
+      {pinnedEntities.map((entity) => (
+        <MobileEntityRow key={entity._id} entity={entity} />
+      ))}
+      {unpinnedEntities.length > 0 && (
+        <>
+          {pinnedEntities.length > 0 && <Separator className="my-2" />}
+          <p className="text-muted-foreground px-2 text-xs font-medium">Not pinned</p>
+          {unpinnedEntities.map((entity) => (
+            <MobileEntityRow key={entity._id} entity={entity} />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+function MobileEntityRow({ entity }: { entity: OpenEntitySummary }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { setActiveEntity, isPinned, pinEntity, unpinEntity } = useOpenEntitiesContext();
+  const href = entityHref(entity);
+  const isActiveEntity = entity.isActive === true;
+  const pinned = isPinned(entity._id);
+
+  return (
+    <div
+      data-testid={`mobile-entity-${entity._id}`}
+      className={clsx(
+        "hover:bg-accent flex cursor-pointer items-center justify-between gap-2 rounded-md p-2 transition-colors",
+        pathname === href && "bg-accent"
+      )}
+      onClick={() => router.push(href)}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span>{getEntityIcon(entity.kind)}</span>
+        <span className="truncate">{entity.name}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        {isActiveEntity ? (
+          <div className="rounded-sm p-1">
+            <Star className="size-3 fill-current" />
           </div>
-        );
-      })}
+        ) : (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveEntity(entity);
+            }}
+            className="hover:bg-accent rounded-sm p-1 transition-colors"
+            aria-label={`Make ${entity.name} active`}
+          >
+            <Star className="size-3" />
+          </button>
+        )}
+        {/* The active entity is always pinned, so it gets no unpin button. */}
+        {!isActiveEntity && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (pinned) unpinEntity(entity._id);
+              else pinEntity(entity);
+            }}
+            className="hover:bg-accent rounded-sm p-1 transition-colors"
+            aria-label={pinned ? `Unpin ${entity.name}` : `Pin ${entity.name}`}
+          >
+            {pinned ? <PinOff className="size-3" /> : <Pin className="size-3" />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 /**
- * Desktop version: pinned collections/decks render inline as drop targets; the
- * rest live behind a "More" dropdown (navigable, but not drop targets).
+ * Desktop version: pinned collections/decks render inline as drop targets; every
+ * other collection and deck lives behind a "More" dropdown (navigable, but not
+ * drop targets).
  */
 export default function OpenCollectionButtons() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { pinnedEntities, unpinnedEntities, removeOpenEntity } = useOpenEntitiesContext();
+  const { pinnedEntities, unpinnedEntities } = useOpenEntitiesContext();
 
   // While any card is being dragged, the divs in the inline buttons are made visible and
   // advertise themselves as drop targets (expand + dashed outline).
   // Only NEW_CARD / PHYSICAL_CARD drags exist, so a plain isDragging() is sufficient.
   const isDragging = useDragLayer((monitor) => monitor.isDragging());
-
-  const handleCloseButton = (entity: OpenEntitySummary) => {
-    removeOpenEntity(entity._id);
-    if (pathname === entityHref(entity)) router.push("/my-cards");
-  };
 
   if (pinnedEntities.length === 0 && unpinnedEntities.length === 0) return null;
 
@@ -139,35 +133,27 @@ export default function OpenCollectionButtons() {
       <Separator orientation="vertical" className="bg-foreground/20 mx-1 h-6! shrink-0" />
       <div className="flex min-w-0 items-center gap-2 transition-all">
         {pinnedEntities.map((entity) => (
-          <OpenEntityButton
-            key={entity._id}
-            entity={entity}
-            onClose={handleCloseButton}
-            isDragging={isDragging}
-          />
+          <OpenEntityButton key={entity._id} entity={entity} isDragging={isDragging} />
         ))}
       </div>
-      {unpinnedEntities.length > 0 && (
-        <MoreEntitiesMenu entities={unpinnedEntities} onClose={handleCloseButton} />
-      )}
+      {unpinnedEntities.length > 0 && <MoreEntitiesMenu entities={unpinnedEntities} />}
     </div>
   );
 }
 
 interface OpenEntityButtonProps {
   entity: OpenEntitySummary;
-  onClose: (entity: OpenEntitySummary) => void;
   isDragging: boolean;
 }
 
-function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps) {
+function OpenEntityButton({ entity, isDragging }: OpenEntityButtonProps) {
   const pathname = usePathname();
-  const { setActiveEntity, isPinned, togglePin } = useOpenEntitiesContext();
+  const { setActiveEntity, unpinEntity } = useOpenEntitiesContext();
   const href = entityHref(entity);
 
   const { isOver, dropRef } = useEntityButtonDropTarget(entity);
+  // The active entity is always pinned, so it has no unpin affordances.
   const isActiveEntity = entity.isActive === true;
-  const pinned = isPinned(entity._id);
 
   return (
     <ContextMenu>
@@ -182,18 +168,21 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
             <Link href={href}>
               <span>{getEntityIcon(entity.kind)}</span>
               <span>{entity.name}</span>
-              {isActiveEntity && <Star className="size-3 fill-current" />}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onClose(entity);
-                }}
-                className="ml-1 rounded-sm opacity-70 transition-opacity hover:opacity-100"
-                aria-label={`Close ${entity.name}`}
-              >
-                <X className="size-3" />
-              </button>
+              {isActiveEntity ? (
+                <Star className="size-3 fill-current" />
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    unpinEntity(entity._id);
+                  }}
+                  className="ml-1 rounded-sm opacity-70 transition-opacity hover:opacity-100"
+                  aria-label={`Unpin ${entity.name}`}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
             </Link>
           </Button>
 
@@ -223,15 +212,16 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        {!isActiveEntity && (
+        {isActiveEntity ? (
+          <ContextMenuItem disabled>Active {entity.kind}s stay pinned</ContextMenuItem>
+        ) : (
           <>
             <ContextMenuItem onClick={() => setActiveEntity(entity)}>Make active</ContextMenuItem>
-            <ContextMenuItem onClick={() => togglePin(entity._id)}>
-              {pinned ? "Unpin from bar" : "Pin to bar"}
+            <ContextMenuItem onClick={() => unpinEntity(entity._id)}>
+              Unpin from bar
             </ContextMenuItem>
           </>
         )}
-        <ContextMenuItem onClick={() => onClose(entity)}>Close</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -239,22 +229,25 @@ function OpenEntityButton({ entity, onClose, isDragging }: OpenEntityButtonProps
 
 interface MoreEntitiesMenuProps {
   entities: OpenEntitySummary[];
-  onClose: (entity: OpenEntitySummary) => void;
 }
 
 /**
- * Dropdown holding the unpinned open entities. Rows navigate on click and offer
- * an inline pin toggle + close. Rows here are intentionally not drop targets —
- * pin an entity to make it a droppable inline button.
+ * Dropdown holding every unpinned collection and deck, grouped by kind. Rows
+ * navigate on click and offer an inline pin button. Rows here are intentionally
+ * not drop targets — pin an entity to make it a droppable inline button.
  */
-function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
-  const { togglePin } = useOpenEntitiesContext();
+function MoreEntitiesMenu({ entities }: MoreEntitiesMenuProps) {
+  const pathname = usePathname();
+  const collections = entities.filter((e) => e.kind === "collection");
+  const decks = entities.filter((e) => e.kind === "deck");
+  // Highlight the trigger when the current page belongs to an unpinned entity.
+  const containsCurrentPage = entities.some((e) => pathname === entityHref(e));
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant={containsCurrentPage ? "default" : "outline"}
           size="sm"
           className="shrink-0 gap-1"
           data-testid="open-entities-more"
@@ -265,14 +258,36 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
-        {entities.map((entity) => (
+        <MoreEntitiesGroup label="Collections" entities={collections} />
+        {collections.length > 0 && decks.length > 0 && <DropdownMenuSeparator />}
+        <MoreEntitiesGroup label="Decks" entities={decks} />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function MoreEntitiesGroup({ label, entities }: { label: string; entities: OpenEntitySummary[] }) {
+  const pathname = usePathname();
+  const { pinEntity } = useOpenEntitiesContext();
+
+  if (entities.length === 0) return null;
+
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuLabel className="text-muted-foreground text-xs">{label}</DropdownMenuLabel>
+      {entities.map((entity) => {
+        const href = entityHref(entity);
+        return (
           <div
             key={entity._id}
             data-testid={`open-entity-menu-${entity._id}`}
             className="flex items-center gap-1 pr-1"
           >
-            <DropdownMenuItem asChild className="min-w-0 flex-1">
-              <Link href={entityHref(entity)}>
+            <DropdownMenuItem
+              asChild
+              className={clsx("min-w-0 flex-1", pathname === href && "bg-accent")}
+            >
+              <Link href={href}>
                 <span>{getEntityIcon(entity.kind)}</span>
                 <span className="truncate">{entity.name}</span>
               </Link>
@@ -281,7 +296,7 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                togglePin(entity._id);
+                pinEntity(entity);
               }}
               className="hover:bg-accent rounded-sm p-1.5 transition-colors"
               aria-label={`Pin ${entity.name}`}
@@ -289,20 +304,9 @@ function MoreEntitiesMenu({ entities, onClose }: MoreEntitiesMenuProps) {
             >
               <Pin className="size-3.5" />
             </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClose(entity);
-              }}
-              className="hover:bg-accent rounded-sm p-1.5 transition-colors"
-              aria-label={`Close ${entity.name}`}
-            >
-              <X className="size-3.5" />
-            </button>
           </div>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        );
+      })}
+    </DropdownMenuGroup>
   );
 }

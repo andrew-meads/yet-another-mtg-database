@@ -18,7 +18,7 @@ const m = vi.hoisted(() => ({
   state: {
     activeCollection: null as null | { _id: string; name: string },
     activeDeck: null as null | { _id: string; name: string },
-    openEntities: [] as { _id: string; name: string; kind: "collection" | "deck" }[]
+    pinnedEntities: [] as { _id: string; name: string; kind: "collection" | "deck" }[]
   }
 }));
 
@@ -41,7 +41,7 @@ vi.mock("@/context/OpenEntitiesContext", () => ({
   useOpenEntitiesContext: () => ({
     activeCollection: m.state.activeCollection,
     activeDeck: m.state.activeDeck,
-    openEntities: m.state.openEntities
+    pinnedEntities: m.state.pinnedEntities
   })
 }));
 vi.mock("@/hooks/useCollectionRowActions", () => ({
@@ -94,7 +94,7 @@ beforeEach(() => {
   m.getItem = undefined;
   m.state.activeCollection = { _id: "active-coll", name: "Active Collection" };
   m.state.activeDeck = { _id: "active-deck", name: "Active Deck" };
-  m.state.openEntities = [
+  m.state.pinnedEntities = [
     { _id: "c1", name: "Main", kind: "collection" },
     { _id: "other-coll", name: "Trade Binder", kind: "collection" },
     { _id: "deck-1", name: "Burn", kind: "deck" }
@@ -179,7 +179,7 @@ describe("CollectionTableRow context menu", () => {
     expect(menuItemFor(/Add copy to deck/)).toHaveAttribute("data-disabled");
   });
 
-  it("lists open collections in the move submenu (current one disabled)", () => {
+  it("lists pinned collections in the move submenu (current one disabled)", () => {
     openMenu(makeRow());
     expect(menuItemFor(/Move copy to collection/)).not.toHaveAttribute("data-disabled");
   });

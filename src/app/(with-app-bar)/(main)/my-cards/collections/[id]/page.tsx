@@ -1,7 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
+import { use, useState } from "react";
 import { useRetrieveCollectionDetails } from "@/hooks/react-query/useRetrieveCollectionDetails";
 import { useDeleteCollection } from "@/hooks/react-query/useDeleteEntity";
 import { useUpdateCollection } from "@/hooks/react-query/useUpdateCollection";
@@ -27,17 +26,11 @@ export default function CollectionPage({ params }: PageProps) {
 
 function CollectionPageContent({ id }: { id: string }) {
   const router = useRouter();
-  const { addOpenEntity } = useOpenEntitiesContext();
   const [searchQuery, setSearchQuery] = useLocalStorage(collectionSearchStorageKey(id), "");
   const { data, isLoading, error } = useRetrieveCollectionDetails(id, searchQuery);
   const deleteCollection = useDeleteCollection();
   const updateCollection = useUpdateCollection();
   const [editOpen, setEditOpen] = useState(false);
-
-  useEffect(() => {
-    if (data?.collection) addOpenEntity(data.collection);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.collection?._id]);
 
   // An unknown (or someone else's) collection id renders the app's 404 page.
   if (isNotFoundError(error)) notFound();

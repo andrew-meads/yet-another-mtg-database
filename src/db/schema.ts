@@ -108,6 +108,11 @@ export interface UserSettingsDoc {
     size: string;
     delayMs: number;
   };
+  pinnedEntities?: {
+    id: string;
+    kind: string;
+  }[];
+  /** Legacy section, superseded by `pinnedEntities` and unset on its first write. */
   openEntities?: {
     id: string;
     kind: string;
@@ -396,6 +401,14 @@ const pricingSettingsSchema = new Schema(
   { _id: false }
 );
 
+const pinnedEntityRefSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    kind: { type: String, required: true, enum: ["collection", "deck"] }
+  },
+  { _id: false }
+);
+
 const openEntityRefSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -410,6 +423,7 @@ const userSettingsSchema = new Schema<UserSettingsDoc>(
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     ai: { type: aiSettingsSchema, default: undefined },
     cardPreview: { type: cardPreviewSettingsSchema, default: undefined },
+    pinnedEntities: { type: [pinnedEntityRefSchema], default: undefined },
     openEntities: { type: [openEntityRefSchema], default: undefined },
     pricing: { type: pricingSettingsSchema, default: undefined }
   },

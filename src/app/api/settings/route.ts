@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest) {
 
 /**
  * PATCH /api/settings — partial update of the non-secret sections
- * (`cardPreview`, `openEntities`). Only the provided sections are written.
+ * (`cardPreview`, `pinnedEntities`, `pricing`). Only the provided sections are written.
  */
 export async function PATCH(request: NextRequest) {
   try {

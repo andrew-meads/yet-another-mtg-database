@@ -23,14 +23,19 @@ Provider in `src/context/QueryProvider.tsx`; all providers composed in
   clears it, and a `cardId` mismatch is dropped; both persist in localStorage. Collection
   rows (`copiesFromRow`), deck cards (`copiesFromPhysical`, both in
   `src/lib/selectedCopies.ts`) and card-locations rows pass their copies.
-- **`OpenEntitiesContext`** — holds the user's open collections **and** decks as a
-  `kind`-discriminated `OpenEntitySummary[]`, its `{ id, kind, pinned? }` refs server-synced
-  via `useServerSetting("openEntities", …)` with a one-time migration from the legacy
-  `"open-entity-ids"` localStorage key and a union-merge reconcile for entities opened
-  while the settings query was in flight; exposes `activeCollection`/`activeDeck` +
-  `setActiveCollection`/`setActiveDeck`/`setActiveEntity`, and treats either active entity
-  as always-pinned. Closing a collection (`removeOpenEntity`) deletes its persisted search
-  string.
+- **`OpenEntitiesContext`** — tracks which collections **and** decks are pinned to the app
+  bar. There is no "open" state: every collection/deck is either **pinned** (inline in the
+  app bar as a drop target, its x button unpins) or **unpinned** (listed, grouped by kind, in
+  the app bar's "More" menu). Its `{ id, kind }` refs are server-synced via
+  `useServerSetting("pinnedEntities", …)`, seeded once from the pinned entries of the legacy
+  `openEntities` section (`migrate`) and union-merged with pins made while the settings query
+  was in flight. Exposes `pinnedEntities` (active collection, active deck, then pin order) /
+  `unpinnedEntities` (everything else, collections first), `isPinned` / `pinEntity` /
+  `unpinEntity`, and `activeCollection`/`activeDeck` + `setActiveCollection`/`setActiveDeck`/
+  `setActiveEntity`. The active entities are always pinned and `unpinEntity` refuses them; an
+  effect persists their pin, so a formerly active entity stays pinned (and becomes
+  unpinnable) once something else is active. Visiting a detail page does not pin it. The
+  card-search and collection-row "Add to collection/deck" submenus list the pinned entities.
 - **`ScanContext`** — scan results between `/scan` and `/scan/results`.
 - **`SettingsContext`** — server-synced user preferences (see
   [user-settings-and-ai.md](user-settings-and-ai.md)); `useCardPreviewSettings()` holds the

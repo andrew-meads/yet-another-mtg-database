@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { seedOpenEntities } from "./openEntities";
+import { seedPinnedEntities } from "./pinnedEntities";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -41,16 +41,15 @@ async function html5DragAndDrop(page: Page, sourceTestId: string, targetTestId: 
   );
 }
 
-test("open collections appear in the AppBar on the search route, and pinning works", async ({
+test("pinned collections appear in the AppBar on the search route, and pinning/unpinning works", async ({
   page
 }) => {
   const { mainCollectionId, sideCollectionId } = fixtures;
-  await seedOpenEntities(page, [
-    { id: mainCollectionId, kind: "collection" }, // active → always pinned inline
-    { id: sideCollectionId, kind: "collection" } // unpinned → behind "More"
-  ]);
+  // Nothing explicitly pinned: the active (main) collection is pinned automatically,
+  // and the side collection is only reachable through "More".
+  await seedPinnedEntities(page, []);
 
-  // The AppBar (and its open-entity strip) must show even off /my-cards.
+  // The AppBar (and its pinned-entity strip) must show even off /my-cards.
   await page.goto("/search");
 
   // Active collection is pinned inline; the unpinned one is not.
@@ -63,13 +62,22 @@ test("open collections appear in the AppBar on the search route, and pinning wor
   await page.getByTestId("open-entities-more").click();
   await page.getByTestId(`pin-toggle-${sideCollectionId}`).click();
   await expect(page.getByTestId(`open-entity-${sideCollectionId}`)).toBeVisible();
+
+  // Its x button unpins it back into the "More" menu.
+  await page
+    .getByTestId(`open-entity-${sideCollectionId}`)
+    .getByRole("button", { name: /^Unpin / })
+    .click();
+  await expect(page.getByTestId(`open-entity-${sideCollectionId}`)).toHaveCount(0);
+  await page.getByTestId("open-entities-more").click();
+  await expect(page.getByTestId(`open-entity-menu-${sideCollectionId}`)).toBeVisible();
 });
 
 test("a pinned collection button is a drop target for search cards", async ({ page }) => {
   const { mainCollectionId, sideCollectionId } = fixtures;
-  await seedOpenEntities(page, [
+  await seedPinnedEntities(page, [
     { id: mainCollectionId, kind: "collection" },
-    { id: sideCollectionId, kind: "collection", pinned: true }
+    { id: sideCollectionId, kind: "collection" }
   ]);
 
   await page.goto("/search");

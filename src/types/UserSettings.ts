@@ -46,11 +46,17 @@ export interface PricingSettings {
 
 export const DEFAULT_PRICING_SETTINGS: PricingSettings = { currency: "USD" };
 
-/** A reference to a collection or deck the user has open in the workspace. */
-export interface OpenEntityRef {
+/** A reference to a collection or deck the user has pinned to the app bar. */
+export interface PinnedEntityRef {
   id: string;
   kind: "collection" | "deck";
-  /** Whether the user has pinned this entity to the main bar. Missing = unpinned. */
+}
+
+/**
+ * Legacy (pre-pinning-only) shape: the entities the user had "open", some of them
+ * pinned. Read once on the client to seed `pinnedEntities`; never written.
+ */
+export interface LegacyOpenEntityRef extends PinnedEntityRef {
   pinned?: boolean;
 }
 
@@ -69,7 +75,9 @@ export interface AiSettingsMasked {
 /** The settings object returned by GET /api/settings (AI section masked). */
 export interface UserSettingsPayload {
   cardPreview?: CardPreviewSettings;
-  openEntities?: OpenEntityRef[];
+  pinnedEntities?: PinnedEntityRef[];
+  /** @deprecated Legacy section, only read to migrate into `pinnedEntities`. */
+  openEntities?: LegacyOpenEntityRef[];
   pricing?: PricingSettings;
   ai?: AiSettingsMasked;
 }

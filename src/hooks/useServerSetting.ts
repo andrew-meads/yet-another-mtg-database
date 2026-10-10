@@ -18,6 +18,12 @@ export interface ServerSettingOptions<T> {
    */
   legacyStorageKey?: string;
   /**
+   * Derive a value from the rest of the settings document when this section is
+   * absent (e.g. a section that replaced an older one). Consulted after
+   * `legacyStorageKey`; the result is adopted and persisted like a legacy value.
+   */
+  migrate?: (settings: UserSettingsPayload) => T | undefined;
+  /**
    * How to combine the server value with local edits made before hydration
    * completed (e.g. an entity opened while the settings request was in flight).
    * Defaults to local-wins.
@@ -122,7 +128,9 @@ export function useServerSetting<T>(
         window.localStorage.removeItem(opts.legacyStorageKey);
       }
     } else {
-      const legacy = opts?.legacyStorageKey ? readLegacyValue<T>(opts.legacyStorageKey) : undefined;
+      const legacy =
+        (opts?.legacyStorageKey ? readLegacyValue<T>(opts.legacyStorageKey) : undefined) ??
+        opts?.migrate?.(data.settings as UserSettingsPayload);
       const removeLegacy = () => {
         if (opts?.legacyStorageKey && typeof window !== "undefined") {
           window.localStorage.removeItem(opts.legacyStorageKey);
@@ -131,8 +139,11 @@ export function useServerSetting<T>(
 
       if (touchedRef.current && localValue !== null) {
         // The user changed the value before the first load finished — their
-        // edits win over anything the legacy key holds.
-        persist(localValue, removeLegacy);
+        // edits win over the legacy value, unless a reconcile merges the two.
+        const merged =
+          legacy !== undefined && opts?.reconcile ? opts.reconcile(legacy, localValue) : localValue;
+        if (merged !== localValue) applyLocal(merged);
+        persist(merged, removeLegacy);
       } else if (legacy !== undefined) {
         applyLocal(legacy);
         persist(legacy, removeLegacy);

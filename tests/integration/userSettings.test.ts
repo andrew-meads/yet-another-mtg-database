@@ -38,20 +38,35 @@ describe("PATCH /api/settings", () => {
     expect((await readBack.json()).settings.cardPreview).toEqual(cardPreview);
   });
 
-  it("persists the openEntities section and leaves other sections untouched", async () => {
+  it("persists the pinnedEntities section and leaves other sections untouched", async () => {
     const cardPreview = { enabled: true, size: "small", delayMs: 500 };
     await patchSettings(jsonRequest("/api/settings", "PATCH", { cardPreview }));
 
-    const openEntities = [
-      { id: new Types.ObjectId().toString(), kind: "collection", pinned: true },
+    const pinnedEntities = [
+      { id: new Types.ObjectId().toString(), kind: "collection" },
       { id: new Types.ObjectId().toString(), kind: "deck" }
     ];
-    const res = await patchSettings(jsonRequest("/api/settings", "PATCH", { openEntities }));
+    const res = await patchSettings(jsonRequest("/api/settings", "PATCH", { pinnedEntities }));
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body.settings.openEntities).toEqual(openEntities);
+    expect(body.settings.pinnedEntities).toEqual(pinnedEntities);
     expect(body.settings.cardPreview).toEqual(cardPreview);
+  });
+
+  it("returns the legacy openEntities section for migration and drops it on the first pinned write", async () => {
+    const legacy = [{ id: new Types.ObjectId().toString(), kind: "collection", pinned: true }];
+    await UserSettingsModel.create({ owner: new Types.ObjectId(userId), openEntities: legacy });
+
+    const before = await (await getSettings(jsonRequest("/api/settings", "GET"))).json();
+    expect(before.settings.openEntities).toEqual(legacy);
+    expect(before.settings.pinnedEntities).toBeUndefined();
+
+    const pinnedEntities = [{ id: legacy[0].id, kind: "collection" }];
+    const res = await patchSettings(jsonRequest("/api/settings", "PATCH", { pinnedEntities }));
+    const body = await res.json();
+    expect(body.settings.pinnedEntities).toEqual(pinnedEntities);
+    expect(body.settings.openEntities).toBeUndefined();
   });
 
   it("persists the pricing section and rejects unsupported currencies", async () => {
@@ -112,17 +127,25 @@ describe("PATCH /api/settings", () => {
 
     const badEntities = await patchSettings(
       jsonRequest("/api/settings", "PATCH", {
-        openEntities: [{ id: "not-an-objectid", kind: "collection" }]
+        pinnedEntities: [{ id: "not-an-objectid", kind: "collection" }]
       })
     );
     expect(badEntities.status).toBe(400);
 
     const badKind = await patchSettings(
       jsonRequest("/api/settings", "PATCH", {
-        openEntities: [{ id: new Types.ObjectId().toString(), kind: "binder" }]
+        pinnedEntities: [{ id: new Types.ObjectId().toString(), kind: "binder" }]
       })
     );
     expect(badKind.status).toBe(400);
+
+    // The legacy section is read-only now.
+    const legacyWrite = await patchSettings(
+      jsonRequest("/api/settings", "PATCH", {
+        openEntities: [{ id: new Types.ObjectId().toString(), kind: "deck" }]
+      })
+    );
+    expect(legacyWrite.status).toBe(400);
   });
 
   it("scopes settings to the requesting user", async () => {

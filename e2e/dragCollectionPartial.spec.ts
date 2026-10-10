@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { seedOpenEntities } from "./openEntities";
+import { seedPinnedEntities } from "./pinnedEntities";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -48,9 +48,9 @@ test("dragging with the drag-count control moves only the chosen number of copie
   page
 }) => {
   const { mainCollectionId, sideCollectionId } = fixtures;
-  await seedOpenEntities(page, [
+  await seedPinnedEntities(page, [
     { id: mainCollectionId, kind: "collection" }, // active → pinned inline
-    { id: sideCollectionId, kind: "collection", pinned: true } // drop target in the app bar
+    { id: sideCollectionId, kind: "collection" } // drop target in the app bar
   ]);
 
   await page.goto(`/my-cards/collections/${mainCollectionId}`);

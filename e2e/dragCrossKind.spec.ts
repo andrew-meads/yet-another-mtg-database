@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { seedOpenEntities } from "./openEntities";
+import { seedPinnedEntities } from "./pinnedEntities";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -75,9 +75,9 @@ test("search → deck: a search card dropped on a pinned deck lands in the deck"
 }) => {
   const { mainCollectionId, ckDeckId } = fixtures;
   // Main must be open + active so the new card has a collection to be created in.
-  await seedOpenEntities(page, [
+  await seedPinnedEntities(page, [
     { id: mainCollectionId, kind: "collection" },
-    { id: ckDeckId, kind: "deck", pinned: true }
+    { id: ckDeckId, kind: "deck" }
   ]);
 
   await page.goto("/search");
@@ -100,9 +100,9 @@ test("collection → deck: a loose collection card dropped on a pinned deck is p
   page
 }) => {
   const { mainCollectionId, ckDeckId } = fixtures;
-  await seedOpenEntities(page, [
+  await seedPinnedEntities(page, [
     { id: mainCollectionId, kind: "collection" },
-    { id: ckDeckId, kind: "deck", pinned: true }
+    { id: ckDeckId, kind: "deck" }
   ]);
 
   await page.goto(`/my-cards/collections/${mainCollectionId}`);
@@ -126,7 +126,7 @@ test("deck → collection: a deck card dropped on a pinned collection leaves the
   page
 }) => {
   const { ckSourceDeckId, ckDeckCardId, ckTargetCollId } = fixtures;
-  await seedOpenEntities(page, [{ id: ckTargetCollId, kind: "collection", pinned: true }]);
+  await seedPinnedEntities(page, [{ id: ckTargetCollId, kind: "collection" }]);
 
   await page.goto(`/my-cards/decks/${ckSourceDeckId}`);
   await expect(page.getByTestId(`deck-card-${ckDeckCardId}`)).toBeVisible({ timeout: 15_000 });

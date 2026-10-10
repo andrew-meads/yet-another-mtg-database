@@ -86,10 +86,10 @@ export default function CardsTableRow({
   const { isDragging, dragRef } = useNewCardDragSource(card, true, createFields);
 
   // === CONTEXT ===
-  // Get open collections from context (decks can't receive a raw "add to collection")
-  const { activeCollection, activeDeck, openEntities } = useOpenEntitiesContext();
-  const openCollections = openEntities.filter((e) => e.kind === "collection");
-  const openDecks = openEntities.filter((e) => e.kind === "deck");
+  // Pinned collections/decks back the "Add to collection"/"Add to deck" submenus
+  const { activeCollection, activeDeck, pinnedEntities } = useOpenEntitiesContext();
+  const openCollections = pinnedEntities.filter((e) => e.kind === "collection");
+  const openDecks = pinnedEntities.filter((e) => e.kind === "deck");
 
   // Notify parent component when drag state changes (used to hide hover popup)
   useEffect(() => {

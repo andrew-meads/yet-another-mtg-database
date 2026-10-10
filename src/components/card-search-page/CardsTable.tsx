@@ -115,11 +115,11 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
 
   // === CONTEXT ===
 
-  // Get active collection and open collections from context
-  const { activeCollection, openEntities } = useOpenEntitiesContext();
+  // Get active collection and pinned collections from context
+  const { activeCollection, pinnedEntities } = useOpenEntitiesContext();
   const openCollections = useMemo(
-    () => openEntities.filter((e) => e.kind === "collection"),
-    [openEntities]
+    () => pinnedEntities.filter((e) => e.kind === "collection"),
+    [pinnedEntities]
   );
 
   // Mutation to add a physical card to a collection
@@ -188,7 +188,7 @@ function InternalCardsTable({ cards, maxHeight, onCardClicked }: InternalCardsTa
         // Use active collection if no specific collection ID provided
         targetCollection = activeCollection;
       } else {
-        // Find collection in open collections by ID
+        // Find collection in pinned collections by ID
         targetCollection = openCollections.find((c) => c._id === collectionId);
       }
 

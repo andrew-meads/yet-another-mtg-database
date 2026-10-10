@@ -178,9 +178,9 @@ export default function CollectionTableRow({
 
   const deckOp = useDeckCardOp();
 
-  const { activeCollection, activeDeck, openEntities } = useOpenEntitiesContext();
-  const openCollections = openEntities.filter((e) => e.kind === "collection");
-  const openDecks = openEntities.filter((e) => e.kind === "deck");
+  const { activeCollection, activeDeck, pinnedEntities } = useOpenEntitiesContext();
+  const openCollections = pinnedEntities.filter((e) => e.kind === "collection");
+  const openDecks = pinnedEntities.filter((e) => e.kind === "deck");
   const { moveOneToCollection, addOneToDeck, removeOneFromDeck } =
     useCollectionRowActions(collectionId);
 

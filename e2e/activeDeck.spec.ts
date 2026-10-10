@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { seedOpenEntities } from "./openEntities";
+import { seedPinnedEntities } from "./pinnedEntities";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -17,9 +17,9 @@ test("making a deck active lets 'd' add the selected search card to it", async (
   const { mainCollectionId, activeDeckId } = fixtures;
   // Main Collection is seeded active — the new copy is created there before being
   // placed into the deck.
-  await seedOpenEntities(page, [
+  await seedPinnedEntities(page, [
     { id: mainCollectionId, kind: "collection" },
-    { id: activeDeckId, kind: "deck", pinned: true }
+    { id: activeDeckId, kind: "deck" }
   ]);
 
   await page.goto("/search");
@@ -62,9 +62,9 @@ test("shift+d adds the selected search card to the active deck as an ephemeral c
   page
 }) => {
   const { mainCollectionId, activeDeckId } = fixtures;
-  await seedOpenEntities(page, [
+  await seedPinnedEntities(page, [
     { id: mainCollectionId, kind: "collection" },
-    { id: activeDeckId, kind: "deck", pinned: true }
+    { id: activeDeckId, kind: "deck" }
   ]);
 
   await page.goto("/search");

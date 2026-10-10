@@ -15,8 +15,7 @@ export function getEntityIcon(kind: EntityKind, size: string = "h-4 w-4") {
 
 /**
  * localStorage key for a collection's persisted Scryfall-style search string.
- * Keyed by collection id so each collection remembers its own search; cleared
- * when the collection is closed (see `removeOpenEntity` in OpenEntitiesContext).
+ * Keyed by collection id so each collection remembers its own search.
  */
 export const collectionSearchStorageKey = (collectionId: string) =>
   `collection-search-${collectionId}`;

@@ -60,8 +60,12 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   is a full-screen page.
 - **Drag-and-drop organization** — move and copy cards between collections with
   react-dnd.
+- **Pinned collections & decks** — pin collections and decks to the app bar, where they
+  act as drop targets; everything unpinned is a click away in the app bar's **More**
+  menu (pin from there, or click a pinned item's ✕ to unpin it). The active collection
+  and deck are always pinned.
 - **Active collection & active deck** — mark one collection and one deck as "active"
-  from the app bar (right-click an open collection/deck → **Make active**, or tap its
+  from the app bar (right-click a pinned collection/deck → **Make active**, or tap its
   star on mobile). The two are independent, and they become the default target for
   quick-add actions. On the card-search page, select a card and press `+` (or `=`) to
   add it to the active collection, or `d` to add it to the active deck — the deck copy
@@ -142,7 +146,7 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   image preview, configurable on the **Settings page** (`/settings`, gear icon in the app
   bar): toggle it on/off, pick a size (small/normal/large), and set the show delay
   (500–2000 ms). Preferences apply immediately and sync to your account, so they (and
-  your open collections/decks) follow you across browsers and devices.
+  your pinned collections/decks) follow you across browsers and devices.
 - **AI natural-language search** — the sparkle button in the search bar turns a plain-
   English request ("cheap green creatures that make mana") into an editable query
   string using your own OpenAI-compatible endpoint, configured under **Settings → AI
