@@ -20,7 +20,7 @@ interface OpenEntitiesContextType {
   unpinnedEntities: OpenEntitySummary[];
   /** Whether an entity is pinned (explicitly, or because it is active). */
   isPinned: (id: string) => boolean;
-  pinEntity: (entity: OpenEntitySummary) => void;
+  pinEntity: (entity: EntityKey) => void;
   /** Unpin an entity. No-op for the active collection/deck. */
   unpinEntity: (id: string) => void;
   /**
@@ -36,6 +36,9 @@ interface OpenEntitiesContextType {
   setActiveEntity: (entity: OpenEntitySummary) => void;
 }
 
+/** Just enough of an entity to pin it (e.g. a freshly created one). */
+type EntityKey = Pick<OpenEntitySummary, "_id" | "kind">;
+
 const OpenEntitiesContext = createContext<OpenEntitiesContextType | undefined>(undefined);
 
 export function useOpenEntitiesContext(): OpenEntitiesContextType {
@@ -49,7 +52,7 @@ export function useOpenEntitiesContext(): OpenEntitiesContextType {
 /** Stable empty list so the pre-hydration fallback doesn't churn identities. */
 const NO_PINNED_REFS: PinnedEntityRef[] = [];
 
-const toRef = (entity: OpenEntitySummary): PinnedEntityRef => ({
+const toRef = (entity: EntityKey): PinnedEntityRef => ({
   id: entity._id,
   kind: entity.kind
 });
@@ -139,7 +142,7 @@ export function OpenEntitiesProvider({ children }: { children: React.ReactNode }
     };
   }, [pinnedRefs, collections, decks]);
 
-  const pinEntity = (entity: OpenEntitySummary) => {
+  const pinEntity = (entity: EntityKey) => {
     setPinnedRefs((prev) =>
       prev.some((ref) => ref.id === entity._id) ? prev : [...prev, toRef(entity)]
     );

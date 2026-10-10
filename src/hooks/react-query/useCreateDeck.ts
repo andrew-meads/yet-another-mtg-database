@@ -2,6 +2,7 @@
 
 import { Deck } from "@/types/Deck";
 import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
+import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 
 export interface CreateDeckRequest {
   name: string;
@@ -27,9 +28,12 @@ async function createDeck(data: CreateDeckRequest): Promise<CreateDeckResponse> 
 
 export function useCreateDeck(): UseMutationResult<CreateDeckResponse, Error, CreateDeckRequest> {
   const queryClient = useQueryClient();
+  const { pinEntity } = useOpenEntitiesContext();
   return useMutation({
     mutationFn: createDeck,
-    onSuccess: () => {
+    onSuccess: (res) => {
+      // New decks start pinned to the app bar.
+      pinEntity({ _id: res.deck._id, kind: "deck" });
       queryClient.invalidateQueries({ queryKey: ["deck-summaries"] });
     }
   });

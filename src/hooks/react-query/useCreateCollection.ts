@@ -2,6 +2,7 @@
 
 import { Collection } from "@/types/Collection";
 import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
+import { useOpenEntitiesContext } from "@/context/OpenEntitiesContext";
 
 export interface CreateCollectionRequest {
   name: string;
@@ -35,10 +36,13 @@ export function useCreateCollection(): UseMutationResult<
   CreateCollectionRequest
 > {
   const queryClient = useQueryClient();
+  const { pinEntity } = useOpenEntitiesContext();
 
   return useMutation({
     mutationFn: createCollection,
-    onSuccess: () => {
+    onSuccess: (res) => {
+      // New collections start pinned to the app bar.
+      pinEntity({ _id: res.collection._id, kind: "collection" });
       queryClient.invalidateQueries({ queryKey: ["collection-summaries"] });
     }
   });

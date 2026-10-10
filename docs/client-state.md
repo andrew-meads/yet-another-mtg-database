@@ -34,7 +34,9 @@ Provider in `src/context/QueryProvider.tsx`; all providers composed in
   `unpinEntity`, and `activeCollection`/`activeDeck` + `setActiveCollection`/`setActiveDeck`/
   `setActiveEntity`. The active entities are always pinned and `unpinEntity` refuses them; an
   effect persists their pin, so a formerly active entity stays pinned (and becomes
-  unpinnable) once something else is active. Visiting a detail page does not pin it. The
+  unpinnable) once something else is active. `useCreateCollection` / `useCreateDeck` pin the
+  new entity on success, so new collections/decks start pinned; visiting a detail page does
+  not pin it. The
   card-search and collection-row "Add to collection/deck" submenus list the pinned entities.
 - **`ScanContext`** — scan results between `/scan` and `/scan/results`.
 - **`SettingsContext`** — server-synced user preferences (see

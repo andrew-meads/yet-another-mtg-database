@@ -62,8 +62,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   react-dnd.
 - **Pinned collections & decks** — pin collections and decks to the app bar, where they
   act as drop targets; everything unpinned is a click away in the app bar's **More**
-  menu (pin from there, or click a pinned item's ✕ to unpin it). The active collection
-  and deck are always pinned.
+  menu (pin from there, or click a pinned item's ✕ to unpin it). New collections and
+  decks start pinned, and the active collection and deck are always pinned.
 - **Active collection & active deck** — mark one collection and one deck as "active"
   from the app bar (right-click a pinned collection/deck → **Make active**, or tap its
   star on mobile). The two are independent, and they become the default target for
