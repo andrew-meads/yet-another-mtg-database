@@ -4,6 +4,7 @@ import { GET as listDecks } from "@/app/api/decks/route";
 import { POST as deckCardsOp } from "@/app/api/decks/[id]/cards/route";
 import { PATCH as setDeckActive } from "@/app/api/decks/[id]/isActive/route";
 import { POST as addSection, PATCH as updateSection } from "@/app/api/decks/[id]/sections/route";
+import { POST as sortSection } from "@/app/api/decks/[id]/sections/sort/route";
 import { Types } from "mongoose";
 import { CollectionModel, DeckModel, PhysicalCardModel } from "@/db/schema";
 import {
@@ -618,6 +619,157 @@ describe("/api/decks/[id]/sections kind", () => {
       }),
       ctx({ id: deckId })
     );
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /api/decks/[id]/sections/sort", () => {
+  function sortOp(deckId: string, body: Record<string, unknown>) {
+    return sortSection(
+      jsonRequest(`/api/decks/${deckId}/sections/sort`, "POST", body),
+      ctx({ id: deckId })
+    );
+  }
+
+  async function sectionColumns(deckId: string, index = 0) {
+    const fresh = await DeckModel.findById(deckId).lean();
+    return fresh!.sections[index].columns.map((c) => c.cards.map(String));
+  }
+
+  /** Seeds a deck whose "Main" section holds one copy of each card, spread over two columns. */
+  async function seedMixedDeck() {
+    const cards = {
+      bolt: await seedCard({ name: "Lightning Bolt", cmc: 1, colors: ["R"] }),
+      charm: await seedCard({ name: "Azorius Charm", cmc: 3, colors: ["W", "U"] }),
+      giant: await seedCard({ name: "Big Giant", cmc: 9, colors: ["G"] }),
+      opt: await seedCard({ name: "Opt", cmc: 1, colors: ["U"] }),
+      rock: await seedCard({ name: "Mind Stone", cmc: 2, colors: [], type_line: "Artifact" }),
+      forest: await seedCard({
+        name: "Forest",
+        cmc: 0,
+        colors: [],
+        type_line: "Basic Land — Forest"
+      }),
+      // Transform card: colors only on the faces.
+      wolf: await seedCard({
+        name: "Werewolf",
+        cmc: 2,
+        colors: [],
+        type_line: "Creature — Human // Creature — Werewolf",
+        card_faces: [
+          { name: "Human", colors: ["G"] } as never,
+          { name: "Wolf", colors: ["G"] } as never
+        ]
+      })
+    };
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const pc: Record<keyof typeof cards, string> = {} as never;
+    for (const [key, c] of Object.entries(cards)) {
+      pc[key as keyof typeof cards] = await seedPhysicalCard(owner, c.id, collectionId, { deckId });
+    }
+    deck.sections[0].columns = [
+      { cards: [pc.forest, pc.giant, pc.bolt] },
+      { cards: [pc.charm, pc.opt, pc.rock, pc.wolf] }
+    ] as never;
+    deck.sections.push({ name: "Side", kind: "sideboard", columns: [{ cards: [] }] } as never);
+    deck.markModified("sections");
+    await deck.save();
+    return { deckId, sectionId: String(deck.sections[0]._id), pc };
+  }
+
+  it("sorts into mana value columns with placeholders, 7+ and a lands column", async () => {
+    const { deckId, sectionId, pc } = await seedMixedDeck();
+    const res = await sortOp(deckId, { sectionId, mode: "manaValue" });
+    expect(res.status).toBe(200);
+    expect(await sectionColumns(deckId)).toEqual([
+      [pc.bolt, pc.opt],
+      [pc.rock, pc.wolf],
+      [pc.charm],
+      [],
+      [],
+      [],
+      [pc.giant],
+      [pc.forest]
+    ]);
+  });
+
+  it("sorts by mana value then color", async () => {
+    const { deckId, sectionId, pc } = await seedMixedDeck();
+    await sortOp(deckId, { sectionId, mode: "manaValueThenColor" });
+    const columns = await sectionColumns(deckId);
+    expect(columns[0]).toEqual([pc.opt, pc.bolt]);
+    expect(columns[1]).toEqual([pc.wolf, pc.rock]);
+  });
+
+  it("sorts by mana value then alphabetically", async () => {
+    const { deckId, sectionId, pc } = await seedMixedDeck();
+    await sortOp(deckId, { sectionId, mode: "manaValueThenName" });
+    const columns = await sectionColumns(deckId);
+    // Lightning Bolt < Opt; Mind Stone < Werewolf.
+    expect(columns[0]).toEqual([pc.bolt, pc.opt]);
+    expect(columns[1]).toEqual([pc.rock, pc.wolf]);
+  });
+
+  it("sorts into color columns, using face colors for double-faced cards", async () => {
+    const { deckId, sectionId, pc } = await seedMixedDeck();
+    await sortOp(deckId, { sectionId, mode: "colorThenManaValue" });
+    expect(await sectionColumns(deckId)).toEqual([
+      [pc.opt],
+      [pc.bolt],
+      [pc.wolf, pc.giant],
+      [pc.charm],
+      [pc.rock],
+      [pc.forest]
+    ]);
+  });
+
+  it("leaves other sections, the section kind and the back-refs untouched", async () => {
+    const { deckId, pc } = await seedMixedDeck();
+    const deck = await DeckModel.findById(deckId);
+    // Sort the sideboard (empty) and the main section; the sideboard keeps its kind.
+    const sideId = String(deck!.sections[1]._id);
+    expect((await sortOp(deckId, { sectionId: sideId, mode: "color" })).status).toBe(200);
+    const fresh = await DeckModel.findById(deckId).lean();
+    expect(fresh!.sections[1].kind).toBe("sideboard");
+    expect(fresh!.sections[1].columns.map((c) => c.cards)).toEqual([[]]);
+    expect(fresh!.sections[0].columns).toHaveLength(2);
+
+    const copies = await PhysicalCardModel.find({ _id: { $in: Object.values(pc) } }).lean();
+    expect(copies.every((c) => String(c.deckId) === deckId)).toBe(true);
+  });
+
+  it("keeps an arranged id whose card data is missing", async () => {
+    const { deckId, sectionId, pc } = await seedMixedDeck();
+    const stray = new Types.ObjectId().toString();
+    const deck = await DeckModel.findById(deckId);
+    deck!.sections[0].columns[0].cards.push(stray as never);
+    deck!.markModified("sections");
+    await deck!.save();
+
+    await sortOp(deckId, { sectionId, mode: "color" });
+    const columns = await sectionColumns(deckId);
+    expect(columns[columns.length - 1]).toEqual([pc.forest, stray]);
+  });
+
+  it("400s for a bad mode or body", async () => {
+    const { deckId, sectionId } = await seedMixedDeck();
+    expect((await sortOp(deckId, { sectionId, mode: "rarity" })).status).toBe(400);
+    expect((await sortOp(deckId, { mode: "color" })).status).toBe(400);
+    expect((await sortOp(deckId, { sectionId, mode: "color", extra: 1 })).status).toBe(400);
+  });
+
+  it("404s for an unknown section or another user's deck", async () => {
+    const { deckId } = await seedMixedDeck();
+    const missing = new Types.ObjectId().toString();
+    expect((await sortOp(deckId, { sectionId: missing, mode: "color" })).status).toBe(404);
+
+    const other = await seedUser("other@example.com");
+    const theirs = await seedDeck(other);
+    const res = await sortOp(theirs._id.toString(), {
+      sectionId: String(theirs.sections[0]._id),
+      mode: "color"
+    });
     expect(res.status).toBe(404);
   });
 });

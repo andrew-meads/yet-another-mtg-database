@@ -137,7 +137,7 @@ export const sortConfigs: Record<string, SortConfig> = {
 /**
  * Define the color combination order (WUBRG)
  */
-const COLOR_COMBINATION_ORDER = [
+export const COLOR_COMBINATION_ORDER: string[][] = [
   ["W"],
   ["U"],
   ["B"],

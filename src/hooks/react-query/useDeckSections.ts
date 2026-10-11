@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeckSectionKind } from "@/types/Deck";
+import { SectionSortMode } from "@/lib/deckSectionSort";
 
 async function request(deckId: string, method: string, body: unknown) {
   const res = await fetch(`/api/decks/${deckId}/sections`, {
@@ -50,6 +51,33 @@ export function useDeleteSection() {
   return useMutation({
     mutationFn: ({ deckId, sectionId }: { deckId: string; sectionId: string }) =>
       request(deckId, "DELETE", { sectionId }),
+    onSuccess: (_d, v) => queryClient.invalidateQueries({ queryKey: ["deck-details", v.deckId] })
+  });
+}
+
+export function useSortSection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      deckId,
+      sectionId,
+      mode
+    }: {
+      deckId: string;
+      sectionId: string;
+      mode: SectionSortMode;
+    }) => {
+      const res = await fetch(`/api/decks/${deckId}/sections/sort`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionId, mode })
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: "Failed to sort section" }));
+        throw new Error(error.error || "Failed to sort section");
+      }
+      return res.json();
+    },
     onSuccess: (_d, v) => queryClient.invalidateQueries({ queryKey: ["deck-details", v.deckId] })
   });
 }

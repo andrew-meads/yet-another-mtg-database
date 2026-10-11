@@ -4,7 +4,8 @@
 
 All server state goes through TanStack Query. Hooks live in `src/hooks/react-query/`
 (e.g. `useInfiniteCardsSearch`, `useRetrieveCollectionDetails`, `useRetrieveDeckDetails`,
-`useCreatePhysicalCard`, `useDeckCardOp`). Query keys: `["collection-summaries"]`,
+`useCreatePhysicalCard`, `useDeckCardOp`, and the deck-arrangement hooks in
+`useDeckSections` / `useDeckColumns`; `useSortSection` re-columns a section). Query keys: `["collection-summaries"]`,
 `["collection-details", id]`, `["deck-summaries"]`, `["deck-details", id]`,
 `["card-locations", name]`, `["tags"]`, `["user-settings"]`, `["ai-status"]`,
 `["card-prices", ids]`, `["exchange-rate", target]`.

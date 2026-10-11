@@ -133,6 +133,32 @@ value). Sections stay in the user's order in the deck view; exports reorder them
 [deck-export.md](deck-export.md)), and the AI tools flag them (see
 [user-settings-and-ai.md](user-settings-and-ai.md)).
 
+#### Sorting a section
+
+Each section header has a **Sort** menu (`DeckSection.tsx` → `useSortSection`) that
+rebuilds that section's columns in one `POST /api/decks/[id]/sections/sort`
+`{ sectionId, mode }` (zod: `sectionSortSchema`). The modes are `SECTION_SORT_MODES` in
+`src/lib/deckSectionSort.ts`. That pure, client-safe module holds the rules in
+`arrangeSectionColumns`:
+
+- **Mana value**: one column per MV from 1 up to the highest present. It starts at 0
+  instead if any non-land has MV 0. MV 7 and above share one column, and every MV in the
+  range gets a column, so missing MVs leave empty placeholder columns.
+- **Color**: W, U, B, R, G, Multicolor, then Colorless, only for groups that have cards.
+  Colors are the union of the top-level `colors` and every face's `colors`, as in
+  `EFFECTIVE_COLORS_EXPR`.
+- **Lands**: in both modes, cards whose front face is a land go in a final column.
+- **Secondary key**: the "…, then color" and "…, then mana value" modes sort each column
+  by the other key, then by name. The "…, then alphabetically" modes sort by name alone. The color order is `COLOR_COMBINATION_ORDER` from
+  `src/lib/sortConfig.ts`. Without a secondary key, cards keep their current reading
+  order.
+
+The sort runs on the server (`src/lib/server/deckSectionSort.ts`), so the slim card
+projection doesn't need `colors`. It only rewrites the deck's own arrays (back-refs are
+untouched) in a single save. Column ids are regenerated. Arranged ids with no card data
+are kept, at the end of the last column. Nothing about the mode is stored: it is
+one-shot, and drag and drop works as usual afterwards.
+
 #### Card counts
 
 Card totals are derived client-side from the loaded `DeckWithCards` by
@@ -221,7 +247,8 @@ details payload from ~16 MB to ~5 MB raw.
 - `/api/collections` — CRUD + `summaries` + `[id]/isActive`; `GET [id]?details=true`
   accepts an optional `q` Scryfall search param scoped to that collection (see
   [search-engine.md](search-engine.md)).
-- `/api/decks` — CRUD + `[id]/isActive` + `/sections`, `/columns`, `/cards` placement ops
+- `/api/decks` — CRUD + `[id]/isActive` + `/sections` (and `/sections/sort`, see
+  [Sorting a section](#sorting-a-section)), `/columns`, `/cards` placement ops
   `place|move|remove`, `/archive`, `/fill`, `/export`. `/cards` is batched: the body is
   `{ op, physicalCardIds: string[] (≤ 500), sectionId?, columnId?, index? }`, validated by
   `deckCardOpSchema` in `src/lib/server/deckArrange.ts`. Every id is ownership-checked before

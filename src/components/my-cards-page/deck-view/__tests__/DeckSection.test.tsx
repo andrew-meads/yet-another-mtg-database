@@ -5,12 +5,14 @@ import userEvent from "@testing-library/user-event";
 
 const h = vi.hoisted(() => ({
   updateSection: vi.fn(),
+  sortSection: vi.fn(),
   columnProps: [] as Array<{ muted?: boolean }>
 }));
 
 vi.mock("@/hooks/react-query/useDeckSections", () => ({
   useUpdateSection: () => ({ mutate: h.updateSection }),
-  useDeleteSection: () => ({ mutate: vi.fn() })
+  useDeleteSection: () => ({ mutate: vi.fn() }),
+  useSortSection: () => ({ mutate: h.sortSection, isPending: false })
 }));
 vi.mock("@/hooks/react-query/useDeckColumns", () => ({
   useAddColumn: () => ({ mutate: vi.fn() }),
@@ -43,6 +45,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   h.updateSection.mockClear();
+  h.sortSection.mockClear();
   h.columnProps = [];
 });
 
@@ -132,5 +135,35 @@ describe("DeckSection kind", () => {
     await user.click(screen.getByRole("combobox", { name: "Section type" }));
     await user.click(await screen.findByRole("option", { name: "Scratch area" }));
     expect(h.updateSection).not.toHaveBeenCalled();
+  });
+});
+
+describe("DeckSection sort", () => {
+  it("offers the six sort modes and sorts the section by the chosen one", async () => {
+    const user = userEvent.setup();
+    renderSection(makeSection([2, 1]));
+    await user.click(screen.getByTestId("section-sort-sec-1"));
+
+    const items = screen.getAllByRole("menuitem").map((el) => el.textContent);
+    expect(items).toEqual([
+      "Mana value",
+      "Mana value, then color",
+      "Mana value, then alphabetically",
+      "Color",
+      "Color, then mana value",
+      "Color, then alphabetically"
+    ]);
+
+    await user.click(screen.getByRole("menuitem", { name: "Color, then mana value" }));
+    expect(h.sortSection).toHaveBeenCalledWith({
+      deckId: "deck-1",
+      sectionId: "sec-1",
+      mode: "colorThenManaValue"
+    });
+  });
+
+  it("is disabled for an empty section", () => {
+    renderSection(makeSection([0]));
+    expect(screen.getByTestId("section-sort-sec-1")).toBeDisabled();
   });
 });

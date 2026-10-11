@@ -90,6 +90,12 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   cards are shown partly greyed out — handy for candidates and ideas). Every export lists
   sideboard sections after the main deck and scratch areas last, clearly marked, and the
   AI advisor knows neither belongs to the main deck.
+- **Sort a section into columns** — each deck section's **Sort** menu re-lays its cards
+  into columns by **Mana value** or by **Color**, optionally sorting inside each column by
+  the other one or alphabetically. Mana value gives one column per value from 1 (or 0) up to 7+, with empty
+  columns for any missing values in between. Color gives white, blue, black, red, green,
+  multicolor and colorless columns. Lands always get their own column at the end. It's a
+  one-off rearrangement: drag cards around freely afterwards.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from

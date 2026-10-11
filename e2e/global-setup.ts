@@ -422,6 +422,41 @@ async function globalSetup() {
     updatedAt: new Date()
   });
 
+  // Dedicated deck for sectionSort.spec.ts: one section of ephemeral cards, deliberately
+  // out of order. Sorting is idempotent, so the spec is repeatable.
+  const ssDeckId = new Types.ObjectId();
+  const ssSectionId = new Types.ObjectId();
+  const ssCards = {
+    island: { _id: new Types.ObjectId(), cardId: "e2e-unh-island" },
+    shivan: { _id: new Types.ObjectId(), cardId: "e2e-shivan" },
+    llanowar: { _id: new Types.ObjectId(), cardId: "e2e-llanowar" }
+  };
+  await db.collection("physicalcards").insertMany(
+    Object.values(ssCards).map((c) => ({
+      ...c,
+      owner: userId,
+      collectionId: null,
+      deckId: ssDeckId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })) as never
+  );
+  await db.collection("decks").insertOne({
+    _id: ssDeckId,
+    name: "Section Sort Deck",
+    description: "",
+    owner: userId,
+    sections: [
+      {
+        _id: ssSectionId,
+        name: "Main",
+        columns: [{ cards: [ssCards.island._id, ssCards.shivan._id, ssCards.llanowar._id] }]
+      }
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
   await mongoose.disconnect();
 
   mkdirSync(dirname(FIXTURES), { recursive: true });
@@ -456,7 +491,13 @@ async function globalSetup() {
         skDeckId: skDeckId.toString(),
         skSideSectionId: skSideSectionId.toString(),
         skMaybeSectionId: skMaybeSectionId.toString(),
-        skMaybeCardId: skCards[3]._id.toString()
+        skMaybeCardId: skCards[3]._id.toString(),
+        // Section-sort spec fixtures.
+        ssDeckId: ssDeckId.toString(),
+        ssSectionId: ssSectionId.toString(),
+        ssIslandId: ssCards.island._id.toString(),
+        ssShivanId: ssCards.shivan._id.toString(),
+        ssLlanowarId: ssCards.llanowar._id.toString()
       },
       null,
       2

@@ -4,11 +4,15 @@ import { DeckSection as DeckSectionData } from "@/types/Deck";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeckColumn from "./DeckColumn";
 import AddBasicLandButton from "./AddBasicLandButton";
-import { useUpdateSection, useDeleteSection } from "@/hooks/react-query/useDeckSections";
+import {
+  useUpdateSection,
+  useDeleteSection,
+  useSortSection
+} from "@/hooks/react-query/useDeckSections";
 import { useAddColumn } from "@/hooks/react-query/useDeckColumns";
 import { useDeckNewColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
 import {
@@ -28,6 +32,13 @@ import {
 } from "@/components/ui/select";
 import { useDeckCardDimensions } from "./DeckZoomContext";
 import { PLACEHOLDER_LABEL_MIN_ZOOM } from "@/lib/deckZoom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { SECTION_SORT_MODES, SECTION_SORT_MODE_LABELS } from "@/lib/deckSectionSort";
 
 interface DeckSectionProps {
   deckId: string;
@@ -57,6 +68,7 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
   const updateSection = useUpdateSection();
   const deleteSection = useDeleteSection();
   const addColumn = useAddColumn();
+  const sortSection = useSortSection();
   const { columnGap } = useDeckCardDimensions();
 
   const [name, setName] = useState(section.name);
@@ -128,6 +140,32 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
           <Plus className="size-4" />
           Column
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              disabled={isEmpty || sortSection.isPending}
+              title="Sort this section into columns"
+              data-testid={`section-sort-${section._id}`}
+            >
+              <ArrowDownWideNarrow className="size-4" />
+              Sort
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {SECTION_SORT_MODES.map((mode) => (
+              <DropdownMenuItem
+                key={mode}
+                data-testid={`section-sort-${mode}`}
+                onSelect={() => sortSection.mutate({ deckId, sectionId: section._id, mode })}
+              >
+                {SECTION_SORT_MODE_LABELS[mode]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <AddBasicLandButton deckId={deckId} sectionId={section._id} />
         <Button
           variant="ghost"
