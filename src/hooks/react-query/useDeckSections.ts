@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeckSectionKind } from "@/types/Deck";
 import { SectionSortMode } from "@/lib/deckSectionSort";
+import { applySectionOrder } from "@/lib/deckUtils";
+import { DeckDetailsResponse } from "./useRetrieveDeckDetails";
 
 async function request(deckId: string, method: string, body: unknown) {
   const res = await fetch(`/api/decks/${deckId}/sections`, {
@@ -33,16 +35,44 @@ export function useUpdateSection() {
       deckId,
       sectionId,
       name,
-      kind,
-      order
+      kind
     }: {
       deckId: string;
-      sectionId?: string;
+      sectionId: string;
       name?: string;
       kind?: DeckSectionKind;
-      order?: string[];
-    }) => request(deckId, "PATCH", { sectionId, name, kind, order }),
+    }) => request(deckId, "PATCH", { sectionId, name, kind }),
     onSuccess: (_d, v) => queryClient.invalidateQueries({ queryKey: ["deck-details", v.deckId] })
+  });
+}
+
+/**
+ * Reorders a deck's sections. `order` must list every section id exactly once. The
+ * cached deck is reordered optimistically so a dragged section doesn't snap back while
+ * the request is in flight, and restored if the server refuses.
+ */
+export function useReorderSections() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ deckId, order }: { deckId: string; order: string[] }) =>
+      request(deckId, "PATCH", { order }),
+    onMutate: async ({ deckId, order }) => {
+      const queryKey = ["deck-details", deckId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<DeckDetailsResponse>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<DeckDetailsResponse>(queryKey, {
+          ...previous,
+          deck: { ...previous.deck, sections: applySectionOrder(previous.deck.sections, order) }
+        });
+      }
+      return { previous };
+    },
+    onError: (_e, v, context) => {
+      if (context?.previous) queryClient.setQueryData(["deck-details", v.deckId], context.previous);
+    },
+    onSettled: (_d, _e, v) =>
+      queryClient.invalidateQueries({ queryKey: ["deck-details", v.deckId] })
   });
 }
 

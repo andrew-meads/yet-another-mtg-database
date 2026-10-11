@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  applySectionOrder,
   countDeckCards,
   countDeckCardsByKind,
   countSectionCards,
@@ -7,6 +8,8 @@ import {
   formatCardCount,
   formatDeckCardCount,
   isDeckSectionKind,
+  isSectionOrderFor,
+  moveSectionInOrder,
   sortSectionsByKind
 } from "@/lib/deckUtils";
 import type { DeckSection, DeckSectionKind, DeckWithCards } from "@/types/Deck";
@@ -137,5 +140,81 @@ describe("formatDeckCardCount", () => {
 
   it("appends the sideboard count when there is one", () => {
     expect(formatDeckCardCount(60, 15)).toBe("60 cards + 15 sideboard");
+  });
+});
+
+describe("moveSectionInOrder", () => {
+  const order = ["a", "b", "c", "d"];
+
+  it("moves a section before a later one", () => {
+    expect(moveSectionInOrder(order, "a", "c", "before")).toEqual(["b", "a", "c", "d"]);
+  });
+
+  it("moves a section after a later one", () => {
+    expect(moveSectionInOrder(order, "a", "d", "after")).toEqual(["b", "c", "d", "a"]);
+  });
+
+  it("moves a section before an earlier one", () => {
+    expect(moveSectionInOrder(order, "d", "a", "before")).toEqual(["d", "a", "b", "c"]);
+  });
+
+  it("moves a section after an earlier one", () => {
+    expect(moveSectionInOrder(order, "d", "b", "after")).toEqual(["a", "b", "d", "c"]);
+  });
+
+  it("returns null for drops that leave the order unchanged", () => {
+    expect(moveSectionInOrder(order, "b", "b", "before")).toBeNull();
+    expect(moveSectionInOrder(order, "b", "b", "after")).toBeNull();
+    // The gap just above or below the dragged section is where it already is.
+    expect(moveSectionInOrder(order, "b", "a", "after")).toBeNull();
+    expect(moveSectionInOrder(order, "b", "c", "before")).toBeNull();
+  });
+
+  it("returns null for unknown ids", () => {
+    expect(moveSectionInOrder(order, "x", "a", "before")).toBeNull();
+    expect(moveSectionInOrder(order, "a", "x", "after")).toBeNull();
+  });
+
+  it("does not mutate its input", () => {
+    const input = [...order];
+    moveSectionInOrder(input, "a", "d", "after");
+    expect(input).toEqual(order);
+  });
+});
+
+describe("isSectionOrderFor", () => {
+  const ids = ["a", "b", "c"];
+
+  it("accepts any permutation of the ids", () => {
+    expect(isSectionOrderFor(["c", "a", "b"], ids)).toBe(true);
+    expect(isSectionOrderFor(["a", "b", "c"], ids)).toBe(true);
+  });
+
+  it("rejects missing, extra, duplicated, or unknown ids", () => {
+    expect(isSectionOrderFor(["a", "b"], ids)).toBe(false);
+    expect(isSectionOrderFor(["a", "b", "c", "d"], ids)).toBe(false);
+    expect(isSectionOrderFor(["a", "a", "b"], ids)).toBe(false);
+    expect(isSectionOrderFor(["a", "b", "x"], ids)).toBe(false);
+  });
+
+  it("rejects non-arrays", () => {
+    expect(isSectionOrderFor("a,b,c", ids)).toBe(false);
+    expect(isSectionOrderFor(undefined, ids)).toBe(false);
+  });
+});
+
+describe("applySectionOrder", () => {
+  const sections = [{ _id: "a" }, { _id: "b" }, { _id: "c" }];
+
+  it("rearranges sections to follow the order", () => {
+    expect(applySectionOrder(sections, ["c", "a", "b"]).map((s) => s._id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("keeps sections missing from the order at the end, in their original order", () => {
+    expect(applySectionOrder(sections, ["b"]).map((s) => s._id)).toEqual(["b", "a", "c"]);
+  });
+
+  it("returns a new array", () => {
+    expect(applySectionOrder(sections, ["a", "b", "c"])).not.toBe(sections);
   });
 });

@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeckSection from "./DeckSection";
-import { useAddSection } from "@/hooks/react-query/useDeckSections";
+import { useAddSection, useReorderSections } from "@/hooks/react-query/useDeckSections";
 import { useDeckNewSectionDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
 import { ZOOM_DEFAULT } from "@/lib/deckZoom";
 import { DeckZoomProvider } from "./DeckZoomContext";
+import { useCallback, useMemo } from "react";
+import { toast } from "sonner";
 
 interface DeckViewProps {
   deck: DeckWithCards;
@@ -33,13 +35,38 @@ function NewSectionDropZone({ deckId }: { deckId: string }) {
 
 export default function DeckView({ deck, zoom = ZOOM_DEFAULT }: DeckViewProps) {
   const addSection = useAddSection();
+  const reorderSections = useReorderSections();
+  const { mutate: reorder } = reorderSections;
+  const deckId = deck._id;
+
+  const sectionIds = useMemo(() => deck.sections.map((s) => s._id), [deck.sections]);
+  const handleReorder = useCallback(
+    (order: string[]) =>
+      reorder(
+        { deckId, order },
+        {
+          onError: (error) =>
+            toast.error("Failed to reorder sections", { description: error.message })
+        }
+      ),
+    [reorder, deckId]
+  );
 
   return (
     <DeckZoomProvider zoom={zoom}>
       <div className="h-full space-y-8 overflow-auto rounded-md border p-4">
-        {deck.sections.map((section) => (
-          <DeckSection key={section._id} deckId={deck._id} deckName={deck.name} section={section} />
-        ))}
+        <div>
+          {deck.sections.map((section) => (
+            <DeckSection
+              key={section._id}
+              deckId={deck._id}
+              deckName={deck.name}
+              section={section}
+              sectionIds={sectionIds}
+              onReorderSections={handleReorder}
+            />
+          ))}
+        </div>
 
         <div className="flex items-center gap-3 pt-2">
           <Button

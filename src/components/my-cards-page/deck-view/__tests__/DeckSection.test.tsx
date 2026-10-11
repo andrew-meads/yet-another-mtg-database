@@ -6,7 +6,10 @@ import userEvent from "@testing-library/user-event";
 const h = vi.hoisted(() => ({
   updateSection: vi.fn(),
   sortSection: vi.fn(),
-  columnProps: [] as Array<{ muted?: boolean }>
+  columnProps: [] as Array<{ muted?: boolean }>,
+  dropPosition: null as "before" | "after" | null,
+  isDragging: false,
+  dropParams: [] as Array<{ onReorder: (order: string[]) => void; sectionIds: string[] }>
 }));
 
 vi.mock("@/hooks/react-query/useDeckSections", () => ({
@@ -21,6 +24,20 @@ vi.mock("@/hooks/react-query/useDeckColumns", () => ({
 vi.mock("@/hooks/drag-drop/useDeckDropTargets", () => ({
   useDeckNewColumnDropTarget: () => ({ dropRef: vi.fn(), isOver: false }),
   useDeckColumnDropTarget: () => ({ dropRef: vi.fn(), isOver: false })
+}));
+vi.mock("@/hooks/drag-drop/useDeckSectionDrag", () => ({
+  useDeckSectionDragSource: () => ({
+    isDragging: h.isDragging,
+    dragRef: vi.fn(),
+    previewRef: vi.fn()
+  }),
+  useDeckSectionDropTarget: (params: {
+    onReorder: (order: string[]) => void;
+    sectionIds: string[];
+  }) => {
+    h.dropParams.push(params);
+    return { dropRef: vi.fn(), dropPosition: h.dropPosition };
+  }
 }));
 vi.mock("@/components/my-cards-page/deck-view/AddBasicLandButton", () => ({
   default: () => React.createElement("div")
@@ -47,6 +64,9 @@ beforeEach(() => {
   h.updateSection.mockClear();
   h.sortSection.mockClear();
   h.columnProps = [];
+  h.dropPosition = null;
+  h.isDragging = false;
+  h.dropParams = [];
 });
 
 function makeSection(columnSizes: number[], kind?: DeckSectionKind): DeckSectionData {
@@ -165,5 +185,68 @@ describe("DeckSection sort", () => {
   it("is disabled for an empty section", () => {
     renderSection(makeSection([0]));
     expect(screen.getByTestId("section-sort-sec-1")).toBeDisabled();
+  });
+});
+
+describe("DeckSection reorder", () => {
+  function renderReorderable(sectionIds: string[], onReorderSections = vi.fn()) {
+    render(
+      React.createElement(DeckSection, {
+        deckId: "deck-1",
+        section: makeSection([1]),
+        sectionIds,
+        onReorderSections
+      })
+    );
+    return onReorderSections;
+  }
+
+  it("shows a drag handle when the deck has other sections to reorder against", () => {
+    renderReorderable(["sec-0", "sec-1"]);
+    expect(
+      screen.getByRole("button", { name: "Drag to reorder section Creatures" })
+    ).toBeInTheDocument();
+  });
+
+  it("hides the drag handle for a deck's only section", () => {
+    renderReorderable(["sec-1"]);
+    expect(screen.queryByTestId("section-drag-handle-sec-1")).toBeNull();
+  });
+
+  it("hides the drag handle when no reorder callback is given", () => {
+    render(
+      React.createElement(DeckSection, {
+        deckId: "deck-1",
+        section: makeSection([1]),
+        sectionIds: ["sec-0", "sec-1"]
+      })
+    );
+    expect(screen.queryByTestId("section-drag-handle-sec-1")).toBeNull();
+  });
+
+  it("passes the deck's section order and reorder callback to the drop target", () => {
+    const onReorder = renderReorderable(["sec-0", "sec-1"]);
+    const params = h.dropParams.at(-1)!;
+    expect(params.sectionIds).toEqual(["sec-0", "sec-1"]);
+    params.onReorder(["sec-1", "sec-0"]);
+    expect(onReorder).toHaveBeenCalledWith(["sec-1", "sec-0"]);
+  });
+
+  it("draws the drop indicator on the hovered side", () => {
+    h.dropPosition = "after";
+    renderReorderable(["sec-0", "sec-1"]);
+    expect(screen.getByTestId("section-drop-indicator-after")).toHaveClass("bottom-0");
+    expect(screen.queryByTestId("section-drop-indicator-before")).toBeNull();
+  });
+
+  it("draws no drop indicator when not hovered", () => {
+    renderReorderable(["sec-0", "sec-1"]);
+    expect(screen.queryByTestId(/section-drop-indicator/)).toBeNull();
+  });
+
+  it("fades the section while it is being dragged", () => {
+    h.isDragging = true;
+    renderReorderable(["sec-0", "sec-1"]);
+    expect(screen.getByTestId("deck-section-sec-1")).toHaveClass("opacity-40");
   });
 });

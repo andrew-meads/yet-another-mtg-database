@@ -63,6 +63,11 @@ test("pinned collections appear in the AppBar on the search route, and pinning/u
   await page.getByTestId(`pin-toggle-${sideCollectionId}`).click();
   await expect(page.getByTestId(`open-entity-${sideCollectionId}`)).toBeVisible();
 
+  // Pinning keeps the menu open (so several can be pinned in a row), and while the
+  // modal menu is open the rest of the AppBar is aria-hidden: close it first.
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId(`pin-toggle-${sideCollectionId}`)).toHaveCount(0);
+
   // Its x button unpins it back into the "More" menu.
   await page
     .getByTestId(`open-entity-${sideCollectionId}`)

@@ -4,7 +4,7 @@ import { DeckSection as DeckSectionData } from "@/types/Deck";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowDownWideNarrow, Plus, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, GripVertical, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeckColumn from "./DeckColumn";
 import AddBasicLandButton from "./AddBasicLandButton";
@@ -15,6 +15,10 @@ import {
 } from "@/hooks/react-query/useDeckSections";
 import { useAddColumn } from "@/hooks/react-query/useDeckColumns";
 import { useDeckNewColumnDropTarget } from "@/hooks/drag-drop/useDeckDropTargets";
+import {
+  useDeckSectionDragSource,
+  useDeckSectionDropTarget
+} from "@/hooks/drag-drop/useDeckSectionDrag";
 import {
   DECK_SECTION_KIND_LABELS,
   countSectionCards,
@@ -44,7 +48,14 @@ interface DeckSectionProps {
   deckId: string;
   deckName?: string;
   section: DeckSectionData;
+  /** Every section id of the deck, in order (drives drag-to-reorder). */
+  sectionIds?: string[];
+  /** Saves a new section order; dragging is disabled without it. */
+  onReorderSections?: (order: string[]) => void;
 }
+
+const NO_SECTION_IDS: string[] = [];
+const noReorder = () => {};
 
 function NewColumnDropZone({ deckId, sectionId }: { deckId: string; sectionId: string }) {
   const { dropRef, isOver } = useDeckNewColumnDropTarget(deckId, sectionId);
@@ -64,12 +75,26 @@ function NewColumnDropZone({ deckId, sectionId }: { deckId: string; sectionId: s
   );
 }
 
-export default function DeckSection({ deckId, deckName, section }: DeckSectionProps) {
+export default function DeckSection({
+  deckId,
+  deckName,
+  section,
+  sectionIds = NO_SECTION_IDS,
+  onReorderSections
+}: DeckSectionProps) {
   const updateSection = useUpdateSection();
   const deleteSection = useDeleteSection();
   const addColumn = useAddColumn();
   const sortSection = useSortSection();
   const { columnGap } = useDeckCardDimensions();
+  const { isDragging, dragRef, previewRef } = useDeckSectionDragSource(deckId, section._id);
+  const { dropRef, dropPosition } = useDeckSectionDropTarget({
+    deckId,
+    sectionId: section._id,
+    sectionIds,
+    onReorder: onReorderSections ?? noReorder
+  });
+  const canReorder = !!onReorderSections && sectionIds.length > 1;
 
   const [name, setName] = useState(section.name);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -88,8 +113,36 @@ export default function DeckSection({ deckId, deckName, section }: DeckSectionPr
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
+    // Sections are spaced with padding rather than margins so the gap between two
+    // sections still belongs to one of them as a drop target.
+    <div
+      ref={dropRef}
+      className={cn("relative space-y-2 py-4 first:pt-0 last:pb-0", isDragging && "opacity-40")}
+      data-testid={`deck-section-${section._id}`}
+    >
+      {dropPosition && (
+        <div
+          aria-hidden
+          data-testid={`section-drop-indicator-${dropPosition}`}
+          className={cn(
+            "bg-primary pointer-events-none absolute inset-x-0 z-10 my-0 h-1 rounded-full",
+            dropPosition === "before" ? "top-0 -translate-y-1/2" : "bottom-0 translate-y-1/2"
+          )}
+        />
+      )}
+      <div ref={previewRef} className="flex items-center gap-2">
+        {canReorder && (
+          <button
+            type="button"
+            ref={dragRef}
+            aria-label={`Drag to reorder section ${section.name}`}
+            title="Drag to reorder sections"
+            data-testid={`section-drag-handle-${section._id}`}
+            className="text-muted-foreground hover:text-foreground -mr-1 flex h-8 w-5 shrink-0 cursor-grab items-center justify-center rounded-sm active:cursor-grabbing"
+          >
+            <GripVertical className="size-4" />
+          </button>
+        )}
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}

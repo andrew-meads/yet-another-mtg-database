@@ -133,6 +133,19 @@ value). Sections stay in the user's order in the deck view; exports reorder them
 [deck-export.md](deck-export.md)), and the AI tools flag them (see
 [user-settings-and-ai.md](user-settings-and-ai.md)).
 
+#### Reordering sections
+
+Each section header has a grip handle (`DeckSection.tsx`, shown when the deck has more than
+one section) that drags the whole section with react-dnd's `DECK_SECTION` item type (see
+[client-state.md](client-state.md#drag-and-drop-react-dnd-html5-backend)). The drop saves
+with `PATCH /api/decks/[id]/sections` `{ order: sectionId[] }` through
+`useReorderSections`, which reorders the cached deck optimistically and restores it if the
+request fails. `order` must list every section of the deck exactly once
+(`isSectionOrderFor` in `src/lib/deckUtils.ts`): a non-string-array is a 400, and a stale
+order (a section added or deleted since the client loaded the deck, or a duplicate) is a
+409 that leaves the deck untouched. Only the `sections` array order changes; ids, columns
+and back-refs are untouched.
+
 #### Sorting a section
 
 Each section header has a **Sort** menu (`DeckSection.tsx` → `useSortSection`) that
@@ -247,7 +260,8 @@ details payload from ~16 MB to ~5 MB raw.
 - `/api/collections` — CRUD + `summaries` + `[id]/isActive`; `GET [id]?details=true`
   accepts an optional `q` Scryfall search param scoped to that collection (see
   [search-engine.md](search-engine.md)).
-- `/api/decks` — CRUD + `[id]/isActive` + `/sections` (and `/sections/sort`, see
+- `/api/decks` — CRUD + `[id]/isActive` + `/sections` (`PATCH { order }` reorders, see
+  [Reordering sections](#reordering-sections); `/sections/sort`, see
   [Sorting a section](#sorting-a-section)), `/columns`, `/cards` placement ops
   `place|move|remove`, `/archive`, `/fill`, `/export`. `/cards` is batched: the body is
   `{ op, physicalCardIds: string[] (≤ 500), sectionId?, columnId?, index? }`, validated by

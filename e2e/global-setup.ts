@@ -457,6 +457,34 @@ async function globalSetup() {
     updatedAt: new Date()
   });
 
+  // Dedicated deck for sectionReorder.spec.ts: three sections (one holding an
+  // ephemeral card) that the spec drags into a new order and back again.
+  const srDeckId = new Types.ObjectId();
+  const srSectionIds = [new Types.ObjectId(), new Types.ObjectId(), new Types.ObjectId()];
+  const srCardId = new Types.ObjectId();
+  await db.collection("physicalcards").insertOne({
+    _id: srCardId,
+    cardId: "e2e-shivan",
+    owner: userId,
+    collectionId: null,
+    deckId: srDeckId,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  } as never);
+  await db.collection("decks").insertOne({
+    _id: srDeckId,
+    name: "Section Reorder Deck",
+    description: "",
+    owner: userId,
+    sections: [
+      { _id: srSectionIds[0], name: "Creatures", columns: [{ cards: [srCardId] }] },
+      { _id: srSectionIds[1], name: "Spells", columns: [{ cards: [] }] },
+      { _id: srSectionIds[2], name: "Lands", columns: [{ cards: [] }] }
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
   await mongoose.disconnect();
 
   mkdirSync(dirname(FIXTURES), { recursive: true });
@@ -497,7 +525,10 @@ async function globalSetup() {
         ssSectionId: ssSectionId.toString(),
         ssIslandId: ssCards.island._id.toString(),
         ssShivanId: ssCards.shivan._id.toString(),
-        ssLlanowarId: ssCards.llanowar._id.toString()
+        ssLlanowarId: ssCards.llanowar._id.toString(),
+        // Section-reorder spec fixtures.
+        srDeckId: srDeckId.toString(),
+        srSectionIds: srSectionIds.map((id) => id.toString())
       },
       null,
       2

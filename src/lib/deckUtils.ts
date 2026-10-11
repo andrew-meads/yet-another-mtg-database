@@ -65,3 +65,46 @@ export function formatDeckCardCount(main: number, sideboard: number): string {
     ? `${formatCardCount(main)} + ${sideboard} sideboard`
     : formatCardCount(main);
 }
+
+/** Where a dragged section lands relative to the section it is dropped on. */
+export type SectionDropPosition = "before" | "after";
+
+/**
+ * The section id order after dropping `draggedId` before or after `targetId`.
+ * Returns null when the drop would leave the order unchanged (dropping a section on
+ * itself or into the gap it already occupies) or either id is unknown.
+ */
+export function moveSectionInOrder(
+  order: string[],
+  draggedId: string,
+  targetId: string,
+  position: SectionDropPosition
+): string[] | null {
+  if (!order.includes(draggedId) || !order.includes(targetId) || draggedId === targetId) {
+    return null;
+  }
+  const rest = order.filter((id) => id !== draggedId);
+  const targetIndex = rest.indexOf(targetId);
+  const next = [...rest];
+  next.splice(position === "before" ? targetIndex : targetIndex + 1, 0, draggedId);
+  return next.every((id, i) => id === order[i]) ? null : next;
+}
+
+/** True when `order` lists every id in `ids` exactly once and nothing else. */
+export function isSectionOrderFor(order: unknown, ids: string[]): order is string[] {
+  if (!Array.isArray(order) || order.length !== ids.length) return false;
+  const seen = new Set(order);
+  return seen.size === ids.length && ids.every((id) => seen.has(id));
+}
+
+/** `sections` rearranged to follow `order` (by `_id`); ids missing from it keep their place at the end. */
+export function applySectionOrder<T extends { _id: string }>(sections: T[], order: string[]): T[] {
+  const rank = (s: T) => {
+    const index = order.indexOf(s._id);
+    return index === -1 ? order.length : index;
+  };
+  return sections
+    .map((section, index) => ({ section, index }))
+    .sort((a, b) => rank(a.section) - rank(b.section) || a.index - b.index)
+    .map(({ section }) => section);
+}

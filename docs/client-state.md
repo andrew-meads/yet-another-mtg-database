@@ -5,7 +5,7 @@
 All server state goes through TanStack Query. Hooks live in `src/hooks/react-query/`
 (e.g. `useInfiniteCardsSearch`, `useRetrieveCollectionDetails`, `useRetrieveDeckDetails`,
 `useCreatePhysicalCard`, `useDeckCardOp`, and the deck-arrangement hooks in
-`useDeckSections` / `useDeckColumns`; `useSortSection` re-columns a section). Query keys: `["collection-summaries"]`,
+`useDeckSections` / `useDeckColumns`; `useSortSection` re-columns a section and `useReorderSections` reorders sections optimistically). Query keys: `["collection-summaries"]`,
 `["collection-details", id]`, `["deck-summaries"]`, `["deck-details", id]`,
 `["card-locations", name]`, `["tags"]`, `["user-settings"]`, `["ai-status"]`,
 `["card-prices", ids]`, `["exchange-rate", target]`.
@@ -162,6 +162,23 @@ per copy. Ephemeral cards may only be reordered within their own deck
 (`PhysicalCardDragItem.isEphemeral`). The collection table shows each card's deck badge;
 the deck view shows each card's collection badge. The collection table is **virtualized**
 with `@tanstack/react-virtual` (no pagination, no manual row reorder).
+
+**Section reorder** is a separate, third item type, `DECK_SECTION`
+(`DeckSectionDragItem`), in `useDeckSectionDrag.ts`; it never goes through
+`useDropDispatch`, and no card target accepts it. The section header's grip handle is the
+drag source, with the header row as the native drag image. Each whole section is the drop
+target, and the pointer's half of it picks before/after. `moveSectionInOrder`
+(`src/lib/deckUtils.ts`) computes the new order and returns null for no-op drops, which
+hides the indicator and sends nothing. Sections are spaced with padding rather than
+margins, so the gap between two sections is still a drop target, and the indicator line
+sits centred in it. The dragged section fades to 40% while in flight. Persistence and
+validation are in [data-model.md](data-model.md#reordering-sections).
+
+Tests: unit `src/lib/__tests__/deckUtils.test.ts`; jsdom the reorder block in
+`deck-view/__tests__/DeckSection.test.tsx` and
+`src/hooks/react-query/__tests__/useReorderSections.test.tsx`; integration
+`tests/integration/decks.test.ts`; e2e `e2e/sectionReorder.spec.ts` (drag, reload, drag
+back; no request for no-op drops).
 
 ## Deck-editor zoom
 

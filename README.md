@@ -96,6 +96,8 @@ Built with Next.js 16 (App Router + API routes) and MongoDB.
   columns for any missing values in between. Color gives white, blue, black, red, green,
   multicolor and colorless columns. Lands always get their own column at the end. It's a
   one-off rearrangement: drag cards around freely afterwards.
+- **Reorder sections** — drag a deck section up or down by the grip handle beside its name;
+  a line shows where it will land.
 - **Basic lands in decks** — add basic lands (Plains/Island/Swamp/Mountain/Forest)
   straight into a deck from a per-section "Add land" picker, without first adding them
   to a collection. These "ephemeral" copies live only in the deck and are removed from

@@ -2,7 +2,7 @@ import connectDB from "@/db/mongoose";
 import { DeckModel } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { getAuthSession } from "@/auth";
-import { isDeckSectionKind } from "@/lib/deckUtils";
+import { applySectionOrder, isDeckSectionKind, isSectionOrderFor } from "@/lib/deckUtils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -52,6 +52,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/decks/[
  * PATCH /api/decks/[id]/sections
  * Renames a section and/or sets its kind ({ sectionId, name?, kind? }), or
  * reorders sections ({ order: id[] }). `kind` is "normal" | "sideboard" | "scratch".
+ * `order` must list every section id exactly once; a stale order (sections added or
+ * removed since the client loaded the deck) is refused with 409.
  */
 export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/[id]/sections">) {
   try {
@@ -67,10 +69,19 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<"/api/decks/
     const deck = await loadDeck(id, userId);
     if (!deck) return Response.json({ error: "Deck not found" }, { status: 404 });
 
-    if (Array.isArray(order)) {
-      deck.sections.sort(
-        (a: any, b: any) => order.indexOf(String(a._id)) - order.indexOf(String(b._id))
-      );
+    if (order !== undefined) {
+      if (!Array.isArray(order) || !order.every((id) => typeof id === "string")) {
+        return Response.json({ error: "order must be an array of section ids" }, { status: 400 });
+      }
+      const ids = deck.sections.map((s: any) => String(s._id));
+      if (!isSectionOrderFor(order, ids)) {
+        return Response.json(
+          { error: "order must list every section of the deck exactly once" },
+          { status: 409 }
+        );
+      }
+      const withIds = deck.sections.map((s: any) => ({ _id: String(s._id), section: s }));
+      deck.sections = applySectionOrder(withIds, order).map(({ section }) => section) as any;
       deck.markModified("sections");
     } else if (sectionId && (typeof name === "string" || kind !== undefined)) {
       const section = deck.sections.find((s: any) => String(s._id) === sectionId) as any;

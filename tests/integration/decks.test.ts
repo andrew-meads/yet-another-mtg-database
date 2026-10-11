@@ -623,6 +623,70 @@ describe("/api/decks/[id]/sections kind", () => {
   });
 });
 
+describe("PATCH /api/decks/[id]/sections { order }", () => {
+  /** Seeds a deck with sections Main, Side and Maybe (with a card in Side) and returns their ids. */
+  async function seedThreeSections() {
+    const deck = await seedDeck(owner);
+    const deckId = deck._id.toString();
+    const pcId = await seedPhysicalCard(owner, cardId, collectionId, { deckId });
+    deck.sections.push(
+      { name: "Side", kind: "sideboard", columns: [{ cards: [pcId] }] } as never,
+      { name: "Maybe", columns: [{ cards: [] }] } as never
+    );
+    await deck.save();
+    const [main, side, maybe] = deck.sections.map((s) => String(s._id));
+    return { deckId, main, side, maybe, pcId };
+  }
+
+  function reorder(deckId: string, order: unknown) {
+    return updateSection(
+      jsonRequest(`/api/decks/${deckId}/sections`, "PATCH", { order }),
+      ctx({ id: deckId })
+    );
+  }
+
+  it("reorders sections, keeping their names, kinds and cards", async () => {
+    const { deckId, main, side, maybe, pcId } = await seedThreeSections();
+    const res = await reorder(deckId, [maybe, main, side]);
+    expect(res.status).toBe(200);
+
+    const fresh = await DeckModel.findById(deckId).lean();
+    expect(fresh!.sections.map((s) => String(s._id))).toEqual([maybe, main, side]);
+    expect(fresh!.sections.map((s) => s.name)).toEqual(["Maybe", "Main", "Side"]);
+    expect(fresh!.sections[2].kind).toBe("sideboard");
+    expect(fresh!.sections[2].columns[0].cards.map(String)).toEqual([pcId]);
+  });
+
+  it("409s on a stale order without changing the deck", async () => {
+    const { deckId, main, side, maybe } = await seedThreeSections();
+    const unknown = new Types.ObjectId().toString();
+    for (const order of [
+      [side, main],
+      [maybe, main, side, unknown],
+      [side, side, main]
+    ]) {
+      expect((await reorder(deckId, order)).status).toBe(409);
+    }
+    const fresh = await DeckModel.findById(deckId).lean();
+    expect(fresh!.sections.map((s) => String(s._id))).toEqual([main, side, maybe]);
+  });
+
+  it("400s on a malformed order", async () => {
+    const { deckId, main, side, maybe } = await seedThreeSections();
+    expect((await reorder(deckId, "nope")).status).toBe(400);
+    expect((await reorder(deckId, [main, side, 3])).status).toBe(400);
+    const fresh = await DeckModel.findById(deckId).lean();
+    expect(fresh!.sections.map((s) => String(s._id))).toEqual([main, side, maybe]);
+  });
+
+  it("404s on another user's deck", async () => {
+    const other = await seedUser("other@example.com");
+    const deck = await seedDeck(other);
+    const deckId = deck._id.toString();
+    expect((await reorder(deckId, [String(deck.sections[0]._id)])).status).toBe(404);
+  });
+});
+
 describe("POST /api/decks/[id]/sections/sort", () => {
   function sortOp(deckId: string, body: Record<string, unknown>) {
     return sortSection(

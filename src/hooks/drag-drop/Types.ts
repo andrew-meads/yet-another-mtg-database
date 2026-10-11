@@ -4,6 +4,7 @@ import { NewCopyMeta } from "@/types/PhysicalCard";
 
 export const NEW_CARD = "NEW_CARD";
 export const PHYSICAL_CARD = "PHYSICAL_CARD";
+export const DECK_SECTION = "DECK_SECTION";
 
 /**
  * Dragged from search results — a brand new card to be added somewhere, carrying
@@ -44,6 +45,16 @@ export interface PhysicalCardDragItem {
 }
 
 export type AnyDragItem = NewCardDragItem | PhysicalCardDragItem;
+
+/**
+ * A deck section dragged by its header grip to reorder the deck's sections. Only
+ * other sections of the same deck accept it; it never goes through `useDropDispatch`.
+ */
+export interface DeckSectionDragItem {
+  kind: "section";
+  deckId: string;
+  sectionId: string;
+}
 
 /** True when the dragged item is an ephemeral (deck-only) physical card. */
 export function isEphemeralItem(item: AnyDragItem | null | undefined): boolean {
